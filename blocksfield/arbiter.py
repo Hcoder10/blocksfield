@@ -36,6 +36,7 @@ log = logging.getLogger("blocksfield.arbiter")
 VLLM_URL = os.environ.get("BLOCKSFIELD_VLLM_URL", "http://127.0.0.1:8000")
 GATHER = float(os.environ.get("BLOCKSFIELD_ART_GATHER", "4"))
 MAX_ART_TURN = float(os.environ.get("BLOCKSFIELD_MAX_ART_TURN", "240"))
+HOLD = Path(os.environ.get("BLOCKSFIELD_HOLD", "/root/setup_logs/vllm.hold"))
 
 
 @dataclass
@@ -119,8 +120,11 @@ class Turns:
 
     async def art_turn(self, first: ArtJob) -> None:
         await asyncio.sleep(GATHER)              # let a burst of requests share one swap
-        while (state := await self.vllm_state()) == "starting":
-            await asyncio.sleep(5)               # vLLM is grabbing VRAM: an art job now would OOM both
+        # vLLM grabbing VRAM (starting, or about to: the launcher drops a hold file first) means an art job now
+        # would OOM both. The hold clears itself once vLLM answers.
+        while (state := await self.vllm_state()) == "starting" or (HOLD.exists() and state != "up"):
+            await asyncio.sleep(5)
+        HOLD.unlink(missing_ok=True)
         async with self.cond:
             self.art_waiting = True
             await self.cond.wait_for(lambda: self.inflight == 0)
