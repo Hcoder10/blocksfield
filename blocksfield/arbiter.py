@@ -28,16 +28,13 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from PIL import Image
 
+from blocksfield import recipe
 from blocksfield.comfy import Comfy, ComfyError
 
 log = logging.getLogger("blocksfield.arbiter")
 VLLM_URL = os.environ.get("BLOCKSFIELD_VLLM_URL", "http://127.0.0.1:8000")
 GATHER = float(os.environ.get("BLOCKSFIELD_ART_GATHER", "4"))
 MAX_ART_TURN = float(os.environ.get("BLOCKSFIELD_MAX_ART_TURN", "240"))
-
-# kind -> (workflow, width, height); transparent kinds go through the RGBA workflow
-WIDE = {"background", "banner", "button", "logo", "thumbnail", "concept"}
-TALL = {"character", "portrait"}
 
 
 @dataclass
@@ -123,14 +120,10 @@ class Turns:
                 self.cond.notify_all()
 
 
-def image_params(prompt: str, kind: str, out_size: int = 1024) -> tuple[str, dict]:
-    if kind in WIDE:
-        w, h = 1664, 928
-    elif kind in TALL:
-        w, h = 928, 1664
-    else:
-        w, h = 1328, 1328
-    return "image", {"prompt": prompt, "width": w, "height": h, "seed": -1}
+def image_params(prompt: str, kind: str, transparent: bool | None) -> tuple[str, dict, bool]:
+    p = recipe.plan(prompt, kind, transparent)
+    wf = "image_rgba" if p["transparent"] else "image"
+    return wf, {"prompt": p["prompt"], "width": p["width"], "height": p["height"], "seed": -1}, p["transparent"]
 
 
 def to_png(data: bytes, transparent: bool, out_size: int) -> tuple[bytes, int, int]:
@@ -161,10 +154,7 @@ def create_app() -> FastAPI:
     @app.post("/generate")
     async def generate(req: Request) -> JSONResponse:
         b = await req.json()
-        transparent = bool(b.get("transparent"))
-        wf, params = image_params(b["prompt"], b.get("kind", "icon"), int(b.get("out_size", 1024)))
-        if transparent:
-            wf = "image_rgba"
+        wf, params, transparent = image_params(b["prompt"], b.get("kind", "icon"), b.get("transparent"))
         try:
             files = await turns.submit(wf, params)
         except ComfyError as e:
