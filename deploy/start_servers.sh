@@ -15,6 +15,9 @@ start_vllm() {
   # flashinfer JIT-builds the sm_120 FP4 GEMM: the image's CUDA 12.8 nvcc cannot target it, the venv's pip
   # CUDA 13 toolkit can.
   local cu=/root/venvs/vllm/lib/python3.12/site-packages/nvidia/cu13
+  # vLLM sizes itself against free VRAM at startup: make ComfyUI drop any cached models first.
+  curl -s -X POST 127.0.0.1:8189/free -H 'Content-Type: application/json' \
+    -d '{"unload_models": true, "free_memory": true}' >/dev/null 2>&1 && sleep 3
   tmux new-session -d -s vllm "CUDA_HOME=$cu PATH=$cu/bin:\$PATH VLLM_SERVER_DEV_MODE=1 /root/venvs/vllm/bin/vllm serve /root/models/qwen38-nvfp4 \
     --served-model-name cybus --host 127.0.0.1 --port 8000 \
     --enable-sleep-mode --gpu-memory-utilization ${BF_VLLM_UTIL:-0.88} \
