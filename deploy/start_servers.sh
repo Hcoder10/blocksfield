@@ -24,8 +24,8 @@ start_vllm() {
     -d '{"unload_models": true, "free_memory": true}' >/dev/null 2>&1 && sleep 3
   tmux new-session -d -s vllm "VLLM_USE_FLASHINFER_SAMPLER=0 VLLM_SERVER_DEV_MODE=1 /root/venvs/vllm/bin/vllm serve /root/models/qwen38-nvfp4 \
     --served-model-name cybus --host 127.0.0.1 --port 8000 \
-    --enable-sleep-mode --gpu-memory-utilization ${BF_VLLM_UTIL:-0.88} \
-    --max-model-len ${BF_MAX_LEN:-65536} --max-num-seqs ${BF_MAX_SEQS:-6} \
+    --enable-sleep-mode --gpu-memory-utilization ${BF_VLLM_UTIL:-0.94} \
+    --max-model-len ${BF_MAX_LEN:-65536} --max-num-seqs ${BF_MAX_SEQS:-4} \
     --limit-mm-per-prompt '{\"image\": 8}' \
     --enable-auto-tool-choice --tool-call-parser qwen3_xml --reasoning-parser qwen3 \
     --speculative-config '{\"method\":\"mtp\",\"num_speculative_tokens\":2}' \
