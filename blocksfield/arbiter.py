@@ -22,6 +22,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import httpx
 from fastapi import FastAPI, Request, Response
@@ -56,6 +57,11 @@ class Turns:
         self.stats = {"swaps": 0, "art_jobs": 0, "llm_calls": 0, "sleep_s": 0.0, "wake_s": 0.0,
                       "art_s": 0.0, "last_error": None}
         self.llm_loaded = True
+        self.events: list[dict] = []
+        self.current: str | None = None
+        self.thumb_store: dict[int, bytes] = {}
+        self.thumb_seq = 0
+        self.llm_open: dict[int, float] = {}      # LLM calls in flight: id -> start time
 
     # ---------------------------------------------------------------- LLM side
     async def llm_enter(self) -> None:
@@ -83,41 +89,102 @@ class Turns:
         except httpx.HTTPError:
             return False
 
+    def event(self, kind: str, name: str, t0: float, **extra) -> None:
+        self.events.append({"kind": kind, "name": name, "start": round(t0, 2), "end": round(time.time(), 2),
+                            **extra})
+        del self.events[:-400]
+
+    async def vllm_state(self) -> str:
+        """'up' (answering), 'starting' (process alive, API not answering: it is allocating VRAM) or 'down'."""
+        try:
+            async with httpx.AsyncClient(timeout=5) as http:
+                if (await http.get(f"{VLLM_URL}/health")).status_code == 200:
+                    return "up"
+        except httpx.HTTPError:
+            pass
+        proc = await asyncio.create_subprocess_exec("pgrep", "-f", "vllm serve", stdout=asyncio.subprocess.DEVNULL)
+        return "starting" if await proc.wait() == 0 else "down"
+
     async def worker(self) -> None:
         while True:
             first = await self.queue.get()
-            await asyncio.sleep(GATHER)          # let a burst of requests share one swap
-            async with self.cond:
-                self.art_waiting = True
-                await self.cond.wait_for(lambda: self.inflight == 0)
-                self.mode = "art"
-            t = time.time()
-            self.llm_loaded = not await self._vllm("/sleep?level=1")
-            self.stats["sleep_s"] = round(time.time() - t, 1)
-            self.stats["swaps"] += 1
-            t_turn = time.time()
-            job: ArtJob | None = first
+            try:
+                await self.art_turn(first)
+            except Exception as e:  # noqa: BLE001  -- never leave the LLM locked out
+                log.exception("art turn failed")
+                self.stats["last_error"] = f"art turn: {e}"[:500]
+                async with self.cond:
+                    self.mode, self.art_waiting = "llm", False
+                    self.cond.notify_all()
+
+    async def art_turn(self, first: ArtJob) -> None:
+        await asyncio.sleep(GATHER)              # let a burst of requests share one swap
+        while (state := await self.vllm_state()) == "starting":
+            await asyncio.sleep(5)               # vLLM is grabbing VRAM: an art job now would OOM both
+        async with self.cond:
+            self.art_waiting = True
+            await self.cond.wait_for(lambda: self.inflight == 0)
+            self.mode = "art"
+        t = time.time()
+        if state == "up":
+            await self._vllm("/sleep?level=1")
+            self.event("sleep", "LLM -> host RAM", t)
+        self.llm_loaded = False
+        self.stats["sleep_s"] = round(time.time() - t, 1)
+        self.stats["swaps"] += 1
+        t_turn = time.time()
+        job: ArtJob | None = first
+        try:
             while job is not None:
                 t = time.time()
+                self.current = job.workflow
                 try:
-                    job.fut.set_result(await self.comfy.run(job.workflow, **job.params))
+                    files = await self.comfy.run(job.workflow, **job.params)
+                    job.fut.set_result(files)
+                    self.event("art", job.workflow, t, thumbs=self.thumbs(files),
+                               prompt=str(job.params.get("prompt", ""))[:160])
                 except Exception as e:  # noqa: BLE001
                     self.stats["last_error"] = f"{job.workflow}: {e}"[:500]
                     job.fut.set_exception(e)
+                    self.event("error", job.workflow, t, error=str(e)[:200])
                 self.stats["art_jobs"] += 1
                 self.stats["art_s"] = round(time.time() - t, 1)
                 job = None
                 if time.time() - t_turn < MAX_ART_TURN and not self.queue.empty():
                     job = self.queue.get_nowait()
-            await self.comfy.free()
+        finally:
+            self.current = None
             t = time.time()
-            await self._vllm("/wake_up")
-            self.llm_loaded = True
+            await self.comfy.free()
+            if state == "up":
+                await self._vllm("/wake_up")
+                self.event("wake", "LLM -> GPU", t)
+            self.llm_loaded = state == "up"
             self.stats["wake_s"] = round(time.time() - t, 1)
             async with self.cond:
                 self.mode = "llm"
                 self.art_waiting = False
                 self.cond.notify_all()
+
+    def thumbs(self, files: list[dict]) -> list[int]:
+        ids = []
+        for f in files:
+            if not f["filename"].lower().endswith((".png", ".jpg", ".webp")):
+                continue
+            try:
+                with Image.open(io.BytesIO(f["data"])) as im:
+                    im = im.convert("RGBA")
+                    im.thumbnail((320, 320))
+                    buf = io.BytesIO()
+                    im.save(buf, "PNG")
+            except Exception:  # noqa: BLE001
+                continue
+            self.thumb_seq += 1
+            self.thumb_store[self.thumb_seq] = buf.getvalue()
+            ids.append(self.thumb_seq)
+        for k in [k for k in self.thumb_store if k <= self.thumb_seq - 200]:
+            del self.thumb_store[k]
+        return ids
 
 
 def image_params(prompt: str, kind: str, transparent: bool | None) -> tuple[str, dict, bool]:
@@ -183,12 +250,35 @@ def create_app() -> FastAPI:
         if req.method == "GET":                 # /v1/models etc. never need the GPU
             r = await proxy.get(f"/v1/{path}", headers=headers)
             return Response(r.content, r.status_code, media_type=r.headers.get("content-type"))
+        t0 = time.time()
         await turns.llm_enter()
+        t1 = time.time()
         try:
             r = await proxy.post(f"/v1/{path}", content=body, headers=headers)
         finally:
             await turns.llm_exit()
+        tokens = 0
+        try:
+            tokens = int(r.json().get("usage", {}).get("completion_tokens", 0))
+        except Exception:  # noqa: BLE001
+            pass
+        turns.event("llm", path, t1, tokens=tokens, waited=round(t1 - t0, 1), status=r.status_code)
         return Response(r.content, r.status_code, media_type=r.headers.get("content-type"))
+
+    @app.get("/events")
+    async def events(since: float = 0) -> dict:
+        return {"now": time.time(), "mode": turns.mode, "current": turns.current, "inflight_llm": turns.inflight,
+                "art_queue": turns.queue.qsize(), "events": [e for e in turns.events if e["end"] > since],
+                **turns.stats}
+
+    @app.get("/thumb/{tid}")
+    async def thumb(tid: int) -> Response:
+        data = turns.thumb_store.get(tid)
+        return Response(data or b"", 200 if data else 404, media_type="image/png")
+
+    @app.get("/")
+    async def dashboard() -> Response:
+        return Response((Path(__file__).parent / "dashboard.html").read_bytes(), media_type="text/html")
 
     return app
 

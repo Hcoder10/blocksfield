@@ -1,0 +1,617 @@
+{
+ "1": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "{{unet}}",
+   "weight_dtype": "default"
+  }
+ },
+ "2": {
+  "class_type": "QwenImage21Cache",
+  "inputs": {
+   "model": [
+    "1",
+    0
+   ],
+   "device": "auto",
+   "dtype": "default"
+  }
+ },
+ "3": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+   "type": "qwen_image",
+   "device": "default"
+  }
+ },
+ "4": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+  }
+ },
+ "5": {
+  "class_type": "TextEncodeQwenImage21",
+  "inputs": {
+   "clip": [
+    "3",
+    0
+   ],
+   "prompt": "{{prompt}}",
+   "negative_prompt": "{{negative}}",
+   "resolution": 1024
+  }
+ },
+ "6": {
+  "class_type": "EmptyLatentImage",
+  "inputs": {
+   "width": 1328,
+   "height": 1328,
+   "batch_size": 1
+  }
+ },
+ "7": {
+  "class_type": "RandomNoise",
+  "inputs": {
+   "noise_seed": "{{seed}}"
+  }
+ },
+ "8": {
+  "class_type": "CFGGuider",
+  "inputs": {
+   "model": [
+    "2",
+    0
+   ],
+   "positive": [
+    "5",
+    0
+   ],
+   "negative": [
+    "5",
+    1
+   ],
+   "cfg": 1.0
+  }
+ },
+ "9": {
+  "class_type": "KSamplerSelect",
+  "inputs": {
+   "sampler_name": "euler"
+  }
+ },
+ "10": {
+  "class_type": "ManualSigmas",
+  "inputs": {
+   "sigmas": "{{sigmas}}"
+  }
+ },
+ "11": {
+  "class_type": "SamplerCustomAdvanced",
+  "inputs": {
+   "noise": [
+    "7",
+    0
+   ],
+   "guider": [
+    "8",
+    0
+   ],
+   "sampler": [
+    "9",
+    0
+   ],
+   "sigmas": [
+    "10",
+    0
+   ],
+   "latent_image": [
+    "6",
+    0
+   ]
+  }
+ },
+ "12": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "11",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "13": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "12",
+    0
+   ],
+   "filename_prefix": "bf/prop3d_ref"
+  }
+ },
+ "20": {
+  "class_type": "LoadBackgroundRemovalModel",
+  "inputs": {
+   "bg_removal_name": "birefnet.safetensors"
+  }
+ },
+ "21": {
+  "class_type": "RemoveBackground",
+  "inputs": {
+   "bg_removal_model": [
+    "20",
+    0
+   ],
+   "image": [
+    "12",
+    0
+   ]
+  }
+ },
+ "22": {
+  "class_type": "ImageCropToMask",
+  "inputs": {
+   "images": [
+    "12",
+    0
+   ],
+   "masks": [
+    "21",
+    0
+   ],
+   "width": 1024,
+   "height": 1024,
+   "pad_factor": 1.1,
+   "grow_mask": 0,
+   "background": "#000000"
+  }
+ },
+ "23": {
+  "class_type": "CLIPVisionLoader",
+  "inputs": {
+   "clip_name": "dino_v3_vit_l.safetensors"
+  }
+ },
+ "24": {
+  "class_type": "Trellis2Conditioning",
+  "inputs": {
+   "clip_vision_model": [
+    "23",
+    0
+   ],
+   "image": [
+    "22",
+    0
+   ]
+  }
+ },
+ "25": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "trellis_2_bf16.safetensors",
+   "weight_dtype": "default"
+  }
+ },
+ "26": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "trellis_2_shape_vae_bf16.safetensors"
+  }
+ },
+ "27": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "trellis_2_texture_vae_bf16.safetensors"
+  }
+ },
+ "28": {
+  "class_type": "CFGOverride",
+  "inputs": {
+   "model": [
+    "25",
+    0
+   ],
+   "cfg": 1.0,
+   "start_percent": 0.667,
+   "end_percent": 1.0
+  }
+ },
+ "29": {
+  "class_type": "RescaleCFG",
+  "inputs": {
+   "model": [
+    "28",
+    0
+   ],
+   "multiplier": 0.7
+  }
+ },
+ "30": {
+  "class_type": "ModelSamplingSD3",
+  "inputs": {
+   "model": [
+    "29",
+    0
+   ],
+   "shift": 5.0
+  }
+ },
+ "31": {
+  "class_type": "CFGOverride",
+  "inputs": {
+   "model": [
+    "25",
+    0
+   ],
+   "cfg": 1.0,
+   "start_percent": 0.769,
+   "end_percent": 1.0
+  }
+ },
+ "32": {
+  "class_type": "RescaleCFG",
+  "inputs": {
+   "model": [
+    "31",
+    0
+   ],
+   "multiplier": 0.5
+  }
+ },
+ "33": {
+  "class_type": "EmptyTrellis2LatentStructure",
+  "inputs": {
+   "batch_size": 1
+  }
+ },
+ "34": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "30",
+    0
+   ],
+   "seed": "{{seed}}",
+   "steps": 12,
+   "cfg": 7.5,
+   "sampler_name": "euler",
+   "scheduler": "normal",
+   "positive": [
+    "24",
+    0
+   ],
+   "negative": [
+    "24",
+    1
+   ],
+   "latent_image": [
+    "33",
+    0
+   ],
+   "denoise": 1.0
+  }
+ },
+ "35": {
+  "class_type": "VaeDecodeStructureTrellis2",
+  "inputs": {
+   "samples": [
+    "34",
+    0
+   ],
+   "vae": [
+    "26",
+    0
+   ],
+   "resolution": "32"
+  }
+ },
+ "36": {
+  "class_type": "Trellis2ShapeStage",
+  "inputs": {
+   "positive": [
+    "24",
+    0
+   ],
+   "negative": [
+    "24",
+    1
+   ],
+   "voxel": [
+    "35",
+    0
+   ]
+  }
+ },
+ "37": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "32",
+    0
+   ],
+   "seed": "{{seed}}",
+   "steps": 20,
+   "cfg": 7.5,
+   "sampler_name": "euler",
+   "scheduler": "normal",
+   "positive": [
+    "36",
+    0
+   ],
+   "negative": [
+    "36",
+    1
+   ],
+   "latent_image": [
+    "36",
+    2
+   ],
+   "denoise": 1.0
+  }
+ },
+ "38": {
+  "class_type": "Trellis2UpsampleStage",
+  "inputs": {
+   "positive": [
+    "36",
+    0
+   ],
+   "negative": [
+    "36",
+    1
+   ],
+   "shape_latent": [
+    "37",
+    0
+   ],
+   "vae": [
+    "26",
+    0
+   ],
+   "target_resolution": "{{shape_res}}"
+  }
+ },
+ "39": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "32",
+    0
+   ],
+   "seed": "{{seed}}",
+   "steps": 12,
+   "cfg": 7.5,
+   "sampler_name": "euler",
+   "scheduler": "simple",
+   "positive": [
+    "38",
+    0
+   ],
+   "negative": [
+    "38",
+    1
+   ],
+   "latent_image": [
+    "38",
+    2
+   ],
+   "denoise": 1.0
+  }
+ },
+ "40": {
+  "class_type": "VaeDecodeShapeTrellis",
+  "inputs": {
+   "samples": [
+    "39",
+    0
+   ],
+   "vae": [
+    "26",
+    0
+   ]
+  }
+ },
+ "41": {
+  "class_type": "Trellis2TextureStage",
+  "inputs": {
+   "positive": [
+    "38",
+    0
+   ],
+   "negative": [
+    "38",
+    1
+   ],
+   "shape_latent": [
+    "39",
+    0
+   ]
+  }
+ },
+ "42": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "25",
+    0
+   ],
+   "seed": "{{seed}}",
+   "steps": 12,
+   "cfg": 1.0,
+   "sampler_name": "euler",
+   "scheduler": "normal",
+   "positive": [
+    "41",
+    0
+   ],
+   "negative": [
+    "41",
+    1
+   ],
+   "latent_image": [
+    "41",
+    2
+   ],
+   "denoise": 1.0
+  }
+ },
+ "43": {
+  "class_type": "VaeDecodeTextureTrellis",
+  "inputs": {
+   "samples": [
+    "42",
+    0
+   ],
+   "vae": [
+    "27",
+    0
+   ],
+   "shape_subdivides": [
+    "40",
+    1
+   ]
+  }
+ },
+ "44": {
+  "class_type": "RemeshMesh",
+  "inputs": {
+   "mesh": [
+    "40",
+    0
+   ],
+   "resolution": "{{remesh_res}}",
+   "sign_mode": "solid",
+   "sign_mode.fill": 20.0,
+   "sign_mode.qef": false,
+   "band": 1.0,
+   "project_back": 0.0,
+   "fix_poles": false,
+   "smooth_iters": 20,
+   "drop_small_components": 0.01,
+   "precluster_max_verts": 20000000
+  }
+ },
+ "45": {
+  "class_type": "DecimateMesh",
+  "inputs": {
+   "mesh": [
+    "44",
+    0
+   ],
+   "target_face_count": "{{faces}}",
+   "placement_mode": "qem",
+   "placement_mode.line_quadric_weight": 0.0,
+   "placement_mode.feature_edge_quadric_weight": 0.0,
+   "placement_mode.feature_edge_min_dihedral_deg": 30.0,
+   "placement_mode.clamp_v_to_edge": true
+  }
+ },
+ "46": {
+  "class_type": "MeshSmoothNormals",
+  "inputs": {
+   "mesh": [
+    "45",
+    0
+   ],
+   "crease_angle": 180.0
+  }
+ },
+ "47": {
+  "class_type": "UnwrapMesh",
+  "inputs": {
+   "mesh": [
+    "46",
+    0
+   ],
+   "segmenter": "pec",
+   "resolution": "{{texture}}",
+   "padding": 1,
+   "weld_distance": 0.0002
+  }
+ },
+ "48": {
+  "class_type": "BakeTextureFromVoxel",
+  "inputs": {
+   "mesh": [
+    "47",
+    0
+   ],
+   "voxel_colors": [
+    "43",
+    0
+   ],
+   "texture_size": "{{texture}}",
+   "reference_mesh": [
+    "40",
+    0
+   ]
+  }
+ },
+ "49": {
+  "class_type": "BakeNormalMapFromMesh",
+  "inputs": {
+   "low_poly": [
+    "47",
+    0
+   ],
+   "high_poly": [
+    "44",
+    0
+   ],
+   "resolution": "{{texture}}",
+   "cage_distance": 0.05,
+   "ignore_backfaces": true
+  }
+ },
+ "50": {
+  "class_type": "ApplyTextureToMesh",
+  "inputs": {
+   "mesh": [
+    "47",
+    0
+   ],
+   "base_color": [
+    "48",
+    0
+   ],
+   "metallic": [
+    "48",
+    1
+   ],
+   "roughness": [
+    "48",
+    2
+   ],
+   "normal_map": [
+    "49",
+    0
+   ]
+  }
+ },
+ "51": {
+  "class_type": "MeshSmoothNormals",
+  "inputs": {
+   "mesh": [
+    "50",
+    0
+   ],
+   "crease_angle": 180.0
+  }
+ },
+ "52": {
+  "class_type": "SaveGLB",
+  "inputs": {
+   "mesh": [
+    "51",
+    0
+   ],
+   "filename_prefix": "bf/prop3d"
+  }
+ }
+}

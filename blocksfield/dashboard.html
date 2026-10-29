@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Blocksfield · one 5090</title>
+<style>
+  :root { --bg:#0d0f14; --panel:#151922; --line:#232838; --text:#e8ebf2; --dim:#8a93a8;
+          --llm:#7c9cff; --image:#ff9f43; --mesh:#2ed3a3; --video:#ff5d8f; --audio:#c08cff; --swap:#4a5168; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.4 "Inter", "Segoe UI", system-ui, sans-serif; }
+  header { display:flex; align-items:baseline; gap:24px; padding:18px 28px 6px; }
+  h1 { margin:0; font-size:22px; letter-spacing:.5px; }
+  h1 span { color:var(--dim); font-weight:500; }
+  .now { margin-left:auto; font-size:13px; color:var(--dim); text-transform:uppercase; letter-spacing:1.5px; }
+  .now b { display:block; font-size:24px; color:var(--text); letter-spacing:0; text-transform:none; }
+  .stats { display:flex; gap:28px; padding:4px 28px 14px; color:var(--dim); }
+  .stats b { color:var(--text); font-size:18px; margin-right:6px; }
+  main { display:grid; grid-template-columns: 1fr 420px; gap:16px; padding:0 28px 28px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .panel h2 { margin:0 0 10px; font-size:12px; color:var(--dim); text-transform:uppercase; letter-spacing:1.5px; }
+  canvas { width:100%; height:300px; display:block; }
+  .gallery { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; max-height:620px; overflow:auto; }
+  .gallery figure { margin:0; background:#0a0c10 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="8" height="8" fill="%23161a22"/><rect x="8" y="8" width="8" height="8" fill="%23161a22"/></svg>'); border-radius:8px; overflow:hidden; position:relative; aspect-ratio:1; }
+  .gallery img { width:100%; height:100%; object-fit:contain; display:block; }
+  .gallery figcaption { position:absolute; left:0; right:0; bottom:0; padding:4px 6px; font-size:10px; background:linear-gradient(transparent, #000c); color:#cfd5e3; }
+  .log { font:12px/1.5 ui-monospace, Consolas, monospace; color:var(--dim); max-height:230px; overflow:auto; margin-top:14px; }
+  .log div b { color:var(--text); font-weight:600; }
+  .legend { display:flex; gap:16px; margin-top:8px; font-size:12px; color:var(--dim); flex-wrap:wrap; }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:-1px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Blocksfield <span>· every model on one RTX 5090</span></h1>
+  <div class="now">on the GPU now<b id="now">…</b></div>
+</header>
+<div class="stats">
+  <div><b id="s-llm">0</b>LLM calls</div>
+  <div><b id="s-tok">0</b>tokens written</div>
+  <div><b id="s-art">0</b>art jobs</div>
+  <div><b id="s-swap">0</b>model swaps</div>
+  <div><b id="s-wake">–</b>last wake (s)</div>
+</div>
+<main>
+  <section class="panel">
+    <h2>GPU timeline · last <span id="win">10</span> minutes</h2>
+    <canvas id="tl" width="1600" height="300"></canvas>
+    <div class="legend" id="legend"></div>
+    <div class="log" id="log"></div>
+  </section>
+  <section class="panel">
+    <h2>Generated on this card</h2>
+    <div class="gallery" id="gallery"></div>
+  </section>
+</main>
+<script>
+const LANES = [
+  {key:"llm",   label:"Qwen3.8-27B NVFP4 · code + judging", color:"--llm"},
+  {key:"image", label:"Qwen-Image-2.1 · art",                color:"--image"},
+  {key:"mesh",  label:"TRELLIS.2 · 3D props",                color:"--mesh"},
+  {key:"video", label:"LTX-2.5 · trailer",                   color:"--video"},
+  {key:"audio", label:"ACE-Step 1.5 · music",                color:"--audio"},
+  {key:"swap",  label:"swap (sleep / wake)",                 color:"--swap"},
+];
+const NAMES = {llm:"Qwen3.8-27B (LLM)", image:"Qwen-Image-2.1", mesh:"TRELLIS.2", video:"LTX-2.5", audio:"ACE-Step 1.5", swap:"swapping…"};
+function lane(e) {
+  if (e.kind === "llm") return "llm";
+  if (e.kind === "sleep" || e.kind === "wake") return "swap";
+  const n = e.name || "";
+  if (n.startsWith("prop3d")) return "mesh";
+  if (n.startsWith("trailer")) return "video";
+  if (n.startsWith("music") || n.startsWith("sfx")) return "audio";
+  return "image";
+}
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const WINDOW = 600;
+let events = [], seen = new Set(), last = 0, stats = {};
+document.getElementById("legend").innerHTML = LANES.map(l => `<span><i style="background:${css(l.color)}"></i>${l.label}</span>`).join("");
+
+async function poll() {
+  try {
+    const r = await fetch(`events?since=${last}`); const d = await r.json();
+    stats = d;
+    for (const e of d.events) {
+      const id = `${e.kind}|${e.name}|${e.start}`;
+      if (seen.has(id)) continue; seen.add(id); events.push(e);
+      if (e.thumbs && e.thumbs.length) addThumbs(e);
+      addLog(e);
+    }
+    last = Math.max(last, d.now - 2);
+    events = events.filter(e => e.end > d.now - WINDOW);
+    let tok = 0; for (const e of events) tok += e.tokens || 0; stats._tok = (stats._tok || 0);
+    render(d.now);
+  } catch (err) {}
+  setTimeout(poll, 1000);
+}
+let tokens = 0;
+function addLog(e) {
+  if (e.kind === "llm") { tokens += e.tokens || 0; return; }
+  const el = document.getElementById("log");
+  const d = new Date(e.end * 1000).toLocaleTimeString();
+  const dur = (e.end - e.start).toFixed(1);
+  const what = e.kind === "error" ? `<b style="color:#ff6b6b">error</b> ${e.name}: ${e.error}` :
+               e.kind === "art" ? `<b>${NAMES[lane(e)]}</b> ${e.name} · ${dur}s · ${(e.prompt||"").slice(0,90)}` :
+               `<b>${e.name}</b> · ${dur}s`;
+  el.insertAdjacentHTML("afterbegin", `<div>${d} ${what}</div>`);
+}
+function addThumbs(e) {
+  const g = document.getElementById("gallery");
+  for (const t of e.thumbs) {
+    g.insertAdjacentHTML("afterbegin", `<figure><img src="thumb/${t}"><figcaption>${NAMES[lane(e)]} · ${(e.end-e.start).toFixed(0)}s</figcaption></figure>`);
+  }
+}
+function render(now) {
+  const c = document.getElementById("tl"), x = c.getContext("2d");
+  const W = c.width, H = c.height, left = 300, laneH = (H - 30) / LANES.length;
+  x.clearRect(0, 0, W, H);
+  x.font = "22px Inter, Segoe UI, sans-serif"; x.textBaseline = "middle";
+  LANES.forEach((l, i) => {
+    const y = i * laneH;
+    x.fillStyle = i % 2 ? "#151922" : "#181d27"; x.fillRect(left, y, W - left, laneH);
+    x.fillStyle = css("--dim"); x.fillText(l.label, 8, y + laneH / 2);
+  });
+  const tx = t => left + (W - left) * (1 - (now - t) / WINDOW);
+  for (const e of events) {
+    const li = LANES.findIndex(l => l.key === lane(e)); if (li < 0) continue;
+    const a = Math.max(tx(e.start), left), b = Math.max(tx(e.end), a + 3);
+    x.fillStyle = e.kind === "error" ? "#ff6b6b" : css(LANES[li].color);
+    x.globalAlpha = e.kind === "llm" ? 0.55 : 0.95;
+    x.fillRect(a, li * laneH + 6, b - a, laneH - 12);
+  }
+  x.globalAlpha = 1;
+  x.fillStyle = css("--dim"); x.font = "18px Inter, Segoe UI, sans-serif";
+  for (let m = 0; m <= 10; m += 2) { const px = tx(now - m * 60); x.fillText(m ? `-${m}m` : "now", px - 20, H - 12); }
+  const holder = stats.mode === "art" ? (stats.current ? NAMES[lane({kind:"art", name:stats.current})] : NAMES.swap)
+               : (stats.inflight_llm ? NAMES.llm + ` · ${stats.inflight_llm} agent${stats.inflight_llm>1?"s":""}` : "Qwen3.8-27B (idle)");
+  document.getElementById("now").textContent = holder;
+  document.getElementById("s-llm").textContent = stats.llm_calls ?? 0;
+  document.getElementById("s-tok").textContent = tokens.toLocaleString();
+  document.getElementById("s-art").textContent = stats.art_jobs ?? 0;
+  document.getElementById("s-swap").textContent = stats.swaps ?? 0;
+  document.getElementById("s-wake").textContent = stats.wake_s ?? "–";
+}
+poll();
+</script>
+</body>
+</html>
