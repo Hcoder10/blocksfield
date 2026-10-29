@@ -12,9 +12,8 @@ up() { tmux has-session -t "=$1" 2>/dev/null; }
 
 start_vllm() {
   up vllm && { echo "vllm already running"; return; }
-  # flashinfer JIT-builds the sm_120 FP4 GEMM: the image's CUDA 12.8 nvcc cannot target it, the venv's pip
-  # CUDA 13 toolkit can.
-  local cu=/root/venvs/vllm/lib/python3.12/site-packages/nvidia/cu13
+  # No flashinfer JIT anywhere (the image has CUDA 12.8 nvcc, the venv CUDA 13 headers: every JIT build fails):
+  # prebuilt CUTLASS NVFP4 GEMMs, Triton attention, the PyTorch sampler.
   # vLLM sizes itself against free VRAM at startup: hold the arbiter's art turns (it clears the hold once vLLM
   # answers), wait out a running ComfyUI job, then make ComfyUI drop its cached models.
   touch $LOG/vllm.hold
@@ -23,14 +22,14 @@ start_vllm() {
   done
   curl -s -X POST 127.0.0.1:8189/free -H 'Content-Type: application/json' \
     -d '{"unload_models": true, "free_memory": true}' >/dev/null 2>&1 && sleep 3
-  tmux new-session -d -s vllm "CUDA_HOME=$cu PATH=$cu/bin:\$PATH VLLM_SERVER_DEV_MODE=1 /root/venvs/vllm/bin/vllm serve /root/models/qwen38-nvfp4 \
+  tmux new-session -d -s vllm "VLLM_USE_FLASHINFER_SAMPLER=0 VLLM_SERVER_DEV_MODE=1/root/venvs/vllm/bin/vllm serve /root/models/qwen38-nvfp4 \
     --served-model-name cybus --host 127.0.0.1 --port 8000 \
     --enable-sleep-mode --gpu-memory-utilization ${BF_VLLM_UTIL:-0.88} \
     --max-model-len ${BF_MAX_LEN:-65536} --max-num-seqs ${BF_MAX_SEQS:-6} \
     --limit-mm-per-prompt '{\"image\": 8}' \
     --enable-auto-tool-choice --tool-call-parser qwen3_xml --reasoning-parser qwen3 \
     --speculative-config '{\"method\":\"mtp\",\"num_speculative_tokens\":2}' \
-    --linear-backend ${BF_LINEAR_BACKEND:-cutlass} ${BF_VLLM_EXTRA:-} > $LOG/vllm_serve.log 2>&1"
+    --linear-backend ${BF_LINEAR_BACKEND:-cutlass} --attention-backend ${BF_ATTN:-TRITON_ATTN} ${BF_VLLM_EXTRA:-} > $LOG/vllm_serve.log 2>&1"
   echo "vllm starting (first start compiles: several minutes); log $LOG/vllm_serve.log"
 }
 
