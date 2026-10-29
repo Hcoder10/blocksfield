@@ -1,0 +1,15 @@
+{
+ "description": "Qwen-Image-2.1 turbo text-to-image (8 steps, cfg 1)",
+ "params": {
+  "prompt": "",
+  "negative": "",
+  "width": 2048,
+  "height": 2048,
+  "seed": -1,
+  "unet": "qwen_image_2.1_turbo_int8_convrot.safetensors",
+  "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0"
+ },
+ "outputs": [
+  "13"
+ ]
+}
