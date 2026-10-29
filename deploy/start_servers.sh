@@ -12,7 +12,10 @@ up() { tmux has-session -t "=$1" 2>/dev/null; }
 
 start_vllm() {
   up vllm && { echo "vllm already running"; return; }
-  tmux new-session -d -s vllm "VLLM_SERVER_DEV_MODE=1 /root/venvs/vllm/bin/vllm serve /root/models/qwen38-nvfp4 \
+  # flashinfer JIT-builds the sm_120 FP4 GEMM: the image's CUDA 12.8 nvcc cannot target it, the venv's pip
+  # CUDA 13 toolkit can.
+  local cu=/root/venvs/vllm/lib/python3.12/site-packages/nvidia/cu13
+  tmux new-session -d -s vllm "CUDA_HOME=$cu PATH=$cu/bin:\$PATH VLLM_SERVER_DEV_MODE=1 /root/venvs/vllm/bin/vllm serve /root/models/qwen38-nvfp4 \
     --served-model-name cybus --host 127.0.0.1 --port 8000 \
     --enable-sleep-mode --gpu-memory-utilization ${BF_VLLM_UTIL:-0.88} \
     --max-model-len ${BF_MAX_LEN:-65536} --max-num-seqs ${BF_MAX_SEQS:-6} \
