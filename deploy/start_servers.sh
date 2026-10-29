@@ -22,7 +22,7 @@ start_vllm() {
     --limit-mm-per-prompt '{\"image\": 8}' \
     --enable-auto-tool-choice --tool-call-parser qwen3_xml --reasoning-parser qwen3 \
     --speculative-config '{\"method\":\"mtp\",\"num_speculative_tokens\":2}' \
-    ${BF_VLLM_EXTRA:-} > $LOG/vllm_serve.log 2>&1"
+    --linear-backend ${BF_LINEAR_BACKEND:-cutlass} ${BF_VLLM_EXTRA:-} > $LOG/vllm_serve.log 2>&1"
   echo "vllm starting (first start compiles: several minutes); log $LOG/vllm_serve.log"
 }
 

@@ -265,6 +265,15 @@ def create_app() -> FastAPI:
         turns.event("llm", path, t1, tokens=tokens, waited=round(t1 - t0, 1), status=r.status_code)
         return Response(r.content, r.status_code, media_type=r.headers.get("content-type"))
 
+    @app.post("/upload")
+    async def upload(req: Request) -> JSONResponse:
+        """{filename, b64} -> put an image into ComfyUI's input folder (for edit / image-to-video jobs)."""
+        b = await req.json()
+        async with httpx.AsyncClient(timeout=120) as http:
+            r = await http.post(f"{turns.comfy.url}/upload/image", data={"overwrite": "true"},
+                                files={"image": (b["filename"], base64.b64decode(b["b64"]), "image/png")})
+        return JSONResponse(r.json() if r.status_code < 400 else {"error": r.text[:300]}, status_code=r.status_code)
+
     @app.get("/events")
     async def events(since: float = 0) -> dict:
         return {"now": time.time(), "mode": turns.mode, "current": turns.current, "inflight_llm": turns.inflight,

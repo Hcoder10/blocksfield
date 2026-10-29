@@ -1,0 +1,17 @@
+{
+ "description": "Qwen-Image-2.1 turbo edit with two reference images (ComfyUI input filenames): thumbnails, icons, style-matched art",
+ "params": {
+  "prompt": "",
+  "negative": "",
+  "width": 2752,
+  "height": 1536,
+  "seed": -1,
+  "unet": "qwen_image_2.1_turbo_int8_convrot.safetensors",
+  "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0",
+  "image_1": "",
+  "image_2": ""
+ },
+ "outputs": [
+  "13"
+ ]
+}

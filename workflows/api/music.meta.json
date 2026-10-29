@@ -1,0 +1,14 @@
+{
+ "description": "ACE-Step 1.5 turbo text-to-music (8 steps, cfg 1) -> MP3. lyrics \"[Instrumental]\" for background music",
+ "params": {
+  "tags": "",
+  "lyrics": "[Instrumental]",
+  "seconds": 60,
+  "bpm": 120,
+  "keyscale": "C major",
+  "seed": -1
+ },
+ "outputs": [
+  "8"
+ ]
+}
