@@ -124,7 +124,9 @@ export BLOCKSFIELD_BOX="-p <ssh port> root@<box>"         # the runner opens the
 python -m blocksfield.run --check                         # tunnel, arbiter, LLM, bridge, Studio, tools
 python -m blocksfield.run "A neon obby tower in the clouds with laser gates and checkpoints" --id neon_obby
 python -m blocksfield.marketing runs/neon_obby            # thumbnail, icon, trailer from the built game's captures
-python -m blocksfield.demo_video runs/neon_obby           # the 2-minute cut
+python -m blocksfield.export_place runs/neon_obby --look toon_bright   # the Studio-built world -> place/final.rbxlx
+python -m blocksfield.capture_footage --attach --place runs/neon_obby/place/final.rbxlx   # orbit/dolly/hero clips
+python -m blocksfield.promo_video --run runs/neon_obby --out video/promo.mp4             # the demo cut
 ```
 The build opens its own Studio place, plays it, judges every capture against the concept board, and repairs the
 game. The finished place is `runs/<id>/place/final.rbxlx`.

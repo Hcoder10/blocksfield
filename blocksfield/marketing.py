@@ -46,7 +46,8 @@ Answer with JSON only:
 
 
 def captures(run_dir: Path) -> list[Path]:
-    shots = sorted((run_dir / "work" / "captures").rglob("*.png"), key=lambda p: p.stat().st_mtime)
+    shots = sorted([p for ext in ("*.png", "*.jpg") for p in (run_dir / "work" / "captures").rglob(ext)],
+                   key=lambda p: p.stat().st_mtime)            # captures are saved as JPEG
     good = []
     for p in shots:
         try:
