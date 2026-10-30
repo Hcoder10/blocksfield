@@ -35,6 +35,27 @@ by hand, and Higgsfield makes the promo video. Blocksfield does the whole loop l
 | Music | ACE-Step 1.5 turbo | ComfyUI |
 | Sound effects | Stable Audio 3 small-sfx (t5gemma text encoder) | ComfyUI |
 
+## The kit library: why a 27B model can make good-looking games
+
+A local 27B model can't write a vehicle controller, an animated HUD or a lighting rig to the standard of a top
+Roblox game. In our live runs it reliably failed in the same ways: geometry that renders as nothing, noon lighting
+for "golden hour", and contracts between its own files that don't match. It does reliably *compose* well-made parts.
+So Blocksfield gives it a library of genre-general kits, each tested in Studio, and the game is the model's choices
+on top of them: the design, layout, art direction, tuning and UI. The kits live in the harness's
+`harness/kit/`, and every builder gets their API plus routing rules for which kit to use when.
+
+| Kit | What it gives a game |
+|---|---|
+| **LookKit** | One-call art direction: toon_bright, realistic, cozy, neon_night, dark_fantasy, snow, desert, candy, space (lighting, atmosphere, sky, post-processing, terrain colours, a palette), plus MaterialVariants from generated textures, outlines and cel helpers |
+| **WorldKit / WorldKit2** | Sculpted terrain islands and water, 12 biomes, 63 stylised prop kinds, builders for race courses, N64-style platforming courses, arenas, interiors (kitchen, tavern, lab…), towns and dungeons, with gameplay hooks |
+| **ControllerKit** | Feel profiles: platformer (coyote time, buffering, double and long jump, dive, ground pound, wall kick), top-down / isometric, FPS/TPS shooter (ADS, recoil, viewmodel, server-validated hits), arcade vehicles (kart, car, hover, boat; drift-boost tiers, chase camera) |
+| **GameplayKit** | Self-wiring, server-authoritative systems: rounds, score, objectives, health and damage, NPC AI with waves, collectibles, interactables, cooking/crafting stations and recipes, inventory, checkpoints, races with AI followers, moving hazards |
+| **UIKit** | ~25 animated, themed components (arcade, cozy, tactical, fantasy, toon): banners, countdowns, rolling counters, bars, dials, minimap, standings, crosshair, ammo, dialog, hotbar, shop cards, results |
+| **FXKit** | 51 VFX presets in four styles (movement, combat, pickups, ambient weather) plus screen juice |
+
+The ComfyUI asset tools (above) fill the kits' art slots: generated skyboxes, tileable textures, UI art, icons,
+sound effects and music.
+
 ## How it fits together
 
 ```
@@ -119,3 +140,18 @@ runs one headless.
 
 MIT for this repository. Each model keeps its own licence (see the table above); check them before any
 commercial use.
+
+## Honest notes
+
+- **What's verified.** Every kit was screenshotted in Studio: UIKit, LookKit and WorldKit2 look good; ControllerKit
+  and GameplayKit run without errors (their *feel* has not been playtested by a person); FXKit was retuned after its
+  first Studio pass showed effects too small. All six ComfyUI asset tools ran end to end on the 5090.
+- **Operator interventions.** Where a build's own code crashed on a one-line bug its repair rounds missed, we fixed
+  that line by hand so the rest of the build could be judged, and we logged every such edit in the run's
+  `OPERATOR_NOTES.md`. Everything else in a game is written by the local model.
+- **What the model still gets wrong.** Its own glue code: type confusion, such as passing a `Color3` to
+  `Color3.fromHex` or indexing a `Vector3` like a table, and API slips hidden behind untyped helpers. The kits
+  removed whole classes of failure; strict typing in builder files is the next step.
+- **Licences.** This repository is MIT. Model licences vary: Qwen-Image-2.1 is research-only (non-commercial), and
+  LTX-2.5, Stable Audio 3, Hunyuan3D and FLUX use community licences. Qwen3.8, TRELLIS.2, ACE-Step and BiRefNet are
+  permissive. Check each one before any commercial use.
