@@ -113,9 +113,9 @@ function addThumbs(e) {
 }
 function render(now) {
   const c = document.getElementById("tl"), x = c.getContext("2d");
-  const W = c.width, H = c.height, left = 300, laneH = (H - 30) / LANES.length;
+  const W = c.width, H = c.height, left = 390, laneH = (H - 30) / LANES.length;
   x.clearRect(0, 0, W, H);
-  x.font = "22px Inter, Segoe UI, sans-serif"; x.textBaseline = "middle";
+  x.font = "19px Inter, Segoe UI, sans-serif"; x.textBaseline = "middle";
   LANES.forEach((l, i) => {
     const y = i * laneH;
     x.fillStyle = i % 2 ? "#151922" : "#181d27"; x.fillRect(left, y, W - left, laneH);
