@@ -215,6 +215,16 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def _start() -> None:
+        # A restart can land mid art turn, with vLLM asleep: hand the card back to the LLM before serving.
+        try:
+            async with httpx.AsyncClient(timeout=10) as http:
+                asleep = (await http.get(f"{VLLM_URL}/is_sleeping")).json().get("is_sleeping")
+        except Exception:  # noqa: BLE001
+            asleep = False
+        if asleep:
+            await turns.comfy.free()
+            await turns._vllm("/wake_up")
+            log.warning("vLLM was asleep at startup: woke it")
         asyncio.create_task(turns.worker())
 
     @app.get("/status")
