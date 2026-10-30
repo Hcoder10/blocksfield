@@ -5,7 +5,7 @@
 Also writes <out stem>_nomusic.mp4 (creator audio only), promo_timing.md (each section's start/end and on-screen text,
 for writing the voiceover) and <out stem>_sheet.jpg (one frame every 5 s). Sections:
 
-1. cold open: Higgsfield-sponsored / affiliate creator clips from video/source (see its NOTES.md), with credits
+1. cold open: why it is new (default), or with --creators the Higgsfield-sponsored creator clips from video/source
 2. price card: Higgsfield plans vs Blocksfield (figures from NOTES.md only)
 3. the pipeline: pitch -> concept board -> GPU timeline -> Studio look loop -> generated art -> Idol props -> kits -> models
 4. the game: video/game_footage/ (mp4 clips and/or stills, by name), else the run's latest Studio captures
@@ -35,7 +35,7 @@ BUILD = VIDEO / "build"
 KITDEMO = ROOT / "runs" / "_kitdemo"
 IDOL_EXTRA = SOURCE / "idol"            # Idol previews from the prop experiments (copied out of a scratch dir)
 
-REPO_URL = "github.com/…"
+REPO_URL = "github.com/Hcoder10/blocksfield"
 HASHTAG = "#OpenSourceHiggsfield"
 
 W, H, FPS = 1920, 1080, 30
@@ -391,6 +391,37 @@ def price_card() -> Seg:
         fade_in=0.2, fade_out=0.2)
 
 
+def why_card() -> Seg:
+    """The submission's cold open (the contest bars unlicensed likenesses, so no creator clips): why it is new."""
+    points = [
+        ("Pitch in, a real Roblox place out.", "Not a cover or a trailer of a game: the game itself, playable."),
+        ("It builds in Roblox Studio and looks at its own work.", "Surveys the world from any camera, judges it "
+         "against its concept art, fixes it."),
+        ("ComfyUI makes everything it sees.", "Concept art, icons, skies, props as Roblox Parts, music, sound."),
+        ("Every model open-weight, on one RTX 5090.", "The LLM sleeps to host RAM while ComfyUI takes the card."),
+    ]
+
+    def draw(t, i):
+        f = canvas()
+        d = ImageDraw.Draw(f, "RGBA")
+        kicker(d, (140, 150), "Why this is new", ramp(t, 0.0))
+        text(d, (140, 196), "Higgsfield's Roblox workflow makes the cover and the trailer.", font(54, "Bold"), FG,
+             ramp(t, 0.15))
+        text(d, (140, 266), "Blocksfield makes the game.", font(54, "Bold"), ACCENT, ramp(t, 0.9))
+        y = 420
+        for k, (head, sub) in enumerate(points):
+            a = ramp(t, 1.6 + 0.7 * k)
+            d.rectangle([140, y + 8, 148, y + 92], fill=rgba(ACCENT, a))
+            text(d, (180 + 20 * (1 - a), y), head, font(42, "Semibold"), FG, a)
+            text(d, (180 + 20 * (1 - a), y + 56), sub, font(30, "Regular"), (190, 196, 210), a)
+            y += 140
+        return f
+
+    return Seg("1. Why it's new", "why card", 9.0, draw, [
+        "WHY THIS IS NEW / Higgsfield's Roblox workflow makes the cover and the trailer. Blocksfield makes the game."]
+        + [f"{h} {s}" for h, s in points], fade_in=0.3, fade_out=0.2)
+
+
 def title_card() -> Seg:
     lines = [("Same workflow.", FG), ("Fully local.", FG), ("One GPU.", ACCENT)]
 
@@ -741,7 +772,7 @@ def close_card() -> Seg:
 
     return Seg("5. Close", "close card", 11.0, draw, [
         "Blocksfield / Open-source Higgsfield for Roblox.",
-        "Every model open-weight. One GPU. $0 per generation.", HASHTAG, f"{REPO_URL} (placeholder)"],
+        "Every model open-weight. One GPU. $0 per generation.", HASHTAG, REPO_URL],
         fade_in=0.3, fade_out=1.0)
 
 
@@ -781,14 +812,17 @@ def music(runs: list[Path]) -> tuple[list[Path], Path | None]:
     return beds, (stings[0] if stings else None)
 
 
-def build(run: Path) -> list[Seg]:
+def build(run: Path, creators: bool = False) -> list[Seg]:
     idea = json.loads((run / "idea.json").read_text(encoding="utf-8"))
     runs = same_idea_runs(run)
     segs: list[Seg] = []
     # 1. cold open
-    for k, (name, a, b, credit, caps) in enumerate(CLIPS):
-        segs.append(creator_clip(name, a, b, credit, caps, opening=k == 0,
-                                 new_credit=k == 0 or CLIPS[k - 1][3] != credit))
+    if creators:
+        for k, (name, a, b, credit, caps) in enumerate(CLIPS):
+            segs.append(creator_clip(name, a, b, credit, caps, opening=k == 0,
+                                     new_credit=k == 0 or CLIPS[k - 1][3] != credit))
+    else:
+        segs.append(why_card())
     # 2. price
     segs.append(price_card())
     # 3. pipeline
@@ -985,12 +1019,14 @@ def main() -> int:
     ap.add_argument("--out", default=str(VIDEO / "promo_draft.mp4"))
     ap.add_argument("--keep", action="store_true", help="keep the intermediates in video/build")
     ap.add_argument("--preview", action="store_true", help="only write one still per shot to video/build")
+    ap.add_argument("--creators", action="store_true",
+                    help="open with the sponsored creator clips (not for the contest cut: it bars unlicensed likenesses)")
     a = ap.parse_args()
     run = Path(a.run).resolve()
     out = Path(a.out).resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
     BUILD.mkdir(parents=True, exist_ok=True)
-    segs = build(run)
+    segs = build(run, creators=a.creators)
     total = sum(s.dur for s in segs)
     beds, sting = music(same_idea_runs(run))
     print(f"{len(segs)} shots, {total:.1f} s; music: {[p.name for p in beds]} sting: {sting and sting.name}")

@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
-$py = "C:\Users\sarta\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe"
-$root = "C:\Users\sarta\blocksfield"
+$py = if ($env:BLOCKSFIELD_PYTHON) { $env:BLOCKSFIELD_PYTHON } else { "python" }
+$root = Split-Path $PSScriptRoot -Parent
 $run = Join-Path $root "runs\starbloom_kits"
 $env:HARNESS_MAX_ITEMS = "3"
 $env:HARNESS_KIT_GATE = "1"

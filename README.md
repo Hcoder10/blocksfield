@@ -96,7 +96,13 @@ sound effects and music.
   Parts prop, above). Each is a ComfyUI workflow through the
   arbiter; the files are installed into Studio's local content folder as `rbxasset://cybus/<run>/<file>`.
 - The build harness, which handles plan → style guide → architecture → build → Studio capture → vision judge →
-  repair → polish, is [cybus-harness](#) (branch `blocksfield`).
+  repair → polish, is [cybus-harness](https://github.com/Hcoder10/cybus-harness/tree/blocksfield) (branch `blocksfield`).
+
+## Try the demo game (no GPU needed)
+
+`examples/starbloom_peaks.rbxlx` is Starbloom Peaks, the game in the demo video, as the pipeline built it. Open it in
+Roblox Studio and press Play. For its one generated UI glyph, first copy `examples/content/cybus` into Studio's
+content folder (Windows: `%LOCALAPPDATA%\Roblox\Versions\<version>\content\`); without it the star icon is blank.
 
 ## Run it
 
@@ -105,7 +111,7 @@ Studio. They can be the same machine.
 
 **1. GPU box: models and servers.**
 ```bash
-git clone <this repo> /root/blocksfield && cd /root/blocksfield
+git clone https://github.com/Hcoder10/blocksfield /root/blocksfield && cd /root/blocksfield
 bash deploy/box_setup.sh all        # ComfyUI + vLLM venvs, ~106 GB of open weights (LTX-2.5 needs its HF gate accepted)
 bash deploy/start_servers.sh all    # vLLM :8000 (sleep mode), ComfyUI :8189, arbiter :8100
 ```
@@ -113,9 +119,10 @@ Open `http://<box>:8100/` to watch the GPU timeline.
 
 **2. Studio machine: bridge and harness.**
 - Install the Studio Bridge plugin and server
-  ([roblox-studio-mcp](https://github.com/)). Start it with `node packages/server/dist/index.js`, which serves
+  ([roblox-studio-mcp](https://github.com/Hcoder10/roblox-studio-mcp)). Start it with `node packages/server/dist/index.js`, which serves
   `localhost:3000`.
-- Clone [cybus-harness](https://github.com/) (branch `blocksfield`) next to this repo.
+- Clone [cybus-harness](https://github.com/Hcoder10/cybus-harness) next to this repo:
+  `git clone -b blocksfield https://github.com/Hcoder10/cybus-harness`.
 - Put `luau-analyze`, `luau-lsp` and `rojo` on PATH.
 
 **3. Build a game.**
@@ -158,7 +165,7 @@ runs one headless.
 
 ## License
 
-MIT for this repository. Each model keeps its own licence (see the table above); check them before any
+MIT for this repository (see `LICENSE`). Each model keeps its own licence (see the table above); check them before any
 commercial use.
 
 ## Honest notes

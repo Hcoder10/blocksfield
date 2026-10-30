@@ -1,7 +1,7 @@
 param([string]$Id = "starbloom", [string]$Run = "starbloom_final", [int]$Repair = 1, [int]$Polish = 1, [int]$Items = 3)
 $ErrorActionPreference = "Stop"
-$py = "C:\Users\sarta\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe"
-$root = "C:\Users\sarta\blocksfield"
+$py = if ($env:BLOCKSFIELD_PYTHON) { $env:BLOCKSFIELD_PYTHON } else { "python" }
+$root = Split-Path $PSScriptRoot -Parent
 $dir = Join-Path $root "runs\$Run"
 New-Item -ItemType Directory -Force $dir | Out-Null
 $env:HARNESS_MAX_ITEMS = "$Items"

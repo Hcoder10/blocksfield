@@ -5,3 +5,6 @@ runs/
 .env
 *.key
 roblox_key*
+
+# demo renders and creator source clips (large; not redistributable)
+video/
