@@ -56,7 +56,55 @@ by hand, and Higgsfield makes the promo video. Blocksfield does the whole loop l
 
 ## Run it
 
-_Setup steps are being written; see `deploy/box_setup.sh` and `deploy/start_servers.sh`._
+You need a Linux GPU box with one 32 GB card (we use a rented RTX 5090) and a Windows or Mac machine with Roblox
+Studio. They can be the same machine.
+
+**1. GPU box: models and servers.**
+```bash
+git clone <this repo> /root/blocksfield && cd /root/blocksfield
+bash deploy/box_setup.sh all        # ComfyUI + vLLM venvs, ~106 GB of open weights (LTX-2.5 needs its HF gate accepted)
+bash deploy/start_servers.sh all    # vLLM :8000 (sleep mode), ComfyUI :8189, arbiter :8100
+```
+Open `http://<box>:8100/` to watch the GPU timeline.
+
+**2. Studio machine: bridge and harness.**
+- Install the Studio Bridge plugin and server
+  ([roblox-studio-mcp](https://github.com/)). Start it with `node packages/server/dist/index.js`, which serves
+  `localhost:3000`.
+- Clone [cybus-harness](https://github.com/) (branch `blocksfield`) next to this repo.
+- Put `luau-analyze`, `luau-lsp` and `rojo` on PATH.
+
+**3. Build a game.**
+```bash
+export BLOCKSFIELD_BOX="-p <ssh port> root@<box>"         # the runner opens the ssh tunnel to the arbiter itself
+python -m blocksfield.run --check                         # tunnel, arbiter, LLM, bridge, Studio, tools
+python -m blocksfield.run "A neon obby tower in the clouds with laser gates and checkpoints" --id neon_obby
+python -m blocksfield.marketing runs/neon_obby            # thumbnail, icon, trailer from the built game's captures
+python -m blocksfield.demo_video runs/neon_obby           # the 2-minute cut
+```
+The build opens its own Studio place, plays it, judges every capture against the concept board, and repairs the
+game. The finished place is `runs/<id>/place/final.rbxlx`.
+
+**Optional: 3D props.** Set `ROBLOX_API_KEY` (Open Cloud, Assets read and write) and `ROBLOX_CREATOR_ID`. Builders then
+get a `generate_model` tool (Qwen-Image → TRELLIS.2 → decimated GLB → uploaded → loaded into the place) through
+`HARNESS_EXTRA_TOOLS=blocksfield.harness_ext:tools`.
+
+### The ComfyUI workflows
+
+`workflows/api/` holds the API-format workflows the arbiter runs, with `{{param}}` slots and defaults in
+`<name>.meta.json`:
+
+| Workflow | What it does |
+|---|---|
+| `image` | Qwen-Image-2.1 turbo text-to-image at native ~2K |
+| `image_rgba` | the same image, then a BiRefNet cut-out to RGBA (UI art, icons) |
+| `edit` | Qwen-Image-2.1 edit with two reference images (thumbnail and icon from real captures) |
+| `prop3d` | prop image → TRELLIS.2 → remesh → QEM decimate to 15k triangles → baked PBR textures → GLB |
+| `music` | ACE-Step 1.5 turbo, instrumental, any length |
+| `trailer_clip` | LTX-2.5 distilled image-to-video, 720p, with its own audio |
+
+Drag any of them into ComfyUI to see and edit the graph. `python -m blocksfield.comfy run <name> key=value`
+runs one headless.
 
 ## License
 
