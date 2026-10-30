@@ -37,6 +37,7 @@ IDOL_EXTRA = SOURCE / "idol"            # Idol previews from the prop experiment
 
 REPO_URL = "github.com/Hcoder10/blocksfield"
 HASHTAG = "#OpenSourceHiggsfield"
+NOTE = ""                               # small print on the close card (--note)
 
 W, H, FPS = 1920, 1080, 30
 BG = (11, 13, 18)
@@ -47,8 +48,8 @@ PANEL = (22, 26, 34)
 
 # Creator clips (video/source/NOTES.md). Trims and caption times come from word timestamps (faster-whisper base.en,
 # checked against the NOTES transcripts); caption times are relative to the start of each piece.
-COLE = ("Cole  ·  @ColeMNTY on YouTube", "Sponsored by Higgsfield, disclosed in the video")
-FAYYAZ = ("Fayyaz Ahmed  ·  @f4fayyax on YouTube", "Higgsfield affiliate link, disclosed in the description")
+COLE = ("Cole  ·  @ColeMNTY on YouTube", "")
+FAYYAZ = ("Fayyaz Ahmed  ·  @f4fayyax on YouTube", "")
 CLIPS = [
     ("clip_01_colemnty.mp4", 1.80, 9.55, COLE, [
         (0.05, 2.66, "We need to do something about this cover, because nobody's clicking on this"),
@@ -314,17 +315,19 @@ def creator_clip(name: str, t_in: float, t_out: float, credit, caps, opening: bo
         f.alpha_composite(shade(180, 0.55, bottom=False))
         d = ImageDraw.Draw(f, "RGBA")
         k = ramp(t, 0.15) if opening else 1.0
-        kw = tracked_width("THE PAID WORKFLOW", font(26, "Bold"), 26 * 0.14)
+        kw = tracked_width("THE HIGGSFIELD WORKFLOW", font(26, "Bold"), 26 * 0.14)
         d.rounded_rectangle([76, 60, 116 + kw, 108], 24, fill=(8, 10, 14, int(200 * k)))
-        kicker(d, (96, 85), "The paid workflow", k, anchor="lm")
-        # credit: a dark panel with an accent bar, the creator and how the sponsorship is disclosed
+        kicker(d, (96, 85), "The Higgsfield workflow", k, anchor="lm")
+        # credit: a dark panel with an accent bar and the creator's name and channel
         a = ramp(t, 0.15) if new_credit else 1.0
         x, y = 96 - 16 * (1 - a), H - 270
+        ph = 104 if credit[1] else 60
         pw = max(font(36, "Semibold").getlength(credit[0]), font(28, "Regular").getlength(credit[1])) + 64
-        d.rounded_rectangle([x, y, x + pw, y + 104], 14, fill=(8, 10, 14, int(205 * a)))
-        d.rectangle([x, y + 14, x + 6, y + 90], fill=rgba(ACCENT, a))
+        d.rounded_rectangle([x, y, x + pw, y + ph], 14, fill=(8, 10, 14, int(205 * a)))
+        d.rectangle([x, y + 14, x + 6, y + ph - 14], fill=rgba(ACCENT, a))
         text(d, (x + 30, y + 10), credit[0], font(36, "Semibold"), FG, a)
-        text(d, (x + 30, y + 58), credit[1], font(28, "Regular"), (205, 210, 220), a)
+        if credit[1]:
+            text(d, (x + 30, y + 58), credit[1], font(28, "Regular"), (205, 210, 220), a)
         for c0, c1, s in caps:
             if c0 <= t < c1:
                 ca = min(1.0, (t - c0) / 0.12, (c1 - t) / 0.12 if c1 < dur - 0.05 else 1.0)
@@ -332,7 +335,7 @@ def creator_clip(name: str, t_in: float, t_out: float, credit, caps, opening: bo
                     text(d, (W // 2, H - 84 - k * 56), line, font(44, "Semibold"), FG, ca, anchor="ms", stroke=2)
         return f
 
-    onscreen = (["THE PAID WORKFLOW"] if opening else []) + ([f"Credit: {credit[0]} / {credit[1]}"] if new_credit else [])
+    onscreen = (["THE HIGGSFIELD WORKFLOW"] if opening else []) + ([f"Credit: {credit[0]}"] if new_credit else [])
     onscreen += [f'Caption: "{s}"' for _, _, s in caps]
     gain = -16.0 - lufs(path)
     return Seg("1. Cold open", f"{name} {t_in:.2f}-{t_out:.2f} s", dur, draw, onscreen,
@@ -380,7 +383,7 @@ def price_card() -> Seg:
              font(22, "Regular"), (120, 128, 144), ramp(t, 0.6))
         return f
 
-    return Seg("2. Price", "price card", 11.0, draw, [
+    return Seg("2. Price", "price card", 9.5, draw, [
         "WHAT THE PAID WORKFLOW COSTS / Higgsfield: Starter $19/month 270 credits; Plus $59/month 1,200 credits; "
         "Ultra $129/month 3,000 credits",
         "A game build starts at ~70 credits. One game + thumbnail + two 1080p trailers: ~806 credits, about 67% of a "
@@ -768,11 +771,13 @@ def close_card() -> Seg:
              (215, 220, 230), ramp(t, 1.1), anchor="ms")
         text(d, (W // 2, 660), HASHTAG, font(56, "Bold"), ACCENT, ramp(t, 1.7), anchor="ms")
         text(d, (W // 2, 760), REPO_URL, font(34, "Regular"), MUTED, ramp(t, 2.1), anchor="ms")
+        if NOTE:
+            text(d, (W // 2, H - 70), NOTE, font(24, "Regular"), (120, 128, 144), ramp(t, 2.6), anchor="ms")
         return f
 
-    return Seg("5. Close", "close card", 11.0, draw, [
+    return Seg("5. Close", "close card", 8.0, draw, [
         "Blocksfield / Open-source Higgsfield for Roblox.",
-        "Every model open-weight. One GPU. $0 per generation.", HASHTAG, REPO_URL],
+        "Every model open-weight. One GPU. $0 per generation.", HASHTAG, REPO_URL] + ([f"Small print: {NOTE}"] if NOTE else []),
         fade_in=0.3, fade_out=1.0)
 
 
@@ -837,7 +842,7 @@ def build(run: Path, creators: bool = False) -> list[Seg]:
         segs.append(stills("3. Pipeline", "concept board", [Image.open(p) for p in refs], 2.6,
                            "Step 2  ·  Concept board",
                            "Qwen-Image-2.1 paints the targets the build is judged against", zoom=(1.02, 1.1)))
-    for s in (dashboard(run, 11.0), look_loop(run)):
+    for s in (dashboard(run, 8.0), look_loop(run)):
         if s:
             segs.append(s)
     arts, sources = [], []
@@ -1019,6 +1024,7 @@ def main() -> int:
     ap.add_argument("--out", default=str(VIDEO / "promo_draft.mp4"))
     ap.add_argument("--keep", action="store_true", help="keep the intermediates in video/build")
     ap.add_argument("--preview", action="store_true", help="only write one still per shot to video/build")
+    ap.add_argument("--note", default="", help="small print at the bottom of the close card")
     ap.add_argument("--creators", action="store_true",
                     help="open with the sponsored creator clips (not for the contest cut: it bars unlicensed likenesses)")
     a = ap.parse_args()
@@ -1026,6 +1032,8 @@ def main() -> int:
     out = Path(a.out).resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
     BUILD.mkdir(parents=True, exist_ok=True)
+    global NOTE
+    NOTE = a.note
     segs = build(run, creators=a.creators)
     total = sum(s.dur for s in segs)
     beds, sting = music(same_idea_runs(run))

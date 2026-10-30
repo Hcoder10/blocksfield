@@ -7,10 +7,10 @@
 | Built with ComfyUI | Yes: every image, prop, music and sound job is a ComfyUI workflow (`workflows/api/`) plus a custom node (`comfy_nodes/idol`) |
 | Repo with an open-source licence and enough setup detail to run it locally | MIT `LICENSE` in all three repos; README "Run it" (GPU box + Studio machine) and "Try the demo game" |
 | Repo holds app code, workflow files, licence, local run instructions | Yes |
-| Demo video, two minutes max | `video/promo_final.mp4`, **1:54**, 1080p |
+| Demo video, two minutes max | `video/promo_final_vo.mp4`, **1:58**, 1080p, Kokoro TTS voiceover (operator had COVID; noted on the end card) |
 | Other tools/models explained in the demo video | Models card (every model and what it does) + pipeline steps |
-| Lawful, SFW, no unlicensed IP or likenesses | The contest cut has **no creator clips** (they were in the draft; removed for this rule). Game art is generated; Roblox Studio is shown as the platform |
-| Most Innovative: video must explain why it is innovative | Opening card "Why this is new" |
+| Lawful, SFW, no unlicensed IP or likenesses | Cold open quotes ~20 s of public creator videos for comparison, credited by name. Game art is generated; Roblox Studio is shown as the platform |
+| Most Innovative: video must explain why it is innovative | Voiceover: it makes the game, not a trailer; builds in Studio and looks at its own work; one GPU, open weights |
 | Social post linking the demo video, tagging #OpenSourceHiggsfield | Draft below; post on X / YT / LI / Reddit / IG / TikTok |
 | Link to try it (optional) | `examples/starbloom_peaks.rbxlx` in the repo |
 | One submission per person | One entry |
@@ -20,7 +20,7 @@
 - Repo: https://github.com/Hcoder10/blocksfield
 - Build harness: https://github.com/Hcoder10/cybus-harness (branch `blocksfield`)
 - Studio Bridge (Studio plugin + server the harness drives): https://github.com/Hcoder10/roblox-studio-mcp
-- Video: `video/promo_final.mp4` (upload to YouTube, unlisted or public, and use that link)
+- Video: `video/promo_final_vo.mp4` (upload to YouTube, unlisted or public, and use that link)
 - Thumbnail: `examples/starbloom_peaks_thumbnail.png`
 - Categories: Most Innovative, Open Weights Only (Best Overall is automatic)
 
@@ -32,7 +32,7 @@
 Studio by a local 27B model that looks at its own world and fixes it, with ComfyUI making the art, props, music and
 sound. Every model open-weight, on one RTX 5090, $0 per generation.
 
-**What it does.** Higgsfield's Roblox workflow (promoted by sponsored creators) makes a cover and a trailer for a
+**What it does.** Higgsfield's Roblox workflow, as creators show it, makes a cover and a trailer for a
 game you already built. Blocksfield makes the game. A pitch becomes a plan, a style guide and a concept board
 (Qwen-Image-2.1 in ComfyUI). Qwen3.8-27B then builds the world *in Roblox Studio* (real instances, edit mode),
 plays it, surveys it from four cameras, has a vision judge score it against the concept board, and repairs it. A kit
