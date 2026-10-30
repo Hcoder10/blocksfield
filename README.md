@@ -30,7 +30,8 @@ by hand, and Higgsfield makes the promo video. Blocksfield does the whole loop l
 |---|---|---|
 | Game design, Luau code, vision judge | Qwen3.8-27B NVFP4 (`RedHatAI/Qwen3.8-27B-NVFP4`) | vLLM 0.32 (sleep mode) |
 | Concept art, UI art, icons, thumbnail | Qwen-Image-2.1 turbo int8 + BiRefNet cut-outs | ComfyUI |
-| 3D props | TRELLIS.2 → decimated under Roblox's 20k-triangle limit | ComfyUI |
+| 3D props (meshes) | TRELLIS.2 → decimated under Roblox's 20k-triangle limit | ComfyUI |
+| Procedural props | Idol (`speridlabs/idol`, image → Gaussian splat in ~2 s) → voxel / blob Parts | ComfyUI (custom node in `comfy_nodes/idol`) |
 | Trailer | LTX-2.5 distilled NVFP4, image-to-video | ComfyUI |
 | Music | ACE-Step 1.5 turbo | ComfyUI |
 | Sound effects | Stable Audio 3 small-sfx (t5gemma text encoder) | ComfyUI |
@@ -52,6 +53,13 @@ on top of them: the design, layout, art direction, tuning and UI. The kits live 
 | **GameplayKit** | Self-wiring, server-authoritative systems: rounds, score, objectives, health and damage, NPC AI with waves, collectibles, interactables, cooking/crafting stations and recipes, inventory, checkpoints, races with AI followers, moving hazards |
 | **UIKit** | ~25 animated, themed components (arcade, cozy, tactical, fantasy, toon): banners, countdowns, rolling counters, bars, dials, minimap, standings, crosshair, ammo, dialog, hotbar, shop cards, results |
 | **FXKit** | 51 VFX presets in four styles (movement, combat, pickups, ambient weather) plus screen juice |
+| **PropKit** | Spawns generated procedural props (Luau data modules of Parts) with scale, tint, palette swap, collision and anchoring options |
+
+**Procedural props.** `generate_prop` turns a prompt into an editable prop with no upload step: Qwen-Image draws it
+on a clean background, Idol lifts it to a Gaussian splat, and `blocksfield/splat_to_parts.py` clusters the splat into
+Roblox Parts (a greedy-merged voxel style with a quantised palette, or smooth k-means blobs). The result is a plain
+Luau module in `ReplicatedStorage/Shared/Props/`, so the model can re-tint, rescale, scatter or edit it like any other
+code, and `PropKit.spawn` places it. If Idol is unavailable it voxelises a TRELLIS.2 mesh instead.
 
 The ComfyUI asset tools (above) fill the kits' art slots: generated skyboxes, tileable textures, UI art, icons,
 sound effects and music.
@@ -69,14 +77,15 @@ sound effects and music.
 
 - `blocksfield/arbiter.py`: the GPU turn-taking server and the live dashboard.
 - `workflows/api/*.json`: the ComfyUI workflows (API format, with `{{param}}` slots): `image`, `image_rgba`,
-  `edit`, `prop3d`, `music`, `trailer_clip`.
+  `edit`, `prop3d`, `prop_splat`, `music`, `sfx`, `trailer_clip`.
 - `blocksfield/run.py`: build a game from a pitch.
 - `blocksfield/marketing.py`: thumbnail, icon and trailer from the built game.
 - `blocksfield/harness_ext.py`: the builders' extra tools: `generate_model` (prompt → 3D prop in the place) plus
   everything in `blocksfield/asset_tools.py`.
 - `blocksfield/asset_tools.py`: `generate_texture` (seamless MaterialVariant colour maps), `generate_skybox` (six
   wrapped Sky faces from a panorama and a zenith image), `generate_sfx`, `generate_music`, `generate_icon` and
-  `generate_ui_art` (panels, buttons, banners, badges with 9-slice centres). Each is a ComfyUI workflow through the
+  `generate_ui_art` (panels, buttons, banners, badges with 9-slice centres), and `generate_prop` (prompt → procedural
+  Parts prop, above). Each is a ComfyUI workflow through the
   arbiter; the files are installed into Studio's local content folder as `rbxasset://cybus/<run>/<file>`.
 - The build harness, which handles plan → style guide → architecture → build → Studio capture → vision judge →
   repair → polish, is [cybus-harness](#) (branch `blocksfield`).
@@ -129,6 +138,7 @@ also get a `generate_model` tool (Qwen-Image → TRELLIS.2 → decimated GLB →
 | `image_rgba` | the same image, then a BiRefNet cut-out to RGBA (UI art, icons) |
 | `edit` | Qwen-Image-2.1 edit with two reference images (thumbnail and icon from real captures) |
 | `prop3d` | prop image → TRELLIS.2 → remesh → QEM decimate to 15k triangles → baked PBR textures → GLB |
+| `prop_splat` | prop image → Idol → Gaussian splat `.ply` (then `splat_to_parts` → Luau) |
 | `music` | ACE-Step 1.5 turbo, instrumental, any length |
 | `sfx` | Stable Audio 3 small-sfx text-to-audio, 1-4 takes per call, MP3 |
 | `trailer_clip` | LTX-2.5 distilled image-to-video, 720p, with its own audio |
