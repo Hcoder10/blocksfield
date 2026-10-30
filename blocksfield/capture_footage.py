@@ -931,7 +931,10 @@ async def run(a: argparse.Namespace) -> int:
     injected, playing, prev = False, False, {}
     calib: dict | None = None
     try:
-        proc, ours = await launch(place, a.launch_timeout)
+        if a.attach:                      # record the Studio that is already open (its unsaved world included)
+            proc, ours = None, set()
+        else:
+            proc, ours = await launch(place, a.launch_timeout)
         manifest["studio_pids"] = sorted(ours)
         bridge = StudioBridge(allow_place_ids={"0"})
         await retry("bridge connect", bridge.connect, 10, 3)
@@ -1024,6 +1027,8 @@ def main() -> int:
     ap.add_argument("--keep-hud", action="store_true", help="leave the game's HUD on during cinematic shots")
     ap.add_argument("--avatar", action="store_true", help="keep the tester's avatar (default: neutral character)")
     ap.add_argument("--keep-studio", action="store_true", help="leave the launched Studio open afterwards")
+    ap.add_argument("--attach", action="store_true",
+                    help="use the one Studio already open on the place instead of launching a copy (never closed)")
     ap.add_argument("--launch-timeout", type=float, default=240.0)
     ap.add_argument("--boot-timeout", type=float, default=180.0, help="play start -> marker on screen")
     a = ap.parse_args()
