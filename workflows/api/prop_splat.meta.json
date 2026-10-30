@@ -1,0 +1,16 @@
+{
+ "description": "Qwen-Image-2.1 turbo prop render -> Idol (speridlabs/idol) image-to-3D Gaussian splat -> .ply + predicted camera .json + Idol's cropped input .png (plus the reference PNG). Needs comfy_nodes/idol in ComfyUI/custom_nodes.",
+ "params": {
+  "prompt": "",
+  "negative": "",
+  "seed": -1,
+  "num_gaussians": 131072,
+  "steps": 50,
+  "unet": "qwen_image_2.1_turbo_int8_convrot.safetensors",
+  "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0"
+ },
+ "outputs": [
+  "13",
+  "20"
+ ]
+}

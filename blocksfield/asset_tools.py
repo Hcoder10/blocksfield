@@ -6,6 +6,8 @@
     generate_music     ACE-Step 1.5 (workflows/api/music.json) -> looping MP3 for Kit.Sound
     generate_icon      Qwen-Image + BiRefNet cut-out, game-UI icon recipe
     generate_ui_art    the same for panels, buttons, banners and badges, with a 9-slice centre
+    generate_prop      Qwen-Image prop -> Idol Gaussian splat (TRELLIS.2 GLB if Idol is unavailable) -> a procedural
+                       prop of Parts (blocksfield.splat_to_parts) written to ReplicatedStorage/Shared/Props for PropKit
 
 Delivery is the harness's AssetStore: images go in through AssetStore.add (so Kit.Assets.image(name) works),
 audio is mirrored next to them (art/audio/, same Studio content folder). Everything lands in Studio's local
@@ -21,6 +23,7 @@ import io
 import json
 import logging
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -325,6 +328,51 @@ class AudioStore:
         return cid
 
 
+_IDOL = {"ok": True}                 # flips to False after Idol fails (node not loaded, gated encoder): use TRELLIS
+
+
+def prop_module_name(name: str) -> str:
+    """Any name -> a PascalCase Luau identifier (the ModuleScript under ReplicatedStorage.Shared.Props)."""
+    words = re.findall(r"[A-Za-z0-9]+", name)
+    out = "".join(w[:1].upper() + w[1:] for w in words)[:40] or "Prop"
+    return "P" + out if out[0].isdigit() else out
+
+
+async def make_prop(prompt: str, out_dir: Path, name: str) -> dict:
+    """Prompt -> a 3D source for splat_to_parts: Idol splat (prop_splat) when it works, else TRELLIS.2's GLB (prop3d).
+    -> {"src": path, "ref": PIL image | None, "camera": dict | None, "via": "idol" | "trellis"}."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    err = None
+    if _IDOL["ok"]:
+        try:
+            files = await run_job("prop_splat", {"prompt": prompt, "seed": -1})
+            ply = next((f for f in files if f["filename"].lower().endswith(".ply")), None)
+            if ply is None:
+                raise RuntimeError("prop_splat produced no .ply")
+            path = out_dir / f"{name}.ply"
+            path.write_bytes(ply["data"])
+            cam = next((json.loads(f["data"]) for f in files if f["filename"].endswith("_camera.json")), None)
+            ref = next((f for f in files if f["filename"].lower().endswith(".png") and "_input" not in f["filename"]),
+                       None)
+            return {"src": path, "camera": cam, "via": "idol",
+                    "ref": Image.open(io.BytesIO(ref["data"])).copy() if ref else None}
+        except Exception as e:  # noqa: BLE001
+            err = str(e)
+            if re.search(r"IdolImageToSplat|EncoderAccess|gated|dinov3|No module named 'idol'|does not exist", err,
+                         re.I):
+                _IDOL["ok"] = False          # a setup problem: do not pay for the failed attempt again
+            log.warning("Idol prop failed, falling back to TRELLIS: %s", err[:300])
+    files = await run_job("prop3d", {"prompt": prompt, "seed": -1})
+    glb = next((f for f in files if f["filename"].lower().endswith(".glb")), None)
+    if glb is None:
+        raise RuntimeError(f"no 3D output (Idol: {err}; TRELLIS produced no mesh)")
+    path = out_dir / f"{name}.glb"
+    path.write_bytes(glb["data"])
+    ref = next((f for f in files if f["filename"].lower().endswith(".png")), None)
+    return {"src": path, "camera": None, "via": "trellis",
+            "ref": Image.open(io.BytesIO(ref["data"])).copy() if ref else None}
+
+
 def _luau_list(ids: list[str]) -> str:
     return "{ " + ", ".join(f'"{i}"' for i in ids) + " }"
 
@@ -340,6 +388,7 @@ def tools(build, stage, run_dir):
 
     def style() -> str:
         return (getattr(build, "style", None) or {}).get("direction", "")
+    style_text = style                     # generate_prop's own `style` argument shadows style()
 
     async def generate_texture(name: str, prompt: str, tileable: bool = True, studs_per_tile: float = 8,
                                base: str = "") -> ToolResult:
@@ -436,6 +485,46 @@ def tools(build, stage, run_dir):
     async def generate_ui_art(name: str, prompt: str, kind: str = "panel") -> ToolResult:
         return await ui_art(name, prompt, kind)
 
+    props_dir = Path(run_dir) / "art" / "props"
+    ws = getattr(build, "ws", None)
+
+    async def generate_prop(name: str, prompt: str, style: str = "voxel", detail: int = 24) -> ToolResult:
+        from blocksfield import recipe, splat_to_parts
+        mod = prop_module_name(name)
+        style = style if style in ("voxel", "blob") else "voxel"
+        detail = int(min(max(int(detail), 12), 40))
+        full = prompt                     # `style` here is the prop style; the game's art direction is style_text()
+        if direction := style_text():
+            full = f"{prompt.strip().rstrip('.')}. Art direction: {direction[:200]}"
+        try:
+            got = await make_prop(recipe.plan(full, "prop")["prompt"], props_dir, mod)
+            res = await asyncio.to_thread(splat_to_parts.convert, got["src"], mod, style, detail,
+                                          camera=got["camera"])
+        except Exception as e:  # noqa: BLE001
+            return ToolResult(text=f"ERROR: prop generation failed: {e}")
+        rel = f"ReplicatedStorage/Shared/Props/{mod}.luau"
+        if ws is not None:
+            ws.write(rel, res["luau"])
+        (props_dir / f"{mod}.luau").write_text(res["luau"], encoding="utf-8", newline="\n")
+        prev = splat_to_parts.preview(res, got["ref"])
+        prev.save(props_dir / f"{mod}_preview.png")
+        st = res["stats"]
+        sz = res["size"]
+        return ToolResult(
+            text=f"prop '{mod}' written to {rel} ({st['parts']} parts, {st['colors']} colours, {style}, made with "
+                 f"{'Idol' if got['via'] == 'idol' else 'TRELLIS.2'}; proportions {sz[0]:.2f} x {sz[1]:.2f} x "
+                 f"{sz[2]:.2f}, longest side 1). It is plain Parts: no upload, editable, recolourable. Spawn it:\n"
+                 f"  local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\n"
+                 f"  local PropKit = require(ReplicatedStorage.Kit.PropKit)\n"
+                 f"  local Props = ReplicatedStorage.Shared.Props\n"
+                 f"  PropKit.spawn(require(Props.{mod}), {{ position = Vector3.new(0, 0, 0), scale = 8 }})  "
+                 f"-- bottom centre at position; scale = longest side in studs\n"
+                 f"  PropKit.scatter(\"{mod}\", {{ center = Vector3.new(0, 0, 0), radius = 60 }}, 12, {{ scale = 6 }})\n"
+                 f"Options: rotation, tint, palette (remap colours), detail = \"low\", collide = \"box\"|\"parts\"|"
+                 f"\"none\". The image shows the source picture and the part set from the front and the back: "
+                 f"regenerate (or try style=\"blob\" / a higher detail) if it does not read well.",
+            images=[png_bytes(prev, 1152)])
+
     s = {"type": "object", "additionalProperties": False}
     nm = {"type": "string", "description": "snake_case asset name"}
     return [
@@ -481,4 +570,16 @@ def tools(build, stage, run_dir):
                  "name": nm, "prompt": {"type": "string", "description": "colours, material, theme"},
                  "kind": {"type": "string", "enum": sorted(UI)}}},
              generate_ui_art, mutating=True),
+        Tool("generate_prop",
+             "Generate a good-looking 3D prop (tree, rock, crate, lamp, mushroom, statue, furniture, vehicle...) as a "
+             "procedural asset made of Parts, with no upload: picture -> 3D -> a few hundred coloured blocks (voxel, "
+             "default) or ellipsoids (blob). Writes ReplicatedStorage/Shared/Props/<Name>.luau; spawn, scatter and "
+             "recolour it with Kit.PropKit. Takes ~30-90 s.",
+             {**s, "required": ["name", "prompt"], "properties": {
+                 "name": {"type": "string", "description": "PascalCase prop name (the module name)"},
+                 "prompt": {"type": "string", "description": "the single object: shape, materials, colours"},
+                 "style": {"type": "string", "enum": ["voxel", "blob"]},
+                 "detail": {"type": "integer", "description": "voxels along the longest side, 12-40 (default 24; "
+                                                              "more = finer and more parts)"}}},
+             generate_prop, mutating=True),
     ]
