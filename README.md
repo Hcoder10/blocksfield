@@ -14,9 +14,12 @@ by hand, and Higgsfield makes the promo video. Blocksfield does the whole loop l
 
 - **It builds a real Roblox place**, saved as `.rbxlx`, that you open, play and publish. Roblox has 100M+ daily
   players; a hosted demo does not.
-- **The model sees its own game.** It captures the running game in Studio, judges the capture against the
-  generated concept art, and repairs what looks wrong. Blind code generation stops at "it runs"; this loop is
-  what makes the result look good.
+- **The model builds in Studio and looks at what it built.** The world is made in Roblox Studio's edit mode, as real
+  instances saved in the place, not as a script that builds it at runtime. After each step the model plays the game
+  and looks at it: from the player's view, plus an overview, a side view and a top-down view framed on the world it
+  made, or from any camera it chooses. It gets runtime errors and a judge's score against the generated concept art,
+  and keeps fixing until it reads right. Blind code generation stops at "it runs"; this loop is what makes the
+  result look good.
 - **The art is generated.** Concept frames, UI art and icons come from Qwen-Image-2.1. Textured 3D props come
   from TRELLIS.2 and are imported into the place as MeshParts. Trailer shots are animated from real gameplay
   captures with LTX-2.5 and scored with ACE-Step.
@@ -48,6 +51,7 @@ on top of them: the design, layout, art direction, tuning and UI. The kits live 
 | Kit | What it gives a game |
 |---|---|
 | **LookKit** | One-call art direction: toon_bright, realistic, cozy, neon_night, dark_fantasy, snow, desert, candy, space (lighting, atmosphere, sky, post-processing, terrain colours, a palette), plus MaterialVariants from generated textures, outlines and cel helpers |
+| **LevelKit** | One call builds a whole dressed, gameplay-tagged level in any look: `sky_islands` (a hub you spawn on, islands rising in an arc, jump courses between them), `meadow_course`, `arena`, `town`. Checkpoints, coins, goals, hazards and movers come tagged for the gameplay code |
 | **WorldKit / WorldKit2** | Sculpted terrain islands and water, 12 biomes, 63 stylised prop kinds, builders for race courses, N64-style platforming courses, arenas, interiors (kitchen, tavern, lab…), towns and dungeons, with gameplay hooks |
 | **ControllerKit** | Feel profiles: platformer (coyote time, buffering, double and long jump, dive, ground pound, wall kick), top-down / isometric, FPS/TPS shooter (ADS, recoil, viewmodel, server-validated hits), arcade vehicles (kart, car, hover, boat; drift-boost tiers, chase camera) |
 | **GameplayKit** | Self-wiring, server-authoritative systems: rounds, score, objectives, health and damage, NPC AI with waves, collectibles, interactables, cooking/crafting stations and recipes, inventory, checkpoints, races with AI followers, moving hazards |
@@ -79,6 +83,10 @@ sound effects and music.
 - `workflows/api/*.json`: the ComfyUI workflows (API format, with `{{param}}` slots): `image`, `image_rgba`,
   `edit`, `prop3d`, `prop_splat`, `music`, `sfx`, `trailer_clip`.
 - `blocksfield/run.py`: build a game from a pitch.
+- The harness's `harness/studio_build.py`: the builder's Studio tools. `studio_build` runs Luau in edit mode (logged,
+  and replayed if Studio restarts; the finished place is saved from Studio). `studio_view` plays the game and returns
+  framed survey shots, errors and a judge score. It refuses the moves that wrecked worlds in our live runs: fogging
+  or re-grading the kit's tuned look, hand-sculpting terrain, and wiping the whole world to start again.
 - `blocksfield/marketing.py`: thumbnail, icon and trailer from the built game.
 - `blocksfield/harness_ext.py`: the builders' extra tools: `generate_model` (prompt → 3D prop in the place) plus
   everything in `blocksfield/asset_tools.py`.
@@ -159,6 +167,10 @@ commercial use.
 - **Operator interventions.** Where a build's own code crashed on a one-line bug its repair rounds missed, we fixed
   that line by hand so the rest of the build could be judged, and we logged every such edit in the run's
   `OPERATOR_NOTES.md`. Everything else in a game is written by the local model.
+- **What we learned running a 27B model as the builder.** It composes kits well but cannot tune a look. Left free in
+  Studio it fogged the world, graded everything orange, hand-sculpted flat terrain slabs and wiped its world every
+  round. Advice in the prompt did not stop that; hard refusals in the tools and one-call LevelKit presets did. Every
+  harness change made during the night is in the cybus-harness history with the live failure that prompted it.
 - **What the model still gets wrong.** Its own glue code: type confusion, such as passing a `Color3` to
   `Color3.fromHex` or indexing a `Vector3` like a table, and API slips hidden behind untyped helpers. The kits
   removed whole classes of failure; strict typing in builder files is the next step.
