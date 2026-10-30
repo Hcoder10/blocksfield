@@ -82,6 +82,8 @@ def main() -> int:
     ap.add_argument("pitch", nargs="?")
     ap.add_argument("--id", help="snake_case game id (default: from the pitch)")
     ap.add_argument("--title")
+    ap.add_argument("--run", help="run directory name under runs/ (default: the id); a seeded run keeps the id so "
+                                  "its journal replays")
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--repair-rounds", type=int, default=2)
     ap.add_argument("--polish-rounds", type=int, default=1)
@@ -91,7 +93,7 @@ def main() -> int:
     if not a.pitch:
         ap.error("give a pitch")
     gid = a.id or "_".join(re.findall(r"[a-z0-9]+", a.pitch.lower())[:3])
-    run_dir = ROOT / "runs" / gid
+    run_dir = ROOT / "runs" / (a.run or gid)
     run_dir.mkdir(parents=True, exist_ok=True)
     idea = {"id": gid, "title": a.title or gid.replace("_", " ").title(), "pitch": a.pitch}
     (run_dir / "idea.json").write_text(json.dumps(idea, indent=1), encoding="utf-8")
