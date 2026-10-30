@@ -24,7 +24,8 @@ ROBLOX_AVATAR = ("The character is a classic Roblox avatar: a blocky R15 body bu
                  "sculpted facial features, no visible ears; hair and clothing are separate accessory pieces with "
                  "simple chunky shapes. Rendered like an official Roblox avatar thumbnail, clean studio lighting.")
 ROBLOX_WORLD = ("The place is built in Roblox Studio: chunky, clean geometry from parts and simple meshes, smooth "
-                "plastic, slate, wood and glowing neon materials, stylised Roblox terrain, Roblox Future lighting "
+                "plastic, slate, wood and glowing neon materials, smooth sculpted Roblox terrain with soft rolling "
+                "grass and rock (never voxel cubes, nothing like Minecraft), Roblox Future lighting "
                 "with atmosphere and soft bloom. It reads as an in-game screenshot of a popular Roblox "
                 "experience -- bold, readable and slightly toy-like, not photoreal concept art. Every colour named "
                 "above is the scene's palette and stays exactly as stated.")
