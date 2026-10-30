@@ -1,5 +1,8 @@
 """Blocksfield's extra builder tools for the cybus harness (HARNESS_EXTRA_TOOLS=blocksfield.harness_ext:tools).
 
+The art and audio tools (textures, skybox, sound effects, music, UI art) come from blocksfield.asset_tools and need
+only the arbiter; generate_model also needs Open Cloud.
+
 generate_model: prompt -> prop image (Qwen-Image) -> textured mesh (TRELLIS.2, decimated under Roblox's 20k-triangle
 limit) -> uploaded as a Roblox Model (Open Cloud) -> loaded into ServerStorage.BlocksfieldAssets.<name> in the
 run's Studio, scaled so its longest side is `size` studs. Game scripts clone it from there.
@@ -15,7 +18,7 @@ from pathlib import Path
 
 import httpx
 
-from blocksfield import opencloud, recipe
+from blocksfield import asset_tools, opencloud, recipe
 
 log = logging.getLogger("blocksfield.ext")
 ARBITER = os.environ.get("HARNESS_IMAGEGEN_URL", "http://127.0.0.1:8100")
@@ -62,9 +65,10 @@ return string.format("%%d parts, %%.1f x %%.1f x %%.1f studs", parts, s2.X, s2.Y
 
 def tools(build, stage, run_dir):
     from harness.tools.base import Tool, ToolResult
+    extra = asset_tools.tools(build, stage, run_dir)
     if stage is None or not opencloud.configured():
         log.warning("generate_model disabled (%s)", "no Studio" if stage is None else "no ROBLOX_API_KEY/CREATOR_ID")
-        return []
+        return extra
     out_dir = Path(run_dir) / "art" / "models"
     out_dir.mkdir(parents=True, exist_ok=True)
     index_path = out_dir / "models.json"
@@ -105,7 +109,7 @@ def tools(build, stage, run_dir):
                 f"what it looks like.")
         return ToolResult(text=text, images=[preview] if preview else [])
 
-    return [Tool("generate_model",
+    return extra + [Tool("generate_model",
                  "Make a real textured 3D model (a prop, building piece, vehicle, creature, tree...) in the game's "
                  "art style, for things that would look crude built from parts. It takes ~1 minute. The model is "
                  "placed in ServerStorage.BlocksfieldAssets.<name> for your scripts to clone.",

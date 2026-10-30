@@ -68,9 +68,9 @@ def harness_env() -> dict:
     creator_file = Path.home() / ".blocksfield" / "roblox_creator_id.txt"
     if not env.get("ROBLOX_CREATOR_ID") and creator_file.exists():
         env["ROBLOX_CREATOR_ID"] = creator_file.read_text(encoding="utf-8").strip()
-    if env.get("ROBLOX_API_KEY") and env.get("ROBLOX_CREATOR_ID"):
-        env.setdefault("HARNESS_EXTRA_TOOLS", "blocksfield.harness_ext:tools")
-        env["PYTHONPATH"] = str(ROOT) + os.pathsep + env["PYTHONPATH"]
+    # art and audio tools always; generate_model joins them when the Open Cloud key and creator id are present
+    env.setdefault("HARNESS_EXTRA_TOOLS", "blocksfield.harness_ext:tools")
+    env["PYTHONPATH"] = str(ROOT) + os.pathsep + env["PYTHONPATH"]
     analyzer = shutil.which("luau-analyze") or str(Path.home() / "bin" / "luau-analyze.exe")
     if Path(analyzer).exists():
         env.setdefault("HARNESS_LUAU_ANALYZE", analyzer)

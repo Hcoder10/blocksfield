@@ -1,0 +1,16 @@
+{
+ "description": "Stable Audio 3 small-sfx text-to-audio (t5gemma text encoder, 8 lcm steps, cfg 1) -> MP3. One sound effect per prompt",
+ "params": {
+  "prompt": "",
+  "negative": "",
+  "seconds": 2.0,
+  "steps": 8,
+  "cfg": 1.0,
+  "seed": -1,
+  "ckpt": "stable_audio_3_small_sfx.safetensors",
+  "variants": 1
+ },
+ "outputs": [
+  "8"
+ ]
+}

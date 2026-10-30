@@ -33,6 +33,7 @@ by hand, and Higgsfield makes the promo video. Blocksfield does the whole loop l
 | 3D props | TRELLIS.2 → decimated under Roblox's 20k-triangle limit | ComfyUI |
 | Trailer | LTX-2.5 distilled NVFP4, image-to-video | ComfyUI |
 | Music | ACE-Step 1.5 turbo | ComfyUI |
+| Sound effects | Stable Audio 3 small-sfx (t5gemma text encoder) | ComfyUI |
 
 ## How it fits together
 
@@ -50,7 +51,12 @@ by hand, and Higgsfield makes the promo video. Blocksfield does the whole loop l
   `edit`, `prop3d`, `music`, `trailer_clip`.
 - `blocksfield/run.py`: build a game from a pitch.
 - `blocksfield/marketing.py`: thumbnail, icon and trailer from the built game.
-- `blocksfield/harness_ext.py`: the `generate_model` tool (prompt → 3D prop in the place).
+- `blocksfield/harness_ext.py`: the builders' extra tools: `generate_model` (prompt → 3D prop in the place) plus
+  everything in `blocksfield/asset_tools.py`.
+- `blocksfield/asset_tools.py`: `generate_texture` (seamless MaterialVariant colour maps), `generate_skybox` (six
+  wrapped Sky faces from a panorama and a zenith image), `generate_sfx`, `generate_music`, `generate_icon` and
+  `generate_ui_art` (panels, buttons, banners, badges with 9-slice centres). Each is a ComfyUI workflow through the
+  arbiter; the files are installed into Studio's local content folder as `rbxasset://cybus/<run>/<file>`.
 - The build harness, which handles plan → style guide → architecture → build → Studio capture → vision judge →
   repair → polish, is [cybus-harness](#) (branch `blocksfield`).
 
@@ -85,9 +91,11 @@ python -m blocksfield.demo_video runs/neon_obby           # the 2-minute cut
 The build opens its own Studio place, plays it, judges every capture against the concept board, and repairs the
 game. The finished place is `runs/<id>/place/final.rbxlx`.
 
+Builders always get the art and audio tools through `HARNESS_EXTRA_TOOLS=blocksfield.harness_ext:tools` (the runner
+sets it).
+
 **Optional: 3D props.** Set `ROBLOX_API_KEY` (Open Cloud, Assets read and write) and `ROBLOX_CREATOR_ID`. Builders then
-get a `generate_model` tool (Qwen-Image → TRELLIS.2 → decimated GLB → uploaded → loaded into the place) through
-`HARNESS_EXTRA_TOOLS=blocksfield.harness_ext:tools`.
+also get a `generate_model` tool (Qwen-Image → TRELLIS.2 → decimated GLB → uploaded → loaded into the place).
 
 ### The ComfyUI workflows
 
@@ -101,6 +109,7 @@ get a `generate_model` tool (Qwen-Image → TRELLIS.2 → decimated GLB → uplo
 | `edit` | Qwen-Image-2.1 edit with two reference images (thumbnail and icon from real captures) |
 | `prop3d` | prop image → TRELLIS.2 → remesh → QEM decimate to 15k triangles → baked PBR textures → GLB |
 | `music` | ACE-Step 1.5 turbo, instrumental, any length |
+| `sfx` | Stable Audio 3 small-sfx text-to-audio, 1-4 takes per call, MP3 |
 | `trailer_clip` | LTX-2.5 distilled image-to-video, 720p, with its own audio |
 
 Drag any of them into ComfyUI to see and edit the graph. `python -m blocksfield.comfy run <name> key=value`
