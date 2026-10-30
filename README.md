@@ -184,5 +184,5 @@ commercial use.
   `Color3.fromHex` or indexing a `Vector3` like a table, and API slips hidden behind untyped helpers. The kits
   removed whole classes of failure; strict typing in builder files is the next step.
 - **Licences.** This repository is MIT. Model licences vary: Qwen-Image-2.1 is research-only (non-commercial), and
-  LTX-2.5, Stable Audio 3, Hunyuan3D and FLUX use community licences. Qwen3.8, TRELLIS.2, ACE-Step and BiRefNet are
+  LTX-2.5 and Stable Audio 3 use community licences. Qwen3.8, TRELLIS.2, ACE-Step and BiRefNet are
   permissive. Check each one before any commercial use.
