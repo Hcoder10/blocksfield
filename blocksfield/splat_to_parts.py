@@ -265,9 +265,10 @@ def _greedy_boxes(color: np.ndarray, hidden: np.ndarray) -> list[tuple]:
 
 
 def voxel_parts(g: dict, detail: int = 24, colors: int = 8, seed: int = 0) -> dict:
-    n = int(np.clip(detail, 8, 48))
-    vs = 1.0 / n
     size = g["size"]
+    # slender props (a lamp post) get a finer grid so their thin side is not one voxel; squat ones keep `detail`
+    n = int(np.clip(round(detail / np.clip(math.sqrt(sorted(size)[1]), 0.55, 1.0)), 8, 48))
+    vs = 1.0 / n
     dims = np.maximum(1, np.ceil(size / vs - 1e-6).astype(int))
     lo = np.array([-size[0] / 2, 0.0, -size[2] / 2])
     ijk = np.clip(((g["xyz"] - lo) / vs).astype(int), 0, dims - 1)
