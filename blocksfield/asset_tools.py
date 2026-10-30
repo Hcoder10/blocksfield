@@ -64,8 +64,8 @@ UI = {
 }
 UI_RATIO_KIND = {"icon": "icon", "panel": "panel", "button": "button", "banner": "banner", "badge": "icon"}
 SLICED = {"panel", "button", "banner"}
-BASE_MATERIALS = {"wood": "WoodPlanks", "plank": "WoodPlanks", "grass": "Grass", "moss": "Grass", "stone": "Slate",
-                  "rock": "Slate", "cobble": "Cobblestone", "brick": "Brick", "metal": "Metal", "steel": "Metal",
+BASE_MATERIALS = {"cobble": "Cobblestone", "brick": "Brick", "wood": "WoodPlanks", "plank": "WoodPlanks",
+                  "stone": "Slate", "rock": "Slate", "grass": "Grass", "moss": "Grass", "metal": "Metal", "steel": "Metal",
                   "rust": "CorrodedMetal", "sand": "Sand", "dirt": "Ground", "mud": "Mud", "soil": "Ground",
                   "fabric": "Fabric", "cloth": "Fabric", "carpet": "Fabric", "concrete": "Concrete",
                   "ice": "Ice", "snow": "Snow", "marble": "Marble", "granite": "Granite", "tile": "Pavement",
@@ -139,7 +139,19 @@ def _fade_rows(face: np.ndarray, color: np.ndarray, top: bool, frac: float) -> n
     return w * face + (1 - w) * color
 
 
-def sky_faces(pano: Image.Image, up: Image.Image, horizon: float = 2 / 3, size: int = SKY_FACE) -> dict:
+def find_horizon(img: Image.Image, default: float = 2 / 3) -> float:
+    """Height fraction of the horizon: the steepest brightness drop (bright horizon glow -> haze below it) in the lower
+    half. The model does not always put it where the prompt says (asked for 2/3, drew it at ~0.82)."""
+    a = np.asarray(img.convert("L").resize((64, 256)), dtype=np.float64).mean(axis=1)
+    a = np.convolve(a, np.ones(7) / 7, mode="same")
+    lo, hi = int(0.5 * len(a)), int(0.94 * len(a))
+    g = np.diff(a)[lo:hi]
+    if len(g) == 0 or g.min() > -1.0:            # no clear edge: trust the prompt
+        return default
+    return float(np.clip((lo + int(g.argmin()) + 1) / len(a), 0.5, 0.88))
+
+
+def sky_faces(pano: Image.Image, up: Image.Image, horizon: float | None = None, size: int = SKY_FACE) -> dict:
     """Panorama (horizon at `horizon` of its height) + zenith image -> {Lf, Ft, Rt, Bk, Up, Dn} PIL faces.
 
     The side faces are a 4:1 band centred on the horizon (90 degrees tall at the panorama's own angular scale), wrapped
@@ -149,20 +161,21 @@ def sky_faces(pano: Image.Image, up: Image.Image, horizon: float = 2 / 3, size: 
     a = np.asarray(pano.convert("RGB"), dtype=np.float64)
     h, w, _ = a.shape
     s = w // 4
-    cy = int(round(h * horizon))
+    cy = int(round(h * (find_horizon(pano) if horizon is None else horizon)))
     y0 = min(max(0, cy - s // 2), max(0, h - s))
     band = a[y0:y0 + s, :4 * s]
     if band.shape[0] < s:                        # a short panorama: stretch what there is to a square band
         band = np.asarray(Image.fromarray(band.astype(np.uint8)).resize((4 * s, s), Image.LANCZOS), np.float64)
     band = wrap_horizontal(band)
     sides = [band[:, i * s:(i + 1) * s] for i in range(4)]
-    c_top = np.mean([f[:3].mean(axis=(0, 1)) for f in sides], axis=0)
-    c_dn = np.mean([f[-3:].mean(axis=(0, 1)) for f in sides], axis=0)
-    sides = [_fade_rows(_fade_rows(f, c_top, True, 0.18), c_dn, False, 0.18) for f in sides]
+    # the shared colours are medians, not means: the mean of blue sky and peach clouds is grey, the median is sky
+    c_top = np.median(np.concatenate([f[: max(2, s // 12)].reshape(-1, 3) for f in sides]), axis=0)
+    c_dn = np.median(np.concatenate([f[-max(2, s // 12):].reshape(-1, 3) for f in sides]), axis=0)
+    sides = [_fade_rows(_fade_rows(f, c_top, True, 0.12), c_dn, False, 0.18) for f in sides]
     u = np.asarray(up.convert("RGB").resize((s, s), Image.LANCZOS), dtype=np.float64)
     gy, gx = np.mgrid[0:s, 0:s]
     t = np.maximum(np.abs(gx + 0.5 - s / 2), np.abs(gy + 0.5 - s / 2)) / (s / 2)     # 0 centre, 1 rim
-    wu = 1 - _smooth((t - 0.55) / 0.45)[..., None]
+    wu = 1 - _smooth((t - 0.7) / 0.3)[..., None]
     # match the zenith image's overall colour to the panorama's top so the fade is short and soft
     u = u - u.mean(axis=(0, 1)) + 0.5 * (u.mean(axis=(0, 1)) + c_top)
     u = wu * u + (1 - wu) * c_top
@@ -340,15 +353,14 @@ def tools(build, stage, run_dir):
         spt = float(studs_per_tile)
         return ToolResult(
             text=f"texture '{name}' installed as {cid} (1024x1024{', seamless' if tileable else ''}). Make it a "
-                 f"material once (client or server):\n"
+                 f"material once, then put it on parts or whole models:\n"
                  f"  Kit.LookKit.material(\"{name}\", {{ base = Enum.Material.{base}, colorMap = \"{cid}\", "
                  f"studsPerTile = {spt:g} }})\n"
-                 f"then on parts: `part.Material = Enum.Material.{base}; part.MaterialVariant = \"{name}\"`.\n"
-                 f"Without LookKit: `local mv = Instance.new(\"MaterialVariant\"); mv.Name = \"{name}\"; "
-                 f"mv.BaseMaterial = Enum.Material.{base}; mv.ColorMap = \"{cid}\"; mv.StudsPerTile = {spt:g}; "
-                 f"mv.Parent = game:GetService(\"MaterialService\")`, or a Texture instance on one face "
-                 f"(Texture = \"{cid}\", StudsPerTileU/V = {spt:g}). Also Assets.image(\"{name}\"). The image shows "
-                 f"2x2 tiles: regenerate if it does not fit the style guide.",
+                 f"  Kit.LookKit.useMaterial(partOrModel, \"{name}\")\n"
+                 f"(useMaterial sets the MaterialVariant where one could be made and otherwise tiles a Texture on "
+                 f"every face; do not set part.MaterialVariant yourself: running scripts cannot create the variant.) "
+                 f"Also Assets.image(\"{name}\"). The image shows 2x2 tiles: regenerate if it does not fit the style "
+                 f"guide.",
             images=[png_bytes(tile(tex), 768)])
 
     async def generate_skybox(name: str, prompt: str) -> ToolResult:
@@ -360,13 +372,10 @@ def tools(build, stage, run_dir):
             return ToolResult(text=f"ERROR: skybox generation failed: {e}")
         ids = {n: store.add(f"{name}_{n.lower()}", png_bytes(f), kind="skybox", prompt=prompt)
                for n, f in faces.items()}
-        props = "\n".join(f'sky.Skybox{n} = "{ids[n]}"' for n in ("Bk", "Dn", "Ft", "Lf", "Rt", "Up"))
+        faces_luau = ", ".join(f'{n.lower()} = "{ids[n]}"' for n in ("Bk", "Dn", "Ft", "Lf", "Rt", "Up"))
         return ToolResult(
-            text=f"skybox '{name}' installed (6 faces, {SKY_FACE}px). Apply it (server script or at build time):\n"
-                 f"local Lighting = game:GetService(\"Lighting\")\n"
-                 f"local sky = Lighting:FindFirstChildOfClass(\"Sky\") or Instance.new(\"Sky\")\n{props}\n"
-                 f"sky.Parent = Lighting\n"
-                 f"(Set sky.CelestialBodiesShown = false if the painted sky should not get Roblox's sun and moon.) "
+            text=f"skybox '{name}' installed (6 faces, {SKY_FACE}px). Apply it after Kit.LookKit.apply(...), which "
+                 f"removes every Sky LookKit did not make:\n  Kit.LookKit.skybox({{ {faces_luau} }})\n"
                  f"The image is the cube cross: Up / Lf Ft Rt Bk / Dn.",
             images=[png_bytes(sky_cross(faces), 1024)])
 
