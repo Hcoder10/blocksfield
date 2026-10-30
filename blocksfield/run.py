@@ -61,6 +61,16 @@ def harness_env() -> dict:
     })
     for role in ("BUILDER", "JUDGE", "CRITIC", "REVISER"):     # thinking stays on for lead / art / architect
         env.setdefault(f"HARNESS_{role}_EXTRA", NO_THINK)
+    # 3D props need Open Cloud: the key from the environment or ~/.blocksfield/roblox_key.txt (never in the repo)
+    key_file = Path.home() / ".blocksfield" / "roblox_key.txt"
+    if not env.get("ROBLOX_API_KEY") and key_file.exists():
+        env["ROBLOX_API_KEY"] = key_file.read_text(encoding="utf-8").strip()
+    creator_file = Path.home() / ".blocksfield" / "roblox_creator_id.txt"
+    if not env.get("ROBLOX_CREATOR_ID") and creator_file.exists():
+        env["ROBLOX_CREATOR_ID"] = creator_file.read_text(encoding="utf-8").strip()
+    if env.get("ROBLOX_API_KEY") and env.get("ROBLOX_CREATOR_ID"):
+        env.setdefault("HARNESS_EXTRA_TOOLS", "blocksfield.harness_ext:tools")
+        env["PYTHONPATH"] = str(ROOT) + os.pathsep + env["PYTHONPATH"]
     analyzer = shutil.which("luau-analyze") or str(Path.home() / "bin" / "luau-analyze.exe")
     if Path(analyzer).exists():
         env.setdefault("HARNESS_LUAU_ANALYZE", analyzer)
