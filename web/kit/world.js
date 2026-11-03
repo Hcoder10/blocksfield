@@ -569,7 +569,7 @@ export function water(game, opts = {}) {
   const depthTex = new THREE.DataTexture(data, RES, RES, THREE.RGBAFormat);
   depthTex.minFilter = depthTex.magFilter = THREE.LinearFilter; depthTex.needsUpdate = true;
 
-  const g = new THREE.PlaneGeometry(size, size, 160, 160);
+  const g = new THREE.PlaneGeometry(size, size, 48, 48);
   g.rotateX(-Math.PI / 2);
   const night = Look.isNight(game);
   const mat = new THREE.ShaderMaterial({
@@ -588,16 +588,16 @@ export function water(game, opts = {}) {
       void main(){
         vec3 p = position;
         vec4 w = modelMatrix * vec4(p, 1.0);
-        float hgt = sin(w.x * 0.15 + uTime * 1.1) * cos(w.z * 0.12 + uTime * 0.9) + 0.5 * sin((w.x + w.z) * 0.31 + uTime * 1.7);
-        p.y += hgt * waves; vH = hgt;
-        w = modelMatrix * vec4(p, 1.0); vW = w.xyz;
+        // the surface stays flat in geometry (a displaced grid shows its triangles through the ink-outline pass);
+        // waves live in the fragment shader as analytic normals
+        vW = w.xyz; vH = 0.0;
         vec4 mvPosition = viewMatrix * w;
         gl_Position = projectionMatrix * mvPosition;
         #include <fog_vertex>
       }`,
     fragmentShader: `
       uniform vec3 shallow; uniform vec3 deep; uniform vec3 foam; uniform vec3 sky; uniform sampler2D tDepth;
-      uniform float size; uniform vec2 center; uniform float uTime; uniform float foamGlow; uniform vec3 uSunDir;
+      uniform float size; uniform vec2 center; uniform float uTime; uniform float foamGlow; uniform vec3 uSunDir; uniform float waves;
       varying vec3 vW; varying float vH;
       #include <fog_pars_fragment>
       float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }
@@ -615,12 +615,27 @@ export function water(game, opts = {}) {
         float fres = pow(1.0 - clamp(V.y, 0.0, 1.0), 3.0);
         vec3 col = mix(shallow, deep, smoothstep(0.0, 1.0, depth) * 0.75 + 0.25);
         col = mix(col, sky, fres * 0.45);
-        // toon caustic web
-        vec2 c = cell(vW.xz * 0.32);
-        float web = smoothstep(0.06, 0.0, c.y - c.x) * smoothstep(0.0, 0.4, depth);
-        col += foam * web * 0.13 * (1.0 - fres);
+        // analytic wave normal (same swell everywhere, small ripples on top)
+        vec2 q = vW.xz;
+        float t = uTime;
+        vec2 grad = vec2(0.15 * cos(q.x * 0.15 + t * 1.1) * cos(q.y * 0.12 + t * 0.9),
+                         -0.12 * sin(q.x * 0.15 + t * 1.1) * sin(q.y * 0.12 + t * 0.9));
+        grad += 0.155 * cos((q.x + q.y) * 0.31 + t * 1.7) * vec2(1.0);
+        grad *= waves * 2.0;
+        vec2 rp = q * 0.9 + vec2(t * 0.35, -t * 0.28);
+        float e = 0.15;
+        float r0 = n(rp), rx = n(rp + vec2(e, 0.0)), rz = n(rp + vec2(0.0, e));
+        grad += vec2(rx - r0, rz - r0) / e * 0.06;
+        vec3 N = normalize(vec3(-grad.x, 1.0, -grad.y));
+        float fresN = pow(1.0 - clamp(dot(V, N), 0.0, 1.0), 3.0);
+        col = mix(col, sky, (fresN - fres) * 0.45);
+        // soft stylised highlights: smooth ridges of two drifting noise layers (no cells, no hard edges)
+        float n1 = n(q * 0.32 + vec2(t * 0.06, t * 0.04)) * 0.65 + n(q * 0.8 - vec2(t * 0.09, 0.0)) * 0.35;
+        float ridge = 1.0 - abs(n1 * 2.0 - 1.0);
+        float glint = smoothstep(0.9, 0.975, ridge) * smoothstep(0.0, 0.4, depth);
+        col += foam * glint * 0.16 * (1.0 - fres);
         // sun glints
-        vec3 R = reflect(-V, vec3(0.0, 1.0, 0.0));
+        vec3 R = reflect(-V, N);
         float sp = pow(max(dot(R, normalize(uSunDir)), 0.0), 180.0);
         float spark = step(0.6, n(vW.xz * 1.3 + uTime * 0.7)) * sp;
         col += vec3(1.0) * (sp * 1.2 + spark * 2.5);
