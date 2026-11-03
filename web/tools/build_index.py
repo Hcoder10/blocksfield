@@ -19,6 +19,40 @@ WEB = Path(__file__).resolve().parents[1]
 CARD_KEYS = ("title", "tagline", "pitch", "genre", "controls", "created", "thumbnail", "video", "play")
 
 
+_KIT_SRC = None
+_TOKEN_CODES = {"space": ["Space"], "shift": ["Shift"], "esc": ["Escape"], "escape": ["Escape"], "enter": ["Enter"],
+                "tab": ["Tab"], "ctrl": ["Control"], "control": ["Control"]}
+
+
+def checked_controls(d: Path, controls: list) -> list:
+    """Drop control lines naming a key that neither the kit nor this game's code listens for (e.g. an "R: reset" the
+    planner promised but nobody implemented). A line's keys are the text before its colon: single letters (R, C, E)
+    and named keys (Space, Shift, Esc); arrows, WASD and mouse words always pass."""
+    import re
+    global _KIT_SRC
+    if _KIT_SRC is None:
+        _KIT_SRC = "".join(p.read_text(encoding="utf-8", errors="ignore") for p in (WEB / "kit").glob("*.js"))
+    try:
+        src = _KIT_SRC + (d / "game.js").read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return list(controls)
+    out = []
+    for line in controls or []:
+        keys = str(line).split(":", 1)[0] if ":" in str(line) else ""
+        ok = True
+        for tok in re.findall(r"[A-Za-z]+", keys):
+            t = tok.lower()
+            if t in ("wasd", "arrows", "arrow", "or", "and", "mouse", "click", "hold", "drag", "keys", "key"):
+                continue
+            if len(tok) == 1:
+                ok = ok and (f"Key{tok.upper()}" in src or f"'{tok.lower()}'" in src)
+            elif t in _TOKEN_CODES:
+                ok = ok and any(c in src for c in _TOKEN_CODES[t])
+        if ok:
+            out.append(line)
+    return out
+
+
 def game_entry(d: Path) -> dict | None:
     try:
         about = json.loads((d / "about.json").read_text(encoding="utf-8"))
@@ -26,6 +60,8 @@ def game_entry(d: Path) -> dict | None:
         return None
     e = {"id": d.name, **{k: about.get(k) for k in CARD_KEYS}}
     e["play"] = e["play"] or "index.html"
+    if e.get("controls"):
+        e["controls"] = checked_controls(d, e["controls"])
     for k in ("thumbnail", "video"):
         if e[k] and not (d / e[k]).exists():
             e[k] = None

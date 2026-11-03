@@ -23,10 +23,14 @@
   }
   if (!/^[\w.-]+$/.test(id)) return fail("No game id in the link.");
 
-  Promise.all([getJSON(base + "about.json"), getJSON(base + "assets/assets.json")]).then(([a, assets]) => {
-    if (!a) return fail(`No record for "${id}".`);
-    render(a, assets || {});
-  });
+  Promise.all([getJSON(base + "about.json"), getJSON(base + "assets/assets.json"), getJSON("../games/index.json")])
+    .then(([a, assets, idx]) => {
+      if (!a) return fail(`No record for "${id}".`);
+      // the index's controls are checked against the kit and game code (lines naming an unbound key are dropped)
+      const entry = ((idx && idx.games) || []).find((g) => g.id === id);
+      if (entry && Array.isArray(entry.controls)) a = { ...a, controls: entry.controls };
+      render(a, assets || {});
+    });
 
   function render(a, assets) {
     const plan = a.plan || {};
@@ -170,13 +174,22 @@
       "left stick move · drag the right side to look · FIRE / JUMP buttons"],
   };
   HOWTO.boat = HOWTO.kart;
+  // gamepad, per type, from the kit's readKeys (A = button 0 jump, X / RB / RT = action, B / LT = pound) and the
+  // vehicle drift input (jump or action); the right stick turns the orbit/follow camera, not the vehicles' chase cam
+  const PAD = {
+    platformer: "left stick move · A jump · X / RB dash · B ground pound · right stick camera",
+    kart: "left stick steer and throttle · hold A or X / RB in a turn to drift, release to boost",
+    topdown: "left stick move · A jump (fire in blaster games) · X / RB dash",
+    fps: "left stick move · A jump and fire · X / RB action",
+  };
+  PAD.boat = PAD.kart;
   function howTo(type, hasControls, play) {
     const h = HOWTO[type];
     if (!h) return "";
     const rows = [];
     if (!hasControls) rows.push(["Keyboard", h[0]]);
     rows.push(["Phone", h[1]]);
-    rows.push(["Gamepad", "left stick move · A jump · X / RB action · right stick camera"]);
+    rows.push(["Gamepad", PAD[type] || PAD.platformer]);
     rows.push(["Pause", "Esc / P"]);
     return `<h3>How to play</h3><dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
       <p class="howto-foot">Phones: play in landscape. Weak laptop? Open <a href="${esc(url(play))}?quality=low">the low-quality version</a>.</p>`;
