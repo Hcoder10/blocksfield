@@ -737,7 +737,9 @@ export function rules(game, opts = {}) {
           o.position.lerp(c, Math.min(1, dt * (vehicle ? 10 : 6)));
           it.home.lerp(c, Math.min(1, dt * (vehicle ? 10 : 6)));
         }
-        if (d < it.radius + (pl.radius || 0.5) * (vehicle ? 1.6 : 1)) { doCollect(it, pl); break; }
+        // top-down heroes can't jump for pickups that hover a little high: collect on the horizontal distance
+        const flat = pl.type === 'topdown' && Math.abs(c.y - o.position.y) < 2.8 && Math.hypot(c.x - o.position.x, c.z - o.position.z) < it.radius + (pl.radius || 0.5);
+        if (flat || d < it.radius + (pl.radius || 0.5) * (vehicle ? 1.6 : 1)) { doCollect(it, pl); break; }
       }
     }
     // checkpoints
@@ -1477,9 +1479,11 @@ export function autopilot(game, opts = {}) {
     let goalP = route[st.idx];
     if (needMore && st.idx >= route.length - 1 && !st.item) {
       // roam to the nearest uncollected target item
-      const left = R.items.filter(i => !i.collected && i.tag === game.state.collectTag);
+      // nearest remaining target item, preferring ones we haven't given up on (all given up: try them all again)
+      let left = R.items.filter(i => !i.collected && i.tag === game.state.collectTag && !i.skip);
+      if (!left.length) { left = R.items.filter(i => !i.collected && i.tag === game.state.collectTag); for (const i of left) i.skip = false; }
       left.sort((a, b) => a.home.distanceTo(p) - b.home.distanceTo(p));
-      if (left[0]) { goalP = left[0].home; left[0].skip = false; st.item = left[0]; }
+      if (left[0]) { goalP = left[0].home; st.item = left[0]; }
     }
     // mechanics (keys before doors, switches, ...) can redirect the bot
     if (game.__mech && typeof game.__mech.botTarget === 'function') {
