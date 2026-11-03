@@ -1,0 +1,372 @@
+{
+ "id": "lantern_lane2",
+ "title": "Lantern Lane",
+ "tagline": "Gather the lost lights, deliver the letters, and light the tree.",
+ "pitch": "Lantern Lane: a cozy evening village collect-a-thon. Wander a warm little town at golden hour as a cat, gather lost lanterns and letters for the neighbours, chat with friendly villagers, and light the big lantern tree in the plaza. Soft acoustic music, a cozy rounded HUD, no rush.",
+ "genre": "Cozy village collect & quest adventure",
+ "controls": [
+  "WASD / arrows: move",
+  "Space: hop",
+  "Walk up to a villager: chat",
+  "Esc: pause"
+ ],
+ "created": "2026-11-03T01:29:37-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "v2",
+  "score": 6.0,
+  "play": 7.0,
+  "vision": 5.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 6.0,
+    "play_score": 7.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "s0",
+    "score": 0.5,
+    "play_score": 0.5,
+    "vision_score": null
+   },
+   {
+    "tag": "v1",
+    "score": 0.5,
+    "play_score": 0.5,
+    "vision_score": null
+   },
+   {
+    "tag": "v2",
+    "score": 6.0,
+    "play_score": 7.0,
+    "vision_score": 5.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Lantern Lane",
+  "tagline": "Gather the lost lights, deliver the letters, and light the tree.",
+  "genre": "Cozy village collect & quest adventure",
+  "core_loop": "Wander the golden-hour village, gather the lanterns and letters the villagers ask for, deliver them, and chat \u2014 every completed quest brings the plaza's great lantern tree closer to lighting up.",
+  "controls": [
+   "WASD / arrows: move",
+   "Space: hop",
+   "Walk up to a villager: chat",
+   "Esc: pause"
+  ],
+  "win_condition": "Complete all four villager quests, then light the big lantern tree in the plaza.",
+  "lose_condition": "None \u2014 no timer, no enemies, no lives to lose. The evening is yours.",
+  "look": "cozy",
+  "level_kind": "town",
+  "ui_style": "cozy",
+  "level_size": "medium",
+  "player_type": "platformer",
+  "camera": "follow",
+  "player_colors": {
+   "body": "#e08a3c",
+   "accent": "#ffdf9e"
+  },
+  "collectible": {
+   "tag": "lantern",
+   "label": "Lanterns",
+   "count": 12,
+   "target": 10
+  },
+  "goal": true,
+  "timer_seconds": 0,
+  "lives": 0,
+  "enemies": 0,
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  },
+  "character": {
+   "species": "cat",
+   "accessory": "scarf"
+  },
+  "mode": "quests",
+  "npcs": [
+   {
+    "name": "Bramble",
+    "species": "bear",
+    "lines": [
+     "My porch light went out, little one.",
+     "Find me four lanterns and I'll share the master light.",
+     "You're the reason this lane glows."
+    ]
+   },
+   {
+    "name": "Wren",
+    "species": "frog",
+    "lines": [
+     "The wind scattered my letters again.",
+     "Three of them \u2014 check the hedges and the well.",
+     "A village runs on letters, you know."
+    ]
+   },
+   {
+    "name": "Pip",
+    "species": "bunny",
+    "lines": [
+     "Psst! How's the festival going?",
+     "Just say hi to everyone, that's all I ask.",
+     "You'll light the tree, won't you?"
+    ]
+   },
+   {
+    "name": "Milo",
+    "species": "kid",
+    "lines": [
+     "I saved you a seat by the tree!",
+     "Mama says the tree lights when the lane is ready.",
+     "Bring the big lantern when you can!"
+    ]
+   }
+  ],
+  "quests": [
+   {
+    "type": "fetch",
+    "npc": "Bramble",
+    "item": "lantern",
+    "count": 4
+   },
+   {
+    "type": "fetch",
+    "npc": "Wren",
+    "item": "letter",
+    "count": 3
+   },
+   {
+    "type": "talk",
+    "npc": "Pip"
+   },
+   {
+    "type": "deliver",
+    "npc": "Bramble",
+    "item": "lantern",
+    "count": 1,
+    "from": "Bramble's porch",
+    "to": "the big lantern tree"
+   }
+  ],
+  "art_direction": "Warm apricot-and-honey palette at golden hour deepening to dusk violet at the edges, with long soft shadows and a gentle rim light on every rounded form. Low-poly coziness: round cottages with glowing amber windows, cobbled lanes, sagging string lights, and paper lanterns as the recurring motif. Mood is unhurried and gently magical \u2014 Totoro's evening village meets Animal Crossing dusk, with fireflies drifting in the air.",
+  "concept_shots": [
+   "The ginger cat in a cream scarf stands on a cobbled lane at golden hour; string lights sag between round cottages, windows glow amber, and three paper lanterns bob in the grass ahead.",
+   "The plaza at dusk: the big lantern tree, its branches heavy with unlit paper lanterns, villagers seated on benches, the cat carrying a glowing master lantern toward the trunk.",
+   "A close moment: the cat hands a letter to Wren the frog by the well; a soft sparkle burst pops and a quest toast slides in on the cozy rounded HUD."
+  ],
+  "assets": {
+   "sky": "Golden-hour panorama: apricot and honey gradient sinking into dusk violet, a big low sun, soft puffy clouds lit from below, distant hills, and the first stars.",
+   "icons": [
+    {
+     "name": "lantern",
+     "prompt": "Small glowing paper lantern, warm amber glass, rounded chibi icon style, soft cream outline",
+     "for": "lantern"
+    },
+    {
+     "name": "letter",
+     "prompt": "Folded cream letter with a small wax seal, cozy rounded icon style, warm amber accents",
+     "for": "letter"
+    },
+    {
+     "name": "quest",
+     "prompt": "Small wooden signpost with a heart, cozy rounded icon style, warm brown and cream",
+     "for": "quest"
+    }
+   ],
+   "music": "Soft acoustic folk: warm fingerpicked guitar, gentle ukulele, light brushed drums, music-box chimes; 80 BPM, cozy and unhurried, evening mood.",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "Warm round bell chime, like lantern glass tinkling, with a soft paper rustle"
+    },
+    {
+     "event": "jump",
+     "prompt": "Soft bouncy boing with a tiny whoosh, cozy cartoon feel"
+    },
+    {
+     "event": "land",
+     "prompt": "Muffled soft thump, like a paw landing on a rug"
+    },
+    {
+     "event": "checkpoint",
+     "prompt": "Gentle wooden glockenspiel arpeggio, three rising notes, quest-complete feel"
+    },
+    {
+     "event": "win",
+     "prompt": "Small acoustic fanfare: guitar strum, glass bells, and happy murmurs, warm and unhurried"
+    }
+   ],
+   "props": [
+    {
+     "name": "lantern",
+     "prompt": "Small round paper lantern with a warm amber glow, wooden top and bottom caps, and a cream tassel",
+     "count": 14
+    },
+    {
+     "name": "lantern_tree",
+     "prompt": "Small round tree with a wide canopy of unlit paper lanterns hanging from its branches, warm wooden trunk, cozy plaza centerpiece",
+     "count": 1
+    }
+   ]
+  },
+  "mapping_notes": "Cat hero \u2192 Player.makeCharacter with species 'cat' and a 'scarf' accessory, platformer + follow camera so it can hop over hedges and fences. Cozy evening village \u2192 Look 'cozy' (warm palette, soft shadows) + Level 'town' (dressed village: houses, benches, well, stalls, lantern posts, plaza); the golden-hour fantasy is carried by the generated sky panorama and the warm lantern props. The pitch's two pickup types (lanterns AND letters) \u2192 the kit has one primary collectible (lanterns, 12 placed), while letters live on as quest items via fetch/deliver quests in quests mode, so both appear in the world and the HUD. Big lantern tree \u2192 the goal (goal: true) placed in the plaza, dressed with the custom lantern_tree prop; lighting it is reaching the goal once quests are done. 'No rush' \u2192 timer 0, lives 0, enemies 0, race laps 0. Cozy rounded HUD \u2192 UI.setStyle('cozy'). Chatting villagers \u2192 quests-mode NPCs with UI.dialog bubbles. Fireflies and lantern glow \u2192 FX kit touches.",
+  "features": [
+   "Drifting fireflies: gentle sparkle particles (FX.sparkles) over the lanes and plaza at dusk",
+   "Lantern glow: warm sparkle burst + chime on every lantern pickup (FX.sparkle, FX.burst)",
+   "Villager dialog bubbles: UI.dialog shows each neighbour's lines when the cat is near",
+   "Quest tracker: UI.objective + UI.toasts update as each villager's request is completed",
+   "Tree-lighting finale: confetti, a light ring, and a warm flash (FX.confetti, FX.ring, FX.flash) with a brief slow-mo as the tree blooms",
+   "Cozy rounded HUD: lantern/letter counters and a quest list, no timer shown"
+  ]
+ },
+ "timings_s": {
+  "art": 328.2,
+  "build": 835.6,
+  "eval_s0": 43.6,
+  "eval_v0": 64.8,
+  "eval_v1": 37.3,
+  "eval_v2": 74.2,
+  "plan": 134.5,
+  "repair_1": 74.0,
+  "repair_2": 275.7,
+  "scaffold": 1.3
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Lantern Lane: a cozy evening village collect-a-thon. Wander a warm little town at golden hour as a cat, gather lost lanterns and letters for the neighbours, chat with friendly villagers, and light the big lantern tree in the plaza. Soft acoustic music, a cozy rounded HUD, no rush.",
+  "notes": "Cat hero \u2192 Player.makeCharacter with species 'cat' and a 'scarf' accessory, platformer + follow camera so it can hop over hedges and fences. Cozy evening village \u2192 Look 'cozy' (warm palette, soft shadows) + Level 'town' (dressed village: houses, benches, well, stalls, lantern posts, plaza); the golden-hour fantasy is carried by the generated sky panorama and the warm lantern props. The pitch's two pickup types (lanterns AND letters) \u2192 the kit has one primary collectible (lanterns, 12 placed), while letters live on as quest items via fetch/deliver quests in quests mode, so both appear in the world and the HUD. Big lantern tree \u2192 the goal (goal: true) placed in the plaza, dressed with the custom lantern_tree prop; lighting it is reaching the goal once quests are done. 'No rush' \u2192 timer 0, lives 0, enemies 0, race laps 0. Cozy rounded HUD \u2192 UI.setStyle('cozy'). Chatting villagers \u2192 quests-mode NPCs with UI.dialog bubbles. Fireflies and lantern glow \u2192 FX kit touches.",
+  "chosen": {
+   "level_kind": "town",
+   "look": "cozy",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "cozy",
+   "character": {
+    "species": "cat",
+    "accessory": "scarf"
+   },
+   "collectible": "lantern",
+   "collectible_label": "Lanterns"
+  }
+ },
+ "model_calls": {
+  "lead": {
+   "calls": 1,
+   "prompt_tokens": 6885,
+   "completion_tokens": 10358,
+   "seconds": 133.3
+  },
+  "builder": {
+   "calls": 68,
+   "prompt_tokens": 1548740,
+   "completion_tokens": 12037,
+   "seconds": 625.2
+  },
+  "judge": {
+   "calls": 4,
+   "prompt_tokens": 21470,
+   "completion_tokens": 2034,
+   "seconds": 34.4
+  }
+ },
+ "agents": {
+  "live": 4,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 135.8
+    },
+    "icon_lantern": {
+     "ok": true,
+     "seconds": 143.7
+    },
+    "icon_letter": {
+     "ok": true,
+     "seconds": 153.7
+    },
+    "icon_quest": {
+     "ok": true,
+     "seconds": 163.6
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 189.0
+    },
+    "sfx_jump": {
+     "ok": true,
+     "seconds": 189.0
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 189.3
+    },
+    "sfx_land": {
+     "ok": true,
+     "seconds": 189.5
+    },
+    "sfx_checkpoint": {
+     "ok": true,
+     "seconds": 190.6
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 192.4
+    },
+    "prop_lantern": {
+     "ok": true,
+     "seconds": 287.6
+    },
+    "prop_lantern_tree": {
+     "ok": true,
+     "seconds": 328.2
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Lantern Lane is built on the scaffold: a cozy golden-hour town quest adventure. The cat hero (scarf, apricot/cream) wanders the medium 'town' level, gathers glowing paper lanterns (8 on the route, tagged from the level's coins) plus 3 letters I placed off-route for Wren, and works through the four villager quests (Bramble fetch-4 lanterns, Wren fetch-3 letters, Pip talk, and a deliver quest Bramble\u2192Milo for the master lantern). All quests done + lantern target opens the goal portal in the plaza, where the generated lantern-tree prop stands as the centerpiece. Cozy rounded HUD with lantern/letter counters, minimap and live objective; title screen sells the fantasy; firefly sparkles drift over the plaza; letter pickups, quest completions and the quests-done banner get toasts; the win fires a warm flash, confetti, a light ring and magic burst at the tree with a brief slow-mo. Autopilot verified: moves along the route, collects lanterns and letters, and completes Bramble's quest with zero console errors.",
+    "changes": [
+     "Tagged level collectibles as 'lantern' and set collect target to 8 (matches what the level actually places)",
+     "Added 3 'letter' collectibles off-route for Wren's fetch quest, placed via route-side offsets with World.heightAt",
+     "Placed the generated prop_lantern_tree beside the plaza goal as the centerpiece, with an always-on warm sparkle glow",
+     "Fixed the deliver quest (from/to must be NPC names: Bramble \u2192 Milo) so Gameplay.rules no longer throws",
+     "Added HUD objective line and a second letter counter",
+     "Added event juice: letter-pickup toasts, questDone toasts, 'The lane is ready!' banner on questsDone, and a win finale (ring + magic at the tree, confetti, warm flash, slow-mo)",
+     "Shortened the title subtitle to fit the cozy plate"
+    ],
+    "known_issues": [
+     "The 'letters' HUD counter is driven by the quest system, not a state key, so it may stay at 0 even as letters are picked up (lantern counter works correctly)",
+     "The deliver quest's auto-generated objective text reads 'Pick up the Bring the master lantern to the tree from Bramble' \u2014 the label string leaks into the template; the quest itself works fine",
+     "Win flow (tree-lighting FX) is wired but not exercised by the short autopilot runs; it triggers on the 'win' event after all quests + goal"
+    ]
+   },
+   "plays": 7
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ }
+}

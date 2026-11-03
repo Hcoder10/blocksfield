@@ -1,0 +1,334 @@
+{
+ "id": "canyon_runner2",
+ "title": "Canyon Runner",
+ "tagline": "Chain the boost pads. Kiss the red rock. Beat the sunset clock.",
+ "pitch": "Canyon Runner: a desert canyon hover-bike time trial. Rip through red-rock canyons at sunset on a hover-bike, chaining boost pads and hitting every checkpoint before the clock runs out. Warm orange stone, long shadows, dust trails, speed lines.",
+ "genre": "Arcade hover-bike time trial",
+ "controls": [
+  "W / \u2191: throttle",
+  "S / \u2193: brake / reverse",
+  "A / D or \u2190 / \u2192: steer",
+  "Shift: boost (stacks on boost pads)"
+ ],
+ "created": "2026-11-03T01:26:48-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "v0",
+  "score": 6.17,
+  "play": 7.33,
+  "vision": 5.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 6.17,
+    "play_score": 7.33,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "s0",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "v1",
+    "score": 5.67,
+    "play_score": 7.33,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "v2",
+    "score": 5.58,
+    "play_score": 6.17,
+    "vision_score": 5.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Canyon Runner",
+  "tagline": "Chain the boost pads. Kiss the red rock. Beat the sunset clock.",
+  "genre": "Arcade hover-bike time trial",
+  "core_loop": "Throttle through the red-rock canyon, line up boost pads and clip every checkpoint to complete 2 laps before the clock hits zero \u2014 Embers scattered on the racing line are bonus spice for a better medal.",
+  "controls": [
+   "W / \u2191: throttle",
+   "S / \u2193: brake / reverse",
+   "A / D or \u2190 / \u2192: steer",
+   "Shift: boost (stacks on boost pads)"
+  ],
+  "win_condition": "Complete 2 laps before the timer runs out \u2014 faster finish times earn better medals.",
+  "lose_condition": "The clock hits 0:00 before the final lap is complete.",
+  "look": "sunset",
+  "ui_style": "sleek",
+  "level_kind": "race_track",
+  "level_size": "medium",
+  "player_type": "kart",
+  "camera": "chase",
+  "player_colors": {
+   "body": "#2ec4b6",
+   "accent": "#ff6b35"
+  },
+  "collectible": {
+   "tag": "star",
+   "label": "Embers",
+   "count": 24,
+   "target": 12
+  },
+  "goal": true,
+  "timer_seconds": 150,
+  "lives": 0,
+  "enemies": 0,
+  "race": {
+   "laps": 2,
+   "opponents": 0
+  },
+  "character": {
+   "species": "robot",
+   "accessory": "scarf"
+  },
+  "mode": "timetrial",
+  "art_direction": "Stylized red-sandstone canyon at golden hour: layered rust, amber and cream mesas under a molten orange-to-violet sky, low sun raking long shadows across the racing line. Toon-shaded warm palette with a teal robot rider as the one complementary pop against the stone. Mood: dusty, fast, cinematic \u2014 a sunset desert drive with heat shimmer and drifting dust.",
+  "concept_shots": [
+   "Teal robot pilot carving a switchback on the hover-bike, a long amber dust trail streaming behind, speed lines streaking the frame as the low sun rakes the red-rock walls.",
+   "The bike blasts across a glowing boost pad mid-canyon, shockwave ring and ember sparks bursting, the road opening into a wide vista with a checkpoint flag waving on a sandstone ledge.",
+   "Finish: the bike rockets through the goal arch under a burning orange sky, ember confetti raining as the big TIME banner freezes the clock at 0:07."
+  ],
+  "assets": {
+   "sky": "Sunset panorama: low amber sun disc sinking between layered red-rock mesas, gradient from molten orange horizon to deep violet zenith, soft pink cirrus, faint dust haze on the horizon.",
+   "icons": [
+    {
+     "name": "ember_star",
+     "prompt": "Star-shaped ember pickup icon: glowing orange-gold star with a soft flame halo and tiny sparks, dark warm outline, sleek HUD style",
+     "for": "collect"
+    },
+    {
+     "name": "boost_bolt",
+     "prompt": "Lightning bolt inside a ring of flame, hot orange to yellow gradient, sleek speed-gauge style",
+     "for": "laps"
+    },
+    {
+     "name": "check_flag",
+     "prompt": "Checkpoint flag on a short pole, warm cream flag with an orange chevron, clean sleek icon",
+     "for": "laps"
+    },
+    {
+     "name": "timer_gauge",
+     "prompt": "Speedometer-style clock face with a needle, amber glass, tick marks, sleek dark rim",
+     "for": "timer"
+    }
+   ],
+   "music": "Warm synthwave desert drive: analog pads, pulsing bass, taiko-like percussion, 118 BPM, golden-hour energy, seamless loop.",
+   "sfx": [
+    {
+     "event": "boost",
+     "prompt": "Hover-bike boost: rising whoosh with a crackling spark tail",
+     "seconds": 2
+    },
+    {
+     "event": "collect",
+     "prompt": "Ember pickup: bright pluck with a warm shimmer",
+     "seconds": 1
+    },
+    {
+     "event": "checkpoint",
+     "prompt": "Checkpoint flag: short fanfare blip with a whoosh",
+     "seconds": 1
+    },
+    {
+     "event": "damage",
+     "prompt": "Wall scrape: gritty stone skid with a metallic clank",
+     "seconds": 1
+    },
+    {
+     "event": "win",
+     "prompt": "Finish: triumphant horn stab with a rising sweep",
+     "seconds": 4
+    },
+    {
+     "event": "lose",
+     "prompt": "Time up: descending sad synth over a clock tick",
+     "seconds": 3
+    }
+   ],
+   "props": [
+    {
+     "name": "stone_totem",
+     "prompt": "Weathered sandstone totem pole: stacked carved blocks in rust red and cream with a small friendly face, ~2m tall",
+     "count": 6
+    },
+    {
+     "name": "saguaro_cactus",
+     "prompt": "Stubby saguaro cactus: ribbed green body with two short arms, terracotta pot base, warm toon shading",
+     "count": 8
+    }
+   ]
+  },
+  "features": [
+   "Boost pad chains: rows of boost_pad props on the racing line, each activation fires FX.ring + FX.speedLines + boost SFX",
+   "Dust trail: FX.trail behind the kart with FX.dust puffs on hard turns and landings",
+   "Wall-scrape juice: FX.hitFlash + FX.shake + scrape SFX when the kart clips canyon walls",
+   "Checkpoint flags: flag props at each checkpoint with FX.ring, a toast banner, and the checkpoint chime",
+   "Finish slow-mo: FX.slowmo + FX.confetti + big TIME banner on the final lap",
+   "Hover hum: soft Audio 'hover' loop under the kart, pitch rising into boosts"
+  ],
+  "mapping_notes": "Hover-bike \u2192 kart: the kit's closest vehicle controller (kart/boat are the only vehicles), which also brings the chase camera and vehicle physics group the pitch needs. Time trial \u2192 mode timetrial (laps vs the clock, medals): 2 laps, 0 opponents, 150s timer, goal portal as the finish. Red-rock canyon \u2192 level_kind 'canyon', a whole dressed level with route, checkpoints and goal placements. Sunset fantasy \u2192 look 'sunset' (warm orange grade, low sun, long shadows) rather than 'desert', which reads midday. Dust trails and speed lines \u2192 FX.trail, FX.dust, FX.speedLines. Boost pads \u2192 boost_pad props + the 'boost' hazard. Hover feel \u2192 the built-in 'hover' audio loop. The anonymous hover-bike pilot becomes a chibi robot with a fluttering scarf (closest techy species), teal body chosen as a complementary pop against the orange stone. No enemies: the pitch is a pure speed run, so the timer is the only pressure."
+ },
+ "timings_s": {
+  "art": 482.1,
+  "build": 374.3,
+  "eval_s0": 73.1,
+  "eval_v0": 85.6,
+  "eval_v1": 87.8,
+  "eval_v2": 69.5,
+  "plan": 99.3,
+  "repair_1": 232.8,
+  "repair_2": 121.3,
+  "scaffold": 3.1
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Canyon Runner: a desert canyon hover-bike time trial. Rip through red-rock canyons at sunset on a hover-bike, chaining boost pads and hitting every checkpoint before the clock runs out. Warm orange stone, long shadows, dust trails, speed lines.",
+  "notes": "Hover-bike \u2192 kart: the kit's closest vehicle controller (kart/boat are the only vehicles), which also brings the chase camera and vehicle physics group the pitch needs. Time trial \u2192 mode timetrial (laps vs the clock, medals): 2 laps, 0 opponents, 150s timer, goal portal as the finish. Red-rock canyon \u2192 level_kind 'canyon', a whole dressed level with route, checkpoints and goal placements. Sunset fantasy \u2192 look 'sunset' (warm orange grade, low sun, long shadows) rather than 'desert', which reads midday. Dust trails and speed lines \u2192 FX.trail, FX.dust, FX.speedLines. Boost pads \u2192 boost_pad props + the 'boost' hazard. Hover feel \u2192 the built-in 'hover' audio loop. The anonymous hover-bike pilot becomes a chibi robot with a fluttering scarf (closest techy species), teal body chosen as a complementary pop against the orange stone. No enemies: the pitch is a pure speed run, so the timer is the only pressure.",
+  "chosen": {
+   "level_kind": "race_track",
+   "look": "sunset",
+   "player_type": "kart",
+   "camera": "chase",
+   "ui_style": "sleek",
+   "character": {
+    "species": "robot",
+    "accessory": "scarf"
+   },
+   "collectible": "star",
+   "collectible_label": "Embers"
+  }
+ },
+ "model_calls": {
+  "lead": {
+   "calls": 1,
+   "prompt_tokens": 6876,
+   "completion_tokens": 7408,
+   "seconds": 98.4
+  },
+  "builder": {
+   "calls": 51,
+   "prompt_tokens": 1012515,
+   "completion_tokens": 12031,
+   "seconds": 376.8
+  },
+  "judge": {
+   "calls": 8,
+   "prompt_tokens": 42840,
+   "completion_tokens": 3488,
+   "seconds": 77.1
+  }
+ },
+ "agents": {
+  "live": 4,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 232.7
+    },
+    "icon_ember_star": {
+     "ok": true,
+     "seconds": 240.6
+    },
+    "icon_boost_bolt": {
+     "ok": true,
+     "seconds": 250.1
+    },
+    "icon_check_flag": {
+     "ok": true,
+     "seconds": 329.3
+    },
+    "icon_timer_gauge": {
+     "ok": true,
+     "seconds": 341.8
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 360.8
+    },
+    "sfx_boost": {
+     "ok": true,
+     "seconds": 364.1
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 365.1
+    },
+    "sfx_checkpoint": {
+     "ok": true,
+     "seconds": 366.2
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 367.3
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 368.3
+    },
+    "sfx_lose": {
+     "ok": true,
+     "seconds": 370.2
+    },
+    "prop_stone_totem": {
+     "ok": true,
+     "seconds": 439.9
+    },
+    "prop_saguaro_cactus": {
+     "ok": true,
+     "seconds": 482.1
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Canyon Runner: a sunset red-rock canyon hover-kart time trial. Built on the scaffold: switched the level to the 'canyon' kind (winding sandstone loop with arches, hoodoos, boost pads, jump ramps), kept the generated sunset sky, totem/cactus props and splat landmarks, and the sleek HUD with ember counter, timer, lap, minimap and speedometer. The teal robot rider with a scarf drives a teal kart with orange accents. Time trial rules: 2 laps vs a 150s clock, 12-Ember collect target, goal portal, medal targets. Added plan juice: amber dust trail behind the kart, dust puffs on hard turns, boost rings + speed lines + boost SFX on boost pads, checkpoint chime, wall-scrape hit SFX, win slow-mo + ember confetti + win SFX, lose SFX, and a soft WebAudio hover hum that pitches up into boosts. Music (music_main) plays via Audio.music and the generated SFX are preloaded. Title screen sells the fantasy with the tagline and controls credit, 3-2-1-GO countdown. Autopilot verified: moves along the route, collects embers, completes laps with zero console errors.",
+    "changes": [
+     "Level.build switched from race_track to canyon (medium, seed 7, 24 collectibles)",
+     "Look sunset tuned: sun elevation 7, warm fog",
+     "Kart recoloured teal (#2ec4b6) with orange accent",
+     "Rules: timetrial mode, 2 laps, 0 opponents, 150s timer, 12 Embers target",
+     "HUD: sleek style, ember counter with generated icon, timer, lap, minimap, speedometer (km/h), objective line; dropped position (no opponents)",
+     "Added FX.trail amber dust trail, dust puffs on hard turns in game.update",
+     "Boost event: ring + speedLines + sfx_boost + hover-hum pitch rise",
+     "Collect/checkpoint/damage events wired to generated SFX",
+     "Win: slow-mo + ember confetti + win SFX; lose: lose SFX",
+     "Audio.music(music_main) + preload of generated SFX",
+     "Custom WebAudio hover hum loop under the kart"
+    ],
+    "known_issues": [
+     "Kits auto-dropped to 'potato' quality in the low-fps test harness (expected; runs high on real hardware)",
+     "Hover hum starts only after audio unlock (browser autoplay rule)"
+    ]
+   },
+   "plays": 3
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ }
+}
