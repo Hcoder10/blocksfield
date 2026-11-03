@@ -29,7 +29,8 @@ function colors(game) {
   let ink = '', acc = '', fontFam = '';
   if (root) {
     const cs = getComputedStyle(root);
-    ink = cs.getPropertyValue('--tk-ink').trim(); acc = cs.getPropertyValue('--tk-p').trim(); fontFam = cs.fontFamily;
+    ink = cs.getPropertyValue('--tk-ink').trim(); acc = cs.getPropertyValue('--tk-p').trim();
+    fontFam = cs.getPropertyValue('--tk-display').trim() || cs.fontFamily;
   }
   const pal = (game.look && game.look.palette) || {};
   return { ink: ink || pal.ui || '#0b1020', acc: acc || pal.uiAccent || '#ffd23c', text: pal.uiText || '#ffffff',

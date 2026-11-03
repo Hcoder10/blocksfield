@@ -22,6 +22,11 @@ function rng32(a) {
   };
 }
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
+function mixSeed(seed, salt) {
+  let h = (Number(seed) | 0) ^ 0x9e3779b9;
+  for (let i = 0; i < salt.length; i++) h = Math.imul(h ^ salt.charCodeAt(i), 0x01000193);
+  return (h >>> 0) % 1000003;
+}
 const yawTo = (from, to) => Math.atan2(to.x - from.x, to.z - from.z);   // yaw 0 faces +Z
 
 /**
@@ -35,7 +40,8 @@ export function build(game, kind, opts = {}) {
   if (!SIZES[size]) throw new Error(`Level.build: unknown size "${size}"; sizes: small, medium, large`);
   if (!game.look) Look.apply(game, 'toon_bright');
   World.reset(game);
-  const seed = opts.seed ?? 1;
+  // the game's title is mixed into the seed: two games asking for the same kind (and seed) never share a layout
+  const seed = mixSeed(opts.seed ?? 1, opts.unique === false ? '' : (game.title || (typeof document !== 'undefined' ? document.title : '')));
   const group = new THREE.Group(); group.name = 'kit:level:' + kind;
   game.scene.add(group);
   const level = {
@@ -96,7 +102,7 @@ function boundsOf(points, pad = 10) {
 // ------------------------------------------------------------------------------------------------ sky_islands
 function skyIslands(ctx) {
   const { game, level, rnd, S } = ctx;
-  const count = Math.max(4, Math.round(7 * S));
+  const count = Math.max(4, Math.round((6 + rnd() * 2.6) * S));
   const islands = [];
   const conns = [];      // {type, a, b, platforms}
   const route = [];
@@ -198,16 +204,16 @@ function skyIslands(ctx) {
   }
 
   // hazards (Gameplay draws them): spike patches beside the path, a spinner on the widest middle island
-  for (let i = 1; i < islands.length - 1; i++) {
+  for (let i = 2; i < islands.length - 1; i++) {
     const isl = islands[i];
-    if (i % 2 === 1 && isl.radius > 8) {
+    if (i % 2 === 0 && isl.radius > 8) {
       const c = isl.surfacePoint(isl.position.x, isl.position.z), a = rnd() * Math.PI * 2;
       const sp = isl.surfacePoint(c.x + Math.cos(a) * isl.radius * 0.5, c.z + Math.sin(a) * isl.radius * 0.5);
       if (level.route.every(r => r.distanceTo(sp) > 3.2)) { level.hazards.push({ type: 'spikes', position: sp, size: V(2, 0.7, 2) }); World.noPlant(game, [sp], 1.8); }
     }
   }
   {
-    const mids = islands.slice(1, -1).sort((a, b) => b.radius - a.radius);
+    const mids = islands.slice(2, -1).sort((a, b) => b.radius - a.radius);
     if (mids[0] && mids[0].radius > 9.5) { const isl = mids[0]; const c = isl.surfacePoint(isl.position.x, isl.position.z); level.hazards.push({ type: 'spinner', position: c, length: Math.min(9, isl.radius * 0.9), speed: 1.2, height: 0.9 }); World.noPlant(game, [c], 4.8); }
   }
   // collectibles: coin trail along the route + arcs over every jump
@@ -237,7 +243,7 @@ function skyIslands(ctx) {
   });
   if (islands[0]) {
     const f = V(Math.sin(level.spawnYaw), 0, Math.cos(level.spawnYaw)), sd = V(f.z, 0, -f.x);
-    const sp = level.spawn.clone().addScaledVector(f, 4).addScaledVector(sd, 3.2);
+    const sp = level.spawn.clone().addScaledVector(f, 3 + rnd() * 3).addScaledVector(sd, (rnd() < 0.5 ? -1 : 1) * 3.4);
     World.prop(game, 'sign', { ...P(ctx), position: islands[0].surfacePoint(sp.x, sp.z), yaw: level.spawnYaw + Math.PI + 0.4 });
   }
 
@@ -1190,6 +1196,77 @@ varying vec3 vWPos;
     ground.mesh.material = m;
   }
   const gy = (x, z) => ground.heightAt(x, z) ?? 0;
+
+  // ---- the racing line: a packed-dirt road ribbon draped on the floor, red/white curbs, white edge lines, darker
+  // tyre tracks, and chevron boards on the outside of every real bend, so the line reads at speed against the sand
+  {
+    const L = [-W / 2 - 1.1, -W / 2, -W / 2 + 0.35, -W * 0.34 - 0.35, -W * 0.34 + 0.35, -W * 0.14 - 0.3, -W * 0.14 + 0.3,
+      W * 0.14 - 0.3, W * 0.14 + 0.3, W * 0.34 - 0.35, W * 0.34 + 0.35, W / 2 - 0.35, W / 2, W / 2 + 1.1];
+    const dirtC = new THREE.Color('#8a4a2c'), dirt2 = new THREE.Color('#7a3f24'), track = new THREE.Color('#5e2f1c'), line = new THREE.Color('#f4efe6');
+    const curbA = new THREE.Color('#e0362f'), curbB = new THREE.Color('#ffffff');
+    const vtx = [], col = [], idx = [];
+    for (let i = 0; i <= N; i++) {
+      const sd = side(i % N);
+      for (const o of L) {
+        const x = pts[i].x + sd.x * o, z = pts[i].z + sd.z * o;
+        vtx.push(x, heightFn(x, z) + 0.05, z);
+      }
+    }
+    // per-quad colours (non-indexed so bands stay crisp)
+    const pos = [], cl = [], C = L.length;
+    const bandC = (b, i) => {
+      const d = i * lenT / N;
+      if (b === 0 || b === C - 2) return Math.floor(d / 2.5) % 2 ? curbA : curbB;
+      if (b === 1 || b === C - 3) return line;
+      if (b === 3 || b === 5 || b === 7 || b === 9) return track;                  // tyre tracks
+      return Math.floor(d / 6) % 2 ? dirtC : dirt2;
+    };
+    const P3 = (i, b) => [vtx[(i * C + b) * 3], vtx[(i * C + b) * 3 + 1], vtx[(i * C + b) * 3 + 2]];
+    for (let i = 0; i < N; i++) for (let b = 0; b < C - 1; b++) {
+      const c = bandC(b, i), sh = 0.95 + 0.05 * Math.sin(i * 1.3 + b);
+      for (const [ii, bb] of [[i, b], [i + 1, b], [i, b + 1], [i, b + 1], [i + 1, b], [i + 1, b + 1]]) { pos.push(...P3(ii, bb)); cl.push(c.r * sh, c.g * sh, c.b * sh); }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(cl, 3));
+    g.computeVertexNormals();
+    const rm = Look.material(game, { color: '#ffffff', vertexColors: true, rim: 0.131, side: 'double' });
+    rm.polygonOffset = true; rm.polygonOffsetFactor = -2; rm.polygonOffsetUnits = -4;
+    const road = new THREE.Mesh(g, rm); road.name = 'kit:canyon:road'; road.receiveShadow = true;
+    ctx.group.add(road);
+
+    // chevron boards: red with white arrows, on posts outside each sharp bend, pointing the way
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128;
+    const c2 = cv.getContext('2d');
+    c2.fillStyle = '#d42a24'; c2.fillRect(0, 0, 256, 128); c2.strokeStyle = '#1a0d08'; c2.lineWidth = 10; c2.strokeRect(5, 5, 246, 118);
+    c2.fillStyle = '#ffffff';
+    for (const x0 of [40, 110, 180]) { c2.beginPath(); c2.moveTo(x0, 22); c2.lineTo(x0 + 44, 64); c2.lineTo(x0, 106); c2.lineTo(x0 + 22, 106); c2.lineTo(x0 + 66, 64); c2.lineTo(x0 + 22, 22); c2.closePath(); c2.fill(); }
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    const boardM = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false, side: THREE.DoubleSide });
+    const postM = Look.material(game, { color: '#3a2a22' });
+    const boardG = new THREE.PlaneGeometry(3.2, 1.6), postG = new THREE.CylinderGeometry(0.12, 0.12, 2.2, 6);
+    const turnAt = (i) => { const a = tans[(i - 6 + N) % N], b = tans[(i + 6) % N]; return a.x * b.z - a.z * b.x; };
+    let lastI = -999;
+    for (let i = 0; i < N; i += 3) {
+      const tr = turnAt(i);
+      if (Math.abs(tr) < 0.22 || i - lastI < 14) continue;
+      lastI = i;
+      const out = tr > 0 ? 1 : -1;                     // outside of the bend
+      for (const k of [-4, 0, 4]) {
+        const j = (i + k + N) % N, sd = side(j);
+        const q = pts[j].clone().addScaledVector(sd, out * (W / 2 + 2.2)); q.y = heightFn(q.x, q.z);
+        const grp = new THREE.Group(); grp.position.copy(q); grp.userData.dynamic = true;   // keep out of World.bake (textured)
+        const post = new THREE.Mesh(postG, postM); post.position.y = 1.1; grp.add(post);
+        const board = new THREE.Mesh(boardG, boardM); board.position.y = 2.6; grp.add(board);
+        const th = Math.atan2(-out * sd.x, -out * sd.z);   // board faces the road
+        grp.rotation.y = th;
+        const lx = Math.cos(th), lz = -Math.sin(th);       // the board's +X (arrow direction) in world space
+        board.scale.x = lx * tans[j].x + lz * tans[j].z >= 0 ? 1 : -1;   // arrows point the way the road runs
+        grp.traverse(o => { if (o.isMesh) o.castShadow = true; });
+        ctx.group.add(grp);
+      }
+    }
+  }
 
   // ---- placements: start, route (platformers) to the goal arch, checkpoints, laps (races)
   const goalI = Math.round(N * 0.78);

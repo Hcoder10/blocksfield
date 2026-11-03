@@ -165,11 +165,42 @@ const voxCache = new Map();
  *   voxels stream in; group.userData.ready is a Promise<boolean> that resolves true when the generated prop is shown).
  * Voxel JSON (written by the pipeline): {"voxel": 0.05, "points": [[x, y, z, r, g, b], ...], "up": "y"} -- see docs/Assets.md.
  */
+
+// props must not land on a race track (the game's own placement can be off): push them past the barrier, and hide any
+// prop the chase camera is inside so it never fills the screen
+function clearOfTrack(game, pos) {
+  const lv = game.level;
+  if (!lv || !lv.trackWidth || !lv.route || !lv.route.length) return pos;
+  let best = null, bd = Infinity;
+  for (const r of lv.route) { const d = (r.x - pos.x) ** 2 + (r.z - pos.z) ** 2; if (d < bd) { bd = d; best = r; } }
+  const need = lv.trackWidth / 2 + 3.2, d = Math.sqrt(bd);
+  if (d >= need) return pos;
+  const dir = new THREE.Vector3(pos.x - best.x, 0, pos.z - best.z);
+  if (dir.lengthSq() < 1e-6) dir.set(1, 0, 0);
+  dir.normalize();
+  const out = new THREE.Vector3(best.x + dir.x * need, pos.y, best.z + dir.z * need);
+  const h = World.heightAt(game, out.x, out.z);
+  if (h != null) out.y = h;
+  return out;
+}
+function nearHide(game, group, radius) {
+  const list = game._kitNearHide || (game._kitNearHide = []);
+  list.push({ group, radius });
+  if (list.length === 1) {
+    const c = new THREE.Vector3();
+    game.lateUpdate(() => {
+      const cam = game.camera.position;
+      for (const it of list) { it.group.getWorldPosition(c); c.y += it.radius * 0.5; it.group.visible = cam.distanceTo(c) > it.radius * 1.15 + 0.6; }
+    }, 24);
+  }
+}
+
 export function prop(game, name, opts = {}) {
   if (!game || !game.scene) throw new Error('Assets.prop(game, name, opts): first argument must be the game from createGame()');
   const group = new THREE.Group(); group.name = 'kit:asset:' + name;
-  const pos = World.v3(opts.position);
+  const pos = clearOfTrack(game, World.v3(opts.position));
   group.position.copy(pos); group.rotation.y = opts.rotationY ?? opts.yaw ?? 0;
+  nearHide(game, group, opts.height ?? (opts.scale ?? 1) * 1.2 + 0.8);
   (opts.parent || game.scene).add(group);
   const e = entry(game, name, 'prop') || entry(game, name);
   const fallback = () => {
@@ -331,7 +362,8 @@ const pct = (arr, p) => { const a = Float32Array.from(arr).sort(); return a[Math
 export function splat(game, name, opts = {}) {
   if (!game || !game.scene) throw new Error('Assets.splat(game, name, opts): first argument must be the game from createGame()');
   const group = new THREE.Group(); group.name = 'kit:splat:' + name;
-  const pos = World.v3(opts.position);
+  const pos = clearOfTrack(game, World.v3(opts.position));
+  nearHide(game, group, opts.height ?? (opts.scale ?? 1) * 0.8 + 0.8);
   group.position.copy(pos); group.rotation.y = opts.rotationY ?? opts.yaw ?? 0;
   (opts.parent || game.scene).add(group);
   const e = entry(game, name, 'splat');

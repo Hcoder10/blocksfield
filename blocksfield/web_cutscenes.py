@@ -102,12 +102,34 @@ def shots(game_dir: Path, about: dict) -> dict:
     }
 
 
-async def upload(http: httpx.AsyncClient, img: Image.Image, name: str) -> str:
+async def upload(http: httpx.AsyncClient, img: Image.Image, name: str, patience: float = 900) -> str:
+    """Put the source image in ComfyUI's input folder. The arbiter forwards uploads straight to ComfyUI, which is only
+    up while the box is in art mode; while the LLM holds the card we retry, and after a while ask for a tiny art job
+    (through the arbiter's queue, like any build) so ComfyUI wakes."""
     buf = io.BytesIO()
     img.save(buf, "PNG")
-    r = await http.post(f"{ARBITER}/upload", json={"filename": name, "b64": base64.b64encode(buf.getvalue()).decode()})
-    r.raise_for_status()
-    return r.json().get("name", name)
+    body = {"filename": name, "b64": base64.b64encode(buf.getvalue()).decode()}
+    t0, woke = time.time(), False
+    while True:
+        try:
+            r = await http.post(f"{ARBITER}/upload", json=body)
+            if r.status_code < 400:
+                return r.json().get("name", name)
+            err = r.text[:200]
+        except httpx.HTTPError as e:            # noqa: PERF203
+            err = str(e)
+        if time.time() - t0 > patience:
+            raise RuntimeError(f"upload failed for {patience:.0f} s: {err}")
+        if not woke and time.time() - t0 > 60:
+            woke = True
+            print("  ComfyUI asleep: queueing a tiny image job to wake it", flush=True)
+            try:
+                await http.post(f"{ARBITER}/job", json={"workflow": "image", "params": {
+                    "prompt": "a plain grey square", "width": 256, "height": 256, "seed": 1}})
+            except httpx.HTTPError:
+                pass
+            continue
+        await asyncio.sleep(8)
 
 
 async def clip(http: httpx.AsyncClient, img: Image.Image, prompt: str, name: str, seconds: float) -> bytes:
