@@ -121,6 +121,7 @@ export function play(game, urlOrWhen, opts = {}) {
 /** Cutscene.install(game, { intro=true, win=true, lose=true }): auto-play the manifest's cutscenes. Idempotent. */
 export function install(game, opts = {}) {
   if (!game || game.__cutscenes) return game && game.__cutscenes;
+  if (typeof window !== 'undefined' && (window.__kitNoCutscenes || /[?&]nocutscenes=1/.test(location.search))) return (game.__cutscenes = { found: [], played: [], disabled: true });
   const found = entries(game);
   const C = game.__cutscenes = { found: Object.keys(found), played: [] };
   if (!C.found.length) return C;

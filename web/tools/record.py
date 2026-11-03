@@ -24,6 +24,7 @@ from shot import GPU_ARGS, WEB, serve  # noqa: E402
 # virtual time: the page only advances when we call __step(dt)
 INIT = """
 (() => {
+  window.__kitNoCutscenes = !/[?&]cutscenes=1/.test(location.search);   // recordings show gameplay, not cutscenes
   const realNow = performance.now.bind(performance);
   let vt = realNow();
   const q = [];
