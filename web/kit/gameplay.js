@@ -1592,6 +1592,7 @@ export function autopilot(game, opts = {}) {
         if (d < 30 && d < td && !Physics.raycast(game, eye, c.clone().sub(eye), d - 0.8, { excludeCollider: player.collider })) { td = d; tgtE = e; }
       }
       let wantYaw = Math.hypot(mx, mz) > 0.1 ? Math.atan2(mx, mz) : player.lookYaw, wantPitch = -0.05;
+      st.fpsTarget = tgtE;
       if (tgtE) {
         const c = tgtE.position.clone().add(V3(0, tgtE.height * 0.5, 0));
         wantYaw = Math.atan2(c.x - p.x, c.z - p.z); wantPitch = Math.atan2(c.y - eye.y, Math.hypot(c.x - p.x, c.z - p.z));
@@ -1630,6 +1631,69 @@ export function autopilot(game, opts = {}) {
     } else if (player.type === 'topdown' && R) {
       // dash is an edge-triggered press: tap it (press / release) while an enemy is in reach
       for (const e of R.enemies) if (e.alive && e.position.distanceTo(p) < 4.5) { const d = e.position.clone().sub(p).setY(0).normalize(); st.tap = !st.tap; player.setInput(d.x, d.z, false, st.tap, { world: true }); break; }
+    }
+    if ((player.type === 'fps' || player.type === 'topdown') && player._bot && player._bot.world) steerAround(dt);
+  }
+
+  // ---- obstacle avoidance for the walking shooters (fps / topdown): footage must never face-plant into decor ----
+  const ray3 = new THREE.Raycaster(); let decor = [], decorT = 0;
+  function collectDecor() {
+    decor = [];
+    const skip = new Set([player.object, game.__rules && game.__rules.root].filter(Boolean));
+    game.scene.traverse(o => {
+      if (!o.isMesh || !o.visible || !o.geometry || (o.isInstancedMesh && o.count > 150)) return;   // grass / flower carpets are not obstacles
+      for (let q = o; q; q = q.parent) if (skip.has(q) || q.isCamera) return;
+      if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+      const s = o.getWorldScale(V3()), r = o.geometry.boundingSphere.radius * Math.max(s.x, s.y, s.z);
+      if (o.isInstancedMesh || (r > 0.5 && r < 25)) decor.push(o);   // props, crystals, rocks, walls; not terrain / floors
+    });
+  }
+  // free distance along a direction at chest height: static colliders (Rapier) and visible decor without colliders
+  function clearance(from, dir, len) {
+    const hit = Physics.raycast(game, from, dir, len, { excludeCollider: player.collider });
+    let d = hit ? hit.distance : len;
+    ray3.set(from, dir); ray3.far = d;
+    const h3 = ray3.intersectObjects(decor, false)[0];
+    if (h3) d = Math.min(d, h3.distance);
+    return d;
+  }
+  function steerAround(dt) {
+    decorT -= dt; if (decorT <= 0) { collectDecor(); decorT = 2.5; }
+    const b = player._bot, p = player.position, mag = Math.hypot(b.x, b.y);
+    st.backT = Math.max(0, (st.backT || 0) - dt);
+    if (st.backT > 0) { b.x = st.backDir.x; b.y = st.backDir.z; }
+    else if (mag > 0.2) {
+      const want = V3(b.x / mag, 0, b.y / mag), chest = p.clone().add(V3(0, 1.0, 0));
+      const look = 2.6 + Math.min(2, player.speed * 0.15);
+      // fan out from the wanted heading, keep the first direction with room (prefer the side we used last)
+      let best = null;
+      const side = st.avoidSide || 1;
+      for (const a of [0, 0.35, -0.35, 0.7, -0.7, 1.05, -1.05, 1.45, -1.45, 1.9, -1.9]) {
+        const d = want.clone().applyAxisAngle(UP, a * side);
+        // a body-wide corridor: centre ray plus one at each shoulder
+        const sideV = V3(d.z, 0, -d.x).multiplyScalar(0.4);
+        if (clearance(chest, d, look) >= look - 0.05 && clearance(chest.clone().add(sideV), d, look * 0.8) >= look * 0.8 - 0.05 && clearance(chest.clone().sub(sideV), d, look * 0.8) >= look * 0.8 - 0.05) { best = d; if (a) st.avoidSide = Math.sign(a * side); break; }
+      }
+      if (best) { b.x = best.x * mag; b.y = best.z * mag; }
+      else { st.backT = 0.45; st.backDir = want.clone().negate().applyAxisAngle(UP, 0.8 * (st.avoidSide || 1)); b.x = st.backDir.x; b.y = st.backDir.z; }
+      // pressing into something without moving: back off and turn
+      if (player.speed < 1.2 && player.grounded) { st.blockT = (st.blockT || 0) + dt; if (st.blockT > 0.5) { st.blockT = 0; st.avoidSide = -(st.avoidSide || 1); st.backT = 0.5; st.backDir = want.clone().negate().applyAxisAngle(UP, 0.9 * st.avoidSide); } }
+      else st.blockT = 0;
+    }
+    // fps: with no enemy to watch, look where we walk; never stare into a wall closer than 3 u
+    if (player.type === 'fps' && !st.fpsTarget) {
+      const vx = player.velocity.x, vz = player.velocity.z, sp = Math.hypot(vx, vz);
+      let wantYaw = sp > 1.5 ? Math.atan2(vx, vz) : (Math.hypot(b.x, b.y) > 0.2 ? Math.atan2(b.x, b.y) : player.lookYaw);
+      const eye = p.clone().add(V3(0, 1.55, 0)), f = V3(Math.sin(player.lookYaw), 0, Math.cos(player.lookYaw));
+      if (clearance(eye, f, 3) < 3) {
+        // turn toward the most open direction
+        let bestA = 0, bestD = -1;
+        for (let k = 1; k <= 8; k++) { const a = k * Math.PI / 4; const d = clearance(eye, f.clone().applyAxisAngle(UP, a), 8); if (d > bestD) { bestD = d; bestA = a; } }
+        wantYaw = player.lookYaw + (bestA > Math.PI ? bestA - 2 * Math.PI : bestA);
+      }
+      const err = angWrap(wantYaw - player.lookYaw);
+      st.aimV += (THREE.MathUtils.clamp(err * 6, -2.6, 2.6) - st.aimV) * Math.min(1, dt * 8);
+      b.lookYaw = player.lookYaw + st.aimV * dt;
     }
   }
 

@@ -151,11 +151,11 @@ export function follow(game, player, opts = {}) {
 
 // Fade whatever still hides the player after the collision pull-in (clouds, waterfalls, canopies, props without
 // colliders): those meshes get their own faded material copy while they block the view, then get the original back.
-function occluders(game, player) {
+function occluders(game, player, rays = null) {
   const ray = new THREE.Raycaster(), faded = new Map(), cam = game.camera;
   const head = new THREE.Vector3(), to = new THREE.Vector3();
   let k = 0, cands = [], candT = 0;
-  const skip = (o) => { for (let q = o; q; q = q.parent) if (q === player.object || q.userData.noOcclude) return true; return false; };
+  const skip = (o) => { for (let q = o; q; q = q.parent) if (q === player.object || q.userData.noOcclude || q.isCamera || (game.__rules && q === game.__rules.root)) return true; return false; };
   function collect() {
     cands = [];
     game.scene.traverse(o => {
@@ -173,7 +173,11 @@ function occluders(game, player) {
       candT -= dt; if (candT <= 0) { collect(); candT = 2; }
       if ((k++ % 3) === 0) {
         const hits = new Set();
-        for (const h of [1.0, 1.7]) {
+        if (rays) for (const [dir, far] of rays()) {
+          ray.set(cam.position, dir); ray.far = far; ray.near = 0.05;
+          for (const hit of ray.intersectObjects(cands, false)) hits.add(hit.object);
+        }
+        else for (const h of [1.0, 1.7]) {
           head.copy(player.position).y += h;
           to.subVectors(head, cam.position); const len = to.length(); if (len < 0.5) continue;
           ray.set(cam.position, to.divideScalar(len)); ray.far = len - 0.6; ray.near = 0.1;
@@ -353,7 +357,15 @@ export function firstPerson(game, player, opts = {}) {
     vignette = new THREE.Mesh(new THREE.PlaneGeometry(h * 2.4, h), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c2), transparent: true, opacity: 0, depthTest: false, depthWrite: false, toneMapped: false }));
     vignette.position.z = -0.2; vignette.renderOrder = 13; if (!cam.parent) game.scene.add(cam); if (!vm.parent) cam.add(vm); vm.add(vignette);
   }
+  // anything within ~1.7 u in front of the eye fades out (decor bigger than its collider, walls while strafing)
+  const fwd = new THREE.Vector3();
+  const near = occluders(game, player, () => {
+    cam.getWorldDirection(fwd); const out = [];
+    for (const a of [0, 0.45, -0.45]) for (const p of [0, -0.35]) out.push([fwd.clone().applyAxisAngle(UP, a).add(new THREE.Vector3(0, p, 0)).normalize(), 1.7]);
+    return out;
+  });
   const rig = install(game, 'firstPerson', o, (dt) => {
+    near.update(dt || 1 / 60);
     const fdt = dt || 1 / 60;
     if (gun) {
       st.recoil = Math.max(0, st.recoil - fdt * 12);
@@ -385,7 +397,7 @@ export function firstPerson(game, player, opts = {}) {
     cam.fov = st.fov; cam.updateProjectionMatrix();
   });
   const dispose = rig.dispose;
-  rig.dispose = () => { cam.remove(vm); for (const off of offs) off(); dispose(); };
+  rig.dispose = () => { cam.remove(vm); near.clear(); for (const off of offs) off(); dispose(); };
   return rig;
 }
 
