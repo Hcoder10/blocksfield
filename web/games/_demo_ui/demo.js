@@ -140,6 +140,13 @@ const S = {
   banner_warn: () => setTimeout(() => K.UI.banner(game, 'Final Lap!', { style: 'warning', duration: 30 }), 200),
   banner_clear: () => setTimeout(() => K.UI.banner(game, 'Stage Clear!', { style: 'stage_clear', duration: 30, sub: 'New record' }), 200),
   countdown: () => setTimeout(() => K.UI.countdown(game), 300),
+  mech: () => {   // mechanics UI driven by the events mechanics.js emits
+    setTimeout(() => { game.emit('powerup', player, { type: 'speed', duration: 8 }); game.emit('powerup', player, { type: 'magnet', duration: 4 }); game.emit('powerup', player, { type: 'invincible', duration: 12 }); }, 300);
+    setTimeout(() => { game.emit('key', player, { color: 'red' }); game.emit('key', player, { color: 'blue' }); game.emit('key', player, { color: 'gold' }); }, 500);
+    setTimeout(() => game.emit('prompt', { text: 'Open door', key: 'E', icon: 'door' }), 700);
+    setTimeout(() => game.emit('rule', { name: 'floor_is_lava', text: 'Floor is lava!', seconds: 5 }), 900);
+    if (q.get('banner')) setTimeout(() => game.emit('mechanic', { name: 'Gravity Flip', text: 'Press G to flip gravity' }), 300);
+  },
   toast: () => { K.UI.toast(game, 'Checkpoint reached', { icon: 'flag' }); K.UI.toast(game, '+50 Combo!', { icon: 'star' }); },
   fx: () => {
     const c = new T.Vector3(0, 1, 0);

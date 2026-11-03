@@ -86,6 +86,32 @@ await K.UI.dialog(game, { name: 'Mayor Pip', portrait: 'P', lines: ['Welcome, fr
 Checkpoint, lap and final-lap banners, the win screen (with 1-3 stars and stats) and the lose screen appear on their
 own from the events; do not add them again. Win stars: `state.stars` if set, else 1 + all counters full + no damage.
 
+## Mechanics UI (power-ups, keys, prompts, rules)
+
+Mechanics (mechanics.js) drives these through events, and `UI.hud` wires them, so a game normally never calls them:
+
+```js
+UI.powerup(game, { type: 'speed', duration: 8, icon, label })   // chip with a draining ring timer; again = refresh
+UI.powerupEnd(game, 'speed')                                     // pop it now (also happens when the timer runs out)
+UI.keyring(game, ['red', 'blue'])  /  UI.keyring(game).add('gold').remove('red')   // keys by colour, top right
+UI.prompt(game, 'Open door', { key: 'E', icon: 'door' })  /  UI.prompt(game, null)  // contextual prompt; a tap button on phones
+UI.ruleToast(game, 'Floor is lava!', { seconds: 3 })            // a rule firing, with a countdown bar
+UI.mechanicBanner(game, 'Gravity Flip', { text: 'Press G to flip gravity' })
+```
+| event (`game.emit`) | UI reaction |
+|---|---|
+| `powerup(player, {type, duration, label, icon})` / `powerupEnd(player, {type})` | power-up chip appears / pops |
+| `key(player, {color})` / `keyUsed(player, {color})` | key added to / removed from the key ring |
+| `door(door, {open, locked, color})` | toast: "Door opened" or "Locked: needs the red key" |
+| `switch(sw, {on, text})` | toast with `text`, if given |
+| `rule({name, text, seconds})` | rule toast |
+| `mechanic({name, text})` | mechanic banner |
+| `prompt({text, key, icon})` / `prompt(null)` | show / hide the contextual prompt |
+
+It also reads `game.state.keys` (array of colours) and `game.state.powerups` (`{type: secondsLeft}`) if set.
+Power-up icons: speed, jump, shield, magnet, giant, tiny, invincible, double_coins, slowmo, ghost. Interactable icons:
+door, key, switch, lever, button, chest, teleporter, spring, crate, plus rule and gear (custom mechanic).
+
 ## Common mistakes
 
 - Calling `UI.winScreen` in `game.on('win')` as well: the HUD already does it (pass `winScreen: false` to own it).

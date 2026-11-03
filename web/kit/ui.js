@@ -82,9 +82,51 @@ const ICON_SVG = {
     <path d="M32 4l22 8v16c0 14-10 26-22 32C20 54 10 42 10 28V12z" fill="url(#g${u})" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><path d="M32 12v40" stroke="#fff" stroke-width="3" opacity=".5"/>`,
   sword: (u) => `<path d="M46 6h12v12L30 46l-12-12z" fill="#e6edf5" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><path d="M12 36l16 16M20 48l-8 8M8 44l12 12" stroke="${INK}" stroke-width="5" stroke-linecap="round"/><path d="M14 38l12 12" stroke="#ffcf3a" stroke-width="3" stroke-linecap="round"/>`,
   person: (u) => `<circle cx="32" cy="20" r="11" fill="#ffd9b8" stroke="${INK}" stroke-width="3.5"/><path d="M12 58c0-14 9-22 20-22s20 8 20 22z" fill="#5aa0ff" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>`,
+  // ---- power-ups (mechanics.js) ----
+  speed: (u) => `<defs><linearGradient id="g${u}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7df9ff"/><stop offset="1" stop-color="#2a8cff"/></linearGradient></defs>
+    <path d="M10 40l14-22h14l-6 10h16l6 12-6 10H22z" fill="url(#g${u})" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><path d="M4 26h10M2 36h8M6 46h8" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/><path d="M26 22h8" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`,
+  jump: (u) => `<defs><linearGradient id="g${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b6ff7a"/><stop offset="1" stop-color="#3cc45a"/></linearGradient></defs>
+    <path d="M32 4l16 18H38v12H26V22H16z" fill="url(#g${u})" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M14 42l36 0M18 48l28 0M14 54l36 0" stroke="${INK}" stroke-width="4" stroke-linecap="round"/><path d="M14 42l36 0M14 54l36 0" stroke="#ffd23f" stroke-width="1.6" stroke-linecap="round"/>`,
+  magnet: (u) => `<path d="M14 10v22a18 18 0 0 0 36 0V10H38v22a6 6 0 0 1-12 0V10z" fill="#ff4d5e" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M14 10h12v8H14zM38 10h12v8H38z" fill="#e6edf5" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><path d="M19 30c0 6 3 11 8 13" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".8"/>`,
+  giant: (u) => `<defs><linearGradient id="g${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8a5b"/><stop offset="1" stop-color="#e0263f"/></linearGradient></defs>
+    <path d="M8 34C8 18 20 8 32 8s24 10 24 26z" fill="url(#g${u})" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><circle cx="22" cy="22" r="4.5" fill="#fff"/><circle cx="40" cy="18" r="3.5" fill="#fff"/><circle cx="44" cy="28" r="3" fill="#fff"/>
+    <path d="M22 34h20v14a6 6 0 0 1-6 6h-8a6 6 0 0 1-6-6z" fill="#fff1d6" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><circle cx="28" cy="42" r="1.8" fill="${INK}"/><circle cx="36" cy="42" r="1.8" fill="${INK}"/>`,
+  tiny: (u) => `<path d="M20 38C20 30 26 24 32 24s12 6 12 14z" fill="#8ff3ff" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><path d="M27 38h10v8a3 3 0 0 1-3 3h-4a3 3 0 0 1-3-3z" fill="#fff1d6" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M10 10l8 8M54 10l-8 8M10 54l8-8M54 54l-8-8" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/><path d="M10 10h6M10 10v6M54 10h-6M54 10v6M10 54h6M10 54v-6M54 54h-6M54 54v-6" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/>`,
+  invincible: (u) => `<defs><linearGradient id="g${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7ad9"/><stop offset=".35" stop-color="#ffe14d"/><stop offset=".7" stop-color="#5ef1ff"/><stop offset="1" stop-color="#9d7bff"/></linearGradient></defs>
+    <path d="M32 5l8 16.4 18 2.6-13 12.7 3 18L32 46.2 16 54.7l3-18L6 24l18-2.6z" fill="url(#g${u})" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><path d="M24 25l5-1.2 3-6.5" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"/>`,
+  double_coins: (u) => `<defs><radialGradient id="g${u}" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#fff6b0"/><stop offset=".5" stop-color="#ffd23f"/><stop offset="1" stop-color="#e08a00"/></radialGradient></defs>
+    <circle cx="24" cy="30" r="16" fill="url(#g${u})" stroke="${INK}" stroke-width="3.5"/><circle cx="40" cy="34" r="16" fill="url(#g${u})" stroke="${INK}" stroke-width="3.5"/>
+    <text x="40" y="41" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="18" fill="${INK}">x2</text>`,
+  slowmo: (u) => `<path d="M16 6h32M16 58h32" stroke="${INK}" stroke-width="5" stroke-linecap="round"/><path d="M20 8c0 14 10 16 10 24S20 42 20 56h24c0-14-10-16-10-24S44 22 44 8z" fill="#c9f4ff" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M26 52c2-6 6-8 6-12 0 4 4 6 6 12z" fill="#ffcf3a"/><path d="M26 16h12" stroke="#ffcf3a" stroke-width="4" stroke-linecap="round"/>`,
+  ghost: (u) => `<path d="M14 56V28a18 18 0 0 1 36 0v28l-6-5-6 5-6-5-6 5-6-5z" fill="#eef2ff" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round" opacity=".92"/><ellipse cx="25" cy="28" rx="3.5" ry="5" fill="${INK}"/><ellipse cx="39" cy="28" rx="3.5" ry="5" fill="${INK}"/><path d="M20 18c2-4 6-6 10-6" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"/>`,
+  // ---- interactables (mechanics.js) ----
+  door: (u) => `<path d="M14 58V14a6 6 0 0 1 6-6h24a6 6 0 0 1 6 6v44z" fill="#b8763f" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><path d="M20 58V18h24v40" fill="#8a5228" stroke="${INK}" stroke-width="2.5"/><path d="M26 24v28M32 24v28M38 24v28" stroke="#6b3d1c" stroke-width="2"/>
+    <circle cx="40" cy="38" r="3" fill="#ffd23f" stroke="${INK}" stroke-width="2"/><path d="M8 58h48" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>`,
+  switch: (u) => `<rect x="10" y="18" width="44" height="28" rx="14" fill="#3cff9e" stroke="${INK}" stroke-width="3.5"/><circle cx="40" cy="32" r="10" fill="#ffffff" stroke="${INK}" stroke-width="3.5"/><path d="M18 28v8" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/>`,
+  lever: (u) => `<path d="M30 46L44 12" stroke="${INK}" stroke-width="7" stroke-linecap="round"/><path d="M30 46L44 12" stroke="#c9cbd8" stroke-width="3" stroke-linecap="round"/><circle cx="45" cy="11" r="6" fill="#ff4d5e" stroke="${INK}" stroke-width="3.5"/>
+    <path d="M10 56c0-10 8-16 22-16s22 6 22 16z" fill="#6b6f80" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>`,
+  button: (u) => `<ellipse cx="32" cy="44" rx="24" ry="10" fill="#6b6f80" stroke="${INK}" stroke-width="3.5"/><path d="M14 40v-8c0-5 8-9 18-9s18 4 18 9v8c0 5-8 9-18 9s-18-4-18-9z" fill="#ff4d5e" stroke="${INK}" stroke-width="3.5"/><ellipse cx="32" cy="32" rx="18" ry="8" fill="#ff8a95" stroke="${INK}" stroke-width="3"/>`,
+  chest: (u) => `<path d="M8 30h48v24H8z" fill="#b8763f" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><path d="M8 30c0-12 10-18 24-18s24 6 24 18z" fill="#d18a4a" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M8 30h48M20 13v41M44 13v41" stroke="#ffcf3a" stroke-width="3.5"/><rect x="27" y="27" width="10" height="11" rx="2" fill="#ffcf3a" stroke="${INK}" stroke-width="2.5"/>`,
+  teleporter: (u) => `<defs><radialGradient id="g${u}" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#b47cff"/><stop offset="1" stop-color="#2a1a6a"/></radialGradient></defs>
+    <ellipse cx="32" cy="32" rx="18" ry="26" fill="url(#g${u})" stroke="${INK}" stroke-width="3.5"/><path d="M32 14c-6 6-6 30 0 36M26 22c4 6 8 14 0 20" stroke="#fff" stroke-width="2.5" fill="none" opacity=".8"/>`,
+  spring: (u) => `<path d="M14 52h36M18 44l28-6M18 36l28-6M18 28l28-6" stroke="${INK}" stroke-width="6" stroke-linecap="round"/><path d="M18 44l28-6M18 36l28-6M18 28l28-6" stroke="#c9cbd8" stroke-width="2.5" stroke-linecap="round"/>
+    <rect x="12" y="10" width="40" height="10" rx="3" fill="#ff4d5e" stroke="${INK}" stroke-width="3.5"/><rect x="10" y="50" width="44" height="8" rx="3" fill="#6b6f80" stroke="${INK}" stroke-width="3"/>`,
+  crate: (u) => `<rect x="10" y="10" width="44" height="44" rx="3" fill="#d18a4a" stroke="${INK}" stroke-width="3.5"/><path d="M10 10l44 44M54 10L10 54" stroke="#8a5228" stroke-width="4"/><rect x="10" y="10" width="44" height="44" rx="3" fill="none" stroke="${INK}" stroke-width="3.5"/>`,
+  rule: (u) => `<path d="M32 6l26 46H6z" fill="#ffcf3a" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><path d="M32 22v14" stroke="${INK}" stroke-width="5" stroke-linecap="round"/><circle cx="32" cy="44" r="3" fill="${INK}"/>`,
+  gear: (u) => `<path d="M28 4h8l2 8 6 3 7-5 6 6-5 7 3 6 8 2v8l-8 2-3 6 5 7-6 6-7-5-6 3-2 8h-8l-2-8-6-3-7 5-6-6 5-7-3-6-8-2v-8l8-2 3-6-5-7 6-6 7 5 6-3z" fill="#b47cff" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><circle cx="32" cy="32" r="8" fill="#fff" stroke="${INK}" stroke-width="3"/>`,
 };
 const ICON_ALIAS = { coins: 'coin', gold: 'coin', stars: 'star', gems: 'gem', diamond: 'gem', hearts: 'heart', life: 'heart', lives: 'heart', seeds: 'seed', keys: 'key',
-  flags: 'flag', goal: 'checkered', finish: 'checkered', energy: 'bolt', boost: 'bolt', speed: 'bolt', enemy: 'skull', enemies: 'skull', kills: 'skull', time: 'clock', timer: 'clock',
+  invincibility: 'invincible', star_power: 'invincible', starman: 'invincible', double: 'double_coins', coin_x2: 'double_coins', slow: 'slowmo',
+  slow_motion: 'slowmo', big: 'giant', grow: 'giant', mega: 'giant', shrink: 'tiny', mini: 'tiny', small: 'tiny', high_jump: 'jump', super_jump: 'jump',
+  jump_boost: 'jump', speed_boost: 'speed', haste: 'speed', fast: 'speed', portal: 'teleporter', teleport: 'teleporter', pressure_plate: 'button',
+  plate: 'button', trampoline: 'spring', bounce: 'spring', bounce_pad: 'spring', box: 'crate', gate: 'door', treasure: 'chest', custom: 'gear',
+  mechanic: 'gear', hazard: 'rule', warning: 'rule', invisible: 'ghost', phase: 'ghost',
+  flags: 'flag', goal: 'checkered', finish: 'checkered', energy: 'bolt', boost: 'bolt', enemy: 'skull', enemies: 'skull', kills: 'skull', time: 'clock', timer: 'clock',
   cup: 'trophy', score: 'trophy', crystals: 'crystal', apple: 'fruit', fruits: 'fruit', leaves: 'leaf', orbs: 'orb', flower: 'fruit', flowers: 'fruit', rings: 'coin' };
 export const ICONS = Object.keys(ICON_SVG);   // built-in icon names (CONTRACT choice list)
 export const icons = ICONS;
@@ -362,6 +404,19 @@ function refresh(game, H) {
       H.pos.last = p;
     }
   }
+  // mechanics state, when mechanics.js keeps it there: game.state.keys = ['red', ...], game.state.powerups = {type: secondsLeft}
+  if (Array.isArray(st.keys)) { const k = st.keys.join(','); if (k !== H.last.keys) { H.last.keys = k; keyring(game, st.keys); } }
+  if (st.powerups && typeof st.powerups === 'object') {
+    const M = mechTray(game);
+    for (const [type, left] of Object.entries(st.powerups)) {
+      if (!(left > 0)) continue;
+      const c = M.chips.get(type);
+      if (!c) powerup(game, { type, duration: left });
+      else if (Math.abs(c.left - left) > 0.5) { if (left > c.left) c.dur = Math.max(c.dur, left); c.left = left; }
+    }
+    for (const type of [...M.chips.keys()]) if (!(st.powerups[type] > 0) && M.chips.get(type).fromState !== false && H.last.puSeen && H.last.puSeen.has(type)) powerupEnd(game, type);
+    H.last.puSeen = new Set(Object.keys(st.powerups).filter(t => st.powerups[t] > 0));
+  }
   if (H.minimap) H.minimap.draw();
   if (H.speedo) H.speedo.update();
 }
@@ -396,6 +451,22 @@ function autoEvents(game, H, on) {
   });
   on('win', () => { if (U.ended) return; U.ended = true; H.running = false; if (o.winScreen !== false) setTimeout(() => winScreen(game, typeof o.winScreen === 'object' ? o.winScreen : {}), o.winDelay ?? 1100); });
   on('lose', (reason) => { if (U.ended) return; U.ended = true; H.running = false; if (o.loseScreen !== false) setTimeout(() => loseScreen(game, { reason, ...(typeof o.loseScreen === 'object' ? o.loseScreen : {}) }), o.loseDelay ?? 900); });
+  // mechanics.js events (feature-detected there; argument shapes are forgiving: the info object may come first or second)
+  const info = (a, b) => (b && typeof b === 'object' && !b.isObject3D && !b.position ? b : a && typeof a === 'object' && !a.isObject3D && !a.position ? a : {}) || {};
+  const label = (x) => String(x || '').replace(/_/g, ' ');
+  on('powerup', (a, b) => { const o = info(a, b); powerup(game, { type: o.type || o.name, duration: o.duration ?? o.seconds, icon: o.icon, label: o.label }); });
+  on('powerupEnd', (a, b) => { const o = info(a, b); powerupEnd(game, o.type || o.name || (typeof a === 'string' ? a : '')); });
+  on('key', (a, b) => { const o = info(a, b); keyring(game).add(o.color || o.key || (typeof b === 'string' ? b : 'gold')); });
+  on('keyUsed', (a, b) => { const o = info(a, b); keyring(game).remove(o.color || o.key || (typeof b === 'string' ? b : 'gold')); });
+  on('door', (a, b) => {
+    const o = info(a, b);
+    if (o.locked || o.open === false) toast(game, o.text || `Locked: needs the ${label(o.color || o.needs || '')} key`.replace('the  key', 'a key'), { icon: 'door', duration: 1.8 });
+    else if (o.open) toast(game, o.text || 'Door opened', { icon: 'door', duration: 1.4 });
+  });
+  on('switch', (a, b) => { const o = info(a, b); if (o.text || o.label) toast(game, o.text || o.label, { icon: o.kind || 'switch', duration: 1.6 }); });
+  on('rule', (a, b) => { const o = typeof a === 'string' ? { text: a } : info(a, b); if (o.silent) return; ruleToast(game, o.text || label(o.name) || 'Rule!', { seconds: o.seconds ?? o.duration, icon: o.icon }); });
+  on('mechanic', (a, b) => { const o = typeof a === 'string' ? { name: a } : info(a, b); mechanicBanner(game, o.title || label(o.name), { text: o.text }); });
+  on('prompt', (a, b) => { if (a == null || a === false) return prompt(game, null); const o = typeof a === 'string' ? { text: a, key: b } : info(a, b); prompt(game, o.text, { key: o.key, icon: o.icon }); });
   on('pause', (b) => { if (game.__kitPause) return; if (b && !U.pauseEl && !U.ended && !U.title && !U.dialog && !U.counting) pauseMenu(game); else if (!b && U.pauseEl) closePause(game, false); });
 }
 
@@ -535,7 +606,7 @@ export function banner(game, text, opts = {}) {
   return new Promise((resolve) => {
     const run = () => {
       U.bannerBusy = true;
-      const el = h('div', `tk-banner tk-${style}`);
+      const el = h('div', `tk-banner tk-${style}${opts.mechanic ? ' tk-mechanic' : ''}`);
       if (style === 'go') el.append(h('div', 'tk-rays'));
       else el.append(h('div', 'tk-band'));
       el.append(bigText(text));
@@ -600,6 +671,145 @@ export function toast(game, text, opts = {}) {
   emitUi(game, 'open');
   setTimeout(() => { el.classList.add('tk-out'); setTimeout(() => el.remove(), 360); }, duration * 1000);
   return el;
+}
+
+// ---------- mechanics UI: power-up timers, key ring, contextual prompt, rule toasts, mechanic banner ----------
+// mechanics.js feature-detects these (and UI.hud wires them to its events), so games never call them by hand.
+const POWERUP_LABEL = { speed: 'Speed', jump: 'Super Jump', shield: 'Shield', magnet: 'Magnet', giant: 'Giant', tiny: 'Tiny', invincible: 'Invincible',
+  double_coins: 'Double Coins', slowmo: 'Slow-Mo', ghost: 'Ghost' };
+const KEY_COLORS = { red: '#ff4d5e', blue: '#3d8bff', green: '#3cdc6a', yellow: '#ffd23f', gold: '#ffcf3a', purple: '#b47cff', orange: '#ff9a3c',
+  pink: '#ff7ad9', cyan: '#3ee8ff', white: '#f4f7fb', silver: '#c9cbd8', black: '#3a3a4a' };
+const keyColor = (c) => KEY_COLORS[String(c || 'gold').toLowerCase()] || (/^#|^rgb/.test(String(c)) ? c : '#ffcf3a');
+function mechTray(game) {
+  const U = ui(game);
+  if (!U.mech) {
+    const tray = h('div', 'tk-powerups'), keys = h('div', 'tk-keyring');
+    U.root.append(tray, keys);
+    U.mech = { tray, keys, chips: new Map(), keyEls: new Map(), tick: null };
+    U.mech.tick = game.lateUpdate((dt) => {
+      for (const [type, c] of U.mech.chips) {
+        if (!Number.isFinite(c.left)) continue;
+        c.left -= dt;
+        const f = Math.max(0, c.left / c.dur);
+        c.ring.setAttribute('stroke-dasharray', `${(f * 100).toFixed(2)} 100`);
+        c.el.classList.toggle('tk-ending', c.left < 2.5);
+        if (c.left <= 0) powerupEnd(game, type);
+      }
+    }, 31);
+  }
+  return U.mech;
+}
+/** UI.powerup(game, {type, duration=8, icon, label}) -> a chip with a draining ring; calling again refreshes it */
+export function powerup(game, opts = {}) {
+  if (typeof opts === 'string') opts = { type: opts };
+  const type = String(opts.type || 'speed');
+  const M = mechTray(game);
+  const dur = +opts.duration > 0 ? +opts.duration : (opts.duration === Infinity ? Infinity : 8);
+  let c = M.chips.get(type);
+  if (!c) {
+    const el = h('div', 'tk-pu');
+    el.innerHTML = `<svg class="tk-pu-ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="19" class="tk-pu-track"/><circle cx="22" cy="22" r="19" class="tk-pu-fill" pathLength="100" stroke-dasharray="100 100"/></svg>`;
+    el.append(icon(game, opts.icon || type, 'tk-pu-ico'), h('span', 'tk-pu-lbl tk-ol', [opts.label || POWERUP_LABEL[type] || type.replace(/_/g, ' ')]));
+    M.tray.append(el);
+    c = { el, ring: el.querySelector('.tk-pu-fill') };
+    M.chips.set(type, c);
+    emitUi(game, 'open');
+  } else { c.el.classList.remove('tk-pu-bump'); void c.el.offsetWidth; c.el.classList.add('tk-pu-bump'); }
+  c.dur = dur; c.left = dur;
+  c.ring.setAttribute('stroke-dasharray', '100 100');
+  return c.el;
+}
+/** UI.powerupEnd(game, type): pop the chip away (also happens when its timer runs out) */
+export function powerupEnd(game, type) {
+  const M = mechTray(game), c = M.chips.get(String(type));
+  if (!c) return;
+  M.chips.delete(String(type));
+  c.el.classList.add('tk-pu-out');
+  setTimeout(() => c.el.remove(), 420);
+}
+/** UI.keyring(game, colors[]) sets the key ring; UI.keyring(game).add(color) / .remove(color) */
+export function keyring(game, colors) {
+  const M = mechTray(game);
+  const api = {
+    add(color) {
+      const k = String(color || 'gold').toLowerCase();
+      if (M.keyEls.has(k)) { const e = M.keyEls.get(k); e.n = (e.n || 1) + 1; e.el.dataset.n = e.n; return api; }
+      const el = h('div', 'tk-key-chip tk-pop');
+      el.innerHTML = `<svg viewBox="0 0 64 64"><path d="M28 30l24 0 0 8-5 0 0 6-6 0 0-6-13 0z" fill="${keyColor(k)}" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><circle cx="18" cy="34" r="12" fill="${keyColor(k)}" stroke="${INK}" stroke-width="3.5"/><circle cx="18" cy="34" r="4.5" fill="${INK}"/><path d="M11 29c1-3 3-4 5-5" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"/></svg>`;
+      el.title = `${k} key`;
+      M.keys.append(el); M.keyEls.set(k, { el, n: 1 });
+      return api;
+    },
+    remove(color) {
+      const k = String(color || 'gold').toLowerCase(), e = M.keyEls.get(k);
+      if (!e) return api;
+      if (e.n > 1) { e.n--; e.el.dataset.n = e.n > 1 ? e.n : ''; return api; }
+      M.keyEls.delete(k); e.el.classList.add('tk-pu-out'); setTimeout(() => e.el.remove(), 420);
+      return api;
+    },
+    set(list) {
+      const want = new Map();
+      for (const c of list || []) { const k = String(c).toLowerCase(); want.set(k, (want.get(k) || 0) + 1); }
+      for (const k of [...M.keyEls.keys()]) if (!want.has(k)) { M.keyEls.get(k).n = 1; api.remove(k); }
+      for (const [k, n] of want) { if (!M.keyEls.has(k)) api.add(k); const e = M.keyEls.get(k); e.n = n; e.el.dataset.n = n > 1 ? n : ''; }
+      return api;
+    },
+  };
+  if (Array.isArray(colors)) api.set(colors);
+  return api;
+}
+/** UI.prompt(game, 'Open door', {key:'E', icon}) shows a contextual prompt; UI.prompt(game, null) hides it.
+ *  On touch screens it is a tap button that presses the key. */
+export function prompt(game, text, opts = {}) {
+  const U = ui(game);
+  if (!U.promptEl) {
+    U.promptEl = h('div', 'tk-prompt');
+    U.root.append(U.promptEl);
+    U.promptEl.addEventListener('pointerdown', (e) => {
+      if (!U.promptKey) return;
+      e.preventDefault(); e.stopPropagation();
+      const code = U.promptKey.length === 1 ? 'Key' + U.promptKey.toUpperCase() : U.promptKey;
+      const key = code.startsWith('Key') ? code.slice(3).toLowerCase() : code === 'Space' ? ' ' : code;
+      window.dispatchEvent(new KeyboardEvent('keydown', { code, key, bubbles: true }));
+      setTimeout(() => window.dispatchEvent(new KeyboardEvent('keyup', { code, key, bubbles: true })), 120);
+      game.emit('promptPress', U.promptKey);
+      U.promptEl.classList.remove('tk-pressed'); void U.promptEl.offsetWidth; U.promptEl.classList.add('tk-pressed');
+    });
+  }
+  const el = U.promptEl;
+  if (text == null || text === false || text === '') { el.classList.remove('tk-show'); U.promptKey = null; U.promptText = null; return null; }
+  const key = String(opts.key || 'E');
+  if (U.promptText === text && U.promptKey === key && el.classList.contains('tk-show')) return el;
+  U.promptKey = key; U.promptText = text;
+  const touch = U.root.classList.contains('tk-touch');
+  el.innerHTML = '';
+  el.append(wrap(panel([touch ? h('span', 'tk-tapdot', ['TAP']) : h('span', 'tk-key', [key.replace(/^Key/, '').toUpperCase()]),
+    opts.icon ? icon(game, opts.icon, 'tk-ico') : null, h('span', 'tk-prompt-t', [String(text)])])));
+  el.classList.toggle('tk-tap', touch);
+  el.classList.add('tk-show');
+  return el;
+}
+/** UI.ruleToast(game, 'Floor is lava!', {seconds:3, icon:'rule'}) announces a rule firing, with a countdown bar */
+export function ruleToast(game, text, opts = {}) {
+  const U = ui(game);
+  const secs = +opts.seconds > 0 ? +opts.seconds : 0;
+  if (U.ruleEl) U.ruleEl.remove();
+  const bar = h('div', 'tk-rule-bar'), sub = h('span', 'tk-rule-s tk-ol', [secs ? `${Math.ceil(secs)} s` : '']);
+  const el = h('div', 'tk-rule', [wrap(panel([icon(game, opts.icon || 'rule', 'tk-ico'), bigText(String(text)), sub, bar]))]);
+  U.root.append(el); U.ruleEl = el;
+  emitUi(game, 'banner');
+  const life = Math.max(1.8, secs || opts.duration || 2.2);
+  if (secs) {
+    bar.style.animation = `tk-rule-drain ${secs}s linear forwards`;
+    const t0 = performance.now();
+    const iv = setInterval(() => { const left = secs - (performance.now() - t0) / 1000; if (left <= 0 || !el.isConnected) { clearInterval(iv); return; } sub.textContent = `${Math.ceil(left)} s`; }, 200);
+  } else bar.remove();
+  setTimeout(() => { el.classList.add('tk-out'); setTimeout(() => el.remove(), 400); }, life * 1000);
+  return el;
+}
+/** UI.mechanicBanner(game, 'Gravity Flip', {text:'Press G to flip gravity'}) when a custom mechanic activates */
+export function mechanicBanner(game, name, opts = {}) {
+  return banner(game, String(name || 'New mechanic'), { style: 'info', sub: opts.text || 'New mechanic!', duration: opts.duration || 2.2, ...opts, mechanic: true });
 }
 
 // ---------- shared screen plumbing ----------
