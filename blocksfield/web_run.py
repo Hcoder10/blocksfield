@@ -236,6 +236,10 @@ class WebBuild:
         if not (self.game_dir / "assets" / "assets.json").exists():
             (self.game_dir / "assets" / "assets.json").write_text("{}", encoding="utf-8")
         (self.game_dir / "index.html").write_text(wp.index_html(self.plan.get("title", self.id)), encoding="utf-8")
+        sc = wp.scenery_js(self.manifest(), self.catalog)
+        (self.game_dir / "scenery.js").unlink(missing_ok=True)
+        if sc:
+            (self.game_dir / "scenery.js").write_text(sc, encoding="utf-8", newline="\n")
         src = wp.scaffold_js(self.plan, self.catalog, self.manifest())
         (self.game_dir / "game.js").write_text(src, encoding="utf-8", newline="\n")
         from blocksfield import web_build as wb
@@ -264,6 +268,8 @@ class WebBuild:
         if res is None:
             await self.llm_up("build (after a failed builder)")   # an outage stops the run here: build is redone
             self.log("build: the builder did not submit; continuing with what is on disk")
+        if self.wp.reattach_scenery(self.game_dir):
+            self.log("build: the builder dropped scenery(game, level): re-attached")
         return {"result": res, "plays": gt.plays}
 
     # -- 5. judge + repair ----------------------------------------------------------------------------
@@ -369,6 +375,8 @@ class WebBuild:
                                                           best["findings"], rnd),
                                           role="builder", system=wb.BUILDER_SYSTEM, tools=tools,
                                           schema=wb.BUILD_SUBMIT, label=name, max_steps=self.a.repair_steps)
+                if self.wp.reattach_scenery(self.game_dir):
+                    self.log(f"{name}: the repair dropped scenery(game, level): re-attached")
                 self.stages.put(name, {"result": res, "from": best["tag"], "plays": gt.plays}, time.time() - t)
             ev = await self.evaluate(f"v{rnd}")
             evals.append(ev)

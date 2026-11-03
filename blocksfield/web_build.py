@@ -62,6 +62,10 @@ class GameTools:
     def _mine(self, path: str) -> Path:
         rel = str(path or "").replace("\\", "/").lstrip("./")
         rel = re.sub(r"^(?:web/)?games/[^/]+/", "", rel)
+        if rel == "scenery.js":
+            raise ValueError("scenery.js is made by the pipeline (it places this game's generated props and splat "
+                             "landmarks); keep calling scenery(game, level) from game.js and add your own scenery "
+                             "in game.js")
         if not WRITABLE.match(rel):
             raise ValueError(f"you can only write game.js or other .js files of this game (e.g. game.js, js/enemies.js),"
                              f" not {path!r}; index.html and assets/ are made by the pipeline")

@@ -345,6 +345,7 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
     racing = bool(int(race.get("laps") or 0)) and plan.get("level_kind") in TRACK_KINDS
     lines = [
         "import * as K from 'kit';",
+        *(["import { scenery } from './scenery.js';"] if scenery_js(assets, catalog) else []),
         "",
         f"// {plan.get('title', 'Game')}: {plan.get('tagline', '')}",
         f"const game = await K.createGame({{ assets: './assets/assets.json', seed: 7, title: {j(plan.get('title'))} }});",
@@ -362,35 +363,8 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
                  f"yaw: level.spawnYaw, colors: {j(plan.get('player_colors') or {})} }});")
     cam = plan.get("camera") or CAMERA_FOR.get(plan.get("player_type"), "follow")
     lines.append(f"K.Camera.{cam}(game, player);" if cam != "orbit" else "K.Camera.orbit(game, { target: player });")
-    props = [n for n, e in assets.items() if e.get("kind") == "prop"][:2] if has("Assets", "prop") else []
-    if props:
-        lines += [
-            "// generated voxel props beside the route, standing on the ground",
-            f"const PROPS = {j(props)};",
-            "for (let i = 3, k = 0; i < level.route.length - 2; i += 3, k++) {",
-            "  const a = level.route[i], b = level.route[i + 1];",
-            "  const side = new K.THREE.Vector3(b.z - a.z, 0, a.x - b.x).normalize().multiplyScalar(k % 2 ? 3.5 : -3.5);",
-            "  const x = a.x + side.x, z = a.z + side.z, y = K.World.heightAt(game, x, z);",
-            "  if (y == null || Math.abs(y - a.y) > 2) continue;",
-            "  K.Assets.prop(game, PROPS[k % PROPS.length], { position: [x, y, z], rotationY: k * 1.3, "
-            "height: 2.2 + (k % 3) * 0.6, fallback: 'mushroom' });",
-            "}",
-        ]
-    splats = [n for n, e in assets.items() if e.get("kind") == "splat"][:3] if has("Assets", "splat") else []
-    if splats:
-        lines += [
-            "// generated Gaussian-splat landmarks (Idol) at mid distance from the route",
-            f"const SPLATS = {j(splats)};",
-            "for (let i = 2, k = 0; i < level.route.length - 1 && k < 6; i += 4) {",
-            "  const a = level.route[i], b = level.route[i + 1];",
-            "  const side = new K.THREE.Vector3(b.z - a.z, 0, a.x - b.x).normalize().multiplyScalar(k % 2 ? 7 : -7);",
-            "  const x = a.x + side.x, z = a.z + side.z, y = K.World.heightAt(game, x, z);",
-            "  if (y == null || Math.abs(y - a.y) > 3) continue;",
-            "  K.Assets.splat(game, SPLATS[k % SPLATS.length], { position: [x, y, z], height: 3.5 + (k % 3), "
-            "rotationY: k * 2.1, fallback: 'tree' });",
-            "  k++;",
-            "}",
-        ]
+    if scenery_js(assets, catalog):
+        lines.append("scenery(game, level);                     // generated props + splat landmarks (scenery.js)")
     rules = {"level": None, "player": None, "collect": {"tag": tag, "target": target}, "goal": bool(plan.get("goal")),
              "timer": timer or False, "lives": int(plan.get("lives") or 0) or False}
     if int(plan.get("enemies") or 0):
@@ -419,6 +393,73 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
         lines.append("if (game.asset('music_main')) K.Audio.music(game, game.asset('music_main'));")
     lines += ["K.Debug.install(game, { level, player });", "game.start();", ""]
     return "\n".join(lines)
+
+
+SCENERY_CALL = "scenery(game, level);"
+
+
+def scenery_js(assets: dict | None, catalog: dict | None = None) -> str | None:
+    """scenery.js: places the game's generated voxel props beside the route and its Idol splats as landmarks at mid
+    distance. Pipeline-owned (builders cannot write it) and re-attached to game.js if a builder drops the call: live,
+    builders rewrote game.js and dropped the scaffold's splats even when told they were unused."""
+    j = json.dumps
+    has = (lambda mod, fn: fn in fn_names(catalog, mod)) if catalog else (lambda mod, fn: True)
+    assets = assets or {}
+    props = [n for n, e in assets.items() if e.get("kind") == "prop"][:2] if has("Assets", "prop") else []
+    splats = [n for n, e in assets.items() if e.get("kind") == "splat"][:3] if has("Assets", "splat") else []
+    if not props and not splats:
+        return None
+    return "\n".join([
+        "// Made by the pipeline: the generated props and splat landmarks of this game. game.js calls",
+        "// scenery(game, level) once after Level.build.",
+        "import * as K from 'kit';",
+        "",
+        f"const PROPS = {j(props)};",
+        f"const SPLATS = {j(splats)};",
+        "",
+        "export function scenery(game, level) {",
+        "  const route = (level && level.route) || [];",
+        "  const beside = (i, dist) => {",
+        "    const a = route[i], b = route[i + 1];",
+        "    const side = new K.THREE.Vector3(b.z - a.z, 0, a.x - b.x).normalize().multiplyScalar(dist);",
+        "    const x = a.x + side.x, z = a.z + side.z, y = K.World.heightAt(game, x, z);",
+        "    return y == null || Math.abs(y - a.y) > 3 ? null : [x, y, z];",
+        "  };",
+        "  if (PROPS.length) for (let i = 3, k = 0; i < route.length - 2; i += 3, k++) {",
+        "    const p = beside(i, k % 2 ? 3.5 : -3.5);",
+        "    if (p) K.Assets.prop(game, PROPS[k % PROPS.length], { position: p, rotationY: k * 1.3, "
+        "height: 2.2 + (k % 3) * 0.6, fallback: 'mushroom' });",
+        "  }",
+        "  if (SPLATS.length) for (let i = 2, k = 0; i < route.length - 1 && k < 6; i += 4) {",
+        "    const p = beside(i, k % 2 ? 7 : -7);",
+        "    if (!p) continue;",
+        "    K.Assets.splat(game, SPLATS[k % SPLATS.length], { position: p, height: 3.5 + (k % 3), rotationY: k * 2.1, "
+        "fallback: 'tree' });",
+        "    k++;",
+        "  }",
+        "}",
+        ""])
+
+
+def reattach_scenery(game_dir: Path) -> bool:
+    """If scenery.js exists and game.js no longer calls it, put the import and the call back (before Debug.install,
+    else before game.start()). Returns True when game.js was changed."""
+    g, sc = Path(game_dir) / "game.js", Path(game_dir) / "scenery.js"
+    if not sc.exists() or not g.exists():
+        return False
+    src = g.read_text(encoding="utf-8")
+    if re.search(r"\bscenery\(\s*game\s*,", src):
+        return False
+    lines = src.splitlines()
+    if not any("from './scenery.js'" in l for l in lines):
+        at = next((i + 1 for i, l in enumerate(lines) if re.match(r"\s*import\b.*from\s+['\"]kit['\"]", l)), 0)
+        lines.insert(at, "import { scenery } from './scenery.js';")
+    at = next((i for i, l in enumerate(lines) if "Debug.install" in l), None)
+    if at is None:
+        at = next((i for i, l in enumerate(lines) if re.search(r"\bgame\.start\(", l)), len(lines))
+    lines.insert(at, "scenery(game, level);   // re-attached by the pipeline: generated props + splat landmarks")
+    g.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    return True
 
 
 def index_html(title: str) -> str:
