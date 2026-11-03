@@ -97,7 +97,9 @@ def main() -> None:
     }
     for when in ("intro", "win"):
         shutil.copyfile(OUT / "gameplay.mp4", OUT / "assets" / f"cutscene_{when}.mp4")
-        assets[f"cutscene_{when}"] = {"file": f"cutscene_{when}.mp4", "kind": "cutscene", "when": when,
+        shutil.copyfile(OUT / "thumb.jpg", OUT / "assets" / f"cutscene_{when}_source.jpg")
+        assets[f"cutscene_{when}"] = {"file": f"cutscene_{when}.mp4", "kind": "cutscene", "when": when, "model": "LTX-2.5",
+                                      "source": f"cutscene_{when}_source.jpg",
                                       "prompt": f"fixture {when} cutscene: the fox looks up at the beacon"}
     (OUT / "game.js").write_text("// fixture game.js (dev only)\nimport * as K from 'kit';\n"
                                  "const game = await K.createGame();\nK.Look.apply(game, 'toon_bright');\n\n"
@@ -155,7 +157,9 @@ def main() -> None:
              "snippet": "K.Mechanics.builtin(game, 'double_jump')"},
         ],
         "post_stages": [{"stage": "re-recorded and re-scored after the final kit update", "kit_commit": "0000000fixture",
-                         "at": "2026-11-03T05:00:00-0800"}],
+                         "at": "2026-11-03T05:00:00-0800"},
+                        {"stage": "cutscenes", "model": "LTX-2.5", "run": "uniform pipeline stage after build",
+                         "clips": ["intro", "win"], "at": "2026-11-03T05:10:00-0800"}],
         "operator_interventions": [],
         "timings_s": {"plan": 41.0, "art": 212.0, "scaffold": 3.0, "build": 640.0, "eval_s0": 70.0, "eval_v0": 66.0,
                       "repair_1": 300.0, "eval_v1": 64.0, "repair_2": 280.0, "eval_v2": 61.0},
