@@ -426,8 +426,10 @@ function minimap(game, H, parent, mo = {}) {
     }
     // collectibles still in play
     const dot = (p, r, fill) => { const [x, y] = P(p); ctx.beginPath(); ctx.arc(x, y, r * dpr, 0, Math.PI * 2); ctx.fillStyle = fill; ctx.fill(); ctx.lineWidth = 1.4 * dpr; ctx.strokeStyle = ink(); ctx.stroke(); };
-    if (mo.collectibles !== false && Array.isArray(level.collectibles) && level.collectibles.length < 400)
-      for (const c of level.collectibles) { if (!c || c.collected || c.taken || c.alive === false || c.active === false) continue; const p = c.position || c; if (p && p.x != null) dot(p, 2.2, '#ffd23f'); }
+    const R = game.__rules;   // Gameplay.rules: live items / racers / enemies
+    const items = R && Array.isArray(R.items) ? R.items : level.collectibles;
+    if (mo.collectibles !== false && Array.isArray(items) && items.length < 400)
+      for (const c of items) { if (!c || c.collected || c.taken || c.alive === false || c.active === false) continue; const p = c.position || c; if (p && p.x != null) dot(p, 2.2, '#ffd23f'); }
     if (Array.isArray(level.checkpoints)) for (const c of level.checkpoints) { const p = c && (c.position || c); if (p && p.x != null) dot(p, 3.4, c.reached || c.passed ? 'rgba(125,252,255,.45)' : '#7dfcff'); }
     if (level.goal && level.goal.position) {
       const [x, y] = P(level.goal.position);
@@ -435,6 +437,8 @@ function minimap(game, H, parent, mo = {}) {
       for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) { ctx.fillStyle = (i + j) % 2 ? '#111' : '#fff'; ctx.fillRect(-s + i * s, -s + j * s, s, s); }
       ctx.strokeStyle = ink(); ctx.lineWidth = 1.5 * dpr; ctx.strokeRect(-s, -s, 2 * s, 2 * s); ctx.restore();
     }
+    if (R && Array.isArray(R.racers)) R.racers.forEach((r, i) => { if (!r.isPlayer && r.player && r.player.position) dot(r.player.position, 3.6, ['#ff5d5d', '#5db0ff', '#7dff8a', '#ff9de2', '#b388ff', '#ffb35d'][i % 6]); });
+    if (R && Array.isArray(R.enemies)) for (const e of R.enemies) { const p = e && e.alive !== false && (e.position || (e.object && e.object.position)); if (p && p.x != null) dot(p, 3, '#ff3b3b'); }
     // extra markers (rivals, enemies): mo.markers() -> [{position, color}]
     if (typeof mo.markers === 'function') { try { for (const m of mo.markers() || []) if (m && m.position) dot(m.position, 3.2, m.color || '#ff5d5d'); } catch (e) { reportError(e); } }
     // player arrow
@@ -465,7 +469,7 @@ function speedometer(game, H, parent, so = {}) {
   const pt = (a, r = R) => [cx + Math.cos(a * Math.PI / 180) * r, cy + Math.sin(a * Math.PI / 180) * r];
   const arc = (a0, a1, r = R) => { const [x0, y0] = pt(a0, r), [x1, y1] = pt(a1, r); return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
   let ticks = '';
-  for (let i = 0; i <= 20; i++) { const a = A0 + SW * i / 20, big = i % 4 === 0; const [x0, y0] = pt(a, big ? 30 : 32.5), [x1, y1] = pt(a, 35.5); ticks += `<line x1="${x0.toFixed(2)}" y1="${y0.toFixed(2)}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}" stroke="#fff" stroke-opacity="${big ? .9 : .45}" stroke-width="${big ? 1.6 : .9}" stroke-linecap="round"/>`; }
+  for (let i = 0; i <= 20; i++) { const a = A0 + SW * i / 20, big = i % 4 === 0; const [x0, y0] = pt(a, big ? 30 : 32.5), [x1, y1] = pt(a, 35.5); ticks += `<line x1="${x0.toFixed(2)}" y1="${y0.toFixed(2)}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}" stroke="currentColor" stroke-opacity="${big ? .9 : .45}" stroke-width="${big ? 1.6 : .9}" stroke-linecap="round"/>`; }
   const box = h('div', 'tk-speedo');
   box.innerHTML = `<svg viewBox="0 0 100 100"><defs>
     <linearGradient id="sg${id}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="var(--tk-a)"/><stop offset=".6" stop-color="var(--tk-p)"/><stop offset="1" stop-color="var(--tk-bad)"/></linearGradient>
@@ -475,7 +479,7 @@ function speedometer(game, H, parent, so = {}) {
     <path d="${arc(A0, A0 + SW)}" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="7" stroke-linecap="round"/>
     <path class="tk-sarc" d="${arc(A0, A0 + SW)}" fill="none" stroke="url(#sg${id})" stroke-width="5.5" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
     ${ticks}
-    <g class="tk-needle"><path d="M${cx - 1.8} ${cy}L${cx} ${cy - 34}L${cx + 1.8} ${cy}z" fill="var(--tk-bad)" stroke="var(--tk-ink)" stroke-width=".8"/><circle cx="${cx}" cy="${cy}" r="4.2" fill="var(--tk-ink)" stroke="#fff" stroke-width="1.2"/></g>
+    <g class="tk-needle"><path d="M${cx - 2.4} ${cy - 21}L${cx} ${cy - 38}L${cx + 2.4} ${cy - 21}z" fill="var(--tk-bad)" stroke="var(--tk-ink)" stroke-width=".9" stroke-linejoin="round"/></g>
   </svg><div class="tk-sv tk-ol">0</div><div class="tk-su">${unit}</div>`;
   parent.append(box);
   const sarc = box.querySelector('.tk-sarc'), needle = box.querySelector('.tk-needle'), sv = box.querySelector('.tk-sv');
@@ -824,10 +828,11 @@ export function dialog(game, opts = {}) {
     emitUi(game, 'click');
     if (++i < lines.length) type(); else close();
   };
-  const close = () => { clearInterval(timer); popKeys(); U.dialog = null; closeScreen(el); if (pause) game.paused = wasPaused; resolveP(); };
+  const close = () => { clearInterval(timer); popKeys(); U.dialog = null; U.root.classList.remove('tk-dialog-open'); closeScreen(el); if (pause) game.paused = wasPaused; resolveP(); };
   const popKeys = pushKeys(U, (e) => { if (['Space', 'Enter', 'KeyE'].includes(e.code)) { e.preventDefault(); advance(); return true; } return false; });
   el.addEventListener('pointerdown', advance);
   U.dialog = { el, close };
+  U.root.classList.add('tk-dialog-open');
   type();
   return p;
 }

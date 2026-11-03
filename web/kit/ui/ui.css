@@ -196,17 +196,19 @@
 .tk-lap .tk-of { font-family: var(--tk-num); font-size: 1.4em; color: var(--tk-dim); }
 .tk-pos { font-family: var(--tk-display); font-size: 5.2em; line-height: .9; transform: skewX(var(--tk-skew)); }
 .tk-pos { display: flex; align-items: flex-start; }
-.tk-pos .tk-suf { font-size: .4em; margin: .12em 0 0 .02em; }
-.tk-pos .tk-of { font-family: var(--tk-num); font-size: .42em; color: #fff; align-self: flex-end; margin: 0 0 .3em .25em; }
+.tk-pos .tk-suf { font-size: .4em; margin: .12em 0 0 -.06em; letter-spacing: 0; }
+.tk-pos .tk-of { font-family: var(--tk-num); font-size: .42em; color: #fff; align-self: flex-end; margin: 0 0 .3em -1.1em; }
 .tk-pos.tk-p1 { --tk-p: #ffe14d; --tk-p2: #ff9a1f; } .tk-pos.tk-p2 { --tk-p: #e8f0ff; --tk-p2: #8fa6c2; } .tk-pos.tk-p3 { --tk-p: #ffc28a; --tk-p2: #c0682a; }
 .tk-pos.tk-pn { --tk-p: #d9e4f2; --tk-p2: #7c8da3; }
 .tk-pos.tk-pop { animation: tk-pop .5s cubic-bezier(.2, 2, .4, 1); }
 
 /* speedometer */
-.tk-speedo { position: relative; width: 13em; height: 13em; }
+.tk-speedo { position: relative; width: 13em; height: 13em; color: #fff; }
+.tk-cozy .tk-speedo { color: #6b4630; }
+.tk-cozy .tk-speedo .tk-sv { color: #5a3826; }
 .tk-speedo svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 .3em .5em rgba(0, 0, 0, .35)); }
-.tk-speedo .tk-sv { position: absolute; left: 0; right: 0; top: 47%; text-align: center; font-family: var(--tk-num); font-size: 3.3em; line-height: 1; font-variant-numeric: tabular-nums; }
-.tk-speedo .tk-su { position: absolute; left: 0; right: 0; top: 70%; text-align: center; font-size: .9em; letter-spacing: .2em; color: var(--tk-dim); font-weight: 700; text-transform: uppercase; }
+.tk-speedo .tk-sv { position: absolute; left: 0; right: 0; top: 39%; text-align: center; font-family: var(--tk-num); font-size: 3.3em; line-height: 1; font-variant-numeric: tabular-nums; }
+.tk-speedo .tk-su { position: absolute; left: 0; right: 0; top: 63%; text-align: center; font-size: .9em; letter-spacing: .2em; color: var(--tk-dim); font-weight: 700; text-transform: uppercase; }
 .tk-speedo.tk-boost svg { filter: drop-shadow(0 0 .6em var(--tk-a)) drop-shadow(0 .3em .5em rgba(0, 0, 0, .35)); }
 
 /* minimap */
@@ -256,6 +258,7 @@
 .tk-banner.tk-checkpoint .tk-band::before { top: .7em; height: .2em; } .tk-banner.tk-checkpoint .tk-band::after { bottom: .7em; height: .2em; }
 .tk-banner.tk-checkpoint .tk-band::before, .tk-banner.tk-checkpoint .tk-band::after { background: linear-gradient(90deg, transparent, var(--tk-a) 20%, var(--tk-a2) 80%, transparent); }
 .tk-banner.tk-checkpoint .tk-big { font-size: 3.8em; --tk-p: var(--tk-a); --tk-p2: var(--tk-a2); }
+.tk-scifi .tk-banner.tk-checkpoint { --tk-a: #7ff6ff; --tk-a2: #23b4ff; }
 .tk-banner.tk-checkpoint .tk-sub { top: 2.1em; font-size: 1.1em; }
 /* warning: hazard stripes */
 .tk-banner.tk-warning .tk-band { background: repeating-linear-gradient(-45deg, rgba(255, 210, 40, .9) 0 1.1em, rgba(20, 10, 10, .9) 1.1em 2.2em); height: 7em; top: -3.5em;
@@ -384,6 +387,10 @@
 .tk-sleek .tk-bubble::before, .tk-scifi .tk-bubble::before { display: none; }
 .tk-fantasy .tk-bubble { background: linear-gradient(180deg, #f6e8c6, #e3cc98); border-color: #4a2e14; color: #2a1608; }
 .tk-fantasy .tk-bubble::before { background: #e8d3a2; border-color: #4a2e14; }
+
+/* the dialog owns the bottom of the screen while it is open */
+.tk-corner { transition: opacity .3s; }
+.tk-dialog-open .tk-bl, .tk-dialog-open .tk-br, .tk-dialog-open .tk-bc { opacity: 0; }
 
 /* countdown */
 .tk-count { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }

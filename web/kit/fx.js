@@ -44,8 +44,8 @@ void main() {
     a = exp(-r * r * 4.0) + 0.5 * exp(-r * r * 22.0);
     col = mix(vColor, vec3(1.0), exp(-r * r * 30.0) * 0.7);
   } else if (vShape < 1.5) {               // star: 4-point twinkle with a core
-    float arms = max(exp(-abs(p.x) * 14.0) * (1.0 - smoothstep(0.0, 1.0, abs(p.y))), exp(-abs(p.y) * 14.0) * (1.0 - smoothstep(0.0, 1.0, abs(p.x))));
-    a = arms + exp(-r * r * 12.0) * 0.9;
+    float arms = max(exp(-abs(p.x) * 8.0) * (1.0 - smoothstep(0.0, 1.0, abs(p.y))), exp(-abs(p.y) * 8.0) * (1.0 - smoothstep(0.0, 1.0, abs(p.x))));
+    a = min(1.0, arms * 1.2 + exp(-r * r * 7.0));
     col = mix(vColor, vec3(1.0), exp(-r * r * 26.0));
   } else if (vShape < 2.5) {               // smoke: soft lumpy puff
     float lump = 0.9 + 0.1 * sin(atan(p.y, p.x) * 3.0 + vRot * 3.0);
@@ -170,7 +170,7 @@ function particles(game, pool, pos, n, f) {
 // burst: radial explosion of glowy bits. sparkle/starBurst are presets of it.
 export function burst(game, pos, opts = {}) {
   const p = need(pos, 'burst');
-  const { count = 24, speed = 6, size = 0.35, life = 0.7, gravity = 4, shape = 'glow', color = '#ffd34d', colorEnd = null, up = 0.4, spread = 1, drag = 2.2, blend = 'add' } = opts;
+  const { count = 24, speed = 6, size = 0.35, life = 0.7, gravity = 4, shape = 'glow', color = '#ffd34d', colorEnd = null, up = 0.4, spread = 1, drag = 2.2, blend = shape === 'star' ? 'alpha' : 'add' } = opts;
   const cs = palette(color), ce = colorEnd ? col(colorEnd) : null;
   particles(game, blend === 'add' ? 'add' : 'alpha', p, count, () => {
     sphere(tv, 1); tv.y = tv.y * spread + up; tv.normalize().multiplyScalar(speed * (0.45 + R() * 0.75));
@@ -182,13 +182,15 @@ export function burst(game, pos, opts = {}) {
 export function sparkle(game, pos, opts = {}) {
   const p = need(pos, 'sparkle');
   const color = opts.color ?? '#ffd34d';
-  burst(game, p, { count: 14, speed: 4.5, size: 0.5, life: 0.55, gravity: 2, shape: 'star', color: [color, '#ffffff'], up: 0.6, ...opts });
+  const k = opts.scale || 1;
+  burst(game, p, { count: 1, speed: 0, size: 2.4 * k, life: 0.16, gravity: 0, shape: 'glow', color });   // pop flash
+  burst(game, p, { count: 14, speed: 5, size: 0.9 * k, life: 0.6, gravity: 2, shape: 'star', color: [color, '#ffffff'], up: 0.6, ...opts });
   burst(game, p, { count: 10, speed: 2.2, size: 0.22, life: 0.9, gravity: -1.5, shape: 'glow', color, up: 1.2, drag: 1.2, ...opts, count: opts.count ? Math.ceil(opts.count / 2) : 10 });
   ring(game, p, { color, radius: 1.2 * (opts.scale || 1), life: 0.35, flat: false, width: 0.12 });
 }
 export function starBurst(game, pos, opts = {}) {
   const p = need(pos, 'starBurst');
-  burst(game, p, { count: 40, speed: 10, size: 0.7, life: 0.9, gravity: 6, shape: 'star', color: opts.color ?? ['#ffe14d', '#ffffff', '#ff9d2e'], ...opts });
+  burst(game, p, { count: 40, speed: 10, size: 1.0, life: 0.9, gravity: 6, shape: 'star', color: opts.color ?? ['#ffe14d', '#ffffff', '#ff9d2e'], ...opts });
   burst(game, p, { count: 1, speed: 0, size: 5 * (opts.scale || 1), life: 0.25, gravity: 0, shape: 'glow', color: opts.color ?? '#fff3b0' });
 }
 // dust: deliberately SMALL and subtle (feet puffs on land/run). scale with opts.amount (0..1)
@@ -441,6 +443,14 @@ export function slowmo(game, scale = 0.3, duration = 0.6) {
 
 // ---------- per-frame ----------
 const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), v3 = new THREE.Vector3(), eq = new THREE.Quaternion();
+// the camera as it will be rendered this frame (core applies cameraOverride after every lateUpdate)
+const viewCam = new THREE.PerspectiveCamera();
+function viewCamera(game) {
+  const c = game.camera, o = game.cameraOverride;
+  if (!o) { c.updateMatrixWorld(); return c; }
+  viewCam.copy(c, false); viewCam.position.copy(o.position); viewCam.lookAt(o.target); viewCam.updateMatrixWorld(); viewCam.updateProjectionMatrix();
+  return viewCam;
+}
 function step(game, s, dtGame) {
   const now = performance.now();
   const realDt = Math.min(0.05, (now - (s.lastNow || now)) / 1000); s.lastNow = now;
@@ -454,7 +464,7 @@ function step(game, s, dtGame) {
     const k = Math.min(1, r.t / r.life), e = 1 - Math.pow(1 - k, 3);
     r.m.scale.setScalar(Math.max(0.01, r.radius * e));
     r.m.material.opacity = r.opacity * (1 - k);
-    if (!r.flat) r.m.quaternion.copy(game.camera.quaternion);
+    if (!r.flat) r.m.quaternion.copy(viewCamera(game).quaternion);
     if (k >= 1) { game.scene.remove(r.m); r.m.material.dispose(); if (r.own) r.m.geometry.dispose(); s.rings.splice(i, 1); }
   }
   // confetti
@@ -484,12 +494,12 @@ function step(game, s, dtGame) {
   }
   // floating text
   if (s.texts.length) {
-    const w = innerWidth, hgt = innerHeight;
+    const w = innerWidth, hgt = innerHeight, cam = viewCamera(game);
     for (let i = s.texts.length - 1; i >= 0; i--) {
       const t = s.texts[i]; t.t += realDt;
       const k = t.t / t.life;
       if (k >= 1) { t.el.remove(); s.texts.splice(i, 1); continue; }
-      v3.copy(t.p); v3.y += t.rise * (1 - Math.pow(1 - k, 2)); v3.x += t.dx * k; v3.project(game.camera);
+      v3.copy(t.p); v3.y += t.rise * (1 - Math.pow(1 - k, 2)); v3.x += t.dx * k; v3.project(cam);
       const vis = v3.z < 1;
       const pop = k < 0.12 ? 0.4 + (k / 0.12) * 0.9 : k < 0.22 ? 1.3 - (k - 0.12) / 0.1 * 0.3 : 1;
       t.el.style.opacity = vis ? String(k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1) : '0';
