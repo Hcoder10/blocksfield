@@ -7,7 +7,7 @@ topbar('run');
 const root = $('#run');
 root.innerHTML = `
   <section class="run-head">
-    <div><div class="t1"><span class="status" id="status">…</span><span class="chip ghost" id="genre"></span><span class="chip ghost" id="rid">${esc(rid)}</span></div>
+    <div><div class="t1"><span class="status" id="status">…</span><span class="chip ghost" id="genre"></span><span class="chip ghost" id="rid">${esc(rid)}</span>${params.get('replay') ? `<span class="chip ghost replay-tag" title="a finished build, replayed from its files and log">${params.get('replay') === 'auto' ? 'replay · sped up' : `replayed at ${esc(params.get('replay'))}×`}</span>` : ''}</div>
       <h1 class="display outlined" id="title">${esc(rid.replace(/_/g, ' '))}</h1><p class="tagline" id="tagline"></p>
       <p class="pitch" id="pitch"></p></div>
     <div class="clock"><div class="lbl" id="clock-lbl">Build time</div><div class="big" id="clock">0:00</div><div id="score-wrap" style="margin-top:12px"></div></div>
@@ -191,7 +191,13 @@ function renderFinal(s) {
 // ----------------------------------------------------------------------------- loop
 let liveGpu = null;
 let snap = null;
-const replaySpeed = +params.get('replay') || 0;
+// ?replay=<speed>, or ?replay=auto: quick through the long quiet stretches (the 30-minute build), slower where
+// things pop in (plan, concept board, assets, judging). Speeds per stage can be overridden: ?replay=auto&build=600
+const AUTO = { plan: 60, art: 160, scaffold: 160, build: 1500, judge: 600, finalize: 150, done: 60 };
+for (const k in AUTO) if (params.get(k)) AUTO[k] = +params.get(k);
+const autoReplay = params.get('replay') === 'auto';
+const replaySpeed = autoReplay ? 1 : (+params.get('replay') || 0);
+let virtT = null, lastReal = null;
 const atFrac = params.get('at');
 let replayT0 = null;
 
@@ -200,6 +206,13 @@ async function refresh() {
   if (snap && (replaySpeed || atFrac != null)) {
     const r = snap.replay;
     if (atFrac != null) at = r.start + (+atFrac) * (r.end - r.start);
+    else if (autoReplay) {
+      const nowR = performance.now();
+      if (virtT == null) { virtT = r.start + (+params.get('from') || 0); lastReal = nowR; }
+      const sp = AUTO[(snap.live ? null : snap.phase) || 'plan'] || 60;
+      virtT += (nowR - lastReal) / 1000 * sp; lastReal = nowR;
+      at = Math.min(virtT, r.end + 2);
+    }
     else { replayT0 = replayT0 ?? performance.now() - (+params.get('from') || 0) * 1000 / replaySpeed; at = r.start + (performance.now() - replayT0) / 1000 * replaySpeed; if (at > r.end + 2) at = r.end + 2; }
   }
   try {
@@ -219,6 +232,7 @@ async function refresh() {
   }
 }
 refresh();
-setInterval(refresh, replaySpeed ? 700 : 2000);
+let busy = false;
+setInterval(async () => { if (busy) return; busy = true; try { await refresh(); } finally { busy = false; } }, autoReplay ? 250 : replaySpeed ? 700 : 2000);
 // live arbiter when this run is live and the tunnel is up; otherwise the strip shows the run's own history
 pollGpu((g) => { liveGpu = g.online && snap && snap.live && snap.status === 'running' ? g : null; if (liveGpu) strip.render(g.segs, g.now, g.info); });

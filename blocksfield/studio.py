@@ -158,11 +158,17 @@ def run_snapshot(rid: str, at: float | None = None) -> dict:
     started = log_all[0]["t"] if log_all else _mtime(rd / "idea.json")
     st_dir = rd / "stages"
     stage_files = {p.stem: p for p in st_dir.glob("*.json")} if st_dir.is_dir() else {}
-    visible = {k: p for k, p in stage_files.items() if _mtime(p) <= at}
+    # when each stage finished: its log line if there is one (files can be rewritten later by --redo), else mtime
+    fin_t = {}
+    for e in log_all:
+        m = re.match(r"stage (\w+): finished", e["text"]) or re.match(r"eval (\w+): score", e["text"])
+        if m:
+            fin_t["eval_" + m[1] if e["text"].startswith("eval") else m[1]] = e["t"]
+    made = {k: fin_t.get(k, _mtime(p)) for k, p in stage_files.items()}
+    visible = {k: p for k, p in stage_files.items() if made[k] <= at}
 
     def stage_t(name):
-        p = visible.get(name)
-        return _mtime(p) if p else None
+        return made[name] if name in visible else None
 
     finished = any(e["text"].startswith("done in ") for e in log) or ("finalize" in visible)
     failed = (not finished) and any(e["text"].startswith(("FAILED", "Traceback")) or "fatal" in e["text"].lower() for e in log[-3:])
@@ -264,7 +270,7 @@ def run_snapshot(rid: str, at: float | None = None) -> dict:
         ap = ev.get("autopilot") or {}
         versions.append({"tag": tag, "score": ev.get("score"), "play": ev.get("play_score"), "vision": ev.get("vision_score"),
                          "notes": (ev.get("vision_notes") or ev.get("notes") or ev.get("play_notes") or [])[:4],
-                         "shots": _shots(vd / "play", at), "t": _mtime(p), "errors": len(ev.get("errors") or []),
+                         "shots": _shots(vd / "play", max(at, made[k] + 5)), "t": made[k], "errors": len(ev.get("errors") or []),
                          "collected": ap.get("collected_end"), "target": ap.get("target"), "won": ap.get("won"),
                          "moved": ap.get("moved")})
     versions.sort(key=lambda v: v["t"])
@@ -489,7 +495,7 @@ class Handler(BaseHTTPRequestHandler):
                     break
                 try:
                     self.wfile.write(chunk)
-                except (BrokenPipeError, ConnectionResetError):
+                except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                     return
                 left -= len(chunk)
 
@@ -536,7 +542,7 @@ class Handler(BaseHTTPRequestHandler):
             if p and p.is_dir():
                 p = p / "index.html"
             return self.send_file(p) if p else self.send_error(403)
-        except (BrokenPipeError, ConnectionResetError):
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
             pass
 
     def do_POST(self) -> None:  # noqa: N802
