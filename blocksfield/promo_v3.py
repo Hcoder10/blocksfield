@@ -35,21 +35,25 @@ NOTE = "Voiceover is local TTS (Kokoro): I caught COVID and couldn't record it m
 TITLE = "Type a pitch. Get a game."
 
 # Section lengths (seconds). "games" is the remainder up to LIMIT, clamped per game to GAME_EACH.
-SECTIONS = {"open": 8.0, "paid": 12.5, "studio": 15.0, "how": 21.0, "games": None, "roblox": 11.5, "close": 12.5}
+SECTIONS = {"open": 7.0, "paid": 12.5, "studio": 15.0, "how": 21.0, "games": None, "roblox": 8.0, "close": 10.0}
+MAPPING_GAME = "canyon_runner"     # the off-template pitch whose mapping notes the VO line describes
 GAME_EACH = (6.0, 8.0)
-CREATOR_CUT = [pv.CLIPS[0], pv.CLIPS[1]]          # ~9.7 s: "...that's where today's sponsor comes in" + "insane"
+# ~7.4 s: the cover/trailer wish + "that trailer was actually insane". The sponsor line ("that's where today's
+# sponsor comes in") and its on-screen ad are cut, per the user: keep the creator clips, drop the paid/sponsor text.
+CREATOR_CUT = [(pv.CLIPS[0][0], pv.CLIPS[0][1], 7.15, pv.CLIPS[0][3], pv.CLIPS[0][4][:2]), pv.CLIPS[1]]
 
 # Voiceover: (section, seconds after the section starts, text). Plain and confident; no claims a shown game lacks.
 VO = [
-    ("open", 0.6, "Type a pitch. Get a game. A real game you can play in the browser, made by open models on one GPU."),
-    ("paid", "shot:2", "That workflow runs on credits. Blocksfield costs nothing per generation."),
+    ("open", 0.5, "Type a pitch. Get a game. A real browser game, made by open models on one GPU."),
+    ("paid", "at:price card (short)", "That workflow runs on credits. Blocksfield costs nothing per generation."),
     ("studio", 0.4, "This is Blocksfield Studio. You type one paragraph, and watch the whole build live: "
                     "the plan, the concept art, the GPU at work."),
-    ("how", "shot:0", "ComfyUI paints a concept board, the target the game is judged against."),
-    ("how", "shot:1", "Then the sky, the icons, the music and the sound effects."),
-    ("how", "shot:2", "Prop images become Gaussian splats with Idol, right in the game."),
-    ("how", "shot:3", "A twenty-seven billion parameter model writes the game from tested kits."),
-    ("how", "shot:4", "Then it plays its own game. A vision model scores each version; the best one ships."),
+    ("how", "at:concept board", "ComfyUI paints a concept board, the target the game is judged against."),
+    ("how", "at:generated assets", "Then the sky, the icons, the music and the sound effects."),
+    ("how", "at:Idol image -> splat in game", "Prop images become Gaussian splats with Idol, right in the game."),
+    ("how", "at:game.js scroll", "A twenty-seven billion parameter model writes the game from tested kits."),
+    ("how", "at:pitch -> kit mapping", "Off-template pitches work too: no hover bike or canyon in the kits, so it chose a kart, a race track and the sunset look."),
+    ("how", "at:playtest + judge", "Then it plays its own game. A vision model scores each version; the best one ships."),
     ("games", 0.4, "Each of these games came from a single pitch."),
     ("games", -9.0, "They run in the browser. Nothing to install."),       # negative: from the section's end
     ("roblox", 0.4, "And the same pipeline builds real Roblox places, inside Roblox Studio."),
@@ -57,7 +61,7 @@ VO = [
                    "Blocksfield is open source."),
 ]
 VOICE, SPEED = "af_heart", 1.06
-SHOT_PAD = 0.7          # a "shot:k" VO line starts 0.3 s into its shot; the shot lasts at least line + this
+SHOT_PAD = 0.5          # an "at:<shot label>" VO line starts 0.3 s into its shot; the shot lasts at least line + this
 
 _vo_cache: dict = {}
 _pipe = None
@@ -92,20 +96,33 @@ def vo_len(txt: str) -> float:
     return len(vo_audio(txt)) / 24000 if USE_VO else len(txt) / 14.5
 
 
-def shot_len(section: str, k: int, base: float) -> float:
+def shot_len(section: str, label: str, base: float) -> float:
     for sec, off, txt in VO:
-        if sec == section and off == f"shot:{k}":
+        if sec == section and off == f"at:{label}":
             return max(base, vo_len(txt) + SHOT_PAD)
     return base
 
 
 # ---------------------------------------------------------------- data
 
-def games(only: list[str] | None = None) -> list[dict]:
+SKIP = {"neon_arena"}          # being re-run (team lead); --skip overrides
+
+
+def games(only: list[str] | None = None, skip: set | None = None) -> list[dict]:
+    """Real generated games only (web/games/<id>, no _ prefix, not dry runs), best judge score first. Uses index.json
+    plus any finished game folder (about.json + gameplay.mp4) the index has not picked up yet."""
+    skip = SKIP if skip is None else skip
     idx = json.loads((GAMES / "index.json").read_text(encoding="utf-8"))
+    listed = {g["id"]: g for g in idx.get("games", [])}
+    for d in GAMES.iterdir():
+        if d.is_dir() and not d.name.startswith("_") and d.name not in listed and (d / "about.json").exists() \
+                and (d / "gameplay.mp4").exists():
+            a = json.loads((d / "about.json").read_text(encoding="utf-8"))
+            listed[d.name] = {"id": d.name, "title": a.get("title", d.name), "pitch": a.get("pitch", ""),
+                              "genre": a.get("genre", ""), "score": a.get("score"), "dry_run": a.get("dry_run", False)}
     out = []
-    for g in idx.get("games", []):
-        if g.get("dry_run") or g["id"].startswith("_") or (only and g["id"] not in only):
+    for g in listed.values():
+        if g.get("dry_run") or g["id"].startswith("_") or g["id"] in skip or (only and g["id"] not in only):
             continue
         d = GAMES / g["id"]
         s = g.get("score")
@@ -195,22 +212,22 @@ def price_short(dur: float) -> Seg:
     def draw(t, i):
         f = canvas()
         d = ImageDraw.Draw(f, "RGBA")
-        kicker(d, (160, 250), "The paid workflow", ramp(t, 0.0))
-        text(d, (160, 296), "Higgsfield", font(72, "Bold"), FG, ramp(t, 0.1))
-        y = 430
+        kicker(d, (110, 130), "The paid workflow", ramp(t, 0.0), size=34)
+        text(d, (110, 180), "Higgsfield", font(110, "Bold"), FG, ramp(t, 0.1))
+        y = 380
         for k, (name, price) in enumerate(plans):
             a = ramp(t, 0.3 + 0.15 * k)
-            text(d, (160, y), name, font(46, "Semibold"), FG, a)
-            text(d, (420, y), price, font(46, "Semibold"), FG, a)
-            text(d, (560, y + 8), "/ month, in credits", font(32, "Regular"), MUTED, a)
-            y += 84
+            text(d, (110, y), name, font(72, "Semibold"), FG, a)
+            text(d, (450, y), price, font(72, "Bold"), FG, a)
+            y += 120
+        text(d, (110, y + 10), "per month, in credits", font(46, "Regular"), MUTED, ramp(t, 0.8))
         b = ramp(t, 1.4, 0.6)
-        d.line([1060, 250, 1060, 780], fill=rgba((48, 54, 68), b), width=2)
-        x = 1150 + 30 * (1 - b)
-        text(d, (x, 296), "Blocksfield", font(72, "Bold"), ACCENT, b)
-        text(d, (x - 8, 380), "$0", font(250, "Bold"), FG, b)
-        text(d, (x, 680), "per generation", font(48, "Semibold"), FG, ramp(t, 1.8))
-        text(d, (160, H - 92), "Prices from higgsfield.ai/pricing, Oct 30 2026, excl. VAT.", font(24, "Regular"),
+        d.line([960, 140, 960, 900], fill=rgba((48, 54, 68), b), width=3)
+        x = 1040 + 30 * (1 - b)
+        text(d, (x, 180), "Blocksfield", font(110, "Bold"), ACCENT, b)
+        text(d, (x - 12, 290), "$0", font(420, "Bold"), FG, b)
+        text(d, (x, 760), "per generation", font(78, "Semibold"), FG, ramp(t, 1.8))
+        text(d, (110, H - 60), "Prices from higgsfield.ai/pricing, Oct 30 2026, excl. VAT.", font(28, "Regular"),
              (120, 128, 144), ramp(t, 0.6))
         return f
     return Seg("2. Paid workflow", "price card (short)", dur, draw, [
@@ -227,25 +244,24 @@ def paid(dur: float) -> list[Seg]:
         s.section = "2. Paid workflow"
         segs.append(s)
     used = sum(s.dur for s in segs)
-    segs.append(price_short(shot_len("paid", 2, max(4.0, dur - used))))
+    segs.append(price_short(shot_len("paid", "price card (short)", max(4.0, dur - used))))
     return segs
 
 
 # ---------------------------------------------------------------- 3. studio
 
 def studio(gs: list[dict], dur: float) -> list[Seg]:
+    """The Studio app recording (kit-ui-fx: video/studio_take.mp4 -> video/v3/clips/studio.mp4), full frame. It carries
+    its own "replayed at N x" tag; only a small label is added in the first seconds, clear of the docked GPU strip."""
     clip = CLIPS_DIR / "studio.mp4"
+    if not clip.exists() and (ROOT / "video" / "studio_take.mp4").exists():
+        clip = ROOT / "video" / "studio_take.mp4"
     if clip.exists():
         info = probe(clip)
 
-        def ov(f, t):
-            d = ImageDraw.Draw(f, "RGBA")
-            a = ramp(t, 0.2) * (1 - ramp(t, 5.0, 0.5))
-            d.rounded_rectangle([60, H - 150, 760, H - 60], 18, fill=(8, 10, 14, int(210 * a)))
-            kicker(d, (90, H - 128), "Blocksfield Studio  ·  our app", a)
-            text(d, (90, H - 96), "One pitch in, the whole build live", font(36, "Semibold"), FG, a)
-        return [video_seg("3. Studio", "studio.mp4", clip, 0.0, min(dur, info["dur"]), overlay=ov, fade_in=0.2,
-                          onscreen=["BLOCKSFIELD STUDIO · OUR APP / One pitch in, the whole build live"])]
+        return [video_seg("3. Studio", clip.name, clip, 0.0, min(dur, info["dur"] - 0.05), fade_in=0.2,
+                          onscreen=["BLOCKSFIELD STUDIO · OUR APP / One pitch in, the whole build live",
+                                    "(app recording; its own 'replayed at N x' tag stays visible)"])]
     # placeholder until the Studio recording exists: the run's pitch typed, over the game's concept art
     g = gs[0]
     concepts = [g["dir"] / c for c in g["about"].get("concepts", [])]
@@ -290,188 +306,245 @@ def waveform(mp3: Path, n: int = 220) -> list[float]:
 
 
 def how(gs: list[dict], dur: float) -> list[Seg]:
+    """Full-bleed cards built from the top game's real artifacts (concept board, assets, game.js, judge scores), the
+    real Idol splat footage, and (if a game has one) its pitch -> kit mapping notes."""
     g = gs[0]
-    lens = [shot_len("how", k, dur / 5) for k in range(5)]
-    each = lens[0]
+    base = dur / 6
     segs = []
-    # a) concept board
-    cpaths = [g["dir"] / c for c in g["about"].get("concepts", []) if (g["dir"] / c).exists()]
+
+    def cap(f, t, k, head, sub=""):
+        pv.caption(f, t, k, head, sub)
+
+    # a) concept board: a full-height triptych
+    cpaths = [g["dir"] / c for c in g["about"].get("concepts", []) if (g["dir"] / c).exists()][:3]
     if cpaths:
-        ims = [Image.open(p).convert("RGB") for p in cpaths[:3]]
+        n = len(cpaths)
+        gap = 10
+        tw = (W - gap * (n - 1)) // n
+        tiles = [cover(Image.open(p), tw, H, margin=1.06) for p in cpaths]
+        L_a = shot_len("how", "concept board", base)
 
         def draw_a(t, i):
-            f = canvas()
-            d = ImageDraw.Draw(f, "RGBA")
-            kicker(d, (120, 96), "1  ·  Concept board", ramp(t, 0.0))
-            text(d, (120, 134), "ComfyUI paints the target the game is judged against", font(48, "Semibold"), FG,
-                 ramp(t, 0.1))
-            tw = (W - 240 - 40 * (len(ims) - 1)) // len(ims)
-            for k, im in enumerate(ims):
-                a = ramp(t, 0.35 + 0.35 * k, 0.4)
-                th = contain(im, tw, 620)
-                x = 120 + k * (tw + 40) + (tw - th.width) // 2
-                y = 260 + (620 - th.height) // 2 + int(40 * (1 - a))
-                if a > 0:
-                    th = th.convert("RGBA")
-                    th.putalpha(int(255 * a))
-                    f.alpha_composite(th, (x, y))
-            text(d, (120, H - 110), f"{g['title']}  ·  Qwen-Image", font(28, "Regular"), MUTED, ramp(t, 1.2))
+            f = canvas((6, 7, 10))
+            for k, im in enumerate(tiles):
+                a = ramp(t, 0.1 + 0.25 * k, 0.45)
+                if a <= 0:
+                    continue
+                v = kenburns(im, t / L_a, (1.0, 1.05), (0.3 * (k - 1), 0.0), w=tw, h=H)
+                v.putalpha(int(255 * a))
+                f.alpha_composite(v, (k * (tw + gap), int(60 * (1 - a))))
+            cap(f, t, "1  ·  Concept board  ·  Qwen-Image", "The target the game is judged against", g["title"])
             return f
-        segs.append(Seg("4. How it works", "concept board", lens[0], draw_a,
-                        ["1 · CONCEPT BOARD / ComfyUI paints the target the game is judged against",
-                         f"{g['title']} · Qwen-Image ({len(ims)} images)"], fade_in=0.15))
-    # b) generated assets: sky, icons, music waveform
+        segs.append(Seg("4. How it works", "concept board", L_a, draw_a,
+                        ["1 · CONCEPT BOARD · QWEN-IMAGE / The target the game is judged against", g["title"]],
+                        fade_in=0.15))
+    # b) generated assets: the sky panorama full frame, icons and the music waveform large on top
     man = json.loads((g["dir"] / "assets" / "assets.json").read_text(encoding="utf-8"))
     sky = next((g["dir"] / "assets" / e["file"] for e in man.values() if e.get("kind") == "sky"), None)
     icons = [g["dir"] / "assets" / e["file"] for e in man.values() if e.get("kind") == "icon"][:4]
     mus = next((g["dir"] / "assets" / e["file"] for e in man.values() if e.get("kind") == "music"), None)
     nsfx = sum(1 for e in man.values() if e.get("kind") == "sfx")
-    sky_im = Image.open(sky).convert("RGB") if sky and sky.exists() else None
+    sky_big = None
+    if sky and sky.exists():
+        im = Image.open(sky).convert("RGB")
+        band = im.crop((0, int(im.height * 0.12), im.width, int(im.height * 0.62)))
+        sky_big = cover(band, W, H, margin=1.0)
+        if sky_big.width < W * 1.3:
+            sky_big = band.resize((int(band.width * H / band.height), H), Image.LANCZOS)
     icon_ims = [Image.open(p).convert("RGBA") for p in icons if p.exists()]
-    wave = waveform(mus) if mus and mus.exists() else []
-
-    each = lens[1]
+    wave = waveform(mus, 160) if mus and mus.exists() else []
+    L_b = shot_len("how", "generated assets", base)
 
     def draw_b(t, i):
-        f = canvas()
+        if sky_big:
+            off = int((sky_big.width - W) * min(1.0, t / L_b))
+            f = sky_big.crop((off, 0, off + W, H)).convert("RGBA")
+        else:
+            f = canvas()
+        f.alpha_composite(shade(260, 0.8, bottom=False))
+        f.alpha_composite(shade(520, 0.92))
         d = ImageDraw.Draw(f, "RGBA")
-        kicker(d, (120, 96), "2  ·  Generated assets", ramp(t, 0.0))
-        text(d, (120, 134), "Sky, icons, music and sound, generated for this game", font(48, "Semibold"), FG,
-             ramp(t, 0.1))
-        if sky_im:
-            band = sky_im.crop((0, int(sky_im.height * 0.18), sky_im.width, int(sky_im.height * 0.6)))
-            bw = int(band.width * 430 / band.height)
-            band = band.resize((bw, 430))
-            off = int((bw - (W - 240)) * min(1, t / each))
-            view = band.crop((off, 0, off + W - 240, 430)).convert("RGBA")
-            view.putalpha(int(255 * ramp(t, 0.2)))
-            f.alpha_composite(view, (120, 230))
-            text(d, (130, 640), "sky panorama", font(24, "Regular"), (230, 235, 245), ramp(t, 0.4))
+        kicker(d, (96, 64), "2  ·  Generated assets  ·  ComfyUI", ramp(t, 0.0), size=30)
+        text(d, (96, 106), "Sky, icons, music and sound, made for this game", font(60, "Semibold"), FG, ramp(t, 0.1),
+             stroke=2)
+        x = 96
         for k, im in enumerate(icon_ims):
-            a = ramp(t, 0.6 + 0.2 * k, 0.35)
-            th = contain(im, 150, 150)
+            a = ramp(t, 0.4 + 0.2 * k, 0.35)
+            th = contain(im, 230, 230)
             if a > 0:
+                d.rounded_rectangle([x - 14, H - 470 - 14 + int(30 * (1 - a)), x + 244, H - 470 + 244 + int(30 * (1 - a))],
+                                    28, fill=(10, 12, 18, int(170 * a)))
                 th.putalpha(Image.eval(th.getchannel("A"), lambda v, a=a: int(v * a)))
-                f.alpha_composite(th, (120 + k * 175, 720 + int(20 * (1 - a))))
+                f.alpha_composite(th, (x + (230 - th.width) // 2, H - 470 + int(30 * (1 - a))))
+            x += 280
         if wave:
-            a = ramp(t, 1.0)
-            x0, x1, yc = 860, W - 120, 800
+            a = ramp(t, 0.9)
+            x0, x1, yc = 96, W - 96, H - 120
             n = len(wave)
-            shown = int(n * min(1.0, max(0.0, (t - 1.0) / 1.6)))
+            shown = int(n * min(1.0, max(0.0, (t - 0.9) / 1.4)))
+            bw = (x1 - x0) / n
             for k in range(shown):
-                x = x0 + (x1 - x0) * k / n
-                hgt = 6 + wave[k] * 110
-                d.rounded_rectangle([x, yc - hgt / 2, x + (x1 - x0) / n * 0.6, yc + hgt / 2], 2, fill=rgba(ACCENT, a))
-            text(d, (x0, 900), f"music (ACE-Step){'  +  ' + str(nsfx) + ' sound effects' if nsfx else ''}",
-                 font(24, "Regular"), MUTED, a)
+                hgt = 8 + wave[k] * 150
+                d.rounded_rectangle([x0 + k * bw, yc - hgt / 2, x0 + k * bw + bw * 0.62, yc + hgt / 2], 3,
+                                    fill=rgba(ACCENT, a))
+            text(d, (W - 96, H - 470), f"music: ACE-Step" + (f"\n+ {nsfx} sound effects" if nsfx else ""),
+                 font(40, "Semibold"), FG, a, anchor="ra", stroke=1)
         return f
-    segs.append(Seg("4. How it works", "generated assets", lens[1], draw_b,
-                    ["2 · GENERATED ASSETS / Sky, icons, music and sound, generated for this game",
-                     f"sky panorama; {len(icon_ims)} icons; music waveform; {nsfx} sfx"]))
-    # c) Idol image -> Gaussian splat in game
+    segs.append(Seg("4. How it works", "generated assets", L_b, draw_b,
+                    ["2 · GENERATED ASSETS · COMFYUI / Sky, icons, music and sound, made for this game",
+                     f"({g['title']}: sky panorama full frame; {len(icon_ims)} icons; music waveform; {nsfx} sfx)"]))
+    # c) Idol image -> Gaussian splat in game (real Idol splats, the kit's splat test scene)
     splat = CLIPS_DIR / "_splat.mp4"
     previews = sorted(g["dir"].glob("about/prop_*_preview.png")) or sorted(GAMES.glob("*/about/prop_*_preview.png"))
     src = Image.open(previews[0]).convert("RGB") if previews else None
-    if src:
-        src = src.crop((0, 24, src.height - 24, src.height)) if src.width > src.height * 2 else src
+    if src and src.width > src.height * 2:
+        src = src.crop((0, 24, src.height - 24, src.height))
     st: dict = {}
-    each = lens[2]
+    L_c = shot_len("how", "Idol image -> splat in game", base)
 
     def draw_c(t, i):
         f = st["r"].frame(i) if "r" in st else canvas()
         d = ImageDraw.Draw(f, "RGBA")
         if src:
             a = ramp(t, 0.1)
-            th = contain(src, 330, 330).convert("RGBA")
-            d.rounded_rectangle([80, 230, 80 + 370, 230 + 420], 18, fill=(8, 10, 14, int(215 * a)))
+            th = contain(src, 400, 400).convert("RGBA")
+            d.rounded_rectangle([70, 250, 70 + 440, 250 + 500], 22, fill=(8, 10, 14, int(220 * a)))
             th.putalpha(int(255 * a))
-            f.alpha_composite(th, (100, 250))
-            text(d, (100, 600), "prop image  →  Idol splat", font(28, "Semibold"), FG, a)
-        f.alpha_composite(shade(240, 0.8, bottom=False))
-        kicker(d, (120, 70), "3  ·  Image to Gaussian splat", ramp(t, 0.0))
-        text(d, (120, 108), "Idol turns prop images into splats, rendered in the game", font(48, "Semibold"), FG,
-             ramp(t, 0.1))
+            f.alpha_composite(th, (90, 270))
+            text(d, (90, 690), "prop image  →  splat", font(34, "Semibold"), FG, a)
+        f.alpha_composite(shade(260, 0.8, bottom=False))
+        kicker(d, (96, 64), "3  ·  Image to Gaussian splat  ·  Idol", ramp(t, 0.0), size=30)
+        text(d, (96, 106), "Prop images become 3D splats, drawn right in the game", font(60, "Semibold"), FG,
+             ramp(t, 0.1), stroke=2)
         return f
-    segs.append(Seg("4. How it works", "Idol image -> splat in game", lens[2], draw_c,
-                    ["3 · IMAGE TO GAUSSIAN SPLAT / Idol turns prop images into splats, rendered in the game",
-                     f"(inset: {previews[0].name if previews else 'none'}; footage: splat_test.html, real Idol splats)"],
-                    setup=(lambda: st.__setitem__("r", VideoReader(splat, 0.0, each))) if splat.exists() else None,
+    segs.append(Seg("4. How it works", "Idol image -> splat in game", L_c, draw_c,
+                    ["3 · IMAGE TO GAUSSIAN SPLAT · IDOL / Prop images become 3D splats, drawn right in the game",
+                     f"(inset: {previews[0].name if previews else 'none'}; footage: kit splat demo with real Idol splats)"],
+                    setup=(lambda: st.__setitem__("r", VideoReader(splat, 0.0, L_c))) if splat.exists() else None,
                     teardown=(lambda: st["r"].close()) if splat.exists() else None))
-    # d) the builder writes game.js (real file, scrolling)
+    # d) the builder writes game.js: the real file, scrolling, large
     code = (g["dir"] / "game.js").read_text(encoding="utf-8").splitlines()
-    fm = mono(25)
-    lh = 34
-    each = lens[3]
+    fm = mono(36)
+    lh = 50
+    L_d = shot_len("how", "game.js scroll", base)
 
     def color_of(line: str):
         s = line.strip()
         if s.startswith("//"):
-            return (120, 130, 150)
+            return (125, 135, 156)
         if "K." in s:
-            return (255, 214, 140)
-        return (210, 216, 228)
+            return (255, 210, 130)
+        return (214, 220, 232)
 
     def draw_d(t, i):
-        f = canvas((14, 16, 22))
+        f = canvas((16, 18, 25))
         d = ImageDraw.Draw(f, "RGBA")
-        kicker(d, (120, 96), "4  ·  The builder writes the game", ramp(t, 0.0))
-        text(d, (120, 134), "Qwen3.8-27B composes tested kits: look, level, player, gameplay, UI",
-             font(44, "Semibold"), FG, ramp(t, 0.1))
-        d.rounded_rectangle([110, 230, W - 110, H - 70], 16, fill=(22, 26, 34, 255))
-        text(d, (140, 246), f"web/games/{g['id']}/game.js  ·  {len(code)} lines", font(24, "Regular"), MUTED)
-        rows = (H - 70 - 300) // lh
-        scroll = max(0, len(code) - rows) * min(1.0, max(0.0, (t - 0.6) / (each - 1.0)))
+        top = 200
+        rows = (H - top) // lh
+        scroll = max(0, len(code) - rows) * min(1.0, max(0.0, (t - 0.5) / (L_d - 0.8)))
         first = int(scroll)
         dy = (scroll - first) * lh
-        for k in range(rows + 1):
+        for k in range(rows + 2):
             n = first + k
             if n >= len(code):
                 break
-            y = 292 + k * lh - dy
-            if y < 286 or y > H - 100:
+            y = top + k * lh - dy
+            if y < top - lh or y > H:
                 continue
-            text(d, (140, y), f"{n + 1:>3}", fm, (80, 88, 104))
-            text(d, (220, y), code[n][:118], fm, color_of(code[n]))
+            text(d, (60, y), f"{n + 1:>3}", fm, (78, 86, 104))
+            text(d, (170, y), code[n][:84], fm, color_of(code[n]))
+        f.alpha_composite(shade(240, 0.96, bottom=False))
+        kicker(d, (96, 50), f"4  ·  The builder writes the game  ·  web/games/{g['id']}/game.js, {len(code)} lines",
+               ramp(t, 0.0), size=28)
+        text(d, (96, 90), "Qwen3.8-27B composes tested kits: look, level, player, gameplay, UI", font(56, "Semibold"),
+             FG, ramp(t, 0.1))
         return f
-    segs.append(Seg("4. How it works", "game.js scroll", lens[3], draw_d,
+    segs.append(Seg("4. How it works", "game.js scroll", L_d, draw_d,
                     ["4 · THE BUILDER WRITES THE GAME / Qwen3.8-27B composes tested kits: look, level, player, gameplay, UI",
                      f"(real file: web/games/{g['id']}/game.js, {len(code)} lines)"]))
-    # e) playtest + vision judge: survey sheet + per-version scores
+    # e) pitch -> kit choices, for an off-template pitch (the game's own mapping notes)
+    gm = next((x for x in gs if x["id"] == MAPPING_GAME and "→" in (x["about"].get("mapping") or {}).get("notes", "")), None)
+    if gm:
+        mp = gm["about"]["mapping"]
+        rows = []
+        for part in re.split(r"(?<=\.)\s+", mp["notes"]):
+            if "→" in part:
+                left, right = [x.strip() for x in part.split("→", 1)]
+                right = re.split(r"[;—]| \(|, since|, and the", right)[0].strip().rstrip(".")
+                rows.append((left, right[:62] + ("…" if len(right) > 62 else "")))
+        rows = rows[:4]
+        chosen = mp.get("chosen", {})
+        chips = [f"{k.replace('_', ' ')}: {chosen[k]}" for k in ("level_kind", "player_type", "look", "camera") if k in chosen]
+        pitch = gm.get("pitch", "")
+        if pitch.startswith(gm.get("title", "") + ":"):
+            pitch = pitch[len(gm["title"]) + 1:].strip()
+        hook = pitch.split(".")[0]
+        L_e = shot_len("how", "pitch -> kit mapping", base)
+        st2: dict = {}
+
+        def draw_e(t, i):
+            f = st2["r"].frame(i) if "r" in st2 else canvas()
+            f.alpha_composite(Image.new("RGBA", (W, H), (8, 10, 14, 205)))
+            d = ImageDraw.Draw(f, "RGBA")
+            kicker(d, (96, 64), f"5  ·  Off-template pitch  ·  {gm['title']}", ramp(t, 0.0), size=30)
+            for k, line in enumerate(wrap(f"“{hook}.”", font(58, "Semibold"), W - 200)[:2]):
+                text(d, (96, 110 + k * 70), line, font(58, "Semibold"), FG, ramp(t, 0.1))
+            y = 330
+            for k, (l, r) in enumerate(rows):
+                a = ramp(t, 0.5 + 0.35 * k, 0.4)
+                text(d, (96, y), l, font(46, "Bold"), ACCENT, a)
+                text(d, (560, y), "→", font(46, "Bold"), MUTED, a)
+                text(d, (640, y + 4), r, font(40, "Regular"), (225, 230, 240), a)
+                y += 96
+            x = 96
+            for k, c in enumerate(chips):
+                x += chip(d, x, H - 120, c, ramp(t, 0.6 + 0.35 * len(rows) + 0.15 * k), size=28) + 16
+            text(d, (W - 96, H - 92), "the plan's own notes", font(28, "Regular"), MUTED, ramp(t, 1.0), anchor="ra")
+            return f
+        segs.append(Seg("4. How it works", "pitch -> kit mapping", L_e, draw_e,
+                        [f"5 · OFF-TEMPLATE PITCH · {gm['title']} / “{hook}.”"] + [f"{l} → {r}" for l, r in rows] + chips
+                        + ["(from about.json mapping.notes, the plan's own words)"],
+                        setup=lambda: st2.__setitem__("r", VideoReader(gm["play"], 2.0, L_e)),
+                        teardown=lambda: st2["r"].close()))
+    # f) playtest + vision judge: survey cameras full width, big per-version scores
     survey = g["dir"] / g["about"].get("survey", "about/survey.jpg")
     sv = Image.open(survey).convert("RGB") if survey.exists() else None
     sc = g["about"].get("score") if isinstance(g["about"].get("score"), dict) else {}
-    vers = sc.get("versions", [])
+    vers = sc.get("versions", [])[-5:]
     best = sc.get("best")
+    L_f = shot_len("how", "playtest + judge", base)
+    sv_big = cover(sv, W, int(W * sv.height / sv.width), margin=1.0) if sv else None
 
-    def draw_e(t, i):
+    def draw_f(t, i):
         f = canvas()
         d = ImageDraw.Draw(f, "RGBA")
-        kicker(d, (120, 96), "5  ·  Playtest and judge", ramp(t, 0.0))
-        text(d, (120, 134), "Autopilot plays it, a vision model scores it, the best version ships",
-             font(44, "Semibold"), FG, ramp(t, 0.1))
-        if sv:
-            th = contain(sv, 1040, 720).convert("RGBA")
-            th.putalpha(int(255 * ramp(t, 0.2)))
-            f.alpha_composite(th, (120, 240))
-        x0 = 1240
-        text(d, (x0, 250), "score per version (0-10)", font(28, "Regular"), MUTED, ramp(t, 0.4))
-        for k, v in enumerate(vers[-6:]):
-            a = ramp(t, 0.6 + 0.3 * k, 0.4)
-            y = 310 + k * 92
+        kicker(d, (96, 50), "6  ·  Playtest and judge", ramp(t, 0.0), size=30)
+        text(d, (96, 90), "Autopilot plays it, a vision model scores it, the best version ships", font(56, "Semibold"),
+             FG, ramp(t, 0.1))
+        if sv_big:
+            v = sv_big.convert("RGBA")
+            v.putalpha(int(255 * ramp(t, 0.2)))
+            f.alpha_composite(v, (0, 190))
+            text(d, (W - 30, 190 + sv_big.height - 40), "survey cameras", font(26, "Regular"), (235, 238, 245),
+                 ramp(t, 0.4), anchor="ra", stroke=1)
+        y0 = 190 + (sv_big.height if sv_big else 0) + 50
+        rowh = min(96, (H - y0 - 30) // max(1, len(vers)))
+        for k, v in enumerate(vers):
+            a = ramp(t, 0.5 + 0.25 * k, 0.4)
+            y = y0 + k * rowh
             win = v.get("tag") == best
-            col = ACCENT if win else (120, 132, 156)
-            text(d, (x0, y + 4), v.get("tag", "?"), font(32, "Semibold"), FG, a)
-            wbar = 440 * min(1.0, float(v.get("score", 0)) / 10) * a
-            d.rounded_rectangle([x0 + 80, y, x0 + 80 + max(8, wbar), y + 44], 10, fill=rgba(col, a))
-            text(d, (x0 + 96 + wbar, y + 22), f"{float(v.get('score', 0)):.2f}", font(30, "Semibold"), FG, a,
-                 anchor="lm")
+            col = ACCENT if win else (110, 122, 148)
+            text(d, (96, y + rowh * 0.42), v.get("tag", "?"), font(44, "Bold"), FG, a, anchor="lm")
+            wbar = 1250 * min(1.0, float(v.get("score", 0)) / 10) * a
+            d.rounded_rectangle([230, y + 8, 230 + max(10, wbar), y + rowh - 14], 14, fill=rgba(col, a))
+            text(d, (250 + wbar, y + rowh * 0.42), f"{float(v.get('score', 0)):.2f}", font(44, "Bold"), FG, a, anchor="lm")
             if win:
-                chip(d, x0 + 80, y + 52, "ships", ramp(t, 0.6 + 0.3 * len(vers[-6:]), 0.4), size=20)
+                chip(d, 420 + wbar, y + rowh * 0.42 - 28, "ships", ramp(t, 0.6 + 0.25 * len(vers), 0.4), size=30)
         return f
-    segs.append(Seg("4. How it works", "playtest + judge", lens[4], draw_e,
-                    ["5 · PLAYTEST AND JUDGE / Autopilot plays it, a vision model scores it, the best version ships",
-                     f"(survey sheet of {g['title']}; scores " + ", ".join(f"{v.get('tag')} {float(v.get('score', 0)):.2f}"
-                                                                    for v in vers) + f"; best {best})"],
+    segs.append(Seg("4. How it works", "playtest + judge", L_f, draw_f,
+                    ["6 · PLAYTEST AND JUDGE / Autopilot plays it, a vision model scores it, the best version ships",
+                     f"({g['title']}: survey sheet; scores " + ", ".join(f"{v.get('tag')} {float(v.get('score', 0)):.2f}"
+                                                                         for v in vers) + f"; best {best})"],
                     fade_out=0.15))
     return segs
 
@@ -599,7 +672,7 @@ def vo_placements(segs: list[Seg]) -> list[tuple[float, float, str]]:
     clock = 0.0
     for s in segs:
         key = s.section.split(". ", 1)[1] if ". " in s.section else s.section
-        shots.setdefault(key, []).append(clock)
+        shots.setdefault(key, {}).setdefault(s.label, clock)
         clock += s.dur
     out = []
     for sec, off, line in VO:
@@ -607,11 +680,10 @@ def vo_placements(segs: list[Seg]) -> list[tuple[float, float, str]]:
         if a is None:
             continue
         if isinstance(off, str):
-            k = int(off.split(":")[1])
-            lst = shots[SEC_KEY[sec]]
-            if k >= len(lst):
+            at = shots.get(SEC_KEY[sec], {}).get(off.split(":", 1)[1])
+            if at is None:
                 continue
-            start = lst[k] + 0.3
+            start = at + 0.3
         else:
             start = a + off if off >= 0 else b + off
         out.append((start, b, line))
@@ -699,13 +771,14 @@ def main() -> int:
     ap.add_argument("--games", default="", help="comma-separated game ids in order (default: by judge score)")
     ap.add_argument("--music", default="", help="music bed (default: the top game's music_main.mp3)")
     ap.add_argument("--no-vo", action="store_true")
+    ap.add_argument("--skip", default=",".join(sorted(SKIP)), help="game ids to leave out (default: %(default)s)")
     ap.add_argument("--preview", action="store_true", help="one still per shot to video/v3/preview_*.jpg")
     a = ap.parse_args()
     out = Path(a.out).resolve()
     V3.mkdir(parents=True, exist_ok=True)
     global USE_VO
     USE_VO = not a.no_vo and not a.preview
-    gs = games([x for x in a.games.split(",") if x] or None)
+    gs = games([x for x in a.games.split(",") if x] or None, {x for x in a.skip.split(",") if x})
     if not gs:
         print("no games with footage in web/games/index.json")
         return 1
