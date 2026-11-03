@@ -10,7 +10,7 @@
   "Shift: dash",
   "P / Esc: pause"
  ],
- "created": "2026-11-02T20:02:01-0800",
+ "created": "2026-11-02T22:32:53-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -23,14 +23,14 @@
  "survey": "about/survey.jpg",
  "score": {
   "best": "v2",
-  "score": 6.72,
-  "play": 7.44,
+  "score": 6.56,
+  "play": 7.12,
   "vision": 6.0,
   "versions": [
    {
     "tag": "v0",
-    "score": 6.16,
-    "play_score": 6.32,
+    "score": 6.56,
+    "play_score": 7.12,
     "vision_score": 6.0
    },
    {
@@ -41,14 +41,14 @@
    },
    {
     "tag": "v1",
-    "score": 6.22,
-    "play_score": 7.44,
+    "score": 6.06,
+    "play_score": 7.12,
     "vision_score": 5.0
    },
    {
     "tag": "v2",
-    "score": 6.72,
-    "play_score": 7.44,
+    "score": 6.56,
+    "play_score": 7.12,
     "vision_score": 6.0
    }
   ]
@@ -177,38 +177,49 @@
  },
  "timings_s": {
   "art": 289.1,
-  "build": 1849.5,
-  "eval_s0": 174.5,
-  "eval_v0": 241.9,
-  "eval_v1": 60.0,
-  "eval_v2": 67.9,
+  "build": 255.0,
+  "eval_s0": 65.7,
+  "eval_v0": 72.2,
+  "eval_v1": 54.8,
+  "eval_v2": 55.2,
   "plan": 69.2,
-  "repair_1": 118.9,
-  "repair_2": 345.6,
-  "scaffold": 1.5
+  "repair_1": 49.4,
+  "repair_2": 116.9,
+  "scaffold": 2.2
+ },
+ "operator_interventions": [
+  "operator re-ran the asset stage for the sound effects and props that had failed (--backfill-assets) after the sfx-length and Idol-token fixes",
+  "operator re-ran the build from the scaffold stage (--redo scaffold) so game.js places the Gaussian-splat landmarks generated afterwards"
+ ],
+ "mapping": {
+  "pitch": "Cloudhop Meadows: a bright, juicy 3D platformer across floating sky islands. Run, double-jump and dash between candy-coloured islands and wobbly mushroom platforms, collect glowing star seeds, dodge spinning thorn bars, and reach the giant blooming flower portal at the top. Cheerful music, a bouncy HUD with a seed counter and timer.",
+  "notes": null,
+  "chosen": {
+   "level_kind": "sky_islands",
+   "look": "toon_bright",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "collectible": "star",
+   "collectible_label": "Star Seeds"
+  }
  },
  "model_calls": {
-  "lead": {
-   "calls": 1,
-   "prompt_tokens": 5743,
-   "completion_tokens": 5467,
-   "seconds": 69.1
-  },
   "builder": {
-   "calls": 51,
-   "prompt_tokens": 1333337,
-   "completion_tokens": 8017,
-   "seconds": 1979.1
+   "calls": 41,
+   "prompt_tokens": 799972,
+   "completion_tokens": 7689,
+   "seconds": 189.4
   },
   "judge": {
-   "calls": 4,
-   "prompt_tokens": 26976,
-   "completion_tokens": 3300,
-   "seconds": 330.1
+   "calls": 10,
+   "prompt_tokens": 51940,
+   "completion_tokens": 4004,
+   "seconds": 81.7
   }
  },
  "agents": {
-  "live": 4,
+  "live": 3,
   "cached": 0,
   "failed": 0
  },
@@ -275,15 +286,11 @@
     },
     "prop_candy_mushroom": {
      "ok": true,
-     "seconds": 285.3,
-     "note": "made by --backfill-assets after the first attempt failed",
-     "first_error": "RuntimeError: no 3D output (Idol: prop_splat failed (502): {\"error\":\"workflow failed: {\\\"prompt_id\\\": \\\"473a43bd-ddff-4665-a79b-c634beb9e2da\\\", \\\"node_id\\\": \\\"20\\\", \\\"node_type\\\": \\\"IdolImageToSplat\\\", \\\"executed\\\": [\\\"8\\\", \\\"6\\\", \\\"7\\\", \\\"12\\\", \\\"5\\\", \\\"11\\\", \\\"13\\\"], \\\"exception_message\\\": \\\"Idol "
+     "seconds": 74.1
     },
     "prop_glow_flower": {
      "ok": true,
-     "seconds": 289.1,
-     "note": "made by --backfill-assets after the first attempt failed",
-     "first_error": "RuntimeError: no 3D output (Idol: prop_splat failed (502): {\"error\":\"workflow failed: {\\\"prompt_id\\\": \\\"85b7f31c-943a-49e5-9481-1ba448dc8672\\\", \\\"node_id\\\": \\\"20\\\", \\\"node_type\\\": \\\"IdolImageToSplat\\\", \\\"executed\\\": [\\\"8\\\", \\\"7\\\", \\\"12\\\", \\\"5\\\", \\\"11\\\", \\\"13\\\"], \\\"exception_message\\\": \\\"Idol needs t"
+     "seconds": 104.9
     }
    }
   },
@@ -292,26 +299,25 @@
   },
   "build": {
    "result": {
-    "summary": "Cloudhop Meadows: a bright toon 3D platformer across floating candy sky islands. The player (bubblegum-pink chibi with butter-yellow accent) runs, double-jumps and dashes up a large sky_islands level, collecting 25 of 40 star seeds, dodging spinning thorn bars, bouncing off spring pads, and reaching the golden bloom portal before a 180-second timer runs out, with 3 lives.\n\nBuilt on top of the scaffold:\n- Level: large sky_islands (seed 7), all 40 collectibles retagged to 'star'.\n- Dressing: generated candy_mushroom and glow_flower props placed every other route point (with World.heightAt sanity check so they only land on the correct island surface), plus 4 spring_pad props paired with Gameplay bounce hazards on route points 4/10/16/22 to help the climb, and 5 spinner thorn-bar hazards on route points 3/8/13/19/25.\n- Player: platformer with the plan's body/accent colours, runSpeed 13, jumpHeight 4.5.\n- Rules: collect {star, target 25}, goal true (portal locked until 25 stars), timer 180s, lives 3, 4 enemies spread along the route. onWin fires a big multi-colour confetti burst; onLose poofs the player.\n- HUD (arcade style): star-seed counter using the generated icon_star_seed icon with target 25, timer, 3 hearts, minimap, objective line, custom win/lose screen titles.\n- Title screen with the plan's tagline, \"Press Space to hop\", controls credit, and a 3-2-1-GO countdown.\n- FX: FX.auto for base juice, plus custom moments \u2014 +10 text on star collect, checkpoint toast with flag icon, \"need N more seeds\" toast on goalLocked, \"the bloom is open\" toast + starBurst on goalOpen, speed lines on dash, sparkle ring on double jump, slow-mo on death, white poof on respawn.\n- Audio: Audio.auto + music_main (arcade procedural fallback if the mp3 is missing).\n- Debug.install + game.start() as required.\n\nVerified with play_game: zero console errors, autopilot moves along the route and collects stars (4 in 10s, more in 20s), HUD/counter/timer/lives/minimap all render correctly, generated sky panorama loads, and the toon_bright look matches the candy-meadow art direction.",
+    "summary": "Cloudhop Meadows is a bright, juicy 3D platformer across floating candy-coloured sky islands. The player (a bubblegum-pink chibi bunny) runs, double-jumps and dashes between islands, grabs 25 of 40 glowing star seeds, dodges spinning thorn bars and 4 enemies, rides spring bounce pads and wobbly movers, and reaches the giant golden bloom portal at the top before the 180-second timer runs out. Losing all 3 lives (thorn hits, enemies, or falling into the void) or running out of time loses the game.\n\nBuilt with kit calls only: toon_bright look with a candy palette override (pink cliffs, mint grass, butter-yellow accents), large sky_islands level, platformer player with the plan's colours, follow camera, Gameplay.rules (star collect target 25, goal, 180s timer, 3 lives, 4 enemies), arcade HUD with the generated star-seed icon, timer, hearts, minimap and objective, title screen with 3-2-1 countdown, FX.auto plus custom moments (double-jump sparkle ring, dash speed lines + dust, confetti when the bloom opens, win star-burst), and the generated chiptune music + custom sfx.\n\nVerified via play_game: zero console errors; autopilot moved 217 units, collected 25/25 stars, opened the goal portal (objective switched to \"Reach the goal!\"), with no deaths.",
     "changes": [
-     "Retagged all 40 level collectibles to 'star' (the plan's pickup)",
-     "Placed generated candy_mushroom and glow_flower props along the route with heightAt sanity checks",
-     "Added 4 spring_pad props + 4 bounce hazards on route points to aid the climb",
-     "Added 5 spinner thorn-bar hazards on the main route",
-     "Customised player colours (body #ff6f91, accent #ffd93d) and tuning (runSpeed 13, jumpHeight 4.5)",
-     "Configured Gameplay.rules: collect star target 25, goal true, timer 180, lives 3, 4 enemies, onWin confetti + onLose poof",
-     "HUD: arcade style, star-seed counter with generated icon + target 25, timer, lives, minimap, objective, custom win/lose screen titles",
-     "Title screen with tagline, 'Press Space to hop', controls credit, 3-2-1-GO countdown",
-     "Extra FX moments: +10 text on collect, checkpoint/goalLocked/goalOpen toasts, dash speed lines, double-jump ring, death slow-mo, respawn poof",
-     "Audio: Audio.auto + music_main with arcade procedural fallback"
+     "Tuned Look.apply to a candy palette (bubblegum-pink primary, butter-yellow accent, pastel-mint grass, pink cliffs) with stronger sun and bloom",
+     "Recoloured the player as a pink bunny with the plan's body/accent colours",
+     "Added spring bounce pads along the route (hazards: bounce) to launch the player to the next tier",
+     "Added spinning thorn-bar hazards (hazards: spinner) at route midpoints to dodge or get bonked by",
+     "Kept the generated voxel props (candy mushrooms, glow flowers) and Gaussian-splat landmarks beside the route",
+     "Configured Gameplay.rules: star collect target 25 of 40, goal portal, 180s countdown timer, 3 lives, 4 enemies",
+     "Added custom FX moments: double-jump sparkle ring, dash speed lines + dust puff, confetti + toast when the goal opens, win confetti + star burst",
+     "Plays the generated chiptune-pop music loop via Audio.music alongside Audio.auto",
+     "Arcade HUD with generated star-seed icon counter, timer, hearts, minimap, objective line, and custom win/lose screen titles",
+     "Title screen with the fantasy tagline, control hints and a 3-2-1-GO countdown"
     ],
     "known_issues": [
-     "Autopilot occasionally dies to spinners or falls off islands (2 deaths in a 20s run) \u2014 expected for a hazard-laden platformer; checkpoints respawn it",
-     "The generated candy_mushroom/glow_flower props use a procedural fallback (mushroom/tree) when the voxel data is not in the manifest; they still read as candy dressing",
-     "The level's default island palette is grass-green rather than the pastel mint/bubblegum described in the art direction \u2014 the kit's toon_bright palette drives island colours and there is no per-island colour override exposed in the Level docs"
+     "The three.js WebGL program info log warning (signed/unsigned mismatch) is a harmless three.js internal warning, not a game error",
+     "Autopilot in the final check collected 25 stars and opened the goal but the 25s window ended just before it reached the portal; the route is fully reachable (goal portal opened, objective updated)"
     ]
    },
-   "plays": 2
+   "plays": 4
   }
  },
  "models": {
@@ -320,8 +326,5 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- },
- "operator_interventions": [
-  "operator re-ran the asset stage for the sound effects and props that had failed (--backfill-assets) after the sfx-length and Idol-token fixes"
- ]
+ }
 }

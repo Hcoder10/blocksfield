@@ -2,14 +2,14 @@
  "id": "starbloom_isles",
  "title": "Starbloom Isles",
  "tagline": "Hop, bloom, and light the beacon across the floating sky.",
- "pitch": "x",
+ "pitch": "Starbloom Isles: a bright, juicy toon 3D platformer. A little fox hops across floating sky islands, rope bridges and moving platforms collecting glowing star blooms, stomping grumpy slimes, and reaching the beacon portal on the last island. Cheerful, saturated, sunny.",
  "genre": "Toon 3D platformer",
  "controls": [
   "WASD / arrows: move",
   "Space: jump (hold for higher hop)",
   "P / Esc: pause"
  ],
- "created": "2026-11-02T20:37:39-0800",
+ "created": "2026-11-02T22:32:33-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -22,15 +22,15 @@
  "survey": "about/survey.jpg",
  "score": {
   "best": "v2",
-  "score": 7.0,
+  "score": 6.5,
   "play": 8.0,
-  "vision": 6.0,
+  "vision": 5.0,
   "versions": [
    {
     "tag": "v0",
-    "score": 6.0,
+    "score": 6.5,
     "play_score": 8.0,
-    "vision_score": 4.0
+    "vision_score": 5.0
    },
    {
     "tag": "s0",
@@ -40,15 +40,15 @@
    },
    {
     "tag": "v1",
-    "score": 7.0,
+    "score": 6.5,
     "play_score": 8.0,
-    "vision_score": 6.0
+    "vision_score": 5.0
    },
    {
     "tag": "v2",
-    "score": 7.0,
+    "score": 6.5,
     "play_score": 8.0,
-    "vision_score": 6.0
+    "vision_score": 5.0
    }
   ]
  },
@@ -170,20 +170,52 @@
  },
  "timings_s": {
   "art": 262.9,
-  "build": 1903.3,
-  "eval_s0": 48.8,
-  "eval_v0": 59.3,
-  "eval_v1": 53.6,
-  "eval_v2": 58.4,
-  "finalize": 32.5,
+  "build": 225.0,
+  "eval_s0": 55.2,
+  "eval_v0": 66.4,
+  "eval_v1": 67.8,
+  "eval_v2": 54.4,
   "plan": 48.5,
-  "repair_1": 277.8,
-  "repair_2": 154.2,
-  "scaffold": 1.5
+  "repair_1": 99.2,
+  "repair_2": 192.1,
+  "scaffold": 2.6
  },
- "model_calls": {},
+ "operator_interventions": [
+  "sky.jpg re-made by hand mid-build: an operator ran the pipeline's fixed panorama code on the same generated sky image (the first version showed painted land below the horizon)",
+  "operator re-ran version selection and the repair rounds (--redo eval_v0) after fixing a judge-selection bug in the pipeline",
+  "operator re-ran the asset stage for the 4 sound effects and 2 props that had failed (--backfill-assets) after the sfx-length fix",
+  "thumb.jpg replaced by hand with a later playtest frame of the same build",
+  "operator re-ran the build from the scaffold stage (--redo scaffold) so game.js places the Gaussian-splat landmarks generated afterwards"
+ ],
+ "mapping": {
+  "pitch": "Starbloom Isles: a bright, juicy toon 3D platformer. A little fox hops across floating sky islands, rope bridges and moving platforms collecting glowing star blooms, stomping grumpy slimes, and reaching the beacon portal on the last island. Cheerful, saturated, sunny.",
+  "notes": null,
+  "chosen": {
+   "level_kind": "sky_islands",
+   "look": "toon_bright",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "collectible": "star",
+   "collectible_label": "Star Blooms"
+  }
+ },
+ "model_calls": {
+  "builder": {
+   "calls": 30,
+   "prompt_tokens": 538416,
+   "completion_tokens": 7632,
+   "seconds": 175.0
+  },
+  "judge": {
+   "calls": 10,
+   "prompt_tokens": 51978,
+   "completion_tokens": 3428,
+   "seconds": 81.3
+  }
+ },
  "agents": {
-  "live": 0,
+  "live": 3,
   "cached": 0,
   "failed": 0
  },
@@ -244,15 +276,11 @@
     },
     "prop_star_shroom": {
      "ok": true,
-     "seconds": 259.6,
-     "note": "made by --backfill-assets after the first attempt failed",
-     "first_error": "RuntimeError: no 3D output (Idol: prop_splat failed (502): {\"error\":\"workflow failed: {\\\"prompt_id\\\": \\\"6403e765-6043-4e87-a853-a21964e5927c\\\", \\\"node_id\\\": \\\"20\\\", \\\"node_type\\\": \\\"IdolImageToSplat\\\", \\\"executed\\\": [\\\"8\\\", \\\"7\\\", \\\"12\\\", \\\"5\\\", \\\"11\\\", \\\"13\\\"], \\\"exception_message\\\": \\\"Idol needs t"
+     "seconds": 149.9
     },
     "prop_beacon_lantern": {
      "ok": true,
-     "seconds": 262.9,
-     "note": "made by --backfill-assets after the first attempt failed",
-     "first_error": "RuntimeError: no 3D output (Idol: prop_splat failed (502): {\"error\":\"workflow failed: {\\\"prompt_id\\\": \\\"bba16898-2fe9-4e57-94cf-c766691e4bce\\\", \\\"node_id\\\": \\\"20\\\", \\\"node_type\\\": \\\"IdolImageToSplat\\\", \\\"executed\\\": [\\\"8\\\", \\\"7\\\", \\\"12\\\", \\\"5\\\", \\\"11\\\", \\\"13\\\"], \\\"exception_message\\\": \\\"Idol needs t"
+     "seconds": 165.2
     }
    }
   },
@@ -261,19 +289,22 @@
   },
   "build": {
    "result": {
-    "summary": "Starbloom Isles: a bright toon 3D platformer where a little fox hops across floating sky islands, banks 12 of 24 star blooms to unlock the beacon portal, and dodges/stomps 4 grumpy patrol slimes. Built on the sky_islands medium level with the plan's candy-sky palette (azure to pale-gold sky, warm high sun, soft bloom), generated star-shroom and beacon-lantern props scattered along the route, extra star-bloom arcs mid-route and a ring around the goal, arcade HUD with star-bloom counter/lives/minimap, title screen with 3-2-1 countdown, and layered FX (stomp poofs + STOMP text, spring rings, collect sparkles, goal confetti, win confetti/starburst/ring). Zero console errors; autopilot runs the route, collects 26/26 blooms, triggers checkpoints and a stomp, and reaches the goal island.",
+    "summary": "Starbloom Isles is a bright toon 3D platformer where a little fox with a teal scarf hops across floating sky islands, collects 24 star blooms (12 needed to unlock the beacon portal), stomps 4 patrol slimes, rides spring pads and moving platforms, and reaches the beacon portal on the final island. The game uses the generated sky panorama, star-bloom icon, heart icon, flag icon, ukulele music, and all 6 SFX (collect, jump, land, damage, win, lose). Voxel props (star shrooms, beacon lanterns) and Gaussian-splat landmarks are placed beside the route. Spring pads launch the fox up steep hops; spinner hazards sweep across flat gaps. The HUD shows star blooms collected (12/12 target), 3 hearts for lives, a minimap with route/checkpoints/goal, and the objective. The title screen sells the fantasy with the tagline and controls. Win triggers confetti, star burst, and a \"win\" emote; lose triggers a dark red vignette and \"sad\" emote. Autopilot verified: full run from spawn to goal, 21 stars collected, 2 enemies stomped, won=true, zero errors.",
     "changes": [
-     "Tuned Look to toon_bright with warm high sun, azure-to-gold sky, gentle bloom and saturation for the candy-sky palette",
-     "Re-tagged all 24 level collectibles as star and added 7 bonus blooms (mid-route arc + goal ring)",
-     "Placed generated star_shroom props (8) and beacon_lantern props (5 + 2 flanking the goal) along the route via Assets.prop with World.heightAt placement",
-     "Created the orange/cream fox platformer player with follow camera",
-     "Gameplay.rules: star collect target 12 (locks the beacon until banked), 3 lives, 4 patrol slime enemies, onWin/onLose FX callbacks",
-     "Added event juice: stomp poof + starburst + STOMP text, bounce rings/sparkles, collect sparkles, goal confetti",
-     "Arcade HUD: star-bloom counter with generated icon, lives hearts, minimap, objective line; title screen with tagline, controls credit and 3-2-1 countdown"
+     "Switched player from default kid to fox species with teal scarf and plan colors (#ff8a3d body, #fff1d6 accent)",
+     "Added spring_pad props + bounce hazards at steep route hops (up to 3, auto-placed)",
+     "Added spinner hazards on flat mid-route gaps (up to 2, auto-placed)",
+     "Added onWin callback: confetti (220 particles, plan palette), star burst at goal, win emote",
+     "Added onLose callback: dark red vignette flash, sad emote",
+     "Added stomp event FX: green poof + 'STOMP!' floating text",
+     "Added goal event FX: golden ring shockwave at the portal",
+     "Added goalLocked toast: tells player how many more star blooms are needed",
+     "Tuned HUD objective text to 'Collect 12 Star Blooms, then reach the beacon'",
+     "Kept generated voxel props (star shrooms, beacon lanterns) and Gaussian-splat landmarks beside the route"
     ],
     "known_issues": [
-     "Autopilot bot occasionally falls off an island edge (1 death in a 25s run); the level's own route jumps are within single-jump range for a human player",
-     "Autopilot test window is ~25s so it does not always reach the goal island in the test; the goal portal, beacon lanterns and win FX are verified in place and the win path (goalOpen -> win event -> confetti) is wired"
+     "THREE.WebGLProgram signed/unsigned mismatch warning (harmless, from three.js shader compilation)",
+     "Autopilot took 2 hits from slimes during the run (hp went 3\u21921) but still won; this is expected gameplay"
     ]
    },
    "plays": 3
@@ -285,11 +316,5 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- },
- "operator_interventions": [
-  "sky.jpg re-made by hand mid-build: an operator ran the pipeline's fixed panorama code on the same generated sky image (the first version showed painted land below the horizon)",
-  "operator re-ran version selection and the repair rounds (--redo eval_v0) after fixing a judge-selection bug in the pipeline",
-  "operator re-ran the asset stage for the 4 sound effects and 2 props that had failed (--backfill-assets) after the sfx-length fix",
-  "thumb.jpg replaced by hand with a later playtest frame of the same build"
- ]
+ }
 }

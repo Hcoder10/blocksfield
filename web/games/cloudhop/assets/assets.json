@@ -85,5 +85,23 @@
   "prompt": "Solid garden flower: green stem, layered pink petals, glowing yellow center, rounded toon shape",
   "via": "idol",
   "parts": 165
+ },
+ "splat_candy_mushroom": {
+  "file": "splat_candy_mushroom.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "Big candy mushroom: cream stem, glossy bubblegum-pink cap with white spots, soft rounded edges",
+  "camera": {
+   "yaw": 1.1523796482876292
+  }
+ },
+ "splat_glow_flower": {
+  "file": "splat_glow_flower.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "Solid garden flower: green stem, layered pink petals, glowing yellow center, rounded toon shape",
+  "camera": {
+   "yaw": 1.5547587751023995
+  }
  }
 }
