@@ -18,6 +18,7 @@ import io
 import json
 import logging
 import re
+import threading
 from pathlib import Path
 
 import numpy as np
@@ -302,13 +303,40 @@ def reason(e: BaseException) -> str:
     return f"{type(e).__name__}: {text}"[:300]
 
 
-def to_spz(ply: Path, out_dir: Path) -> None:
-    """web/tools/ply_to_spz.py (Spark's transcoder in headless Chrome): <out_dir>/<ply stem>.spz."""
-    import subprocess
-    import sys
-    tool = Path(__file__).resolve().parent.parent / "web" / "tools" / "ply_to_spz.py"
-    subprocess.run([sys.executable, str(tool), str(ply), "--out-dir", str(out_dir)], capture_output=True, text=True,
-                   timeout=300)
+_SPZ_LOCK = threading.Lock()
+
+
+def to_spz(ply: Path, out_dir: Path, opacity: float = 0.05) -> None:
+    """.ply -> <out_dir>/<ply stem>.spz with Spark's transcoder in headless Chrome: web/tools/ply_to_spz.py's page, but
+    served from a page file of its own (the tool shares one page file and deletes it when done, so two builds
+    converting at once broke each other: live, both lagoon_rush splats failed)."""
+    import base64
+    import importlib.util
+    import os
+    from playwright.sync_api import sync_playwright
+    from blocksfield.web_play import _SHOT
+    web = Path(__file__).resolve().parent.parent / "web"
+    spec = importlib.util.spec_from_file_location("blocksfield_ply_to_spz", web / "tools" / "ply_to_spz.py")
+    tool = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(tool)
+    page_file = web / "vendor" / "spark" / f"_transcode_{os.getpid()}_{threading.get_ident()}.html"
+    out = Path(out_dir) / f"{Path(ply).stem}.spz"
+    with _SPZ_LOCK:
+        page_file.write_text(tool.PAGE, encoding="utf-8")
+        srv, port = _SHOT.serve(web)
+        try:
+            with sync_playwright() as pw:
+                b = pw.chromium.launch(headless=True, args=_SHOT.GPU_ARGS, channel="chrome")
+                page = b.new_page()
+                page.goto(f"http://127.0.0.1:{port}/vendor/spark/{page_file.name}")
+                page.wait_for_function("window.ready === true", timeout=30000)
+                b64 = page.evaluate("([d, o]) => window.toSpz(d, o)",
+                                    [base64.b64encode(Path(ply).read_bytes()).decode(), opacity])
+                out.write_bytes(base64.b64decode(b64))
+                b.close()
+        finally:
+            srv.shutdown()
+            page_file.unlink(missing_ok=True)
 
 
 def _jpeg(img: Image.Image, q: int) -> bytes:
