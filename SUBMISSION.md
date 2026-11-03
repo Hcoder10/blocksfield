@@ -73,7 +73,8 @@ panorama, UI icons (+ BiRefNet cut-outs), music (ACE-Step 1.5), sound effects (S
 generated image -> Gaussian splat, rendered in the browser). A builder agent writes the game on top of ThreeKit, our
 three.js kit library, and plays it in real Chrome as it works. Every version is then played by an autopilot bot and
 scored by a vision judge against the concept board; a repair agent fixes what the judge found, and the best version
-ships with a thumbnail, a gameplay video and a "How it was made" page. Blocksfield Studio, a local web app, shows the
+ships with a thumbnail, a gameplay video, LTX-2.5 cutscenes and a "How it was made" page. The 15 games in the
+gallery (https://hcoder10.github.io/blocksfield/) were all made this way with zero operator interventions. Blocksfield Studio, a local web app, shows the
 whole build live: plan, concept board, assets as they are generated, playtests, judged versions and the game, with a
 strip showing which model holds the GPU. The same pipeline also targets Roblox: it builds the world inside Roblox
 Studio and saves a real `.rbxlx` place.
@@ -86,7 +87,7 @@ browser, and native Parts on Roblox.
 
 **Other tools or techniques.**
 1. **A kit library the model composes instead of writing an engine.** ThreeKit for the web (`web/kit/`: look,
-   world, level, player, camera, gameplay, UI, FX, audio, debug, touch; one tested module each, with docs written for
+   world, level, mechanics, player, camera, gameplay, UI, FX, audio, cutscene, assist, debug, touch; one tested module each, with docs written for
    the model) and the Roblox kits in the harness. The model's choices are the design, layout, art direction, tuning
    and UI; the kits make every option look and play right, on desktop and phones, with automatic quality tiers.
 2. **Guardrails in the tools, not advice in the prompt.** The plan is schema-checked against enums read from the kit
