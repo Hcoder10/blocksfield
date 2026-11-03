@@ -517,6 +517,9 @@ class WebBuild:
         }
         prev_path = self.game_dir / "about.json"
         prev = json.loads(prev_path.read_text(encoding="utf-8")) if prev_path.exists() else {}
+        inc = self.run_dir / "incidents.json"            # pipeline incidents (not human edits): shown in the build log
+        if inc.exists():
+            about["incidents"] = [x["what"] for x in json.loads(inc.read_text(encoding="utf-8"))]
         for k in ("superseded_by",):                     # gallery decisions survive a re-finalize
             if prev.get(k):
                 about[k] = prev[k]
