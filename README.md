@@ -163,6 +163,24 @@ also get a `generate_model` tool (Qwen-Image → TRELLIS.2 → decimated GLB →
 Drag any of them into ComfyUI to see and edit the graph. `python -m blocksfield.comfy run <name> key=value`
 runs one headless.
 
+## Blocksfield Studio
+
+The app face of the web pipeline: a local web app where you type a pitch and watch the game get made. It shows the
+plan, the concept board, every generated asset (sky, icons, music, sound, props), the builder's playtests, each judged
+version with its scores, and finally the playable three.js game. A live strip shows who holds the GPU second by second
+(the 27B LLM or ComfyUI), read from the arbiter. A finished build can be replayed "live" (`/run/<id>?replay=auto`,
+labelled as a replay in the UI).
+
+```bash
+python -m blocksfield.studio                    # http://127.0.0.1:8420/  (needs the arbiter tunnel for the live GPU strip)
+python -m blocksfield.studio --allow-launch     # also lets "Make game" start real builds (blocksfield.web_run)
+python -m blocksfield.studio_record --run neon_drift   # a scripted 15 s 1920x1080 clip -> video/studio_take.mp4
+```
+Without `--allow-launch` the pitch box never starts a build; it opens the latest run instead. With it, "Make game"
+runs `python -m blocksfield.web_run "<pitch>" --id <slug>` detached (set `BLOCKSFIELD_BOX` as in step 3), logging to
+`runs/web_<id>/build.log`, and opens that run's live view. Pages: `/` (create), `/run/<id>` (a build), `/runs` (every
+web game).
+
 ## License
 
 MIT for this repository (see `LICENSE`). Each model keeps its own licence (see the table above); check them before any
