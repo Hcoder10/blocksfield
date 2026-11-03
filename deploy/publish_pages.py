@@ -80,12 +80,26 @@ def og_card(out: Path) -> None:
         print(f"warning: og card not re-rendered ({type(e).__name__}: {str(e)[:160]}); shipping the committed og.jpg")
 
 
+def replaceable(out: Path) -> bool:
+    """Safe to wipe: empty, marked by an earlier build, or shaped exactly like one (an interrupted build)."""
+    names = {p.name for p in out.iterdir()}
+    return not names or MARK in names or (names <= {"index.html", "site", "games", "kit", "vendor", ".nojekyll"}
+                                          and "index.html" in names and "site" in names)
+
+
+def _force_remove(func, path, _exc) -> None:
+    """Windows: read-only files (git objects, some kit assets) block rmtree; clear the flag and retry."""
+    os.chmod(path, 0o700)
+    func(path)
+
+
 def build(out: Path) -> dict:
     if out.exists():
-        if not (out / MARK).exists():
-            sys.exit(f"refusing to replace {out}: it is not a previous pages build (no {MARK})")
-        shutil.rmtree(out)
+        if not replaceable(out):
+            sys.exit(f"refusing to replace {out}: it is not empty and not a previous pages build (no {MARK})")
+        shutil.rmtree(out, onerror=_force_remove)
     out.mkdir(parents=True)
+    (out / MARK).write_text("building", encoding="utf-8")  # first, so an interrupted build can still be replaced
     shutil.copyfile(WEB / "index.html", out / "index.html")
     shutil.copytree(WEB / "site", out / "site", ignore=SKIP_SITE_DIR)
     shutil.copytree(WEB / "kit", out / "kit", ignore=SKIP_KIT)
@@ -100,7 +114,7 @@ def build(out: Path) -> dict:
     (out / "games" / "index.json").write_text(json.dumps(idx, indent=1), encoding="utf-8")
     (out / ".nojekyll").write_text("", encoding="utf-8")
     og_card(out)
-    (out / MARK).write_text(time.strftime("%Y-%m-%dT%H:%M:%S%z"), encoding="utf-8")
+    (out / MARK).write_text(time.strftime("%Y-%m-%dT%H:%M:%S%z"), encoding="utf-8")  # build finished
     return {"games": [d.name for d in games]}
 
 
