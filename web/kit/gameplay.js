@@ -660,7 +660,14 @@ export function rules(game, opts = {}) {
     game.emit('damage', player, 1, { type: why });
     if (S.hp <= 0) { player.die(why); return; }
     const sp = player.safePoint.clone().add(V3(0, 0.3, 0));
-    player.teleport(sp, player.safeYaw); player.invulnerable = 1.6; player.inputLock = 0.5;
+    // face along the route (toward the next route point), away from the edge we fell off
+    let yaw = player.safeYaw;
+    if (level.route.length > 1) {
+      let bi = 0, bd = Infinity; level.route.forEach((r, i) => { const d = r.distanceToSquared(sp); if (d < bd) { bd = d; bi = i; } });
+      const nx = level.route.slice(bi + 1).find(r => Math.hypot(r.x - sp.x, r.z - sp.z) > 2) || null;
+      if (nx) yaw = Math.atan2(nx.x - sp.x, nx.z - sp.z);
+    }
+    player.teleport(sp, yaw); player.invulnerable = 1.6; player.inputLock = 0.5;
     if (player.character) player.character.squash(1.3);
     game.emit('fall', player, why); game.emit('respawn', player, { safe: true });
     S.hp = Math.max(S.hp, 1);
