@@ -656,7 +656,12 @@ export function titleScreen(game, opts = {}) {
   if (keyName) { const parts = String(start).split(new RegExp(keyName, 'i')); startEl.append(parts[0] || '', h('span', 'tk-key', [keyName === 'Space' ? 'SPACE' : 'ENTER']), parts[1] || ''); }
   else startEl.append(touch ? 'Tap to start' : start);
   el.append(startEl);
-  if (opts.controls && !touch) el.append(h('div', 'tk-controls', [String(opts.controls)]));
+  if (touch) {   // phones: a touch hint replaces the keyboard help
+    const pt = (game.__player && game.__player.type) || (window.__kit && window.__kit.player && window.__kit.player.type) || 'platformer';
+    const hint = pt === 'kart' || pt === 'boat' ? 'Left stick: steer · hold Drift, release to boost' : pt === 'fps' ? 'Left stick: move · drag right side: look · Fire / Jump buttons'
+      : 'Left stick: move · Jump / Dash buttons · drag right side: camera';
+    el.append(h('div', 'tk-controls', [hint]));
+  } else if (opts.controls) el.append(h('div', 'tk-controls', [String(opts.controls)]));
   if (credit && !(touch && /wasd|arrows|space|shift|esc/i.test(credit))) el.append(h('div', 'tk-credit', [credit]));   // keyboard help is noise on a phone
   U.root.append(el);
   const wasPaused = game.paused;

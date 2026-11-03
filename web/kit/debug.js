@@ -458,7 +458,12 @@ export function install(game, opts = {}) {
   });
   window.addEventListener('blur', () => kit.releaseAll());
 
-  try { Touch.install(game, { player }); } catch (e) { reportError(e); }   // phones: joystick + buttons, no game.js change
+  try { Touch.install(game, { player }); } catch (e) { reportError(e); }
+  // ?quality=low|high forces the Look tier (weak laptops, or to compare); auto-quality still runs otherwise
+  try {
+    const q = new URLSearchParams(location.search).get('quality');
+    if ((q === 'low' || q === 'high') && game.look && typeof game.look.setQuality === 'function') game.look.setQuality(q);
+  } catch (e) { reportError(e); }   // phones: joystick + buttons, no game.js change
   window.__kit = kit;
   game.debug = kit;
   return kit;
