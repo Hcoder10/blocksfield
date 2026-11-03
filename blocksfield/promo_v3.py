@@ -167,7 +167,8 @@ def games(only: list[str] | None = None, skip: set | None = None) -> list[dict]:
 
 def mechanics_snippet(js: str) -> list[str] | None:
     """The first K.Mechanics.<fn>(...) call in a game.js, as source lines (balanced parentheses, at most 14 lines)."""
-    m = re.search(r"^[^\n]*\bMechanics\.\w+\(", js, re.M)
+    # a custom mechanic (code the model wrote) is a stronger proof than a declarative rule
+    m = re.search(r"^[^\n]*\bMechanics\.custom\(", js, re.M) or re.search(r"^[^\n]*\bMechanics\.\w+\(", js, re.M)
     if not m:
         return None
     i, depth, started = m.start(), 0, False
@@ -446,7 +447,7 @@ def how(gs: list[dict], dur: float) -> list[Seg]:
             a = ramp(t, 0.9)
             x0, x1, yc = 96, W - 96, H - 150
             n = len(wave)
-            shown = int(n * min(1.0, max(0.0, (t - 0.9) / 1.4)))
+            shown = int(n * min(1.0, max(0.0, (t - 0.3) / 0.9)))
             bw = (x1 - x0) / n
             for k in range(shown):
                 hgt = 10 + wave[k] * 190
@@ -655,7 +656,8 @@ def game_segs(g: dict, dur: float) -> list[Seg]:
         x += chip(d, x, y0 + 14, genre if len(genre) <= 30 else genre[:29] + "…", a) + 12
         x += chip(d, x, y0 + 14, f"judge score {g['score_n']:.1f} / 10", a, fill=(30, 36, 48), fg=FG) + 12
         if g.get("composed"):
-            chip(d, x0, y0 - 56, "level laid out by the model (Level.compose)" if g.get("layout_changed", 0) > 0
+            nch = g.get("layout_changed", 0)
+            chip(d, x0, y0 - 56, f"level laid out by the model: {nch} pieces (Level.compose)" if nch > 0
                  else "composed level (Level.compose)", ramp(gt, 0.6), fill=(255, 120, 90), fg=(20, 10, 8))
         shown = int(total_chars * min(1.0, max(0.0, (gt - 0.4) / 2.6)))
         pa = 1 - ramp(gt, 5.2, 0.6)
@@ -807,7 +809,9 @@ def mechanics_beat(g: dict, dur: float) -> Seg:
         d = ImageDraw.Draw(f, "RGBA")
         d.rectangle([0, 0, W - v.width + 6, H], fill=(14, 16, 22, 235))
         kicker(d, (80, 60), f"New mechanic  ·  {g['title']}", ramp(t, 0.0), size=30)
-        text(d, (80, 100), "The model can add its own mechanics", font(56, "Semibold"), FG, ramp(t, 0.1))
+        custom = any("Mechanics.custom(" in x for x in g["mechanics"])
+        text(d, (80, 100), "A mechanic the model wrote itself (Mechanics.custom)" if custom else "The model can add its own mechanics",
+             font(50 if custom else 56, "Semibold"), FG, ramp(t, 0.1))
         shown = int(sum(len(x) for x in lines) * min(1.0, max(0.0, (t - 0.4) / 2.0)))
         y = 260
         for ln in lines:
