@@ -62,12 +62,30 @@ export const castle = {
     { type: 'pillar', position: [34, 11, 50.5] },
     { type: 'island', position: [34, 13, 58], size: 6 },                                     // the spire
     { type: 'tower', position: [36, 13, 61], height: 14 },
-    { type: 'mover', position: [-12, 5, 24], to: [-26, 7, 30], period: 6 },                // side trip to a bonus island
+    { type: 'mover', position: [-12, 5, 24], to: [-26, 7, 30], period: 6, route: false },  // side trip to a bonus island
     { type: 'island', position: [-31, 7, 32], size: 5, route: false },
   ],
   goal: true,
   collectibles: 'along_route',
 };
 
-export const all = { spiral, canyon, castle };
-export const looks = { spiral: 'candy', canyon: 'desert', castle: 'dark_fantasy' };
+// 4) Ferry crossing: movers ON the route (a raft across the river, a spinning beam, a lift up to the goal).
+export const ferry = {
+  ground: { style: 'grass', y: -3, size: 260, hills: 16 },
+  pieces: [
+    { type: 'water', position: [0, -1.6, 30], size: 280 },
+    { type: 'cliff', position: [0, 1, 0], size: 8 },                                         // start bank
+    { type: 'mover', motion: 'raft', path: [[0, 0, 9.5], [0, 0, 26.5]], period: 9, wait: 1.2 },  // raft across
+    { type: 'cliff', position: [0, 1, 36], size: 8 },
+    { type: 'pillar', position: [0, 2.5, 47.5] },
+    { type: 'mover', motion: 'rotate', position: [0, 3, 54], speed: 0.6, length: 9 },        // spinning beam
+    { type: 'pillar', position: [0, 3.5, 60.5] },
+    { type: 'platform', position: [0, 4, 66], size: [5, 6, 5] },
+    { type: 'mover', path: [[0, 4.3, 71], [0, 12, 78]], period: 7, wait: 1.0 },               // lift
+    { type: 'island', position: [0, 12, 86], size: 7 },                                      // goal
+  ],
+  goal: true,
+};
+
+export const all = { spiral, canyon, castle, ferry };
+export const looks = { spiral: 'candy', canyon: 'desert', castle: 'dark_fantasy', ferry: 'cozy' };

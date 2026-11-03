@@ -1361,7 +1361,8 @@ export function validate(level) {
 
 // ------------------------------------------------------------------------------------------------ compose (custom levels)
 export const PIECES = ['island', 'platform', 'cliff', 'pillar', 'ramp', 'stairs', 'bridge', 'wall', 'arch', 'tower', 'mover', 'water'];
-const ON_ROUTE = new Set(['island', 'platform', 'cliff', 'pillar', 'ramp', 'stairs', 'bridge']);
+const ON_ROUTE = new Set(['island', 'platform', 'cliff', 'pillar', 'ramp', 'stairs', 'bridge', 'mover']);
+export const MOTIONS = ['pingpong', 'loop', 'rotate', 'raft'];
 const HAZARD_TYPES = ['void', 'spikes', 'spinner', 'saw', 'lava', 'killzone', 'bounce', 'boost', 'crumble', 'enemy', 'wind'];
 
 function vecOf(v, what) {
@@ -1458,6 +1459,7 @@ export function compose(game, spec = {}) {
     // pieces
     const anchors = [];      // route anchors in piece order: {p, piece}
     const waterPieces = [];
+    const docks = [];          // mover dock points {p, r}
     spec.pieces.forEach((pc, i) => {
       if (!pc || typeof pc !== 'object') throw new Error(`Level.compose: pieces[${i}] must be an object like { type: "platform", position: [x, y, z] }`);
       const type = pc.type;
@@ -1529,11 +1531,45 @@ export function compose(game, spec = {}) {
         case 'arch': { const p = need('position'); World.prop(game, 'arch', { ...P(ctx), position: p, yaw, width: pc.width ?? 6, height: pc.height ?? 5, color: pc.color }); rec.top = p; break; }
         case 'tower': { const p = need('position'); World.prop(game, 'tower', { ...P(ctx), position: p, height: pc.height ?? (typeof pc.size === 'number' ? pc.size : 12), radius: pc.radius ?? 2.6, color: pc.color }); rec.top = p; break; }
         case 'mover': {
-          const p = need('position'), to = need('to'), r = Math.max(1.4, pc.size ?? 2.2);
-          const mesh = World.prop(game, 'platform_round', { ...P(ctx), position: p, radius: r, thick: 0.7, collider: false, color: pc.color });
-          level.movers.push({ mesh, path: [p.clone(), to.clone()], period: pc.period ?? 5, type: 'platform', size: [2 * r, 0.7, 2 * r] });
-          rec.top = p;
-          if (onRoute) issue('warning', i, `piece ${i} (mover) is on the route: the autopilot cannot time movers; add a static path too`);
+          const motion = pc.motion || 'pingpong';
+          if (!MOTIONS.includes(motion)) throw new Error(`Level.compose: pieces[${i}].motion "${motion}" is not a motion; motions: ${MOTIONS.join(', ')}`);
+          const hasPath = Array.isArray(pc.path) && pc.path.length >= 2;
+          const p = hasPath ? vecOf(pc.path[0], `pieces[${i}].path[0]`) : need('position');
+          let path;
+          if (hasPath) path = pc.path.map((q, k) => vecOf(q, `pieces[${i}].path[${k}]`));
+          else if (motion === 'rotate') path = [p.clone()];
+          else path = [p.clone(), need('to')];
+          if (motion === 'raft') {
+            const wp = spec.pieces.find(x => x && x.type === 'water');
+            if (!wp) throw new Error(`Level.compose: pieces[${i}] is a raft but there is no 'water' piece; add { type: "water", position: [x, waterLevel, z] }`);
+            const wy = vecOf(wp.position, 'water.position').y + 0.25;
+            for (const q of path) q.y = wy;
+          }
+          const shape = pc.shape || (motion === 'rotate' ? 'beam' : motion === 'raft' ? 'raft' : 'round');
+          let mesh, size, r;
+          if (shape === 'beam') {
+            const len = pc.length ?? 9, w = pc.width ?? 2.4;
+            mesh = World.prop(game, 'platform_box', { ...P(ctx), position: path[0], size: [len, 0.6, w], collider: false, color: pc.color || 'primary' });
+            size = [len, 0.6, w]; r = w / 2 + 0.3;
+          } else if (shape === 'raft') {
+            const w = pc.size ?? 3.6;
+            mesh = World.prop(game, 'platform_box', { ...P(ctx), position: path[0], size: [w, 0.5, w], collider: false, color: pc.color || 'wood' });
+            size = [w, 0.5, w]; r = w / 2;
+          } else {
+            r = Math.max(1.4, pc.size ?? 2.2);
+            mesh = World.prop(game, 'platform_round', { ...P(ctx), position: path[0], radius: r, thick: 0.7, collider: false, color: pc.color });
+            size = [2 * r, 0.7, 2 * r];
+          }
+          mesh.userData.dynamic = true;
+          level.movers.push({ mesh, path: path.map(q => q.clone()), period: pc.period ?? 5, wait: pc.wait ?? 0.6, speed: pc.speed ?? 0.8,
+            type: motion === 'rotate' ? 'spin' : motion === 'raft' ? 'raft' : 'platform', pingpong: motion !== 'loop', size, piece: i });
+          rec.top = path[0]; rec.r = r; rec.mover = true;
+          // where it docks: temporary surfaces so the route legs onto / off it validate (removed after validation)
+          docks.push({ p: path[0], r }, ...(path.length > 1 ? [{ p: path[path.length - 1], r }] : []));
+          if (onRoute) {
+            if (motion === 'rotate') anchors.push({ p: path[0].clone(), piece: i, type });
+            else anchors.push({ p: path[0].clone(), pair: path[path.length - 1].clone(), piece: i, type, mover: true });
+          }
           break;
         }
         case 'water': {
@@ -1548,36 +1584,39 @@ export function compose(game, spec = {}) {
     // route: explicit points, or the anchors in piece order (ramps/stairs/bridges walked from the end nearest the previous point)
     let route = [];
     const routePiece = [];
+    const ridden = [];       // ridden[k]: the leg into route[k] is carried by a mover (no jump check)
     if (Array.isArray(spec.route) && spec.route.length >= 2) {
       spec.route.forEach((q, k) => {
         const p = vecOf(q, `route[${k}]`);
         const h = World.heightAt(game, p.x, p.z);
         if (h != null && Math.abs(h - p.y) < 1.5) p.y = h;
-        route.push(p); routePiece.push(null);
+        route.push(p); routePiece.push(null); ridden.push(false);
       });
     } else {
       for (const an of anchors) {
         if (an.pair) {
           const last = route[route.length - 1];
           const [s, e] = !last || last.distanceTo(an.p) <= last.distanceTo(an.pair) ? [an.p, an.pair] : [an.pair, an.p];
-          route.push(s.clone(), e.clone()); routePiece.push(an.piece, an.piece);
-        } else { route.push(an.p.clone()); routePiece.push(an.piece); }
+          route.push(s.clone(), e.clone()); routePiece.push(an.piece, an.piece); ridden.push(false, !!an.mover);
+        } else { route.push(an.p.clone()); routePiece.push(an.piece); ridden.push(false); }
       }
     }
     if (route.length < 2) throw new Error('Level.compose: the route needs at least 2 points: add 2+ standable pieces (island, platform, cliff, pillar, ramp, stairs, bridge) or give spec.route');
-    if (spec.spawn) { route.unshift(vecOf(spec.spawn, 'spawn')); routePiece.unshift(null); }
+    if (spec.spawn) { route.unshift(vecOf(spec.spawn, 'spawn')); routePiece.unshift(null); ridden.unshift(false); }
     let goalP = null;
     if (spec.goal !== false) {
       goalP = spec.goal && spec.goal !== true ? vecOf(spec.goal, 'goal') : route[route.length - 1].clone();
-      if (route[route.length - 1].distanceTo(goalP) > 0.5) { route.push(goalP.clone()); routePiece.push(null); }
+      if (route[route.length - 1].distanceTo(goalP) > 0.5) { route.push(goalP.clone()); routePiece.push(null); ridden.push(false); }
     }
     // validate every leg on the real geometry; auto-fix with stepping platforms; add take-off / landing points
     const label = (k) => routePiece[k] == null ? `route point ${k}` : `piece ${routePiece[k]} (${spec.pieces[routePiece[k]].type})`;
     const out = [route[0].clone()];
     const jumps = [];
     const autofix = spec.autofix !== false;
+    const dockSurfs = docks.map(d => World.addSurface(game, circleSurf(d.p, d.r)));
     for (let k = 1; k < route.length; k++) {
       const a = out[out.length - 1], b = route[k];
+      if (ridden[k]) { out.push(b.clone()); continue; }                       // carried by a mover: board at a, get off at b
       let pr = probeSegment(game, a, b);
       const bad = () => pr.gap > MAX_GAP || (pr.gap > 0.3 && pr.rise > MAX_RISE) || pr.ledge > MAX_RISE;
       if (bad()) {
@@ -1614,9 +1653,18 @@ export function compose(game, spec = {}) {
         if (h0 != null) t0.y = h0; if (h1 != null) t1.y = h1;
         if (t0.distanceTo(a) > 0.8) out.push(t0);
         out.push(t1); jumps.push({ from: t0, to: t1 });
+      } else {
+        // a walk: route points every ~4 u so the autopilot follows the surface (spiral stairs, long ramps, ground paths)
+        const c = out[out.length - 1], L = Math.hypot(b.x - c.x, b.z - c.z);
+        for (let s = 1, n = Math.floor(L / 4); s <= n && L > 5; s++) {
+          const q = c.clone().lerp(b, s / (n + 1)), h = World.heightAt(game, q.x, q.z);
+          if (h != null) q.y = h;
+          out.push(q);
+        }
       }
       if (out[out.length - 1].distanceTo(b) > 0.5) out.push(b.clone());
     }
+    game._kitSurfaces = (game._kitSurfaces || []).filter(x => !dockSurfs.includes(x));
     level.route = out;
     level.spawn = (spec.spawn ? vecOf(spec.spawn, 'spawn') : out[0].clone()).add(V(0, 1, 0));
     level.spawnYaw = yawTo(out[0], out[Math.min(2, out.length - 1)]);

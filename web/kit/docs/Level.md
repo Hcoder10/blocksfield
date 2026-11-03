@@ -117,7 +117,7 @@ tower use `position` = their base on the floor.
 | `bridge` | `from`, `to`, `width` (2.8) | rope bridge with lamps; any length |
 | `wall` | `position`, `length` (8), `height` (2.4), `rotationY` | obstacle / castle wall (not on the route) |
 | `arch`, `tower` | `position`, `width`/`height` | landmarks (not on the route) |
-| `mover` | `position`, `to`, `period` (5), `size` | moving platform (not on the route: the autopilot cannot time it) |
+| `mover` | `position` + `to` (or `path: [[x,y,z], ...]`), `motion`: `pingpong` (default) / `loop` / `rotate` / `raft`, `period` (5 s per cycle), `wait` (0.6 s at each end), `speed` (0.8 rad/s, rotate), `size`, `shape`: `round` / `beam` / `raft` | moving platform, ON the route by default: the player boards at `path[0]`, rides to the last point and gets off. `rotate` = a spinning beam (route goes through its centre); `raft` floats on the `water` piece |
 | `water` | `position` = [x, waterLevel, z], `size` (200) | water plane with shore foam; put the ground below it for a river |
 
 Any piece takes `route: false` to keep it out of the route (scenery). **Movement limits**: every route jump must be
