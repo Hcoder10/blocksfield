@@ -926,7 +926,7 @@ export function rules(game, opts = {}) {
     if (r.progress < me.progress - 0.1) scale = 1;
     if (!r.drive) r.drive = {};
     r.drive.width = race.width; r.drive.lane = r.lane + Math.sin(game.time * 0.3 + r.player.ai.skill * 10) * race.width * 0.15;
-    if (r.finished) { r.player.setInput(0, 0.3, false, false); return; }
+    if (r.finished) { driveTrack(game, r.player, race.samples, r.idx, race.track.getLength(), r.drive, dt, 0.35); return; }
     driveTrack(game, r.player, race.samples, r.idx, race.track.getLength(), r.drive, dt, scale);
   }
 
@@ -1039,7 +1039,13 @@ export function autopilot(game, opts = {}) {
     if (!player.alive || dt <= 0) return;
     const S = game.state;
     const p = player.position;
-    if (S.won || S.lost) { if (S.won) S.autopilotDone = true; player.setInput(0, 0, false, false); return; }
+    if (S.won || S.lost) {
+      if (S.won) S.autopilotDone = true;
+      // vehicles take a slow victory lap along the track instead of coasting onto the beach
+      if (vehicle && level.track && samples && S.won) { driveTrack(game, player, samples, st.ti ?? 0, trackLen, st, dt, 0.35); st.ti = nearestSample(); }
+      else player.setInput(0, 0, false, false);
+      return;
+    }
     // progress watchdog (contract: autopilotStuck after 8 s without progress)
     const progKey = vehicle ? (st.ti ?? 0) : st.idx * 1000 + (S.collected || 0);
     if (progKey !== st.progKey) { st.progKey = progKey; st.noProg = 0; S.autopilotStuck = false; }
@@ -1217,19 +1223,34 @@ export function autopilot(game, opts = {}) {
   function vehicleBot(dt) {
     const p = player.position, track = level.track;
     if (!track) {
+      // no track (arena, town...): drive the route, swerving to grab coins nearby; when the route is done, hunt coins
       while (st.idx < route.length - 1 && route[st.idx].distanceTo(p) < 8) st.idx++;
-      const target = route[st.idx], d = angWrap(Math.atan2(target.x - p.x, target.z - p.z) - player.yaw);
+      let target = route[st.idx];
+      const R = game.__rules;
+      if (R) {
+        let best = null, bd = st.idx >= route.length - 1 ? Infinity : 14;
+        for (const it of R.items) { if (it.collected || it.skip) continue; const d2 = Math.hypot(it.home.x - p.x, it.home.z - p.z); if (d2 < bd && Math.abs(it.home.y - p.y) < 3) { bd = d2; best = it; } }
+        if (best) { target = best.home; if (st.vItem !== best) { st.vItem = best; st.vItemT = 0; } st.vItemT += dt; if (st.vItemT > 6) best.skip = true; }
+      }
+      const d = angWrap(Math.atan2(target.x - p.x, target.z - p.z) - player.yaw);
+      if (player.speed < 2 && game.state.time > 3) { st.vStuck = (st.vStuck || 0) + dt; if (st.vStuck > 0.8) { player.setInput(THREE.MathUtils.clamp(d * 2, -1, 1), -1, false, false); if (st.vStuck > 1.6) st.vStuck = 0; return; } } else st.vStuck = 0;
       player.setInput(THREE.MathUtils.clamp(-d * 2, -1, 1), Math.abs(d) > 1.2 ? 0.6 : 1, false, false);
       return;
     }
     if (!samples) { samples = Array.from({ length: 600 }, (_, i) => track.getPointAt(i / 600)); trackLen = track.getLength(); st.ti = null; }
+    st.ti = nearestSample();
+    driveTrack(game, player, samples, st.ti, trackLen, st, dt, 1);
+    if (st.assistNow) { st.assistNow = false; st.assists++; }
+  }
+  function nearestSample() {
+    if (!samples) return 0;
+    const p = player.position;
     // nearest sample (local search after the first frame)
     let bi = st.ti ?? 0, bd = Infinity;
     const scan = st.ti === null ? 600 : 40;
     for (let k = -scan; k <= scan; k++) { const i = (((st.ti ?? 0) + k) % 600 + 600) % 600, q = samples[i]; const d = (q.x - p.x) ** 2 + (q.z - p.z) ** 2; if (d < bd) { bd = d; bi = i; } }
-    st.ti = bi; st.width = level.trackWidth || 12;
-    driveTrack(game, player, samples, bi, trackLen, st, dt, 1);
-    if (st.assistNow) { st.assistNow = false; st.assists++; }
+    st.width = level.trackWidth || 12;
+    return bi;
   }
 
   game.update(step, -5);
