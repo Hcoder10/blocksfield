@@ -106,7 +106,7 @@ def shot_len(section: str, label: str, base: float) -> float:
 # ---------------------------------------------------------------- data
 
 SKIP: set = set()            # ids to leave out (--skip); superseded games are already hidden by index.json
-MAX_GAMES, MIN_CLEAN = 6, 4   # at most 6 games; if fewer than 4 have zero operator interventions, fill by score
+MAX_GAMES, MIN_CLEAN = 5, 4   # at most 5 games; if fewer than 4 have zero operator interventions, fill by score
 
 
 def games(only: list[str] | None = None, skip: set | None = None) -> list[dict]:
@@ -138,8 +138,8 @@ def games(only: list[str] | None = None, skip: set | None = None) -> list[dict]:
     clean = [g for g in pool if g["interventions"] == 0]
     ranked = clean + ([g for g in pool if g["interventions"] > 0] if len(clean) < MIN_CLEAN else [])
     picked, kinds = [], set()
-    for g in ranked:                                   # pass 1: one game per (player type, level kind)
-        k = (g.get("player_type"), g.get("level_kind"))
+    for g in ranked:                                   # pass 1: one game per player type (platformer, kart, boat, ...)
+        k = g.get("player_type")
         if k not in kinds:
             picked.append(g); kinds.add(k)
     for g in ranked:                                   # pass 2: fill by score
@@ -352,14 +352,27 @@ def how(gs: list[dict], dur: float) -> list[Seg]:
     sky = next((g["dir"] / "assets" / e["file"] for e in man.values() if e.get("kind") == "sky"), None)
     icons = [g["dir"] / "assets" / e["file"] for e in man.values() if e.get("kind") == "icon"][:4]
     mus = next((g["dir"] / "assets" / e["file"] for e in man.values() if e.get("kind") == "music"), None)
-    nsfx = sum(1 for e in man.values() if e.get("kind") == "sfx")
+    sfx_names = [(e.get("event") or k.replace("sfx_", "")).replace("_", " ") for k, e in man.items() if e.get("kind") == "sfx"]
+    nsfx = len(sfx_names)
     sky_big = None
     if sky and sky.exists():
         im = Image.open(sky).convert("RGB")
-        band = im.crop((0, int(im.height * 0.12), im.width, int(im.height * 0.62)))
-        sky_big = cover(band, W, H, margin=1.0)
-        if sky_big.width < W * 1.3:
-            sky_big = band.resize((int(band.width * H / band.height), H), Image.LANCZOS)
+        # the most interesting band of the panorama: highest detail (row-to-row change) + brightness, 40% tall
+        small = im.convert("L").resize((128, 64))
+        px = list(small.getdata())
+        rows = [px[r * 128:(r + 1) * 128] for r in range(64)]
+        def score(r0, r1):
+            lum = sum(sum(rw) for rw in rows[r0:r1]) / ((r1 - r0) * 128 * 255)
+            det = sum(abs(a - b) for k in range(r0, r1 - 1) for a, b in zip(rows[k], rows[k + 1])) / ((r1 - r0) * 128 * 255)
+            return det * 4 + lum
+        span = 26
+        r0 = max(range(4, 64 - span - 4), key=lambda r: score(r, r + span))
+        band = im.crop((0, int(im.height * r0 / 64), im.width, int(im.height * (r0 + span) / 64)))
+        from PIL import ImageEnhance, ImageStat
+        mean = sum(ImageStat.Stat(band.convert("L")).mean) / 255
+        if mean < 0.42:                                  # night skies: lift so the card is not a black frame
+            band = ImageEnhance.Brightness(band).enhance(min(2.2, 0.42 / max(mean, 0.05)))
+        sky_big = band.resize((max(W + 400, int(band.width * H / band.height)), H), Image.LANCZOS)
     icon_ims = [Image.open(p).convert("RGBA") for p in icons if p.exists()]
     wave = waveform(mus, 160) if mus and mus.exists() else []
     L_b = shot_len("how", "generated assets", base)
@@ -371,7 +384,7 @@ def how(gs: list[dict], dur: float) -> list[Seg]:
         else:
             f = canvas()
         f.alpha_composite(shade(260, 0.8, bottom=False))
-        f.alpha_composite(shade(520, 0.92))
+        f.alpha_composite(shade(560, 0.88))
         d = ImageDraw.Draw(f, "RGBA")
         kicker(d, (96, 64), "2  ·  Generated assets  ·  ComfyUI", ramp(t, 0.0), size=30)
         text(d, (96, 106), "Sky, icons, music and sound, made for this game", font(60, "Semibold"), FG, ramp(t, 0.1),
@@ -379,25 +392,32 @@ def how(gs: list[dict], dur: float) -> list[Seg]:
         x = 96
         for k, im in enumerate(icon_ims):
             a = ramp(t, 0.4 + 0.2 * k, 0.35)
-            th = contain(im, 230, 230)
+            th = contain(im, 190, 190)
             if a > 0:
-                d.rounded_rectangle([x - 14, H - 470 - 14 + int(30 * (1 - a)), x + 244, H - 470 + 244 + int(30 * (1 - a))],
-                                    28, fill=(10, 12, 18, int(170 * a)))
+                d.rounded_rectangle([x - 12, H - 560 - 12 + int(30 * (1 - a)), x + 202, H - 560 + 202 + int(30 * (1 - a))],
+                                    26, fill=(10, 12, 18, int(170 * a)))
                 th.putalpha(Image.eval(th.getchannel("A"), lambda v, a=a: int(v * a)))
-                f.alpha_composite(th, (x + (230 - th.width) // 2, H - 470 + int(30 * (1 - a))))
-            x += 280
+                f.alpha_composite(th, (x + (190 - th.width) // 2, H - 560 + int(30 * (1 - a))))
+            x += 230
         if wave:
             a = ramp(t, 0.9)
-            x0, x1, yc = 96, W - 96, H - 120
+            x0, x1, yc = 96, W - 96, H - 150
             n = len(wave)
             shown = int(n * min(1.0, max(0.0, (t - 0.9) / 1.4)))
             bw = (x1 - x0) / n
             for k in range(shown):
-                hgt = 8 + wave[k] * 150
+                hgt = 10 + wave[k] * 190
                 d.rounded_rectangle([x0 + k * bw, yc - hgt / 2, x0 + k * bw + bw * 0.62, yc + hgt / 2], 3,
                                     fill=rgba(ACCENT, a))
-            text(d, (W - 96, H - 470), f"music: ACE-Step" + (f"\n+ {nsfx} sound effects" if nsfx else ""),
-                 font(40, "Semibold"), FG, a, anchor="ra", stroke=1)
+            text(d, (W - 96, H - 560), "music  ·  ACE-Step", font(56, "Bold"), FG, a, anchor="ra", stroke=2)
+            xs = W - 96
+            for k2, nm in enumerate(sfx_names[:3][::-1]):
+                w2 = font(30, "Bold").getlength(nm.upper()) + 30 * 0.14 * len(nm) + 36
+                xs -= w2 + 12
+                chip(d, xs, H - 470, nm, ramp(t, 1.2 + 0.12 * k2), fill=(30, 36, 48), fg=FG, size=30)
+            if sfx_names:
+                text(d, (W - 96, H - 400), "sound effects  ·  Stable Audio", font(30, "Semibold"), (220, 225, 235),
+                     ramp(t, 1.4), anchor="ra", stroke=1)
         return f
     segs.append(Seg("4. How it works", "generated assets", L_b, draw_b,
                     ["2 · GENERATED ASSETS · COMFYUI / Sky, icons, music and sound, made for this game",
@@ -480,8 +500,13 @@ def how(gs: list[dict], dur: float) -> list[Seg]:
         for part in re.split(r"(?<=\.)\s+", mp["notes"]):
             if "→" in part:
                 left, right = [x.strip() for x in part.split("→", 1)]
-                right = re.split(r"[;—]| \(|, since|, and the", right)[0].strip().rstrip(".")
-                rows.append((left, right[:62] + ("…" if len(right) > 62 else "")))
+                right = re.split(r"[;—]| \(|, since|, and the| rather than", right)[0].strip().rstrip(".")
+                right = re.sub(r"^the kit's closest vehicle is ", "", right)
+                lines = wrap(right, font(38, "Regular"), W - 640 - 96)
+                if len(lines) > 2:                       # keep whole words, end at a clause boundary
+                    lines = lines[:2]
+                    lines[1] = re.sub(r"[,;:]?\s+\S*$", "", lines[1]) if len(lines[1]) > 20 else lines[1]
+                rows.append((left, lines))
         rows = rows[:4]
         chosen = mp.get("chosen", {})
         chips = [f"{k.replace('_', ' ')}: {chosen[k]}" for k in ("level_kind", "player_type", "look", "camera") if k in chosen]
@@ -504,15 +529,16 @@ def how(gs: list[dict], dur: float) -> list[Seg]:
                 a = ramp(t, 0.5 + 0.35 * k, 0.4)
                 text(d, (96, y), l, font(46, "Bold"), ACCENT, a)
                 text(d, (560, y), "→", font(46, "Bold"), MUTED, a)
-                text(d, (640, y + 4), r, font(40, "Regular"), (225, 230, 240), a)
-                y += 96
+                for li, ln in enumerate(r):
+                    text(d, (640, y + 4 + li * 48), ln, font(38, "Regular"), (225, 230, 240), a)
+                y += 60 + 48 * len(r)
             x = 96
             for k, c in enumerate(chips):
                 x += chip(d, x, H - 120, c, ramp(t, 0.6 + 0.35 * len(rows) + 0.15 * k), size=28) + 16
             text(d, (W - 96, H - 92), "the plan's own notes", font(28, "Regular"), MUTED, ramp(t, 1.0), anchor="ra")
             return f
         segs.append(Seg("4. How it works", "pitch -> kit mapping", L_e, draw_e,
-                        [f"5 · OFF-TEMPLATE PITCH · {gm['title']} / “{hook}.”"] + [f"{l} → {r}" for l, r in rows] + chips
+                        [f"5 · OFF-TEMPLATE PITCH · {gm['title']} / “{hook}.”"] + [f"{l} → {' '.join(r)}" for l, r in rows] + chips
                         + ["(from about.json mapping.notes, the plan's own words)"],
                         setup=lambda: st2.__setitem__("r", VideoReader(gm["play"], 2.0, L_e)),
                         teardown=lambda: st2["r"].close()))
@@ -639,7 +665,7 @@ def close(dur: float) -> Seg:
         text(d, (W // 2, 590), pv.HASHTAG, font(56, "Bold"), ACCENT, ramp(t, 1.6), anchor="ms")
         text(d, (W // 2, 680), pv.REPO_URL, font(38, "Semibold"), FG, ramp(t, 2.0), anchor="ms")
         text(d, (W // 2, 736), PAGES_URL, font(38, "Semibold"), FG, ramp(t, 2.2), anchor="ms")
-        text(d, (W // 2, H - 70), NOTE, font(26, "Regular"), (130, 138, 154), ramp(t, 2.8), anchor="ms")
+        text(d, (W // 2, H - 64), NOTE, font(32, "Regular"), (170, 178, 194), ramp(t, 2.4), anchor="ms")
         return f
     return Seg("7. Close", "close card", dur, draw, [
         f"Blocksfield / {TITLE}", "Every model open-weight · One RTX 5090 · $0 per generation", pv.HASHTAG,
