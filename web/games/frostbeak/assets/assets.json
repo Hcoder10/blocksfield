@@ -1,0 +1,91 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Pink dawn sky panorama: soft gradient from rose-pink at the horizon to pale blue at the zenith, low cottony pink clouds, a low pale sun, gentle falling snow, crisp and cosy",
+  "wrap_seam": 0.91
+ },
+ "icon_fish": {
+  "file": "icon_fish.png",
+  "kind": "icon",
+  "prompt": "chibi cartoon fish icon, silver-blue body with pink gills and a glossy sparkle, thick soft outline, flat cozy style",
+  "for": "fish"
+ },
+ "icon_heart": {
+  "file": "icon_heart.png",
+  "kind": "icon",
+  "prompt": "soft pink heart icon, cozy toon style with a tiny snowflake on top, thick outline",
+  "for": "lives"
+ },
+ "icon_clock": {
+  "file": "icon_clock.png",
+  "kind": "icon",
+  "prompt": "blue-white snowflake clock icon, cozy toon style, thick soft outline",
+  "for": "timer"
+ },
+ "icon_flag": {
+  "file": "icon_flag.png",
+  "kind": "icon",
+  "prompt": "little flag on a snowy pole with a pink pennant, cozy toon icon, thick outline",
+  "for": "goal"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "cozy lo-fi winter loop: music box and marimba lead, gentle glockenspiel, warm soft pad, light shaker, ~90 BPM, playful and warm"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "bright pling with a sparkle shimmer, like a little fish popping out of water"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "soft rubbery boing, a waddle-hop"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "muffled snow thud with a light crunch"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "comical bonk with a falling whoosh, no pain, cartoonish"
+ },
+ "sfx_boost": {
+  "file": "sfx_boost.mp3",
+  "kind": "sfx",
+  "event": "boost",
+  "prompt": "airy whoosh with a gentle slide whistle, a belly-slide across ice"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "small music-box and glockenspiel fanfare arpeggio with a confetti pop"
+ },
+ "prop_snowman": {
+  "file": "prop_snowman.json",
+  "kind": "prop",
+  "prompt": "chunky voxel snowman: two stacked white snowballs, orange carrot nose, pink scarf, simple stick smile",
+  "via": "idol",
+  "parts": 427
+ },
+ "splat_snowman": {
+  "file": "splat_snowman.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "chunky voxel snowman: two stacked white snowballs, orange carrot nose, pink scarf, simple stick smile",
+  "camera": {
+   "yaw": 1.1800270857036694
+  }
+ }
+}

@@ -1,0 +1,315 @@
+{
+ "id": "canyon_runner",
+ "title": "Canyon Runner",
+ "tagline": "Chain the boost pads, kiss the sunset, beat the clock.",
+ "pitch": "Canyon Runner: a desert canyon hover-bike time trial. Rip through red-rock canyons at sunset on a hover-bike, chaining boost pads and hitting every checkpoint before the clock runs out. Warm orange stone, long shadows, dust trails, speed lines.",
+ "genre": "Arcade hover-bike time trial / kart racer",
+ "controls": [
+  "W / \u2191: throttle",
+  "S / \u2193: brake / reverse",
+  "A / D or \u2190 / \u2192: steer",
+  "Shift: handbrake drift"
+ ],
+ "created": "2026-11-02T22:16:17-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "v2",
+  "score": 7.67,
+  "play": 7.67,
+  "vision": null,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 7.67,
+    "play_score": 7.67,
+    "vision_score": null
+   },
+   {
+    "tag": "s0",
+    "score": 7.5,
+    "play_score": 7.5,
+    "vision_score": null
+   },
+   {
+    "tag": "v1",
+    "score": 7.83,
+    "play_score": 7.83,
+    "vision_score": null
+   },
+   {
+    "tag": "v2",
+    "score": 7.67,
+    "play_score": 7.67,
+    "vision_score": null
+   }
+  ]
+ },
+ "plan": {
+  "title": "Canyon Runner",
+  "tagline": "Chain the boost pads, kiss the sunset, beat the clock.",
+  "genre": "Arcade hover-bike time trial / kart racer",
+  "core_loop": "Throttle through the red-rock canyon, line up boost pads for speed bursts, scoop Sunstones off the racing line, and clear every checkpoint flag before the timer expires to reach the finish gate.",
+  "controls": [
+   "W / \u2191: throttle",
+   "S / \u2193: brake / reverse",
+   "A / D or \u2190 / \u2192: steer",
+   "Shift: handbrake drift"
+  ],
+  "win_condition": "Reach the canyon finish gate before the clock hits zero, having collected at least 12 Sunstones along the way.",
+  "lose_condition": "The timer runs out, or you lose all 3 lives to canyon falls.",
+  "look": "sunset",
+  "ui_style": "arcade",
+  "level_kind": "race_track",
+  "level_size": "medium",
+  "player_type": "kart",
+  "camera": "chase",
+  "player_colors": {
+   "body": "#0f9bb0",
+   "accent": "#ffd166"
+  },
+  "collectible": {
+   "tag": "gem",
+   "label": "Sunstones",
+   "count": 24,
+   "target": 12
+  },
+  "goal": true,
+  "timer_seconds": 150,
+  "lives": 3,
+  "enemies": 0,
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  },
+  "art_direction": "Golden-hour light rakes across layered red-rock canyon walls: burnt sienna, amber and dusty-rose stone under a peach-to-violet sky, with heat haze, drifting dust and long raking shadows. The teal hover-bike with amber accents is the only cool colour in the frame, so speed reads instantly against the warm stone. Mood: Monument Valley's warm minimalism meets a Mario Kart sunset circuit \u2014 clean, sunny, and fast.",
+  "concept_shots": [
+   "The hover-bike rockets along a ridge road carved into the canyon wall, kicking up a long dust trail, a chain of amber Sunstones arcing ahead and glowing boost pads stamped on the racing line.",
+   "Golden hour: the bike crests a mesa at top speed, the low sun slotted between two canyon rims casting long violet shadows, speed lines streaking the screen edges as a checkpoint flag flashes gold.",
+   "The finish: a weathered stone arch gate at the canyon's end, the big arcade timer counting down, the bike diving through in a burst of warm confetti sparks."
+  ],
+  "assets": {
+   "sky": "Golden-hour desert panorama: a low sun slotted between layered red-rock mesas, peach and apricot sky fading to dusty violet overhead, thin wispy clouds catching orange light, warm haze on the horizon.",
+   "icons": [
+    {
+     "name": "sunstone_gem",
+     "prompt": "chubby faceted amber gem icon with a warm inner glow, glossy cartoon style, chunky dark outline",
+     "for": "collectible"
+    },
+    {
+     "name": "sunset_clock",
+     "prompt": "round cartoon clock with an amber face and orange hands, chunky dark outline, tiny sun notch on the rim",
+     "for": "timer"
+    },
+    {
+     "name": "ember_heart",
+     "prompt": "plump heart icon in ember orange with a soft inner glow, cartoon style, dark outline",
+     "for": "lives"
+    },
+    {
+     "name": "boost_bolt",
+     "prompt": "chunky lightning bolt in cyan-teal with a white core, glossy cartoon style, dark outline",
+     "for": "boost"
+    }
+   ],
+   "music": "Warm synthwave-meets-desert-folk loop: plucky synth bass, hand-drum groove, airy flute-like lead, 128 BPM, sunny and driving, sunset mood",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "short bright crystal chime with a warm shimmer, like a gem clinking"
+    },
+    {
+     "event": "boost",
+     "prompt": "rising whoosh with a synth riser and a punchy low thump at the top"
+    },
+    {
+     "event": "checkpoint",
+     "prompt": "two-note warm fanfare blip, quick and confident"
+    },
+    {
+     "event": "damage",
+     "prompt": "thuddy rock scrape with a low dull thump"
+    },
+    {
+     "event": "win",
+     "seconds": 4,
+     "prompt": "triumphant brass-and-synth fanfare, quick and sunny, ending on a shimmer"
+    },
+    {
+     "event": "lose",
+     "seconds": 3,
+     "prompt": "sad descending two-note slide with a dusty thud at the end"
+    }
+   ],
+   "props": [
+    {
+     "name": "canyon_totem",
+     "prompt": "weathered red-sandstone totem pole with carved geometric faces, warm orange and rust colour bands",
+     "count": 6
+    },
+    {
+     "name": "sun_stone",
+     "prompt": "small rounded amber boulder with a glowing crack, like a pocket of sunset light",
+     "count": 10
+    }
+   ]
+  },
+  "features": [
+   "Boost pads on the racing line (World.prop 'boost_pad' + boost hazard) that punch speed with a whoosh, FX.speedLines and a speedLines ramp at high velocity.",
+   "Dust trail: FX.trail on the bike plus FX.dust puffs on landing and boost, selling the hover-bike over red rock.",
+   "Checkpoint flags with FX.ring pulse, 'checkpoint' SFX and a toast banner on every pass.",
+   "Canyon drop-offs as void killzones: a fall costs a life, respawn at the last checkpoint with FX.poof and the respawn SFX.",
+   "Finish gate moment: FX.slowmo + FX.confetti burst and a big 'TIME TRIAL COMPLETE' banner as the bike hits the stone arch.",
+   "FX.auto + Audio.auto wiring so every collect, hit, checkpoint and finish fires matching juice and sound with zero extra code."
+  ],
+  "mapping_notes": "Hover-bike \u2192 the kit's closest vehicle is the kart player on a race_track with a chase camera; the hover fantasy is sold by the sleek teal/amber kart colours, chase-cam speed, dust trail and boost pads rather than a literal bike model. Desert canyon \u2192 the race_track level dressed with cactus, rock, ruins and the totem/sun-stone props, since no canyon level kind exists; the 'sunset' look is chosen over 'desert' because the pitch's mood is explicitly golden hour \u2014 warm light, long shadows, peach-to-violet sky \u2014 and the desert palette is carried by the level dressing and the generated sky panorama. Time trial \u2192 timer + goal gate + checkpoints with laps/opponents at 0 (no AI racers); the 150s clock is the pressure, lives 3 covers canyon falls, and 0 enemies keeps the loop a pure speed run. Speed lines and dust trails map directly onto FX.speedLines and FX.trail/dust."
+ },
+ "timings_s": {
+  "art": 243.8,
+  "build": 334.7,
+  "eval_s0": 93.9,
+  "eval_v0": 273.7,
+  "eval_v1": 91.2,
+  "eval_v2": 97.3,
+  "plan": 72.2,
+  "repair_1": 46.3,
+  "repair_2": 46.1,
+  "scaffold": 3.1
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Canyon Runner: a desert canyon hover-bike time trial. Rip through red-rock canyons at sunset on a hover-bike, chaining boost pads and hitting every checkpoint before the clock runs out. Warm orange stone, long shadows, dust trails, speed lines.",
+  "notes": "Hover-bike \u2192 the kit's closest vehicle is the kart player on a race_track with a chase camera; the hover fantasy is sold by the sleek teal/amber kart colours, chase-cam speed, dust trail and boost pads rather than a literal bike model. Desert canyon \u2192 the race_track level dressed with cactus, rock, ruins and the totem/sun-stone props, since no canyon level kind exists; the 'sunset' look is chosen over 'desert' because the pitch's mood is explicitly golden hour \u2014 warm light, long shadows, peach-to-violet sky \u2014 and the desert palette is carried by the level dressing and the generated sky panorama. Time trial \u2192 timer + goal gate + checkpoints with laps/opponents at 0 (no AI racers); the 150s clock is the pressure, lives 3 covers canyon falls, and 0 enemies keeps the loop a pure speed run. Speed lines and dust trails map directly onto FX.speedLines and FX.trail/dust.",
+  "chosen": {
+   "level_kind": "race_track",
+   "look": "sunset",
+   "player_type": "kart",
+   "camera": "chase",
+   "ui_style": "arcade",
+   "collectible": "gem",
+   "collectible_label": "Sunstones"
+  }
+ },
+ "model_calls": {
+  "lead": {
+   "calls": 1,
+   "prompt_tokens": 5911,
+   "completion_tokens": 5493,
+   "seconds": 72.0
+  },
+  "builder": {
+   "calls": 11,
+   "prompt_tokens": 227881,
+   "completion_tokens": 4417,
+   "seconds": 183.7
+  }
+ },
+ "agents": {
+  "live": 2,
+  "cached": 0,
+  "failed": 2
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 66.3
+    },
+    "icon_sunstone_gem": {
+     "ok": true,
+     "seconds": 75.1
+    },
+    "icon_sunset_clock": {
+     "ok": true,
+     "seconds": 85.0
+    },
+    "icon_ember_heart": {
+     "ok": true,
+     "seconds": 94.7
+    },
+    "icon_boost_bolt": {
+     "ok": true,
+     "seconds": 104.3
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 122.8
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 127.7
+    },
+    "sfx_boost": {
+     "ok": true,
+     "seconds": 128.6
+    },
+    "sfx_checkpoint": {
+     "ok": true,
+     "seconds": 129.7
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 130.7
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 132.4
+    },
+    "sfx_lose": {
+     "ok": true,
+     "seconds": 133.2
+    },
+    "prop_canyon_totem": {
+     "ok": true,
+     "seconds": 201.7
+    },
+    "prop_sun_stone": {
+     "ok": true,
+     "seconds": 243.8
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Canyon Runner: a desert-canyon hover-kart time trial at sunset. Teal/amber kart on a medium race_track with the sunset look (low warm sun, peach-to-violet sky, generated panorama), dressed with cacti/rock/dead-scrub foliage, generated totem and sun-stone voxel props and Gaussian-splat landmarks beside the route. The player chases 12 of 24 Sunstones (gem pickups, generated gem icon in the HUD) and boost pads on the racing line before the 150s clock runs out, with 3 lives for canyon falls. Race configured as a 1-lap time trial with 0 opponents (fixed the kit's auto 3-lap/3-AI race). Juice: amber dust trail off the kart, speed-lines ramping with velocity, boost whoosh + spark bursts, checkpoint gold ring + toast, fall/respawn poof + ring, and a finish-gate moment with slow-mo, confetti, starburst and a 'TIME TRIAL COMPLETE' banner. Arcade HUD with Sunstones counter, timer, hearts, speedometer and minimap; title screen with 3-2-1-GO countdown; custom win/lose screens. Audio: generated synthwave loop plus generated SFX on collect/boost/checkpoint/damage/win/lose. Verified in Chrome: zero console errors, autopilot completed the full run (won, 22/12 Sunstones, no deaths).",
+    "changes": [
+     "Tuned Look to golden hour: sun elevation 8, intensity 2.6, tighter fog",
+     "Added off-route bonus Sunstones beside the racing line (up to 30 gems, target 12)",
+     "Kart recoloured teal/amber per plan with a kid driver in matching colours",
+     "Added amber dust trail (FX.trail) on the kart",
+     "Dressed the circuit with cactus/rock/dead-scrub foliage and noPlant/avoid around the route",
+     "Configured rules as a 1-lap time trial with 0 opponents (race: {laps:1, opponents:0, countdown:0})",
+     "HUD: Sunstones counter with generated gem icon, timer, lives, speedometer, minimap, short objective, custom win/lose screen titles",
+     "Title screen with tagline, controls credit and 3-2-1-GO countdown",
+     "Wired plan's FX moments: boost (whoosh SFX, speedLines pulse, spark burst), checkpoint (gold ring + toast), death (damage SFX), respawn (poof + ring + respawn SFX), win (slow-mo + confetti + starburst + stage_clear banner), lose (lose SFX)",
+     "Per-frame speed-lines ramp tied to kart velocity",
+     "Started the generated synthwave music at 0.6 volume"
+    ],
+    "known_issues": [
+     "The kit auto-assigns a 1-lap race objective ('Finish 1 lap' / 'Finished 1st!') on race tracks even with 0 opponents; the win path is the single lap through the finish gate as intended for the time trial",
+     "The kit's race_track terrain is green-gold rolling hills rather than literal red-rock mesas; the canyon mood is carried by the sunset look, generated sky, cactus/rock dressing and totem/sun-stone props (no canyon level kind exists in the kit)"
+    ]
+   },
+   "plays": 3
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ }
+}

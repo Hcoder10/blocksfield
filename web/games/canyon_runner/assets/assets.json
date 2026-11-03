@@ -1,0 +1,107 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Golden-hour desert panorama: a low sun slotted between layered red-rock mesas, peach and apricot sky fading to dusty violet overhead, thin wispy clouds catching orange light, warm haze on the horizon.",
+  "wrap_seam": 0.8
+ },
+ "icon_sunstone_gem": {
+  "file": "icon_sunstone_gem.png",
+  "kind": "icon",
+  "prompt": "chubby faceted amber gem icon with a warm inner glow, glossy cartoon style, chunky dark outline",
+  "for": "collectible"
+ },
+ "icon_sunset_clock": {
+  "file": "icon_sunset_clock.png",
+  "kind": "icon",
+  "prompt": "round cartoon clock with an amber face and orange hands, chunky dark outline, tiny sun notch on the rim",
+  "for": "timer"
+ },
+ "icon_ember_heart": {
+  "file": "icon_ember_heart.png",
+  "kind": "icon",
+  "prompt": "plump heart icon in ember orange with a soft inner glow, cartoon style, dark outline",
+  "for": "lives"
+ },
+ "icon_boost_bolt": {
+  "file": "icon_boost_bolt.png",
+  "kind": "icon",
+  "prompt": "chunky lightning bolt in cyan-teal with a white core, glossy cartoon style, dark outline",
+  "for": "boost"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Warm synthwave-meets-desert-folk loop: plucky synth bass, hand-drum groove, airy flute-like lead, 128 BPM, sunny and driving, sunset mood"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "short bright crystal chime with a warm shimmer, like a gem clinking"
+ },
+ "sfx_boost": {
+  "file": "sfx_boost.mp3",
+  "kind": "sfx",
+  "event": "boost",
+  "prompt": "rising whoosh with a synth riser and a punchy low thump at the top"
+ },
+ "sfx_checkpoint": {
+  "file": "sfx_checkpoint.mp3",
+  "kind": "sfx",
+  "event": "checkpoint",
+  "prompt": "two-note warm fanfare blip, quick and confident"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "thuddy rock scrape with a low dull thump"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "triumphant brass-and-synth fanfare, quick and sunny, ending on a shimmer"
+ },
+ "sfx_lose": {
+  "file": "sfx_lose.mp3",
+  "kind": "sfx",
+  "event": "lose",
+  "prompt": "sad descending two-note slide with a dusty thud at the end"
+ },
+ "prop_canyon_totem": {
+  "file": "prop_canyon_totem.json",
+  "kind": "prop",
+  "prompt": "weathered red-sandstone totem pole with carved geometric faces, warm orange and rust colour bands",
+  "via": "idol",
+  "parts": 598
+ },
+ "prop_sun_stone": {
+  "file": "prop_sun_stone.json",
+  "kind": "prop",
+  "prompt": "small rounded amber boulder with a glowing crack, like a pocket of sunset light",
+  "via": "idol",
+  "parts": 336
+ },
+ "splat_canyon_totem": {
+  "file": "splat_canyon_totem.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "weathered red-sandstone totem pole with carved geometric faces, warm orange and rust colour bands",
+  "camera": {
+   "yaw": 0.8251854198989325
+  }
+ },
+ "splat_sun_stone": {
+  "file": "splat_sun_stone.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "small rounded amber boulder with a glowing crack, like a pocket of sunset light",
+  "camera": {
+   "yaw": 1.2918387200735433
+  }
+ }
+}

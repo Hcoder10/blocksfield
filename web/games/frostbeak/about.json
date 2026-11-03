@@ -1,0 +1,288 @@
+{
+ "id": "frostbeak",
+ "title": "Frostbeak",
+ "tagline": "Waddle, hop, and slide up the dawn-lit peaks to the summit igloo.",
+ "pitch": "Frostbeak: a little penguin waddles and belly-slides across a snowy mountain, hopping between icy ledges and frozen floating floes to collect glittering fish, dodging rolling snowballs, and reaching the summit igloo. Crisp blue-white snow, pink dawn sky, cosy and playful.",
+ "genre": "cozy platformer",
+ "controls": [
+  "WASD / arrows: move and waddle",
+  "Space: hop",
+  "Esc / P: pause"
+ ],
+ "created": "2026-11-02T22:17:49-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "v2",
+  "score": 7.8,
+  "play": 7.8,
+  "vision": null,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 7.6,
+    "play_score": 7.6,
+    "vision_score": null
+   },
+   {
+    "tag": "s0",
+    "score": 7.8,
+    "play_score": 7.8,
+    "vision_score": null
+   },
+   {
+    "tag": "v1",
+    "score": 7.6,
+    "play_score": 7.6,
+    "vision_score": null
+   },
+   {
+    "tag": "v2",
+    "score": 7.8,
+    "play_score": 7.8,
+    "vision_score": null
+   }
+  ]
+ },
+ "plan": {
+  "title": "Frostbeak",
+  "tagline": "Waddle, hop, and slide up the dawn-lit peaks to the summit igloo.",
+  "genre": "cozy platformer",
+  "core_loop": "Waddle and hop between floating ice floes, collecting glittering fish and dodging rolling snowballs, then race the timer up to the summit igloo.",
+  "controls": [
+   "WASD / arrows: move and waddle",
+   "Space: hop",
+   "Esc / P: pause"
+  ],
+  "win_condition": "Collect 20 of the 30 glittering fish and reach the summit igloo (goal portal) before the timer runs out.",
+  "lose_condition": "Lose all 3 lives (falling into the void below the floes or getting bonked by a snowball) or run out of time.",
+  "look": "snow",
+  "ui_style": "cozy",
+  "level_kind": "sky_islands",
+  "level_size": "medium",
+  "player_type": "platformer",
+  "camera": "follow",
+  "player_colors": {
+   "body": "#26324b",
+   "accent": "#ff8fab"
+  },
+  "collectible": {
+   "tag": "orb",
+   "label": "Fish",
+   "count": 30,
+   "target": 20
+  },
+  "goal": true,
+  "timer_seconds": 180,
+  "lives": 3,
+  "enemies": 5,
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  },
+  "art_direction": "Crisp blue-white snow under a soft pink dawn sky: rounded chibi toon shapes with soft ink outlines, glossy ice ledges and fluffy snow, warm rim light from a low pale sun. Mood is cosy and playful \u2014 a pastel winter diorama, like a Studio Ghibli winter meadow rendered in candy-soft voxel forms, with gentle pink fog drifting in the valley below.",
+  "concept_shots": [
+   "Frostbeak belly-slides down a wide snowy ledge leaving a powder trail, pink dawn light raking across the ice, three glowing fish orbs lined up ahead.",
+   "The penguin leaps between two floating ice floes high above a pink cloud sea, a white rolling snowball patrolling the bridge between the floes.",
+   "The summit: a round igloo with a glowing portal doorway on the topmost floe, confetti and sparkle FX as Frostbeak waddles in, snowflakes drifting in the dawn light."
+  ],
+  "assets": {
+   "sky": "Pink dawn sky panorama: soft gradient from rose-pink at the horizon to pale blue at the zenith, low cottony pink clouds, a low pale sun, gentle falling snow, crisp and cosy",
+   "icons": [
+    {
+     "name": "fish",
+     "prompt": "chibi cartoon fish icon, silver-blue body with pink gills and a glossy sparkle, thick soft outline, flat cozy style",
+     "for": "fish"
+    },
+    {
+     "name": "heart",
+     "prompt": "soft pink heart icon, cozy toon style with a tiny snowflake on top, thick outline",
+     "for": "lives"
+    },
+    {
+     "name": "clock",
+     "prompt": "blue-white snowflake clock icon, cozy toon style, thick soft outline",
+     "for": "timer"
+    },
+    {
+     "name": "flag",
+     "prompt": "little flag on a snowy pole with a pink pennant, cozy toon icon, thick outline",
+     "for": "goal"
+    }
+   ],
+   "music": "cozy lo-fi winter loop: music box and marimba lead, gentle glockenspiel, warm soft pad, light shaker, ~90 BPM, playful and warm",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "bright pling with a sparkle shimmer, like a little fish popping out of water"
+    },
+    {
+     "event": "jump",
+     "prompt": "soft rubbery boing, a waddle-hop"
+    },
+    {
+     "event": "land",
+     "prompt": "muffled snow thud with a light crunch"
+    },
+    {
+     "event": "damage",
+     "prompt": "comical bonk with a falling whoosh, no pain, cartoonish"
+    },
+    {
+     "event": "boost",
+     "prompt": "airy whoosh with a gentle slide whistle, a belly-slide across ice"
+    },
+    {
+     "event": "win",
+     "prompt": "small music-box and glockenspiel fanfare arpeggio with a confetti pop"
+    }
+   ],
+   "props": [
+    {
+     "name": "snowman",
+     "prompt": "chunky voxel snowman: two stacked white snowballs, orange carrot nose, pink scarf, simple stick smile",
+     "count": 6
+    },
+    {
+     "name": "lantern",
+     "prompt": "small warm-glowing lantern on a short wooden post, amber light in a blue-white frame, toon style",
+     "count": 5
+    }
+   ]
+  },
+  "mapping_notes": "The kit has no penguin, so the chibi platformer character stands in, tinted dark navy body with a pink scarf accent (Player.makeCharacter colors) to read as Frostbeak. The snowy mountain of floating floes maps to the 'sky_islands' level: the floating islands become frozen floes and the topmost island becomes the summit, where the goal portal stands in for the igloo doorway. The collectible catalog has no fish tag, so the glittering fish are placed as glowing 'orb' pickups labeled 'Fish', while the HUD counter uses the kit's real 'fish' icon so the score reads as fish. Rolling snowballs are 'patrol' enemies dressed as white rolling balls on the bridges. Belly-sliding is expressed through the platformer's fast run, squash & stretch and a slide-whoosh SFX, since the kit has no dedicated slide mechanic. The pink dawn sky comes from the generated sky panorama plus the snow look preset with fog tuned to the horizon.",
+  "features": [
+   "Spring pads (World.prop 'spring_pad') launch Frostbeak up to the higher floes",
+   "Five patrolling snowball enemies on the wide bridges \u2014 stomp or dodge (Gameplay.spawnEnemy 'patrol')",
+   "Checkpoint flag at the halfway ledge with a banner and checkpoint chime (Gameplay.rules checkpoints)",
+   "Void hazard below the floes: falling respawns you at the last checkpoint (Gameplay HAZARDS 'void')",
+   "Sparkle burst and floating '+1' text on every fish pickup (FX.auto + FX.sparkle)",
+   "Low pink cloud sea drifting below the floes with dawn fog (World.clouds + Look fog)"
+  ]
+ },
+ "timings_s": {
+  "art": 218.4,
+  "build": 47.1,
+  "eval_s0": 96.2,
+  "eval_v0": 110.9,
+  "eval_v1": 103.4,
+  "eval_v2": 94.4,
+  "plan": 78.0,
+  "repair_1": 46.0,
+  "repair_2": 47.6,
+  "scaffold": 1.1
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Frostbeak: a little penguin waddles and belly-slides across a snowy mountain, hopping between icy ledges and frozen floating floes to collect glittering fish, dodging rolling snowballs, and reaching the summit igloo. Crisp blue-white snow, pink dawn sky, cosy and playful.",
+  "notes": "The kit has no penguin, so the chibi platformer character stands in, tinted dark navy body with a pink scarf accent (Player.makeCharacter colors) to read as Frostbeak. The snowy mountain of floating floes maps to the 'sky_islands' level: the floating islands become frozen floes and the topmost island becomes the summit, where the goal portal stands in for the igloo doorway. The collectible catalog has no fish tag, so the glittering fish are placed as glowing 'orb' pickups labeled 'Fish', while the HUD counter uses the kit's real 'fish' icon so the score reads as fish. Rolling snowballs are 'patrol' enemies dressed as white rolling balls on the bridges. Belly-sliding is expressed through the platformer's fast run, squash & stretch and a slide-whoosh SFX, since the kit has no dedicated slide mechanic. The pink dawn sky comes from the generated sky panorama plus the snow look preset with fog tuned to the horizon.",
+  "chosen": {
+   "level_kind": "sky_islands",
+   "look": "snow",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "cozy",
+   "collectible": "orb",
+   "collectible_label": "Fish"
+  }
+ },
+ "model_calls": {
+  "judge": {
+   "calls": 2,
+   "prompt_tokens": 9070,
+   "completion_tokens": 139,
+   "seconds": 15.8
+  }
+ },
+ "agents": {
+  "live": 0,
+  "cached": 0,
+  "failed": 3
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 67.0
+    },
+    "icon_fish": {
+     "ok": true,
+     "seconds": 75.6
+    },
+    "icon_heart": {
+     "ok": true,
+     "seconds": 85.6
+    },
+    "icon_clock": {
+     "ok": true,
+     "seconds": 95.7
+    },
+    "icon_flag": {
+     "ok": true,
+     "seconds": 107.2
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 125.0
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 129.9
+    },
+    "sfx_jump": {
+     "ok": true,
+     "seconds": 130.8
+    },
+    "sfx_land": {
+     "ok": true,
+     "seconds": 131.8
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 133.0
+    },
+    "sfx_boost": {
+     "ok": true,
+     "seconds": 134.2
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 135.3
+    },
+    "prop_snowman": {
+     "ok": true,
+     "seconds": 202.1
+    },
+    "prop_lantern": {
+     "ok": false,
+     "error": "RemoteProtocolError: peer closed connection without sending complete message body (received 11730944 bytes, expected 14299643)",
+     "reason": "RemoteProtocolError: peer closed connection without sending complete message body (received 11730944 bytes, expected 14299643)",
+     "seconds": 218.4
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": null,
+   "plays": 0
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ }
+}
