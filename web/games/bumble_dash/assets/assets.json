@@ -97,5 +97,21 @@
   "camera": {
    "yaw": 2.289330856383545
   }
+ },
+ "cutscene_intro": {
+  "kind": "cutscene",
+  "file": "cutscene_intro.mp4",
+  "when": "intro",
+  "model": "LTX-2.5",
+  "source": "cutscene_intro_source.jpg",
+  "prompt": "Opening cutscene of the world of \"Bumble Dash\", a bouncy obstacle-course platformer sprint game. The camera slowly pushes in and glides over the world, revealing the level, then the hero character appears and strikes a confident pose. Spring meadow in toon_bright: butter-yellow dandelions and pink tulips on grass green, a winding dirt path, sky blue with cotton-ball clouds; cel shading with soft dark ink outlines, warm morning sun and gentle bloom. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Upbeat adventurous music."
+ },
+ "cutscene_win": {
+  "kind": "cutscene",
+  "file": "cutscene_win.mp4",
+  "when": "win",
+  "model": "LTX-2.5",
+  "source": "cutscene_win_source.jpg",
+  "prompt": "Victory cutscene of the world of \"Bumble Dash\", a bouncy obstacle-course platformer sprint game. The hero celebrates the win, jumping and cheering, confetti and sparkles burst around, warm triumphant light, the camera circles slowly. Spring meadow in toon_bright: butter-yellow dandelions and pink tulips on grass green, a winding dirt path, sky blue with cotton-ball clouds; cel shading with soft dark ink outlines, warm morning sun and gentle bloom. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Joyful fanfare."
  }
 }

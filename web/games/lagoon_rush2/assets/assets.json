@@ -87,5 +87,13 @@
   "camera": {
    "yaw": 0.787579695608944
   }
+ },
+ "cutscene_intro": {
+  "kind": "cutscene",
+  "file": "cutscene_intro.mp4",
+  "when": "intro",
+  "model": "LTX-2.5",
+  "source": "cutscene_intro_source.jpg",
+  "prompt": "Opening cutscene of the world of \"Lagoon Rush\", a arcade boat racing game. The camera slowly pushes in and glides over the world, revealing the level, then the hero character appears and strikes a confident pose. Saturated midday tropical postcard: turquoise-to-aqua lagoon water with white foam, pale sand beaches, lush palm green, and a candy-striped red-and-white lighthouse. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Upbeat adventurous music."
  }
 }

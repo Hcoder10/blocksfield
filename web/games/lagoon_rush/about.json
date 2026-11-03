@@ -310,5 +310,18 @@
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
  },
- "superseded_by": "lagoon_rush2"
+ "superseded_by": "lagoon_rush2",
+ "post_stages": [
+  {
+   "stage": "cutscenes",
+   "model": "LTX-2.5",
+   "run": "uniform pipeline stage after build",
+   "clips": [
+    "intro",
+    "win",
+    "lose"
+   ],
+   "at": "2026-11-03T04:01:53-0800"
+  }
+ ]
 }

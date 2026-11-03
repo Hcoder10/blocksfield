@@ -341,6 +341,17 @@
     "deaths": 0
    },
    "previous_score": 6.0
+  },
+  {
+   "stage": "cutscenes",
+   "model": "LTX-2.5",
+   "run": "uniform pipeline stage after build",
+   "clips": [
+    "intro",
+    "win"
+   ],
+   "reviewed": true,
+   "at": "2026-11-03T06:11:12-0800"
   }
  ]
 }
