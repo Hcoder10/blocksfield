@@ -399,7 +399,9 @@ export function rules(game, opts = {}) {
     const list = Array.isArray(opts.enemies) ? opts.enemies : [];
     for (const e of list) addEnemy(e.kind || 'patrol', e.position, e);
     if (typeof opts.enemies === 'number' && level.spawnPoints && level.spawnPoints.length) {
-      for (let i = 0; i < opts.enemies; i++) addEnemy(['chase', 'patrol', 'turret', 'chase'][i % 4], level.spawnPoints[i % level.spawnPoints.length].clone().add(V3((i >= level.spawnPoints.length ? 2 : 0), 0, 0)));
+      // farthest spawn points from the player first: nobody should get jumped at the start line
+      const pts = [...level.spawnPoints].sort((a, b) => b.distanceTo(player.position) - a.distanceTo(player.position));
+      for (let i = 0; i < opts.enemies; i++) addEnemy(['chase', 'patrol', 'turret', 'chase'][i % 4], pts[i % pts.length].clone().add(V3((i >= pts.length ? 2.5 : 0), 0, 0)));
     } else if (typeof opts.enemies === 'number' && level.route.length > 3) {
       // spread them along the route, away from spawn and goal
       for (let i = 0; i < opts.enemies; i++) {
@@ -728,8 +730,10 @@ export function rules(game, opts = {}) {
       }
     }
     // enemies
+    const grace = S.time < 2;
     for (const e of R.enemies) {
       e.t += dt;
+      if (grace && e.alive) { e.body.position.y = Math.abs(Math.sin(e.t * 3)) * 0.1; continue; }
       if (!e.alive) {
         e.deadT += dt;
         e.object.scale.set(1 + e.deadT * 2, Math.max(0.05, 1 - e.deadT * 6), 1 + e.deadT * 2);
@@ -1023,9 +1027,10 @@ export function autopilot(game, opts = {}) {
     }
     if (st.item) st.itemT += dt;
     if (st.item && st.itemT > 3) st.item.skip = true;
-    const locked = R && R.goal && game.state.goalOpen === false;
+    // end of the route but the collect goal isn't met (locked portal, or no goal at all): roam to the nearest target item
+    const needMore = R && game.state.target > 0 && game.state.collected < game.state.target;
     let goalP = route[st.idx];
-    if (locked && st.idx >= route.length - 1 && !st.item) {
+    if (needMore && st.idx >= route.length - 1 && !st.item) {
       // roam to the nearest uncollected target item
       const left = R.items.filter(i => !i.collected && i.tag === game.state.collectTag);
       left.sort((a, b) => a.home.distanceTo(p) - b.home.distanceTo(p));

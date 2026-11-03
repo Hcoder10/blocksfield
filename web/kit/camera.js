@@ -2,6 +2,7 @@
 // One rig is active at a time (a new call replaces the old). Runs in lateUpdate order 20; while game.cameraOverride
 // is set (debug survey cameras) the rig keeps tracking but core.js wins. See docs/Camera.md.
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import * as Physics from './physics.js';
 
 export const MODES = ['follow', 'chase', 'topdown', 'orbit', 'firstPerson'];
@@ -230,15 +231,16 @@ export function firstPerson(game, player, opts = {}) {
   if (o.weapon) {
     const tm = (c) => new THREE.MeshToonMaterial({ color: c });
     gun = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.5), tm(player.character && player.character.mats.body.color ? '#' + player.character.mats.body.color.getHexString() : '#ff7a59'));
-    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.32, 12), tm('#2a2733')); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.03, -0.38);
-    const tip = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.022, 6, 14), new THREE.MeshBasicMaterial({ color: '#7ff6ff', toneMapped: false })); tip.position.set(0, 0.03, -0.54);
-    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.12), tm('#2a2733')); grip.position.set(0, -0.15, 0.1); grip.rotation.x = 0.3;
-    const tank = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), new THREE.MeshBasicMaterial({ color: '#ffd23f', toneMapped: false })); tank.position.set(0, 0.12, 0.05);
+    const col = player.character && player.character.mats.body.color ? '#' + player.character.mats.body.color.getHexString() : '#ff7a59';
+    const body = new THREE.Mesh(new RoundedBoxGeometry(0.15, 0.15, 0.46, 3, 0.05), tm(col));
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.3, 14), tm('#3a3646')); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.01, -0.36);
+    const tip = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.018, 8, 16), new THREE.MeshBasicMaterial({ color: '#7ff6ff', toneMapped: false })); tip.position.set(0, 0.01, -0.51);
+    const grip = new THREE.Mesh(new RoundedBoxGeometry(0.09, 0.2, 0.11, 2, 0.03), tm('#3a3646')); grip.position.set(0, -0.15, 0.1); grip.rotation.x = 0.3;
+    const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.2, 10), new THREE.MeshBasicMaterial({ color: '#7ff6ff', toneMapped: false })); tank.rotation.x = Math.PI / 2; tank.position.set(0.078, 0.02, -0.02);
     gun.add(body, barrel, tip, grip, tank);
     muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), new THREE.MeshBasicMaterial({ color: '#fff6a8', toneMapped: false, transparent: true }));
     muzzle.position.set(0, 0.03, -0.62); muzzle.visible = false; gun.add(muzzle);
-    gun.scale.setScalar(0.45); gun.position.set(0.2, -0.17, -0.42);
+    gun.scale.setScalar(0.42); gun.rotation.y = 0.06; gun.position.set(0.21, -0.19, -0.44);
     gun.traverse(m => { if (m.isMesh) { m.renderOrder = 10; m.material.depthTest = false; m.userData.noCollide = true; } });
     vm.add(gun);
   }
@@ -251,7 +253,7 @@ export function firstPerson(game, player, opts = {}) {
     if (gun) {
       st.recoil = Math.max(0, st.recoil - (dt || 0) * 7);
       const sp2 = Math.hypot(player.velocity.x, player.velocity.z);
-      gun.position.set(0.2 + Math.sin(st.phase * 0.5) * 0.008 * Math.min(1, sp2 / 9), -0.17 + Math.abs(Math.cos(st.phase * 0.5)) * 0.008 * Math.min(1, sp2 / 9) - st.dip * 0.1, -0.42 + st.recoil * 0.05);
+      gun.position.set(0.21 + Math.sin(st.phase * 0.5) * 0.008 * Math.min(1, sp2 / 9), -0.19 + Math.abs(Math.cos(st.phase * 0.5)) * 0.008 * Math.min(1, sp2 / 9) - st.dip * 0.1, -0.44 + st.recoil * 0.05);
       gun.rotation.x = st.recoil * 0.25;
       muzzle.visible = st.recoil > 0.7; muzzle.scale.setScalar(0.6 + st.recoil);
     }

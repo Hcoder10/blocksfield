@@ -138,12 +138,15 @@ export function makeCharacter(game, colors = {}) {
   const torso = mesh(sph(0.4), mats.body); torso.scale.set(1, 0.92, 0.88); torso.position.y = 0.72; body.add(torso);
   const belly = mesh(sph(0.3), mats.belly, false); belly.scale.set(0.95, 0.85, 0.5); belly.position.set(0, 0.68, 0.22); body.add(belly);
   const head = new THREE.Group(); head.position.y = 1.32; body.add(head);
+  // little backpack: colour and shape from behind, where the camera usually is
+  const pack = mesh(new RoundedBoxGeometry(0.46, 0.44, 0.24, 3, 0.09), mats.accent); pack.position.set(0, 0.78, -0.36); pack.rotation.x = 0.12; body.add(pack);
+  const flap = mesh(new RoundedBoxGeometry(0.42, 0.14, 0.06, 2, 0.03), mats.limbs); flap.position.set(0, 0.95, -0.5); flap.rotation.x = 0.12; body.add(flap);
   const skull = mesh(sph(0.47, 28, 20), mats.skin); skull.scale.set(1.05, 0.95, 1); head.add(skull);
   // hair / cap in body colour with a little brim
-  const cap = mesh(new THREE.SphereGeometry(0.5, 28, 14, 0, Math.PI * 2, 0, Math.PI * 0.42), mats.body);
-  cap.position.y = 0.04; cap.rotation.x = -0.18; cap.scale.set(1.06, 1, 1.04); head.add(cap);
+  const cap = mesh(new THREE.SphereGeometry(0.5, 28, 14, 0, Math.PI * 2, 0, Math.PI * 0.46), mats.body);
+  cap.position.set(0, 0.03, -0.02); cap.rotation.x = -0.42; cap.scale.set(1.06, 1, 1.05); head.add(cap);
   const brim = mesh(new THREE.CylinderGeometry(0.34, 0.36, 0.05, 20, 1, false, -Math.PI / 2, Math.PI), mats.accent);
-  brim.position.set(0, 0.17, 0.3); brim.rotation.x = 0.25; brim.scale.z = 0.9; head.add(brim);
+  brim.position.set(0, 0.255, 0.28); brim.rotation.x = 0.14; brim.scale.z = 0.95; head.add(brim);
   const eyes = [];
   for (const s of [-1, 1]) {
     const eg = new THREE.Group(); eg.position.set(0.165 * s, 0.0, 0.41); eg.rotation.y = 0.32 * s; head.add(eg);
@@ -396,6 +399,13 @@ export function create(game, opts = {}) {
   // collider: capsule for characters, ball for vehicles. pos = collider centre.
   const radius = vehicle ? tune.radius : 0.42, half = vehicle ? 0 : 0.48;
   const centerH = radius + half;                         // feet -> centre
+  // a spawn slightly inside the floor would wedge the capsule: stand on the surface under/around it instead
+  const settle = (v) => {
+    const hit = Physics.raycast(game, new THREE.Vector3(v.x, v.y + 2.5, v.z), new THREE.Vector3(0, -1, 0), 4);
+    if (hit && hit.normal.y > 0.5 && hit.point.y > v.y - 0.6) v.y = Math.max(v.y, hit.point.y + 0.02);
+    return v;
+  };
+  settle(spawn);
   const pos = spawn.clone().add(new THREE.Vector3(0, centerH + 0.05, 0));
   const body = world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(pos.x, pos.y, pos.z));
   const collider = world.createCollider((vehicle ? R.ColliderDesc.ball(radius) : R.ColliderDesc.capsule(half, radius))
@@ -446,7 +456,7 @@ export function create(game, opts = {}) {
       p._bot = { x: +x || 0, y: +y || 0, jump: !!jump, action: !!action, pound: !!extra.pound, world: !!extra.world }; p._botT = game.time;
     },
     teleport(at, yaw) {
-      const v = at.isVector3 ? at : new THREE.Vector3(...at);
+      const v = settle(at.isVector3 ? at.clone() : new THREE.Vector3(...at));
       p.position.copy(v); pos.copy(v).add(_a.set(0, centerH + 0.05, 0));
       body.setTranslation({ x: pos.x, y: pos.y, z: pos.z }, true);
       p.velocity.set(0, 0, 0); vy = 0; hv.set(0, 0, 0); skipMove = 2;
@@ -865,6 +875,11 @@ export function create(game, opts = {}) {
     probeT -= dt;
     const g = Physics.raycast(game, pos, _b.set(0, -1, 0), 60, { excludeCollider: collider });
     probeCache = g ? g.point.y : null;
+    // sunk into the floor (spawned inside it, a mover rose into us): pop back onto the surface
+    if (g && g.normal.y > 0.7 && g.distance < centerH - 0.03 && !g.kinematic) {
+      pos.y += centerH - g.distance + 0.01; body.setNextKinematicTranslation({ x: pos.x, y: pos.y, z: pos.z });
+      if (vy < 0) vy = 0;
+    }
     platform = p.grounded && g && g.distance < centerH + 0.4 && g.kinematic ? g.kinematic : null;
     p.groundObject = g && g.distance < centerH + 0.4 ? g.object : null;
     if (!vehicle) p.speed = Math.hypot(hv.x, hv.z);
