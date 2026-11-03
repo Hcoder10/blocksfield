@@ -1224,7 +1224,7 @@ export function rules(game, opts = {}) {
       for (const e of W.alive) {
         if (!e.alive || e.spawnT > 0) continue;
         const eye = player.position.clone().add(V3(0, 1.2, 0)), d = e.position.clone().add(V3(0, 1, 0)).sub(eye);
-        const hidden = d.length() > 22 || Physics.raycast(game, eye, d, d.length() - 0.8, { excludeCollider: player.collider });
+        const hidden = d.length() > 22 || Math.abs(e.position.y - player.position.y) > 2.5 || Physics.raycast(game, eye, d, d.length() - 0.8, { excludeCollider: player.collider });
         e.lostT = hidden ? (e.lostT || 0) + dt : 0;
         if (e.lostT > 8) { const pts = spawnPoints(); if (pts.length) { e.position.copy(pts[0]); e.home.copy(pts[0]); e.spawnT = 0.45; e.object.scale.setScalar(0.01); e.lostT = 0; } }
       }

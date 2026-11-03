@@ -1158,6 +1158,7 @@ export function create(game, opts = {}) {
   const _ray = new THREE.Raycaster(), _plane = new THREE.Plane(), _hit = new THREE.Vector3(), _ndc = new THREE.Vector2();
   function aimDir() {
     const T = tune;
+    if (game.__rules) for (const e of game.__rules.enemies) if (e.alive && Math.abs(e.position.y - p.position.y) >= 4) { /* out of reach vertically */ }
     // mouse aim once the mouse has moved over the game in the last 2 s
     if (performance.now() - mouse.moveT < 2000 && !p._bot) {
       const el = game.renderer.domElement, r = el.getBoundingClientRect();
@@ -1167,8 +1168,9 @@ export function create(game, opts = {}) {
     }
     // auto-aim: nearest live enemy in range
     const R = game.__rules; let best = null, bd = T.range;
-    if (R) for (const e of R.enemies) { if (!e.alive) continue; const d = Math.hypot(e.position.x - p.position.x, e.position.z - p.position.z); if (d < bd && Math.abs(e.position.y - p.position.y) < 4) { bd = d; best = e; } }
-    if (best) return new THREE.Vector3(best.position.x - p.position.x, 0, best.position.z - p.position.z).normalize();
+    if (R) for (const e of R.enemies) { if (!e.alive) continue; const d = Math.hypot(e.position.x - p.position.x, e.position.z - p.position.z); if (d < bd && Math.abs(e.position.y - p.position.y) < 6) { bd = d; best = e; } }
+    // aim at the enemy's body in 3D (it may stand on a ledge above or below us)
+    if (best) return new THREE.Vector3(best.position.x - p.position.x, (best.position.y + (best.height || 1.2) * 0.5) - (p.position.y + 0.95), best.position.z - p.position.z).normalize();
     return null;
   }
   p.autoFire = !!opts.autoFire;
@@ -1183,7 +1185,7 @@ export function create(game, opts = {}) {
       const dir = aim || new THREE.Vector3(Math.sin(p.yaw), 0, Math.cos(p.yaw));
       fireCd = 1 / tune.fireRate; flash = 1; aimHold = 0.35;
       p.yaw = Math.atan2(dir.x, dir.z);
-      const side = new THREE.Vector3(dir.z, 0, -dir.x);
+      const side = new THREE.Vector3(dir.z, 0, -dir.x).normalize();
       const origin = p.position.clone().add(new THREE.Vector3(0, 0.95, 0)).addScaledVector(dir, 0.7).addScaledVector(side, -0.25);
       game.emit('shoot', p, origin, dir, { projectile: true, speed: tune.boltSpeed, range: tune.range, damage: tune.damage, color: opts.boltColor || '#7ff6ff' });
     }
