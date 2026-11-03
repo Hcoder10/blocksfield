@@ -257,7 +257,7 @@ def plan_schema(en: dict[str, list[str]]) -> dict:
                 "sfx": {"type": "array", "maxItems": 6, "items": {"type": "object", "required": ["event", "prompt"],
                         "properties": {"event": {"enum": ["collect", "jump", "land", "damage", "death", "checkpoint",
                                                           "win", "lose", "boost", "respawn"]},
-                                       "prompt": s, "seconds": {"type": "number", "minimum": 0.5, "maximum": 6}}}},
+                                       "prompt": s, "seconds": {"type": "number", "minimum": 1, "maximum": 6}}}},
                 "props": {"type": "array", "maxItems": 2, "items": {"type": "object", "required": ["name", "prompt"],
                           "properties": {"name": {"type": "string", "pattern": "^[a-z][a-z0-9_]{1,24}$"},
                                          "prompt": {**s, "description": "ONE solid object, its shape and colours"},

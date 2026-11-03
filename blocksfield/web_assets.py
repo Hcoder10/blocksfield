@@ -47,38 +47,56 @@ def safe(name: str) -> str:
 
 
 # --------------------------------------------------------------------------------------------- image maths
-def equirect(pano: Image.Image, width: int = EQ_W, height: int = EQ_H, horizon: float | None = None) -> Image.Image:
-    """A wide sky picture (horizon somewhere in its lower half) -> an equirect panorama for a sphere background.
+def sky_horizon(pano: Image.Image) -> float:
+    """Height fraction of the horizon: the brightest band (horizon glow) between 35% and 80% of the height. The model
+    often paints land or a cliff below it (live: a plan's sky prompt asked for 'tiny distant islands'), so the old
+    steepest-drop rule landed on the land's edge."""
+    a = np.asarray(pano.convert("L").resize((64, 256)), dtype=np.float64).mean(axis=1)
+    a = np.convolve(a, np.ones(9) / 9, mode="same")
+    lo, hi = int(0.35 * len(a)), int(0.8 * len(a))
+    return float((lo + int(np.argmax(a[lo:hi]))) / len(a))
 
-    The picture's sky (top .. horizon) fills elevation ~75..0 degrees, its haze (horizon .. bottom) the first ~20
-    degrees below the horizon; above and below that the rows fade to the median zenith / nadir colour (an equirect's
+
+def equirect(pano: Image.Image, width: int = EQ_W, height: int = EQ_H, horizon: float | None = None) -> Image.Image:
+    """A wide sky picture -> an equirect panorama for a sphere background.
+
+    Only the picture's sky is used (top .. horizon), stretched over elevation ~75..0 degrees; everything the model
+    drew below its horizon (often land) is replaced by a haze gradient from the horizon colour, which is what a level
+    floating in the sky shows under it. Above ~75 degrees the rows fade to the median zenith colour (an equirect's
     poles squeeze a whole row into one point, so any detail there pinches). The result wraps left-right."""
     a = np.asarray(pano.convert("RGB"), dtype=np.float64)
     h, w, _ = a.shape
-    cy = int(round(h * (asset_tools.find_horizon(pano) if horizon is None else horizon)))
+    cy = int(round(h * (sky_horizon(pano) if horizon is None else horizon)))
     cy = min(max(cy, 8), h - 8)
     half = height // 2
-    top_px, low_px = int(half * 0.84), int(half * 0.24)
-
-    def rows(src: np.ndarray, n: int) -> np.ndarray:
-        img = Image.fromarray(np.clip(src, 0, 255).astype(np.uint8)).resize((width, max(1, n)), Image.LANCZOS)
-        return np.asarray(img, dtype=np.float64)
-    sky = rows(a[:cy], top_px)
-    haze = rows(a[cy:], low_px)
+    top_px = int(half * 0.84)
+    sky = np.asarray(Image.fromarray(np.clip(a[:cy], 0, 255).astype(np.uint8)).resize((width, top_px), Image.LANCZOS),
+                     dtype=np.float64)
     c_top = np.median(sky[: max(2, top_px // 10)].reshape(-1, 3), axis=0)
-    c_dn = np.median(haze[-max(2, low_px // 4):].reshape(-1, 3), axis=0)
+    c_hz = np.median(sky[-max(2, top_px // 25):].reshape(-1, 3), axis=0)
+    c_dn = 0.55 * c_hz + 0.45 * c_top * 0.8                 # deeper, bluer haze far below
     out = np.empty((height, width, 3))
     out[: half - top_px] = c_top
     out[half - top_px: half] = sky
-    out[half: half + low_px] = haze
-    out[half + low_px:] = c_dn
     y = (np.arange(height) + 0.5) / height                  # 0 zenith .. 1 nadir
+    t = asset_tools._smooth((y[half:] - 0.5) / 0.3)[:, None, None]
+    out[half:] = (1 - t) * c_hz + t * c_dn
     up_w = asset_tools._smooth((y - 0.03) / 0.16)[:, None, None]          # fade the top 19% to the zenith colour
-    dn_w = asset_tools._smooth((0.5 + low_px / height - y) / 0.08)[:, None, None]
     out = up_w * out + (1 - up_w) * c_top
-    out = np.where(y[:, None, None] > 0.5, dn_w * out + (1 - dn_w) * c_dn, out)
+    band = slice(half - 6, half + 6)                         # soften the seam at the horizon
+    out[band] = np.asarray(Image.fromarray(np.clip(out[band], 0, 255).astype(np.uint8)).resize(
+        (width, 12), Image.BILINEAR), dtype=np.float64) * 0.5 + 0.5 * out[band].mean(axis=0, keepdims=True)
     out = asset_tools.wrap_horizontal(out, 0.2)
     return Image.fromarray(np.clip(out, 0, 255).round().astype(np.uint8))
+
+
+LAND = re.compile(r"[^.,;]*\b(island|islands|land|mountain|mountains|hill|hills|bridge|bridges|tree|trees|ground|"
+                  r"cliff|cliffs|castle|tower|building|city|town|forest|meadow|field)\b[^.,;]*[.,;]?", re.I)
+
+
+def sky_prompt(prompt: str) -> str:
+    """The plan's sky description without the land it tends to mention (the panorama must be only sky)."""
+    return re.sub(r"\s+", " ", LAND.sub("", prompt)).strip(" ,.;") or "a bright clear sky with soft clouds"
 
 
 def wrap_report(img: Image.Image) -> float:
@@ -147,7 +165,7 @@ class Assets:
     async def sky(self, prompt: str, style: str) -> None:
         if self.have("sky"):
             return
-        full = f"{prompt.strip().rstrip('.')}. Colour mood: {style[:240]}. {SKY}"
+        full = f"{SKY}. The sky: {sky_prompt(prompt)}. Colour mood: {sky_prompt(style)[:240]}"
         pano = await asset_tools.raw_image(full, asset_tools.PANO_W, asset_tools.PANO_H)
         pano.convert("RGB").save(self.work / "sky_source.png")
         eq = equirect(pano)
@@ -173,7 +191,7 @@ class Assets:
         name = f"sfx_{SFX_NAME.get(event, event)}"
         if self.have(name):
             return
-        clip = (await asset_tools.make_sfx(prompt, min(max(float(seconds), 0.5), 6.0), 1))[0]
+        clip = (await asset_tools.make_sfx(prompt, min(max(float(seconds), 1.0), 6.0), 1))[0]
         self.add(name, name + _audio_ext(clip), clip, kind="sfx", event=event, prompt=prompt[:300])
 
     async def prop(self, name: str, prompt: str, style: str, detail: int = 22) -> None:
