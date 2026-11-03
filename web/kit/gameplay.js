@@ -965,7 +965,7 @@ export function rules(game, opts = {}) {
           const want = Math.atan2(toP.x, toP.z);
           e.body.rotation.y += angWrap(want - e.body.rotation.y) * Math.min(1, dt * 3);
           e.cool -= dt;
-          if (e.cool <= 0 && playing && Math.abs(angWrap(want - e.body.rotation.y)) < 0.25) {
+          if (e.cool <= 0 && playing && !(e.harmlessT > 0) && Math.abs(angWrap(want - e.body.rotation.y)) < 0.25) {
             e.cool = 2.2; e.squash = 1;
             const m = new THREE.Mesh(shotGeo, shotMat); const y = e.body.rotation.y;
             m.position.copy(e.position).add(V3(Math.sin(y) * 1.4, 1.35, Math.cos(y) * 1.4));
@@ -978,7 +978,8 @@ export function rules(game, opts = {}) {
         }
         e.body.scale.setScalar(1 + e.squash * 0.15);
       }
-      // contact with the player
+      // contact with the player (freshly spawned wave enemies can't hurt yet)
+      if (e.harmlessT > 0) { e.harmlessT -= dt; e.object.visible = Math.floor(game.time * 12) % 2 === 0 || e.harmlessT < 0.05; continue; }
       if (!playing || !player.alive) continue;
       const ec = e.position.clone().add(V3(0, e.height * 0.5, 0));
       const d3 = pc.distanceTo(ec);
@@ -1215,7 +1216,7 @@ export function rules(game, opts = {}) {
       for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2 + game.rand(); pts.push(player.position.clone().add(V3(Math.cos(a) * 15, 2, Math.sin(a) * 15))); }
       // only spots the player can see (inside the arena, not behind its walls)
       const eye = player.position.clone().add(V3(0, 1.2, 0));
-      return pts.filter(p => p.distanceTo(player.position) > 8).map(p => { const gy = Physics.groundAt(game, p.x, p.z, p.y + 6, 20); return gy === null ? null : p.setY(gy); })
+      return pts.filter(p => p.distanceTo(player.position) > 12).map(p => { const gy = Physics.groundAt(game, p.x, p.z, p.y + 6, 20); return gy === null ? null : p.setY(gy); })
         .filter(p => { if (!p) return false; const d = p.clone().add(V3(0, 1.2, 0)).sub(eye); return !Physics.raycast(game, eye, d, d.length() - 0.5, { excludeCollider: player.collider }); });
     };
     const startWave = () => {
@@ -1227,7 +1228,7 @@ export function rules(game, opts = {}) {
       for (let i = 0; i < n; i++) {
         const p = pts.length ? pts[i % pts.length].clone().add(V3((game.rand() - 0.5) * 3, 0, (game.rand() - 0.5) * 3)) : player.position.clone().add(V3(10, 0, 0));
         const e = addEnemy(kinds[i % kinds.length], p, { hp: (kinds[i % kinds.length] === 'turret' ? 3 : 2) + Math.floor((S.wave - 1) / cfg.hpGrow) });
-        e.spawnT = 0.6 + i * 0.12; e.object.scale.setScalar(0.01);
+        e.spawnT = 0.6 + i * 0.12; e.object.scale.setScalar(0.01); e.harmlessT = 2.5;   // pop in, then 2.5 s before it can hurt
         W.alive.push(e);
       }
       game.emit('wave', S.wave, cfg.count);
