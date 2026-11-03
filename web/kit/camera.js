@@ -300,9 +300,17 @@ export function firstPerson(game, player, opts = {}) {
   needPlayer('firstPerson', player);
   const o = { eye: 1.55, fov: 72, bob: 0.05, sprintFov: 8, weapon: true, crosshair: true, ...opts };
   const cam = game.camera;
-  const st = { phase: 0, fov: o.fov, dip: 0, recoil: 0 };
-  game.on('land', (pl, sp) => { if (pl === player) st.dip = Math.min(0.35, (sp || 0) * 0.012); });
-  game.on('shoot', (pl) => { if (pl === player) st.recoil = 1; });
+  const st = { phase: 0, fov: o.fov, dip: 0, recoil: 0, swayX: 0, swayY: 0, lastYaw: player.lookYaw, lastPitch: player.lookPitch || 0, hit: 0, kill: 0, hurt: 0, kick: 0 };
+  const offs = [];
+  offs.push(game.on('land', (pl, sp) => { if (pl === player) st.dip = Math.min(0.35, (sp || 0) * 0.012); }));
+  offs.push(game.on('jump', (pl) => { if (pl === player) st.dip = -0.06; }));
+  offs.push(game.on('shoot', (pl) => { if (pl === player) { st.recoil = 1; st.kick = 1; } }));
+  // hit markers: a white X on a hit, red and bigger on a kill; red vignette + view kick when hurt
+  offs.push(game.on('damage', (target, amount, by) => {
+    if (target === player) { st.hurt = 1; st.dip = 0.12; return; }
+    if (by === player) st.hit = 1;
+  }));
+  offs.push(game.on('death', (target) => { if (target !== player && st.hit > 0.5) st.kill = 1; }));
   // toy blaster + reticle parented to the camera (the camera joins the scene so its children render)
   const vm = new THREE.Group(); vm.name = 'viewmodel';
   if (o.weapon || o.crosshair) { if (!cam.parent) game.scene.add(cam); cam.add(vm); }
@@ -317,38 +325,67 @@ export function firstPerson(game, player, opts = {}) {
     const grip = new THREE.Mesh(new RoundedBoxGeometry(0.09, 0.2, 0.11, 2, 0.03), tm('#3a3646')); grip.position.set(0, -0.15, 0.1); grip.rotation.x = 0.3;
     const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.2, 10), new THREE.MeshBasicMaterial({ color: '#7ff6ff', toneMapped: false })); tank.rotation.x = Math.PI / 2; tank.position.set(0.078, 0.02, -0.02);
     gun.add(body, barrel, tip, grip, tank);
-    muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), new THREE.MeshBasicMaterial({ color: '#fff6a8', toneMapped: false, transparent: true }));
+    muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshBasicMaterial({ color: '#e8fdff', toneMapped: false, transparent: true, opacity: 0.85 }));
     muzzle.position.set(0, 0.03, -0.62); muzzle.visible = false; gun.add(muzzle);
+    // the muzzle flash lights the world (reads great in dark looks)
+    st.light = new THREE.PointLight('#9ff6ff', 0, 10, 1.4); st.light.position.set(0.2, 0, -2.6); vm.add(st.light);
+    st.tipMat = tip.material;
     gun.scale.setScalar(0.42); gun.rotation.y = 0.06; gun.position.set(0.21, -0.19, -0.44);
     gun.traverse(m => { if (m.isMesh) { m.renderOrder = 10; m.material.depthTest = false; m.userData.noCollide = true; } });
     vm.add(gun);
   }
+  let marker = null, vignette = null;
   if (o.crosshair) {
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.006, 0.0085, 24), new THREE.MeshBasicMaterial({ color: '#ffffff', depthTest: false, toneMapped: false, transparent: true, opacity: 0.9 }));
     const dot = new THREE.Mesh(new THREE.CircleGeometry(0.0018, 10), ring.material);
     ring.position.z = dot.position.z = -0.5; ring.renderOrder = dot.renderOrder = 11; vm.add(ring, dot);
+    marker = new THREE.Group(); marker.position.z = -0.5; vm.add(marker);
+    const mm = new THREE.MeshBasicMaterial({ color: '#ffffff', depthTest: false, toneMapped: false, transparent: true, opacity: 0 });
+    for (const a of [1, 3, 5, 7]) { const b = new THREE.Mesh(new THREE.PlaneGeometry(0.0085, 0.0018), mm); const r = a * Math.PI / 4; b.position.set(Math.cos(r) * 0.013, Math.sin(r) * 0.013, 0); b.rotation.z = r; b.renderOrder = 12; marker.add(b); }
+    marker.userData.mat = mm;
+  }
+  {
+    // damage vignette: a full-view red rim just in front of the camera
+    const c2 = document.createElement('canvas'); c2.width = c2.height = 128; const x = c2.getContext('2d');
+    const gr = x.createRadialGradient(64, 64, 30, 64, 64, 92); gr.addColorStop(0, 'rgba(255,0,30,0)'); gr.addColorStop(1, 'rgba(255,20,40,0.9)');
+    x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+    const h = 2 * Math.tan((o.fov + 20) * Math.PI / 360) * 0.2;
+    vignette = new THREE.Mesh(new THREE.PlaneGeometry(h * 2.4, h), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c2), transparent: true, opacity: 0, depthTest: false, depthWrite: false, toneMapped: false }));
+    vignette.position.z = -0.2; vignette.renderOrder = 13; if (!cam.parent) game.scene.add(cam); if (!vm.parent) cam.add(vm); vm.add(vignette);
   }
   const rig = install(game, 'firstPerson', o, (dt) => {
+    const fdt = dt || 1 / 60;
     if (gun) {
-      st.recoil = Math.max(0, st.recoil - (dt || 0) * 7);
+      st.recoil = Math.max(0, st.recoil - fdt * 12);
       const sp2 = Math.hypot(player.velocity.x, player.velocity.z);
-      gun.position.set(0.21 + Math.sin(st.phase * 0.5) * 0.008 * Math.min(1, sp2 / 9), -0.19 + Math.abs(Math.cos(st.phase * 0.5)) * 0.008 * Math.min(1, sp2 / 9) - st.dip * 0.1, -0.44 + st.recoil * 0.05);
-      gun.rotation.x = st.recoil * 0.25;
-      muzzle.visible = st.recoil > 0.7; muzzle.scale.setScalar(0.6 + st.recoil);
+      // sway: the blaster lags behind look turns and leans into strafes, then springs back
+      const dyaw = angWrap(player.lookYaw - st.lastYaw), dpit = (player.lookPitch || 0) - st.lastPitch;
+      st.lastYaw = player.lookYaw; st.lastPitch = player.lookPitch || 0;
+      st.swayX += (THREE.MathUtils.clamp(dyaw * 1.6, -0.05, 0.05) - st.swayX) * Math.min(1, fdt * 10);
+      st.swayY += (THREE.MathUtils.clamp(-dpit * 1.6, -0.04, 0.04) - st.swayY) * Math.min(1, fdt * 10);
+      const run = Math.min(1, sp2 / 9);
+      gun.position.set(0.21 + st.swayX + Math.sin(st.phase * 0.5) * 0.008 * run, -0.19 + st.swayY + Math.abs(Math.cos(st.phase * 0.5)) * 0.008 * run - st.dip * 0.1 - (player.grounded ? 0 : 0.015), -0.44 + st.recoil * 0.05);
+      gun.rotation.set(st.recoil * 0.12, 0.06 + st.swayX * 2, -st.swayX * 3);
+      muzzle.visible = st.recoil > 0.55; muzzle.scale.setScalar(0.5 + st.recoil * 0.8);
+      st.light.intensity = st.recoil > 0.4 ? 3 * st.recoil : 0;
+      if (st.tipMat) st.tipMat.color.setHSL(0.5, 1, 0.55 + 0.25 * st.recoil + 0.08 * Math.sin(game.time * 6));
     }
+    st.hit = Math.max(0, st.hit - fdt * 6); st.kill = Math.max(0, st.kill - fdt * 3); st.hurt = Math.max(0, st.hurt - fdt * 1.6); st.kick = Math.max(0, st.kick - fdt * 12);
+    if (marker) { const k = Math.max(st.hit, st.kill); marker.userData.mat.opacity = k; marker.userData.mat.color.set(st.kill > 0.05 ? '#ff4d5e' : '#ffffff'); marker.scale.setScalar(1 + st.kill * 0.6 + (1 - k) * 0.3); }
+    if (vignette) vignette.material.opacity = st.hurt * 0.85;
     const sp = Math.hypot(player.velocity.x, player.velocity.z);
     if (player.grounded) st.phase += (dt || 0) * sp * 1.1;
     const bob = player.grounded ? Math.sin(st.phase) * o.bob * Math.min(1, sp / 9) : 0;
     st.dip *= Math.exp(-(dt || 0) * 8);
     cam.position.copy(player.position).add(new THREE.Vector3(0, o.eye + bob - st.dip, 0));
-    const y = player.lookYaw, pt = player.lookPitch || 0;
+    const y = player.lookYaw + (st.hurt > 0.7 ? Math.sin(game.time * 60) * 0.01 : 0), pt = (player.lookPitch || 0) + st.kick * 0.012;
     cam.lookAt(cam.position.x + Math.sin(y) * Math.cos(pt), cam.position.y + Math.sin(pt), cam.position.z + Math.cos(y) * Math.cos(pt));
     const fov = o.fov + (sp > (player.tuning.runSpeed || 9) + 1 ? o.sprintFov : 0);
     st.fov += (fov - st.fov) * damp(6, dt || 0.016);
     cam.fov = st.fov; cam.updateProjectionMatrix();
   });
   const dispose = rig.dispose;
-  rig.dispose = () => { cam.remove(vm); dispose(); };
+  rig.dispose = () => { cam.remove(vm); for (const off of offs) off(); dispose(); };
   return rig;
 }
 

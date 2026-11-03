@@ -29,9 +29,9 @@ export const TUNING = {
   },
   fps: {
     runSpeed: 9, sprintSpeed: 14, accel: 80, turnAccel: 120, decel: 70, airAccel: 22, airDecel: 2,
-    jumpHeight: 1.8, doubleJumpHeight: 0, jumps: 1, riseGravity: 30, fallGravity: 44, cutGravity: 60, maxFall: 45,
-    coyote: 0.1, buffer: 0.12, dash: false, longJump: null, groundPound: false, turnRate: 0, stepHeight: 0.5, maxSlope: 50,
-    lookSpeed: 0.0022, keyTurn: 2.4,
+    jumpHeight: 2.3, doubleJumpHeight: 0, jumps: 1, riseGravity: 34, fallGravity: 52, cutGravity: 70, maxFall: 45,
+    coyote: 0.12, buffer: 0.14, dash: false, longJump: null, groundPound: false, turnRate: 0, stepHeight: 0.5, maxSlope: 50,
+    lookSpeed: 0.0022, keyTurn: 2.4, fireRate: 6, range: 60, boltSpeed: 70, damage: 1,
   },
   kart: {
     maxSpeed: 32, accel: 34, brake: 55, reverse: 10, coast: 0.25, grip: 9, driftGrip: 2.0,
@@ -754,7 +754,7 @@ export function create(game, opts = {}) {
   let steerS = 0, driftDir = 0, driftCharge = 0, hopT = 0, lastTier = 0, wallCd = 0;
   let platform = null, fallStartY = pos.y;
   const carry = new THREE.Vector3();
-  let shootClick = false;
+  let shootClick = false, fpsCd = 0;
 
   function readInput() {
     if (!p.controls.enabled || !p.alive) return { x: 0, y: 0, jump: false, action: false, pound: false, world: false };
@@ -823,11 +823,19 @@ export function create(game, opts = {}) {
     const wl = wish.length();
     let maxS = T.runSpeed;
     if (type === 'fps' && inp.sprint) maxS = T.sprintSpeed;
-    if (type === 'fps' && (actionPressed || shootClick)) {
-      shootClick = false;
+    // fps: hold to fire (E / J / F / mouse while pointer-locked), glowing bolts from the blaster muzzle toward the crosshair
+    fpsCd -= dt;
+    if (type === 'fps' && (inp.action || shootClick || (mouse.locked && mouse.down)) && fpsCd <= 0 && p.alive) {
+      shootClick = false; fpsCd = 1 / T.fireRate;
       const dir = new THREE.Vector3(Math.sin(p.lookYaw) * Math.cos(p.lookPitch), Math.sin(p.lookPitch), Math.cos(p.lookYaw) * Math.cos(p.lookPitch));
-      game.emit('shoot', p, p.position.clone().add(new THREE.Vector3(0, 1.55, 0)), dir);
-    }
+      const right = new THREE.Vector3().crossVectors(dir, UP).normalize();
+      const eye = p.position.clone().add(new THREE.Vector3(0, 1.55, 0));
+      // aim point: what the crosshair is on (or far ahead); the bolt leaves the muzzle and converges on it
+      const hit = Physics.raycast(game, eye, dir, T.range, { excludeCollider: collider });
+      const aimAt = eye.clone().addScaledVector(dir, hit ? Math.max(2, hit.distance) : T.range);
+      const origin = eye.clone().addScaledVector(dir, 0.55).addScaledVector(right, 0.16).add(new THREE.Vector3(0, -0.12, 0));
+      game.emit('shoot', p, origin, aimAt.sub(origin).normalize(), { projectile: true, speed: T.boltSpeed, range: T.range, damage: T.damage, color: opts.boltColor || '#7ff6ff', fps: true });
+    } else if (shootClick && type === 'fps') shootClick = fpsCd > 0;
     if (p.boostT > 0) maxS *= 1.5;
 
     coyote = p.grounded ? T.coyote : coyote - dt;
@@ -1142,6 +1150,7 @@ export function create(game, opts = {}) {
     p.lookYaw += turn * tune.keyTurn * dt - (inp.lookX || 0) * tune.keyTurn * dt;
     p.lookPitch -= (inp.lookY || 0) * tune.keyTurn * dt;
     if (p._bot && game.time - p._botT < 0.3 && p._bot.lookYaw !== undefined) p.lookYaw = p._bot.lookYaw;
+    if (p._bot && game.time - p._botT < 0.3 && p._bot.lookPitch !== undefined) p.lookPitch = p._bot.lookPitch;
     p.lookPitch = THREE.MathUtils.clamp(p.lookPitch, -1.4, 1.4);
   }
   // --- top-down blaster ---

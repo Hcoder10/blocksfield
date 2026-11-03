@@ -215,7 +215,9 @@ export const ENEMY_COLORS = { patrol: '#5fd16a', chase: '#ff5a3c', turret: '#b05
 function makeEnemy(game, kind, color) {
   const g = new THREE.Group(); g.name = 'enemy_' + kind;
   const body = new THREE.Group(); g.add(body);
-  const own = (c, glow = 0.18) => { const m = mat(game, c).clone(); if (m.emissive) { m.emissive.set(c); m.emissiveIntensity = glow; } return m; };
+  // dark looks (night, dark_fantasy): stronger self-glow so silhouettes read, and glowing eyes
+  const night = typeof Look.isNight === 'function' && (() => { try { return Look.isNight(game); } catch (e) { return false; } })();
+  const own = (c, glow = 0.18) => { const m = mat(game, c).clone(); if (m.emissive) { m.emissive.set(c); m.emissiveIntensity = glow * (night ? 2.6 : 1); } return m; };
   let radius = 0.8, height = 1.2, roller = null;
   const c = color || ENEMY_COLORS[kind] || ENEMY_COLORS.patrol;
   if (kind === 'chase') {
@@ -256,6 +258,11 @@ function makeEnemy(game, kind, color) {
   const ringM = new THREE.MeshBasicMaterial({ color: '#ff3b4e', transparent: true, opacity: 0.75, depthWrite: false, toneMapped: false });
   const ring = new THREE.Mesh(new THREE.RingGeometry(radius * 0.95, radius * 1.15, 32), ringM); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.05; ring.renderOrder = 2; g.add(ring);
   const tele = glowSprite(kind === 'chase' ? '#ff6a3c' : '#ff3b4e', radius * 3.2); tele.position.y = height * 0.55; tele.material.opacity = 0; g.add(tele);
+  if (night) {
+    // eye glow + a soft body halo so they read against a dark sky
+    g.traverse(o => { if (o.isMesh && o.material && o.material.isMeshBasicMaterial && o.material.color && o.material.color.getHex() === 0xffffff && o.geometry.type === 'SphereGeometry') { const s = glowSprite('#fff3b0', 0.5); o.add(s); } });
+    const halo = glowSprite(c, radius * 2.6); halo.material.opacity = 0.35; halo.position.y = height * 0.5; g.add(halo);
+  }
   // owned lit materials (for the hit flash)
   const lit = []; g.traverse(o => { o.userData.noCollide = true; if (o.isMesh && o.material && o.material.emissive) lit.push({ m: o.material, e: o.material.emissive.clone(), i: o.material.emissiveIntensity }); });
   return { group: g, body, radius, height, roller, ring, tele, lit };
@@ -556,6 +563,7 @@ export function rules(game, opts = {}) {
   game.on('shoot', (pl, origin, dir, o) => {
     if (!o || !o.projectile) return;
     const m = new THREE.Mesh(boltGeo, new THREE.MeshBasicMaterial({ color: o.color || '#7ff6ff', toneMapped: false }));
+    if (o.fps) m.scale.set(0.7, 0.7, 1.6);
     m.position.copy(origin); m.lookAt(origin.clone().add(dir)); m.userData.noCollide = true;
     const glow = glowSprite(o.color || '#7ff6ff', 1.3); glow.material.opacity = 0.8; m.add(glow);
     root.add(m);
@@ -1575,14 +1583,34 @@ export function autopilot(game, opts = {}) {
     if (game.__apTrace) game.__apTrace.push([+game.time.toFixed(2), p.x.toFixed(1) + ',' + p.y.toFixed(1) + ',' + p.z.toFixed(1), st.idx, player.grounded ? 'G' : 'A', jump ? 'J' : '', st.item ? 'item' : '', st.plan ? 'plan' : '', (+mx).toFixed(2) + ',' + (+mz).toFixed(2)]);
     player.setInput(mx, mz, jump, action, { world: true });
     if (player.type === 'fps' && player._bot) {
-      const want = Math.atan2(mx, mz);
-      if (Math.abs(mx) + Math.abs(mz) > 0.1) player._bot.lookYaw = player.lookYaw + angWrap(want - player.lookYaw) * Math.min(1, dt * 5);
-      // aim and shoot enemies in range
-      if (R) for (const e of R.enemies) if (e.alive && e.position.distanceTo(p) < 18) {
-        const a = Math.atan2(e.position.x - p.x, e.position.z - p.z); player._bot.lookYaw = player.lookYaw + angWrap(a - player.lookYaw) * Math.min(1, dt * 8);
-        if (Math.abs(angWrap(a - player.lookYaw)) < 0.08) player._bot.action = (game.frame % 12) < 2;
-        break;
+      // plausible aim: turn at a capped rate toward where we walk, or toward the nearest visible enemy; strafe while shooting
+      const eye = p.clone().add(V3(0, 1.55, 0));
+      let tgtE = null, td = 1e9;
+      if (R) for (const e of R.enemies) {
+        if (!e.alive || e.spawnT > 0) continue;
+        const c = e.position.clone().add(V3(0, e.height * 0.5, 0)), d = c.distanceTo(eye);
+        if (d < 30 && d < td && !Physics.raycast(game, eye, c.clone().sub(eye), d - 0.8, { excludeCollider: player.collider })) { td = d; tgtE = e; }
       }
+      let wantYaw = Math.hypot(mx, mz) > 0.1 ? Math.atan2(mx, mz) : player.lookYaw, wantPitch = -0.05;
+      if (tgtE) {
+        const c = tgtE.position.clone().add(V3(0, tgtE.height * 0.5, 0));
+        wantYaw = Math.atan2(c.x - p.x, c.z - p.z); wantPitch = Math.atan2(c.y - eye.y, Math.hypot(c.x - p.x, c.z - p.z));
+      }
+      st.aimV = st.aimV || 0;
+      const err = angWrap(wantYaw - player.lookYaw), maxRate = tgtE ? 4.2 : 2.6;
+      st.aimV += (THREE.MathUtils.clamp(err * 9, -maxRate, maxRate) - st.aimV) * Math.min(1, dt * 10);   // eased turn, no snapping
+      player._bot.lookYaw = player.lookYaw + st.aimV * dt;
+      player._bot.lookPitch = (player.lookPitch || 0) + (wantPitch - (player.lookPitch || 0)) * Math.min(1, dt * 5);
+      if (tgtE) {
+        st.strafeT = (st.strafeT || 0) - dt; if (st.strafeT <= 0) { st.strafeT = 0.8 + game.rand() * 0.9; st.strafe = game.rand() < 0.5 ? -1 : 1; }
+        const f = V3(Math.sin(player.lookYaw), 0, Math.cos(player.lookYaw)), r = V3(f.z, 0, -f.x);
+        const keep = td < 6 ? -0.6 : td > 14 ? 0.5 : 0;            // keep a fighting distance
+        const w = f.multiplyScalar(keep).addScaledVector(r, st.strafe * 0.8);
+        // world-space input in fps is relative to the look direction: convert
+        const lx = w.dot(V3(Math.sin(player.lookYaw - Math.PI / 2) * -1, 0, Math.cos(player.lookYaw - Math.PI / 2) * -1));
+        player._bot.x = w.x; player._bot.y = w.z; player._bot.world = true; void lx;
+        player._bot.action = Math.abs(err) < 0.12;
+      } else player._bot.action = false;
     }
     if (player.type === 'topdown' && R && player.weapon === 'blaster') {
       // shooter: hold fire while anything is in range (the blaster auto-aims), back away from close enemies
