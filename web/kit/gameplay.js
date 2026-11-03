@@ -166,53 +166,67 @@ function makeFlag(game, color) {
   };
 }
 
-function makeEyes(game, parent, y, z, spread = 0.22, size = 0.12) {
+// eyes that read in any light: unlit white sclera, dark pupils, angry brows
+function makeEyes(game, parent, y, z, spread = 0.22, size = 0.12, glowCol = null) {
+  const white = new THREE.MeshBasicMaterial({ color: glowCol || '#ffffff', toneMapped: false });
+  const dark = new THREE.MeshBasicMaterial({ color: '#16121f' });
   for (const s of [-1, 1]) {
-    const w = mesh(new THREE.SphereGeometry(size, 12, 10), mat(game, '#ffffff')); w.scale.set(1, 1.2, 0.6); w.position.set(spread * s, y, z); parent.add(w);
-    const p = mesh(new THREE.SphereGeometry(size * 0.55, 10, 8), mat(game, '#1d1b2e')); p.position.set(0, 0, size * 0.55); w.add(p);
-    const brow = mesh(new THREE.BoxGeometry(size * 1.6, size * 0.35, size * 0.3), mat(game, '#1d1b2e')); brow.position.set(spread * s, y + size * 1.4, z + 0.02); brow.rotation.z = -0.45 * s; parent.add(brow);
+    const w = mesh(new THREE.SphereGeometry(size, 12, 10), white, false); w.scale.set(1, 1.2, 0.6); w.position.set(spread * s, y, z); parent.add(w);
+    const p = mesh(new THREE.SphereGeometry(size * 0.55, 10, 8), dark, false); p.position.set(-0.02 * s, -0.01, size * 0.55); w.add(p);
+    const brow = mesh(new THREE.BoxGeometry(size * 1.7, size * 0.38, size * 0.3), dark, false); brow.position.set(spread * s, y + size * 1.35, z + 0.03); brow.rotation.z = -0.5 * s; parent.add(brow);
   }
 }
 
+// Every enemy kind has its own chibi-monster silhouette, owned (never shared) materials with a self-glow so it reads
+// in dark looks, a red danger ring on the ground, and a telegraph glow (`tele`) used before attacks.
+export const ENEMY_COLORS = { patrol: '#5fd16a', chase: '#ff5a3c', turret: '#b05cff' };
 function makeEnemy(game, kind, color) {
   const g = new THREE.Group(); g.name = 'enemy_' + kind;
   const body = new THREE.Group(); g.add(body);
-  let radius = 0.8, height = 1.2;
+  const own = (c, glow = 0.18) => { const m = mat(game, c).clone(); if (m.emissive) { m.emissive.set(c); m.emissiveIntensity = glow; } return m; };
+  let radius = 0.8, height = 1.2, roller = null;
+  const c = color || ENEMY_COLORS[kind] || ENEMY_COLORS.patrol;
   if (kind === 'chase') {
-    const c = color || '#7a5cff';
-    const ball = mesh(new THREE.SphereGeometry(0.75, 20, 14), mat(game, c)); ball.position.y = 0.8; body.add(ball);
-    const spikeM = mat(game, '#f4f1ea');
-    const ico = new THREE.IcosahedronGeometry(1, 0).attributes.position;
-    const seen = new Set();
+    // spiky ball that rolls (the spikes roll, the angry face stays forward)
+    roller = new THREE.Group(); roller.position.y = 0.8; body.add(roller);
+    roller.add(mesh(new THREE.SphereGeometry(0.72, 20, 14), own(c)));
+    const spikeM = own('#fff1d6', 0.35);
+    const ico = new THREE.IcosahedronGeometry(1, 0).attributes.position, seen = new Set();
     for (let i = 0; i < ico.count; i++) {
       const d = V3(ico.getX(i), ico.getY(i), ico.getZ(i)).normalize(); const key = d.toArray().map(v => v.toFixed(2)).join();
       if (seen.has(key)) continue; seen.add(key);
-      const sp = mesh(new THREE.ConeGeometry(0.16, 0.45, 8), spikeM); sp.position.copy(d).multiplyScalar(0.8); sp.position.y += 0.8;
-      sp.quaternion.setFromUnitVectors(UP, d); ball.parent.add(sp);
+      const sp = mesh(new THREE.ConeGeometry(0.17, 0.5, 6), spikeM); sp.position.copy(d).multiplyScalar(0.8); sp.quaternion.setFromUnitVectors(UP, d); roller.add(sp);
     }
-    makeEyes(game, body, 1.0, 0.62, 0.24, 0.14);
+    const face = new THREE.Group(); face.position.y = 0.8; body.add(face);
+    makeEyes(game, face, 0.12, 0.66, 0.25, 0.15);
+    const jaw = mesh(new THREE.BoxGeometry(0.4, 0.08, 0.06), new THREE.MeshBasicMaterial({ color: '#16121f' }), false); jaw.position.set(0, -0.2, 0.7); face.add(jaw);
+    for (let i = 0; i < 3; i++) { const t = mesh(new THREE.ConeGeometry(0.04, 0.09, 4), new THREE.MeshBasicMaterial({ color: '#ffffff' }), false); t.position.set(-0.12 + i * 0.12, -0.15, 0.72); face.add(t); }
     radius = 0.95; height = 1.6;
   } else if (kind === 'turret') {
-    const c = color || '#ff5d5d';
-    const base = mesh(new THREE.CylinderGeometry(0.9, 1.1, 0.8, 16), mat(game, '#6b6f80')); base.position.y = 0.4; g.add(base);
-    const head = mesh(new THREE.SphereGeometry(0.75, 18, 14), mat(game, c)); head.position.y = 1.35; body.add(head);
-    const barrel = mesh(new THREE.CylinderGeometry(0.22, 0.28, 1.1, 12), mat(game, '#2a2733')); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 1.35, 0.8); body.add(barrel);
-    const muzzle = mesh(new THREE.TorusGeometry(0.24, 0.07, 6, 14), mat(game, '#ffd23f', 'pickup')); muzzle.position.set(0, 1.35, 1.35); body.add(muzzle);
-    makeEyes(game, body, 1.55, 0.6, 0.25, 0.12);
+    const base = mesh(new THREE.CylinderGeometry(0.9, 1.1, 0.8, 16), own('#5b5f74', 0.1)); base.position.y = 0.4; g.add(base);
+    const head = mesh(new THREE.SphereGeometry(0.75, 18, 14), own(c)); head.position.y = 1.35; body.add(head);
+    for (const s of [-1, 1]) { const horn = mesh(new THREE.ConeGeometry(0.14, 0.45, 8), own('#fff1d6', 0.3)); horn.position.set(0.42 * s, 1.95, 0); horn.rotation.z = -0.5 * s; body.add(horn); }
+    const barrel = mesh(new THREE.CylinderGeometry(0.22, 0.28, 1.1, 12), own('#2a2733', 0.05)); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 1.25, 0.8); body.add(barrel);
+    const muzzle = mesh(new THREE.TorusGeometry(0.24, 0.07, 6, 14), new THREE.MeshBasicMaterial({ color: '#ffd23f', toneMapped: false }), false); muzzle.position.set(0, 1.25, 1.35); body.add(muzzle);
+    makeEyes(game, body, 1.5, 0.62, 0.25, 0.12);
     radius = 1.0; height = 2.0;
   } else {
-    // patrol slime
-    const c = color || '#5fd16a';
-    const blob = mesh(new THREE.SphereGeometry(0.8, 22, 16), mat(game, c)); blob.scale.set(1, 0.8, 1); blob.position.y = 0.64; body.add(blob);
-    const shine = mesh(new THREE.SphereGeometry(0.18, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.6 })); shine.position.set(-0.3, 1.0, 0.45); shine.scale.set(1, 0.6, 0.5); body.add(shine);
+    // patrol slime with a little leaf sprout
+    const blob = mesh(new THREE.SphereGeometry(0.8, 22, 16), own(c, 0.22)); blob.scale.set(1, 0.8, 1); blob.position.y = 0.64; body.add(blob);
+    const shine = mesh(new THREE.SphereGeometry(0.18, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.6 }), false); shine.position.set(-0.3, 1.0, 0.45); shine.scale.set(1, 0.6, 0.5); body.add(shine);
+    const sprout = mesh(new THREE.ConeGeometry(0.12, 0.38, 8), own('#fff1d6', 0.3)); sprout.position.set(0.12, 1.32, 0); sprout.rotation.z = -0.3; body.add(sprout);
     makeEyes(game, body, 0.8, 0.62, 0.24, 0.13);
-    const mouth = mesh(new THREE.TorusGeometry(0.12, 0.035, 6, 12, Math.PI), mat(game, '#1d1b2e')); mouth.position.set(0, 0.48, 0.74); mouth.rotation.z = Math.PI; body.add(mouth);
+    const mouth = mesh(new THREE.TorusGeometry(0.12, 0.035, 6, 12, Math.PI), new THREE.MeshBasicMaterial({ color: '#16121f' }), false); mouth.position.set(0, 0.48, 0.74); body.add(mouth);
     radius = 0.85; height = 1.3;
   }
   const blob = new THREE.Mesh(new THREE.CircleGeometry(radius, 20), new THREE.MeshBasicMaterial({ color: '#000', transparent: true, opacity: 0.22, depthWrite: false }));
   blob.rotation.x = -Math.PI / 2; blob.position.y = 0.03; g.add(blob);
-  g.traverse(o => { o.userData.noCollide = true; });
-  return { group: g, body, radius, height };
+  const ringM = new THREE.MeshBasicMaterial({ color: '#ff3b4e', transparent: true, opacity: 0.75, depthWrite: false, toneMapped: false });
+  const ring = new THREE.Mesh(new THREE.RingGeometry(radius * 0.95, radius * 1.15, 32), ringM); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.05; ring.renderOrder = 2; g.add(ring);
+  const tele = glowSprite(kind === 'chase' ? '#ff6a3c' : '#ff3b4e', radius * 3.2); tele.position.y = height * 0.55; tele.material.opacity = 0; g.add(tele);
+  // owned lit materials (for the hit flash)
+  const lit = []; g.traverse(o => { o.userData.noCollide = true; if (o.isMesh && o.material && o.material.emissive) lit.push({ m: o.material, e: o.material.emissive.clone(), i: o.material.emissiveIntensity }); });
+  return { group: g, body, radius, height, roller, ring, tele, lit };
 }
 
 // ---- rules ---------------------------------------------------------------------------------------------------------
@@ -422,7 +436,7 @@ export function rules(game, opts = {}) {
     const p = vec(position, 'enemy position');
     const e = makeEnemy(game, kind, extra.color);
     e.group.position.copy(p); root.add(e.group);
-    const E = { kind, position: e.group.position, home: p.clone(), object: e.group, body: e.body, radius: e.radius, height: e.height,
+    const E = { kind, position: e.group.position, home: p.clone(), object: e.group, body: e.body, radius: e.radius, height: e.height, roller: e.roller, ring: e.ring, tele: e.tele, lit: e.lit, flash: 0, kb: V3(), mode: 'roam', modeT: 0, chargeDir: V3(),
       alive: true, hp: extra.hp || (kind === 'turret' ? 3 : 2), dir: 1, yaw: game.rand() * 6.28, t: game.rand() * 3, cool: 1 + game.rand(), squash: 0,
       range: extra.range || (kind === 'patrol' ? 4 : 14), speed: extra.speed || (kind === 'chase' ? 6 : 2.5), vy: 0, deadT: 0 };
     R.enemies.push(E); S.enemiesLeft++; changed();
@@ -454,8 +468,8 @@ export function rules(game, opts = {}) {
 
   // FPS / topdown shooting: player.js emits 'shoot'(player, origin, dir)
   const tracers = [];
-  game.on('shoot', (pl, origin, dir) => {
-    if (pl !== player) return;
+  game.on('shoot', (pl, origin, dir, o) => {
+    if (pl !== player || (o && o.projectile)) return;
     let best = null, bestT = 60;
     for (const e of R.enemies) {
       if (!e.alive) continue;
@@ -472,15 +486,40 @@ export function rules(game, opts = {}) {
     root.add(line); tracers.push({ line, t: 0.08 });
   });
 
-  function damageEnemy(e, amount, by) {
+  function damageEnemy(e, amount, by, dir) {
     if (!e.alive) return;
-    e.hp -= amount; e.squash = 1;
+    e.hp -= amount; e.squash = 1; e.flash = 0.1;
+    if (dir) e.kb.copy(dir).setY(0).normalize().multiplyScalar(7);
+    if (e.mode === 'windup') { e.mode = 'recover'; e.modeT = 0; e.tele.material.opacity = 0; }   // a hit interrupts the charge
     game.emit('damage', e, amount, by);
     if (e.hp <= 0) {
       e.alive = false; e.deadT = 0; S.enemiesLeft--; S.score += 5; changed();
+      e.ring.visible = false; e.tele.material.opacity = 0;
+      burst(e.position.clone().add(V3(0, e.height * 0.5, 0)), ENEMY_COLORS[e.kind] || '#ffffff', 14, 7);
       game.emit('death', e);
     }
   }
+  // tiny self-contained debris pops (hit sparks, death bursts)
+  const debris = [], debrisGeo = new THREE.IcosahedronGeometry(0.13, 0), debrisMats = new Map();
+  function burst(at, color, n = 8, speed = 6) {
+    if (!debrisMats.has(color)) debrisMats.set(color, new THREE.MeshBasicMaterial({ color, toneMapped: false }));
+    for (let i = 0; i < n; i++) {
+      const m = new THREE.Mesh(debrisGeo, debrisMats.get(color)); m.position.copy(at); m.userData.noCollide = true; root.add(m);
+      const v = V3(Math.random() - 0.5, Math.random() * 0.8 + 0.3, Math.random() - 0.5).normalize().multiplyScalar(speed * (0.5 + Math.random() * 0.7));
+      debris.push({ m, v, life: 0.5 + Math.random() * 0.3, t: 0 });
+    }
+  }
+  R.burst = burst;
+  // top-down blaster bolts (player.js emits shoot(player, origin, dir, {projectile:true, speed, range, damage, color}))
+  const bolts = [], boltGeo = new THREE.CapsuleGeometry(0.11, 0.7, 3, 8); boltGeo.rotateX(Math.PI / 2);
+  game.on('shoot', (pl, origin, dir, o) => {
+    if (!o || !o.projectile) return;
+    const m = new THREE.Mesh(boltGeo, new THREE.MeshBasicMaterial({ color: o.color || '#7ff6ff', toneMapped: false }));
+    m.position.copy(origin); m.lookAt(origin.clone().add(dir)); m.userData.noCollide = true;
+    const glow = glowSprite(o.color || '#7ff6ff', 1.3); glow.material.opacity = 0.8; m.add(glow);
+    root.add(m);
+    bolts.push({ m, dir: dir.clone().normalize(), speed: o.speed || 38, left: o.range || 20, damage: o.damage || 1, by: pl, color: o.color || '#7ff6ff' });
+  });
   R.damageEnemy = damageEnemy;
 
   // ---- race
@@ -791,6 +830,16 @@ export function rules(game, opts = {}) {
         continue;
       }
       e.squash *= Math.exp(-dt * 10);
+      if (e.flash > 0 || e.lit.flashing) {
+        e.flash = Math.max(0, e.flash - dt); e.lit.flashing = e.flash > 0;
+        for (const l of e.lit) { if (e.flash > 0) { l.m.emissive.set('#ffffff'); l.m.emissiveIntensity = 1.6; } else { l.m.emissive.copy(l.e); l.m.emissiveIntensity = l.i; } }
+      }
+      if (e.kb.lengthSq() > 0.01) {
+        const step = e.kb.clone().multiplyScalar(dt), gq = Physics.raycast(game, e.position.clone().add(step).add(V3(0, 1.5, 0)), V3(0, -1, 0), 4);
+        if (gq && Math.abs(gq.point.y - e.position.y) < 1.2) { e.position.add(step); e.position.y = gq.point.y; }
+        e.kb.multiplyScalar(Math.exp(-dt * 8));
+      }
+      e.ring.material.opacity = 0.55 + 0.25 * Math.sin(e.t * 5) + (e.mode === 'windup' ? 0.3 * Math.sin(e.modeT * 30) : 0);
       const toP = pc.clone().sub(e.position); toP.y = 0;
       const dist = toP.length();
       if (e.kind === 'patrol') {
@@ -805,18 +854,39 @@ export function rules(game, opts = {}) {
         e.body.position.y = hop * 0.25; e.body.scale.set(1 + (1 - hop) * 0.12, 1 - (1 - hop) * 0.15 - e.squash * 0.4, 1 + (1 - hop) * 0.12);
         e.object.rotation.y += angWrap(e.yaw - e.object.rotation.y) * Math.min(1, dt * 8);
       } else if (e.kind === 'chase') {
+        // roam toward the player; in range: wind up (shake + glow + ring flash), then charge in a straight line, recover
+        e.modeT += dt;
         const homeD = e.position.distanceTo(e.home);
-        const target = dist < e.range && player.alive && homeD < e.range * 2 ? pc : e.home;
-        const to = target.clone().sub(e.position); to.y = 0;
-        if (to.length() > 0.3) {
-          to.normalize();
-          const next = e.position.clone().addScaledVector(to, e.speed * dt * (target === pc ? 1 : 0.6));
-          const g = Physics.raycast(game, next.clone().add(V3(0, 1.5, 0)), V3(0, -1, 0), 4);
-          if (g && Math.abs(g.point.y - e.position.y) < 1.2) { e.position.copy(next); e.position.y = g.point.y; }
-          e.yaw = Math.atan2(to.x, to.z);
+        let spd = 0, dir = null;
+        if (e.mode === 'windup') {
+          e.tele.material.opacity = 0.25 + 0.6 * Math.min(1, e.modeT / 0.6) * (0.6 + 0.4 * Math.sin(e.modeT * 40));
+          e.body.position.x = Math.sin(e.modeT * 60) * 0.06;
+          if (e.modeT > 0.65) { e.mode = 'charge'; e.modeT = 0; }
+        } else if (e.mode === 'charge') {
+          dir = e.chargeDir; spd = e.speed * 2.3; e.tele.material.opacity = 0.5;
+          if (e.modeT > 0.75) { e.mode = 'recover'; e.modeT = 0; }
+        } else {
+          e.tele.material.opacity *= Math.exp(-dt * 6); e.body.position.x = 0;
+          if (e.mode === 'recover' && e.modeT > 1.1) { e.mode = 'roam'; e.modeT = 0; }
+          const target = dist < e.range && player.alive && homeD < e.range * 2 ? pc : e.home;
+          const to = target.clone().sub(e.position); to.y = 0;
+          if (to.length() > 0.3) { dir = to.normalize(); spd = e.speed * (target === pc ? (e.mode === 'recover' ? 0.35 : 0.8) : 0.6); }
+          if (e.mode === 'roam' && target === pc && dist < 7 && dist > 1.5) { e.mode = 'windup'; e.modeT = 0; e.chargeDir.copy(to).setY(0).normalize(); }
         }
-        e.object.rotation.y += angWrap(e.yaw - e.object.rotation.y) * Math.min(1, dt * 6);
-        e.body.rotation.x += dt * e.speed * 1.2 * (dist < e.range ? 1 : 0.3);
+        if (dir && spd > 0) {
+          // walk around obstacles: try the direct line, then fan out left / right
+          let moved = false;
+          for (const ang of e.mode === 'charge' ? [0] : [0, 0.6, -0.6, 1.2, -1.2, 1.8, -1.8]) {
+            const d2 = dir.clone().applyAxisAngle(UP, ang * (e.sideBias || 1));
+            const next = e.position.clone().addScaledVector(d2, spd * dt);
+            const gq = Physics.raycast(game, next.clone().add(V3(0, 1.5, 0)), V3(0, -1, 0), 4);
+            const wall = Physics.raycast(game, e.position.clone().add(V3(0, 0.6, 0)), d2, e.radius + spd * dt + 0.1);
+            if (gq && Math.abs(gq.point.y - e.position.y) < 1.2 && !wall) { e.position.copy(next); e.position.y = gq.point.y; e.yaw = Math.atan2(d2.x, d2.z); moved = true; if (ang) e.sideBias = Math.sign(ang) * (e.sideBias || 1) > 0 ? (e.sideBias || 1) : -(e.sideBias || 1); break; }
+          }
+          if (!moved && e.mode === 'charge') { e.mode = 'recover'; e.modeT = 0; e.squash = 1; }
+        }
+        e.object.rotation.y += angWrap(e.yaw - e.object.rotation.y) * Math.min(1, dt * (e.mode === 'charge' ? 2 : 8));
+        if (e.roller) e.roller.rotation.x += dt * spd * 1.3;
         e.body.scale.setScalar(1 - e.squash * 0.3);
       } else if (e.kind === 'turret') {
         if (dist < 26 && player.alive) {
@@ -857,6 +927,22 @@ export function rules(game, opts = {}) {
       if (!dead && Physics.raycast(game, s.mesh.position, s.vel, s.vel.length() * dt + 0.2)) dead = true;
       if (dead) { root.remove(s.mesh); shots.splice(i, 1); }
     }
+    for (let i = bolts.length - 1; i >= 0; i--) {
+      const b = bolts[i], step = b.speed * dt; let dead = false;
+      for (const e of R.enemies) {
+        if (!e.alive) continue;
+        const c = e.position.clone().add(V3(0, e.height * 0.5, 0));
+        const rel = c.clone().sub(b.m.position), tt = THREE.MathUtils.clamp(rel.dot(b.dir), 0, step);
+        if (b.m.position.clone().addScaledVector(b.dir, tt).distanceTo(c) < e.radius + 0.35) { damageEnemy(e, b.damage, b.by, b.dir); burst(b.m.position.clone().addScaledVector(b.dir, tt), b.color, 5, 4); dead = true; break; }
+      }
+      if (!dead) { const w = Physics.raycast(game, b.m.position, b.dir, step + 0.1, { excludeCollider: b.by && b.by.collider }); if (w) { burst(w.point, b.color, 4, 3); dead = true; } }
+      b.m.position.addScaledVector(b.dir, step); b.left -= step;
+      if (dead || b.left <= 0) { root.remove(b.m); b.m.material.dispose(); bolts.splice(i, 1); }
+    }
+    for (let i = debris.length - 1; i >= 0; i--) {
+      const d = debris[i]; d.t += dt; d.v.y -= 18 * dt; d.m.position.addScaledVector(d.v, dt); d.m.scale.setScalar(Math.max(0.01, 1 - d.t / d.life));
+      if (d.t >= d.life) { root.remove(d.m); debris.splice(i, 1); }
+    }
     for (let i = tracers.length - 1; i >= 0; i--) { const tr = tracers[i]; tr.t -= dt; tr.line.material.opacity = Math.max(0, tr.t / 0.08); if (tr.t <= 0) { root.remove(tr.line); tracers.splice(i, 1); } }
     // race
     if (race) raceStep(dt, t);
@@ -865,7 +951,11 @@ export function rules(game, opts = {}) {
   };
 
   function objective() {
-    const noun = (n) => { const t = S.collectTag || 'coin'; return n === 1 ? t : t + (/[sxz]$|[^aeiou]y$/.test(t) ? 'es' : 's'); };
+    if (opts.objective) return typeof opts.objective === 'function' ? String(opts.objective(S)) : String(opts.objective);
+    const noun = (n) => {
+      if (collect && collect.label) return collect.label;
+      const t = S.collectTag || 'coin'; return n === 1 ? t : t + (/[sxz]$|[^aeiou]y$/.test(t) ? 'es' : 's');
+    };
     if (S.won) return race ? `Finished ${ordinal(S.position)}!` : 'You win!';
     if (S.lost) return S.loseReason === 'time' ? 'Out of time' : 'Game over';
     if (race) return `Finish ${race.laps} lap${race.laps > 1 ? 's' : ''}`;
@@ -1213,7 +1303,13 @@ export function autopilot(game, opts = {}) {
         break;
       }
     }
-    if (player.type === 'topdown' && R) {
+    if (player.type === 'topdown' && R && player.weapon === 'blaster') {
+      // shooter: hold fire while anything is in range (the blaster auto-aims), back away from close enemies
+      let near = null, nd = 1e9, inRange = false;
+      for (const e of R.enemies) { if (!e.alive) continue; const d = e.position.distanceTo(p); if (d < (player.tuning.range || 20) * 0.9) inRange = true; if (d < nd) { nd = d; near = e; } }
+      if (near && nd < 5) { const away = p.clone().sub(near.position).setY(0).normalize(); mx = mx * 0.4 + away.x; mz = mz * 0.4 + away.z; const l = Math.hypot(mx, mz) || 1; mx /= l; mz /= l; }
+      player.setInput(mx, mz, inRange, near && nd < 2.2, { world: true });
+    } else if (player.type === 'topdown' && R) {
       // dash is an edge-triggered press: tap it (press / release) while an enemy is in reach
       for (const e of R.enemies) if (e.alive && e.position.distanceTo(p) < 4.5) { const d = e.position.clone().sub(p).setY(0).normalize(); st.tap = !st.tap; player.setInput(d.x, d.z, false, st.tap, { world: true }); break; }
     }

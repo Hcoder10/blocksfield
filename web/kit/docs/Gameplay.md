@@ -19,7 +19,7 @@ Gameplay.ENEMIES        // ['patrol', 'chase', 'turret']
 |---|---|---|
 | `level` | the object `Level.build` returned (required) | |
 | `player` | the object `Player.create` returned (required) | |
-| `collect` | `{ tag, target }`, `true`, or `null` | `tag` = most common tag in the level; `target` = all of them (capped to what exists). With a goal: the goal portal stays locked (grey) until `target` is collected. Without a goal: collecting `target` wins. |
+| `collect` | `{ tag, target, label }`, `true`, or `null` (`label` = what the HUD calls them, e.g. 'Energy Cores'; used in the objective text) | `tag` = most common tag in the level; `target` = all of them (capped to what exists). With a goal: the goal portal stays locked (grey) until `target` is collected. Without a goal: collecting `target` wins. |
 | `goal` | `true` / `false` | `true`: touching `level.goal` wins (if unlocked) |
 | `timer` | `true` (count up) or seconds (count down; `lose('time')` at 0) | off |
 | `lives` | number or `false` (endless) | 3 (races: endless); each death costs one, 0 = `lose('lives')` |
@@ -28,6 +28,7 @@ Gameplay.ENEMIES        // ['patrol', 'chase', 'turret']
 | `race` | `{ laps, opponents = 3, aiSpeed = 0.94, countdown = 3 }` or `true` | automatic for kart/boat on a level with `level.track`; laps default `level.laps` or 3 |
 | `killEnemiesToWin` | `true`: win when every enemy is defeated | |
 | `scoreToWin` | number: win at this score | |
+| `objective` | string or `(state) => string`: the objective text (`state.objective`); wins over the generated one | generated from the rules |
 | `onWin(state)`, `onLose(reason, state)` | callbacks (the `win` / `lose` events fire anyway) | |
 
 Values: coin 1, gem 5, star 10, seed 2, heart (heals 1 hp). Collectibles have a magnet radius (~3 u).
@@ -44,9 +45,13 @@ Values: coin 1, gem 5, star 10, seed 2, heart (heals 1 hp). Collectibles have a 
   `bounce {power 22, radius 1.3}` mushroom pad · `boost {yaw, width, length}` arrow pad (vehicles and runners) ·
   `crumble {size}` platform that shakes, falls and comes back · `wind {size, power}` updraft ·
   `enemy {kind}` · `void {y}` fall plane.
-- Enemies: `patrol` slime walking back and forth (turns at edges), `chase` spiky ball that rolls after you,
-  `turret` cannon that turns and fires slow orbs every 2.2 s. Platformers **stomp** them (land on top, bounce);
-  topdown players **dash** through them; fps players **shoot** them (E / click). Touching one otherwise costs 1 hp.
+- Enemies (each a chibi monster with glowing eyes, its own self-lit colours and a red danger ring, readable in night
+  looks): `patrol` green slime with a sprout, walks back and forth (turns at edges); `chase` red spiky ball with an
+  angry toothy face: rolls after you, then **telegraphs** (shakes + glows ~0.65 s) and **charges** in a straight line,
+  then recovers (dodge sideways!); `turret` purple horned cannon that turns and fires slow orbs every 2.2 s.
+  Platformers **stomp** them (land on top); topdown players **shoot** them (blaster, default) or **dash** through
+  them; fps players **shoot** them. Hits flash white, knock back, and interrupt a charge; deaths pop into debris.
+  Touching one otherwise costs 1 hp. Colours: `enemies: [{ kind, position, color }]` (or `Gameplay.ENEMY_COLORS`).
 
 ## game.state (written every frame, `state` event on change)
 

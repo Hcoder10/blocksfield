@@ -4,7 +4,9 @@ One call makes a controllable, animated player: a chibi character (or a kart / b
 a Rapier character controller, keyboard + gamepad input, and juicy feedback (squash & stretch, flips, sparks).
 
 ```js
-Player.create(game, { type = 'platformer', spawn, yaw = 0, character: { species, accessory, colors }, colors, tuning, waterLevel, killY, model = true }) -> player
+Player.create(game, { type = 'platformer', spawn, yaw = 0, character: { species, accessory, colors }, colors, tuning, waterLevel, killY, model = true,
+                      weapon = 'blaster' (topdown only), autoFire = false, boltColor, ring, ringColor }) -> player
+Player.WEAPONS      // ['blaster', 'none']
 Player.TYPES        // ['platformer', 'kart', 'boat', 'topdown', 'fps']
 Player.SPECIES      // ['kid', 'fox', 'cat', 'bunny', 'bear', 'frog', 'penguin', 'robot', 'knight', 'ninja', 'astronaut', 'slime']
 Player.ACCESSORIES  // ['none', 'scarf', 'cape', 'backpack', 'hat', 'crown']
@@ -23,6 +25,10 @@ Player.all(game)    // every player created (AI racers too); game.__player is th
 | `waterLevel` | boat only: water surface height (default `level.water.y` or 0) | — |
 | `killY` | falling below this height = death (Gameplay.rules sets it from the level) | spawn.y - 60 |
 | `model` | `false` hides the character | `true` |
+| `weapon` | topdown only: `'blaster'` (twin-stick shooter: auto-aims at the nearest enemy, or at the mouse once it moves) or `'none'` (dash-and-dodge) | `'blaster'` |
+| `autoFire` | `true` fires by itself whenever an enemy is in range (one-button / mobile-style shooters) | `false` |
+| `boltColor` | colour of the blaster bolts and muzzle flash | `'#7ff6ff'` |
+| `ring` / `ringColor` | bright ground ring under the hero so it pops (on by default for topdown and night looks) | auto |
 
 ## Characters: species and accessories
 
@@ -61,7 +67,7 @@ K.Player.create(game, { type: 'platformer', spawn: level.spawn, character: 'robo
 |---|---|---|---|---|
 | WASD / arrows | run (camera-relative) | run | throttle / brake-reverse / steer | move (arrows turn) |
 | Space | jump; again in the air = double jump (flip); hold = higher | jump | **drift**: hold while steering, release = boost | jump |
-| Shift / E / J | dash; on the ground while running = long jump | dash (kills enemies it hits) | drift (same as Space) | Shift sprint, E / click shoot |
+| Shift / E / J | dash; on the ground while running = long jump | Shift / E dash (kills enemies it hits); **Space / J / mouse button fire** (blaster) | drift (same as Space) | Shift sprint, E / click shoot |
 | C / Ctrl | ground pound (in the air) | — | — | — |
 | mouse | drag to orbit the camera | — | — | click = pointer lock, look |
 
@@ -75,7 +81,8 @@ double jump ~17 u. Dash 24 u/s for 0.18 s (once per air time). Long jump 21 u/s 
 50 degrees and steps up to 0.55 u. Stands on moving platforms (it is carried along and turned with them).
 Kart: top speed ~29 u/s (32 max), boosts to 1.4x. Drift tiers at 0.6 / 1.3 / 2.2 s of drifting give 0.55 / 1.0 / 1.6 s
 boosts (blue / orange / purple sparks). Boat: same with a looser slide; floats and bobs at `waterLevel`, crawls on land.
-FPS: 9 u/s, sprint 14, jump 1.8 u. Topdown: 10 u/s, dash 30 u/s.
+FPS: 9 u/s, sprint 14, jump 1.8 u. Topdown: 10 u/s, dash 30 u/s; blaster 7 shots/s, bolts 38 u/s, range 20,
+1 damage (patrol / chase enemies take 2 hits, turrets 3); tune with `tuning: { fireRate, range, boltSpeed, damage }`.
 
 ## The player object
 

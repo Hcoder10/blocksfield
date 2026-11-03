@@ -6,6 +6,7 @@ import * as Physics from './physics.js';
 import * as Look from './look.js';
 
 export const TYPES = ['platformer', 'kart', 'boat', 'topdown', 'fps'];
+export const WEAPONS = ['blaster', 'none'];
 const ALIASES = { platform: 'platformer', jumper: 'platformer', runner: 'platformer', character: 'platformer', '3d': 'platformer', thirdperson: 'platformer',
   car: 'kart', racer: 'kart', racing: 'kart', vehicle: 'kart', go_kart: 'kart', gokart: 'kart', ship: 'boat', jetski: 'boat', jet_ski: 'boat', speedboat: 'boat',
   top_down: 'topdown', 'top-down': 'topdown', twinstick: 'topdown', twin_stick: 'topdown', arena: 'topdown',
@@ -24,6 +25,7 @@ export const TUNING = {
     jumpHeight: 2.2, doubleJumpHeight: 0, jumps: 1, riseGravity: 40, fallGravity: 60, cutGravity: 80, maxFall: 45,
     coyote: 0.1, buffer: 0.12, dash: true, dashSpeed: 30, dashTime: 0.16, dashCooldown: 0.5,
     longJump: null, groundPound: false, turnRate: 20, stepHeight: 0.55, maxSlope: 50,
+    fireRate: 7, range: 20, boltSpeed: 38, damage: 1,
   },
   fps: {
     runSpeed: 9, sprintSpeed: 14, accel: 80, turnAccel: 120, decel: 70, airAccel: 22, airDecel: 2,
@@ -51,7 +53,7 @@ export const TUNING = {
 
 const KEYS = new Set();
 let inputInstalled = false;
-const mouse = { dx: 0, dy: 0, down: false, locked: false, clicked: false };
+const mouse = { dx: 0, dy: 0, down: false, locked: false, clicked: false, x: 0, y: 0, moveT: -99 };
 function installInput(game) {
   if (inputInstalled) return;
   inputInstalled = true;
@@ -63,6 +65,7 @@ function installInput(game) {
   el.addEventListener('mousedown', () => { mouse.down = true; mouse.clicked = true; });
   window.addEventListener('mouseup', () => { mouse.down = false; });
   window.addEventListener('mousemove', e => {
+    mouse.x = e.clientX; mouse.y = e.clientY; mouse.moveT = performance.now();
     if (mouse.locked || mouse.down) { mouse.dx += e.movementX || 0; mouse.dy += e.movementY || 0; }
   });
   document.addEventListener('pointerlockchange', () => { mouse.locked = document.pointerLockElement === el; });
@@ -311,6 +314,7 @@ export function makeCharacter(game, colors = {}, opts = {}) {
       // blob shadow shrinks with height above ground
       const h = s.heightAbove || 0;
       shadowBlob.position.y = 0.02 - h; shadowBlob.scale.setScalar(Math.max(0.3, 1 - h * 0.08));
+      if (ch.ring) { ch.ring.position.y = 0.05 - h; ch.ring.rotation.y = 0; ch.ring.scale.setScalar((ch.ring.userData.base || 1) * (1 + Math.sin(t * 4) * 0.04)); }
       shadowBlob.material.opacity = 0.22 * Math.max(0.2, 1 - h * 0.1);
     },
   };
@@ -645,6 +649,34 @@ export function create(game, opts = {}) {
     blob.rotation.x = -Math.PI / 2; blob.position.y = 0.03; blob.scale.set(0.8, 1.25, 1); object.add(blob); car.blob = blob;
   } else object.add(character.object);
   if (type === 'fps' || opts.model === false) character.object.visible = false;
+  // top-down blaster (twin-stick style): auto-aims at the nearest enemy, or at the mouse once it moves
+  const weapon = type === 'topdown' ? (opts.weapon ?? 'blaster') : 'none';
+  if (!WEAPONS.includes(weapon)) throw new Error(`Player.create: unknown weapon "${opts.weapon}"; weapons: ${WEAPONS.join(', ')} (topdown only)`);
+  let gun = null, muzzle = null;
+  if (weapon === 'blaster') {
+    gun = new THREE.Group(); gun.position.set(0.44, 0.78, 0.22); character.body.add(gun);
+    const gb = mesh(new RoundedBoxGeometry(0.16, 0.16, 0.46, 2, 0.05), material(game, colors.accent, 'toon', { own: true })); gun.add(gb);
+    const tipC = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.12, 12), new THREE.MeshBasicMaterial({ color: opts.boltColor || '#7ff6ff', toneMapped: false }));
+    tipC.rotation.x = Math.PI / 2; tipC.position.z = 0.28; gun.add(tipC);
+    muzzle = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTexture(), color: opts.boltColor || '#bffcff', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    muzzle.position.z = 0.42; muzzle.scale.setScalar(0.001); gun.add(muzzle);
+    gun.traverse(o => { o.userData.noCollide = true; });
+  }
+  // readability: a bright ground ring under the hero (top-down and night looks) + emissive accent at night
+  const night = typeof Look.isNight === 'function' && (() => { try { return Look.isNight(game); } catch (e) { return false; } })();
+  let ring = null;
+  if (!vehicle && type !== 'fps' && (opts.ring ?? (type === 'topdown' || night))) {
+    const rc = opts.ringColor || colors.ring || (night ? '#7ff6ff' : '#ffffff');
+    ring = new THREE.Group();
+    const r1 = new THREE.Mesh(new THREE.RingGeometry(0.66, 0.82, 48), new THREE.MeshBasicMaterial({ color: rc, transparent: true, opacity: 0.9, depthWrite: false, toneMapped: false }));
+    const r2 = new THREE.Mesh(new THREE.CircleGeometry(0.66, 48), new THREE.MeshBasicMaterial({ color: rc, transparent: true, opacity: 0.16, depthWrite: false, toneMapped: false }));
+    const arrow = new THREE.Mesh(new THREE.CircleGeometry(0.16, 3), r1.material); arrow.position.z = 1.0; arrow.rotation.z = Math.PI / 2;
+    for (const m of [r1, r2, arrow]) { m.rotation.x = -Math.PI / 2; m.renderOrder = 2; m.userData.noCollide = true; ring.add(m); }
+    arrow.rotation.set(-Math.PI / 2, 0, Math.PI / 2);
+    ring.position.y = 0.05; if (type === 'topdown') ring.scale.setScalar(1.35); ring.userData.base = ring.scale.x; character.object.add(ring);
+  }
+  character.ring = ring;
+  if (night) for (const k of ['body', 'accent', 'limbs']) { const m = character.mats[k]; if (m && m.emissive) { m.emissive.copy(m.color); m.emissiveIntensity = k === 'accent' ? 0.55 : 0.28; } }
   object.traverse(o => { if (o.isMesh) o.userData.noCollide = true; });
 
   const sparks = vehicle ? particlePool(game, 260, type === 'boat' ? 0.55 : 0.32) : null;
@@ -1075,10 +1107,13 @@ export function create(game, opts = {}) {
     }
     p.invulnerable = Math.max(0, p.invulnerable - dt);
     if (skipMove > 0) { skipMove--; body.setNextKinematicTranslation({ x: pos.x, y: pos.y, z: pos.z }); syncVisual(dt); return; }
-    const inp = readInput();
+    let inp = readInput();
     if (type === 'fps') fpsLook(dt, inp);
     carryOnPlatform();
+    let fireIn = false;
+    if (weapon === 'blaster') { fireIn = !!(inp.fire ?? inp.jump); inp = { ...inp, jump: false }; }
     if (vehicle) vehicleStep(dt, inp); else charStep(dt, inp);
+    if (weapon === 'blaster') weaponStep(dt, fireIn);
     if (!vehicle && p.boostT > 0) p.boostT = Math.max(0, p.boostT - dt);
     // what are we standing on (moving platforms carry us next frame)
     probeT -= dt;
@@ -1109,6 +1144,52 @@ export function create(game, opts = {}) {
     if (p._bot && game.time - p._botT < 0.3 && p._bot.lookYaw !== undefined) p.lookYaw = p._bot.lookYaw;
     p.lookPitch = THREE.MathUtils.clamp(p.lookPitch, -1.4, 1.4);
   }
+  // --- top-down blaster ---
+  let fireCd = 0, aimHold = 0, flash = 0, autoT = 0;
+  const _ray = new THREE.Raycaster(), _plane = new THREE.Plane(), _hit = new THREE.Vector3(), _ndc = new THREE.Vector2();
+  function aimDir() {
+    const T = tune;
+    // mouse aim once the mouse has moved over the game in the last 2 s
+    if (performance.now() - mouse.moveT < 2000 && !p._bot) {
+      const el = game.renderer.domElement, r = el.getBoundingClientRect();
+      _ndc.set(((mouse.x - r.left) / r.width) * 2 - 1, -((mouse.y - r.top) / r.height) * 2 + 1);
+      _ray.setFromCamera(_ndc, game.camera); _plane.set(UP, -(p.position.y + 0.9));
+      if (_ray.ray.intersectPlane(_plane, _hit)) { const d = _hit.sub(p.center).setY(0); if (d.lengthSq() > 0.2) return d.normalize(); }
+    }
+    // auto-aim: nearest live enemy in range
+    const R = game.__rules; let best = null, bd = T.range;
+    if (R) for (const e of R.enemies) { if (!e.alive) continue; const d = Math.hypot(e.position.x - p.position.x, e.position.z - p.position.z); if (d < bd && Math.abs(e.position.y - p.position.y) < 4) { bd = d; best = e; } }
+    if (best) return new THREE.Vector3(best.position.x - p.position.x, 0, best.position.z - p.position.z).normalize();
+    return null;
+  }
+  p.autoFire = !!opts.autoFire;
+  function weaponStep(dt, fire) {
+    fireCd -= dt; aimHold -= dt; flash = Math.max(0, flash - dt * 9);
+    if (muzzle) muzzle.scale.setScalar(0.001 + flash * 0.9);
+    if (gun) gun.position.z = 0.22 - flash * 0.08;
+    const aim = aimDir();
+    if (p.autoFire && aim) { autoT -= dt; fire = true; }
+    if (!p.alive || !p.controls.enabled) return;
+    if (fire && fireCd <= 0) {
+      const dir = aim || new THREE.Vector3(Math.sin(p.yaw), 0, Math.cos(p.yaw));
+      fireCd = 1 / tune.fireRate; flash = 1; aimHold = 0.35;
+      p.yaw = Math.atan2(dir.x, dir.z);
+      const side = new THREE.Vector3(dir.z, 0, -dir.x);
+      const origin = p.position.clone().add(new THREE.Vector3(0, 0.95, 0)).addScaledVector(dir, 0.7).addScaledVector(side, -0.25);
+      game.emit('shoot', p, origin, dir, { projectile: true, speed: tune.boltSpeed, range: tune.range, damage: tune.damage, color: opts.boltColor || '#7ff6ff' });
+    }
+    if (aimHold > 0 && aim) p.yaw = Math.atan2(aim.x, aim.z);
+  }
+  if (type === 'topdown' && weapon === 'blaster') {
+    // Space / J / mouse button fire; Shift / E dash; no jumping
+    p._read = () => {
+      const k = readKeys();
+      k.fire = keyDown('Space') || keyDown('KeyJ') || keyDown('KeyK') || mouse.down || k.jump;
+      k.action = keyDown('ShiftLeft') || keyDown('ShiftRight') || keyDown('KeyE');
+      k.jump = false; return k;
+    };
+  }
+  p.weapon = weapon;
   // in FPS, arrows turn instead of strafe
   if (type === 'fps') {
     const base = readKeys;

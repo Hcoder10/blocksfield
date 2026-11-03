@@ -248,10 +248,13 @@ export function chase(game, player, opts = {}) {
  */
 export function topdown(game, player, opts = {}) {
   if (player === undefined && game) player = game.__player || null;
-  const o = { height: 22, pitch: 1.0, yaw: 0, lookAhead: 2.5, fov: 50, ...opts };
+  const o = { height: 21, pitch: 1.05, yaw: 0, lookAhead: 2.5, fov: 50, ...opts };
+  // keep it a real top-down view (55-85 deg, 18-45 high): flatter / lower settings lose the hero in the frame
+  o.pitch = THREE.MathUtils.clamp(o.pitch, 0.96, 1.48); o.height = THREE.MathUtils.clamp(o.height, 16, 45);
   const st = { target: new THREE.Vector3(), ahead: new THREE.Vector3(), first: true };
   const cam = game.camera;
-  return install(game, 'topdown', o, (dt) => {
+  const occ = player ? occluders(game, player) : null;
+  const rig = install(game, 'topdown', o, (dt) => {
     if (dt <= 0 && !st.first) dt = 1 / 60;
     const p = player ? player.position : (o.target || new THREE.Vector3());
     if (player) st.ahead.lerp(new THREE.Vector3(player.velocity.x, 0, player.velocity.z).multiplyScalar(o.lookAhead / 10), damp(3, dt));
@@ -263,8 +266,11 @@ export function topdown(game, player, opts = {}) {
     cam.position.copy(st.target).add(off);
     cam.lookAt(st.target);
     if (cam.fov !== o.fov) { cam.fov = o.fov; cam.updateProjectionMatrix(); }
+    if (occ) occ.update(dt);
     st.first = false;
   });
+  const dispose = rig.dispose; rig.dispose = () => { if (occ) occ.clear(); dispose(); };
+  return rig;
 }
 
 /**
