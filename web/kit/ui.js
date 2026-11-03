@@ -99,7 +99,11 @@ export function icon(game, name, cls = 'tk-ico') {
   let url = null;
   if (/[/.]/.test(n)) url = n;
   else if (game && game.asset) url = game.asset('icon_' + n) || game.asset(n + '_icon') || manifestFor(game, 'icon', n) || null;
-  if (url) { const img = h('img', cls, null, { src: url, alt: n, draggable: 'false' }); img.style.objectFit = 'contain'; return img; }
+  if (url) {
+    const img = h('img', cls, null, { src: url, alt: n, draggable: 'false' }); img.style.objectFit = 'contain';
+    img.onerror = () => { const fb = icon(null, n, cls); img.replaceWith(fb); };   // missing generated file -> built-in SVG
+    return img;
+  }
   const key = ICON_SVG[n] ? n : ICON_ALIAS[n.toLowerCase()] || (ICON_SVG[n.toLowerCase().replace(/s$/, '')] ? n.toLowerCase().replace(/s$/, '') : 'star');
   const wrapEl = h('span', cls);
   wrapEl.innerHTML = `<svg viewBox="0 0 64 64" width="100%" height="100%">${ICON_SVG[key](++uid)}</svg>`;
