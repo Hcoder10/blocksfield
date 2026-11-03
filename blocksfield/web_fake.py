@@ -24,7 +24,7 @@ FAKE_PLAN = {
     "level_size": "medium", "player_type": "platformer", "camera": "follow",
     "player_colors": {"body": "#ff7a59", "accent": "#ffd166"},
     "collectible": {"tag": "coin", "label": "Blooms", "count": 30, "target": 20},
-    "goal": True, "timer_seconds": 0, "lives": 3,
+    "goal": True, "timer_seconds": 0, "lives": 3, "enemies": 2, "race": {"laps": 0, "opponents": 0},
     "art_direction": "Saturated candy pastels, chunky rounded islands, soft cel shading, warm late-afternoon light.",
     "concept_shots": ["the hero leaping between two grassy floating islands with glowing star pickups",
                       "a wide view of the island chain with the beacon at the far end"],

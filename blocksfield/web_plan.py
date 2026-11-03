@@ -198,7 +198,7 @@ def plan_schema(en: dict[str, list[str]]) -> dict:
         "type": "object",
         "required": ["title", "tagline", "genre", "core_loop", "controls", "win_condition", "look", "level_kind",
                      "level_size", "player_type", "camera", "player_colors", "collectible", "goal", "timer_seconds",
-                     "lives", "art_direction", "concept_shots", "assets", "features"],
+                     "lives", "enemies", "race", "art_direction", "concept_shots", "assets", "features"],
         "properties": {
             "title": {**s, "maxLength": 40}, "tagline": {**s, "maxLength": 90}, "genre": s,
             "core_loop": {**s, "description": "one or two sentences: what the player does again and again"},
@@ -218,6 +218,11 @@ def plan_schema(en: dict[str, list[str]]) -> dict:
             "goal": {"type": "boolean", "description": "a goal/finish the player must reach"},
             "timer_seconds": {"type": "integer", "minimum": 0, "maximum": 600, "description": "0 = no time limit"},
             "lives": {"type": "integer", "minimum": 0, "maximum": 9, "description": "0 = unlimited"},
+            "enemies": {"type": "integer", "minimum": 0, "maximum": 12,
+                        "description": "patrolling enemies to stomp or avoid (0 = none)"},
+            "race": {"type": "object", "required": ["laps", "opponents"], "description": "laps 0 = not a race",
+                     "properties": {"laps": {"type": "integer", "minimum": 0, "maximum": 5},
+                                    "opponents": {"type": "integer", "minimum": 0, "maximum": 5}}},
             "art_direction": {**s, "description": "2-3 sentences: palette, materials, mood, light, references"},
             "concept_shots": {"type": "array", "items": s, "minItems": 2, "maxItems": 3,
                               "description": "2-3 gameplay moments to paint as the visual target, each one "
@@ -260,7 +265,8 @@ def plan_brief(pitch: str, title: str | None, en: dict, catalog_txt: str, docs: 
             f"- player_type (the controller): one of {', '.join(en['player_type'])}\n"
             f"- camera: one of {', '.join(en['camera'])} (follow for platformers, chase for karts/boats, topdown "
             "for topdown, firstPerson for fps)\n"
-            "- a collectible (count placed along the level, target needed to win), goal, timer, lives\n"
+            "- a collectible (count placed along the level, target needed to win), goal, timer, lives, enemies, and "
+            "race laps/opponents (laps 0 unless it is a race: a race level with a kart or boat)\n"
             "- player colours, the art direction, 2-3 concept shots (the visual target the game is judged against)\n"
             "- generated assets: a sky panorama, 2-4 HUD icons, a music loop, 4-6 sound effects (one per gameplay "
             "event), 0-2 props (single solid objects like a mushroom, crate, lantern, statue; they become voxel "
@@ -322,6 +328,11 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
     lines.append(f"K.Camera.{cam}(game, player);" if cam != "orbit" else "K.Camera.orbit(game, { target: player });")
     rules = {"level": None, "player": None, "collect": {"tag": tag, "target": target}, "goal": bool(plan.get("goal")),
              "timer": timer or False, "lives": int(plan.get("lives") or 0) or False}
+    if int(plan.get("enemies") or 0):
+        rules["enemies"] = int(plan["enemies"])
+    race = plan.get("race") or {}
+    if int(race.get("laps") or 0):
+        rules["race"] = {"laps": int(race["laps"]), "opponents": int(race.get("opponents") or 0)}
     rules_js = j(rules).replace('"level": null', "level").replace('"player": null', "player")
     lines.append(f"const rules = K.Gameplay.rules(game, {rules_js});")
     for p in [n for n, e in assets.items() if e.get("kind") == "prop"][:2]:

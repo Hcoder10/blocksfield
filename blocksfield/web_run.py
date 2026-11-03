@@ -193,6 +193,9 @@ class WebBuild:
         (self.game_dir / "index.html").write_text(wp.index_html(self.plan.get("title", self.id)), encoding="utf-8")
         src = wp.scaffold_js(self.plan, self.catalog, self.manifest())
         (self.game_dir / "game.js").write_text(src, encoding="utf-8", newline="\n")
+        from blocksfield import web_build as wb
+        shutil.rmtree(self.run_dir / "scaffold_src", ignore_errors=True)
+        wb.snapshot(self.game_dir, self.run_dir / "scaffold_src")     # the baseline the builder must beat
         probs = wp.check_js(src, self.catalog)
         for p in probs:
             self.log(f"scaffold problem: {p}")
@@ -220,13 +223,15 @@ class WebBuild:
     def targets(self) -> list[bytes]:
         return [p.read_bytes() for p in sorted((self.run_dir / "concept").glob("concept_*.png"))][:3]
 
-    async def evaluate(self, tag: str) -> dict:
+    async def evaluate(self, tag: str, src: Path | None = None) -> dict:
         from blocksfield import web_build as wb, web_play
         cached = self.stages.get(f"eval_{tag}")
         if cached is not None:
             self.log(f"eval {tag}: kept (score {cached['score']})")
             return cached
         t = time.time()
+        if src is not None:
+            wb.restore(src, self.game_dir)
         vdir = self.run_dir / "versions" / tag
         shutil.rmtree(vdir, ignore_errors=True)            # a re-evaluation must not mix in an older run's frames
         wb.snapshot(self.game_dir, vdir / "src")
@@ -255,6 +260,12 @@ class WebBuild:
         from blocksfield import web_build as wb
         evals = [await self.evaluate("v0")]
         best = evals[0]
+        if (self.run_dir / "scaffold_src").exists():         # the builder must beat the plain scaffold
+            s0 = await self.evaluate("s0", self.run_dir / "scaffold_src")
+            evals.append(s0)
+            if s0["score"] > best["score"]:
+                self.log(f"eval: the scaffold (s0 {s0['score']}) beat the builder's version (v0 {best['score']})")
+                best = s0
         for rnd in range(1, self.a.repair_rounds + 1):
             if best["score"] >= self.a.good_enough and not best["errors"]:
                 self.log(f"repair: best score {best['score']} >= {self.a.good_enough}: done")
