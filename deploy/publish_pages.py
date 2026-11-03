@@ -46,6 +46,20 @@ def shippable_games() -> list[Path]:
     return out
 
 
+def slim_video(mp4: Path, over_mb: float = 4.0) -> None:
+    """The landing reel and cards stream these; ship a 960-wide copy of big ones (the source file is untouched)."""
+    if not mp4.exists() or mp4.stat().st_size < over_mb * 1e6 or not shutil.which("ffmpeg"):
+        return
+    tmp = mp4.with_name("gameplay.slim.mp4")
+    r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(mp4), "-vf", "scale=960:-2", "-c:v", "libx264",
+                        "-preset", "slow", "-crf", "27", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "96k",
+                        "-movflags", "+faststart", str(tmp)])
+    if r.returncode == 0 and tmp.exists() and tmp.stat().st_size < mp4.stat().st_size:
+        tmp.replace(mp4)
+    else:
+        tmp.unlink(missing_ok=True)
+
+
 def build(out: Path) -> dict:
     if out.exists():
         if not (out / MARK).exists():
@@ -60,6 +74,7 @@ def build(out: Path) -> dict:
     games = shippable_games()
     for d in games:
         shutil.copytree(d, out / "games" / d.name, ignore=SKIP_GAME)
+        slim_video(out / "games" / d.name / "gameplay.mp4")
     idx = build_index.build(out / "games", dev=False)
     idx.pop("generated", None)  # deterministic: an unchanged site makes an unchanged tree, so no empty publish
     (out / "games" / "index.json").write_text(json.dumps(idx, indent=1), encoding="utf-8")
