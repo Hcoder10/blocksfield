@@ -178,15 +178,15 @@ def catalog_text(catalog: dict | None, limit: int = 9000) -> str:
 
 
 # --------------------------------------------------------------------------------------------- docs
-def _spiral() -> dict:
+def _spiral(n: int = 11) -> dict:
     import math
     pieces = [{"type": "island", "position": [0, 0, 0], "size": 10},
               {"type": "island", "position": [0, -2, 26], "size": 6, "route": False},
-              {"type": "tower", "position": [0, -2, 26], "height": 30}]
-    for k in range(11):
+              {"type": "tower", "position": [0, -2, 26], "height": 30 - (11 - n) * 2}]
+    for k in range(n):
         a = -math.pi / 2 + k * 0.62
         pieces.append({"type": "pillar", "position": [round(math.cos(a) * 10, 2), round(1.5 + k * 2, 2),
-                                                      round(26 + math.sin(a) * 10, 2)], "size": 3.5 if k == 10 else 1.8})
+                                                      round(26 + math.sin(a) * 10, 2)], "size": 3.5 if k == n - 1 else 1.8})
     return {"pieces": pieces, "goal": True}
 
 
@@ -381,6 +381,9 @@ def plan_schema(en: dict[str, list[str]]) -> dict:
                                   "size": {"type": "number"}, "height": {"type": "number"},
                                   "motion": {"enum": ["pingpong", "loop", "rotate", "raft"]},
                                   "route": {"type": "boolean"}}}},
+            "destination": {"type": "string", "maxLength": 40,
+                            "description": "custom only: the place the player is heading for, named as the pitch "
+                                           "names it (labels the goal piece)"},
             "ground": {"enum": ["none", "grass", "sand", "snow", "dirt", "cobble"],
                        "description": "custom only: a ground plane under the level, or none for a floating level"},
             "mechanics": {"type": "array", "minItems": 1, "maxItems": 3,
@@ -477,7 +480,8 @@ def plan_brief(pitch: str, title: str | None, en: dict, catalog_txt: str, docs: 
                "laid out by you: custom_layout 'freeform' + layout_pieces (each piece a place from the pitch, in "
                "visiting order), or an example to rework: "
                + "; ".join(f"{k} ({d})" for k, (_, d) in COMPOSE_TEMPLATES.items())
-               + ". Say in mapping_notes why no preset kind fits.\n" if "custom" in en["level_kind"] else "")
+               + ". Name the place the player heads for in destination. Say in mapping_notes why no preset kind "
+                 "fits.\n" if "custom" in en["level_kind"] else "")
             + f"- player_type (the controller): one of {', '.join(en['player_type'])}\n"
             f"- camera: one of {', '.join(en['camera'])} (follow for platformers, chase for karts/boats, topdown "
             "for topdown, firstPerson for fps)\n"
@@ -653,8 +657,42 @@ def start_layout(plan: dict) -> dict:
         if plan.get("ground") and plan["ground"] != "none":
             spec["ground"] = {"style": plan["ground"], "y": -3, "size": 260, "hills": 14}
         return spec
-    spec, _ = COMPOSE_TEMPLATES.get(plan.get("custom_layout"), COMPOSE_TEMPLATES["spiral_climb"])
-    return json.loads(json.dumps(spec))
+    return adapt_template(plan)
+
+
+ON_ROUTE = {"island", "platform", "cliff", "pillar", "ramp", "stairs", "bridge", "mover"}   # level.js ON_ROUTE
+
+
+def adapt_template(plan: dict) -> dict:
+    """An example layout adapted to this game, so no two games start from the same level: a per-game seed (from the
+    title) picks the spiral's turn count, mirrors the layout left/right (keeps every gap and height), resizes the
+    off-route scenery and towers; the goal piece is labelled with the pitch's destination. Live: riverbend_canyon
+    shipped the river_run example unchanged."""
+    import zlib
+    name = plan.get("custom_layout") if plan.get("custom_layout") in COMPOSE_TEMPLATES else "spiral_climb"
+    seed = zlib.crc32(str(plan.get("title") or "game").encode()) % 997 + 3
+    if name == "spiral_climb":
+        spec = _spiral(9 + (seed // 2) % 4)
+    else:
+        spec = json.loads(json.dumps(COMPOSE_TEMPLATES[name][0]))
+    mirror = bool(seed & 1)
+    k = 0.85 + (seed // 8 % 7) * 0.05                              # 0.85 .. 1.15
+    for p in spec["pieces"]:
+        if mirror:
+            for f in ("position", "from", "to"):
+                if isinstance(p.get(f), list):
+                    p[f][0] = round(-p[f][0], 2) or 0
+        if p.get("route") is False and isinstance(p.get("size"), (int, float)):
+            p["size"] = round(p["size"] * k, 1)
+        if p.get("type") == "tower" and p.get("height") and name != "spiral_climb":
+            p["height"] = round(p["height"] * k, 1)
+    route = [p for p in spec["pieces"] if p.get("route") is not False and p.get("type") in ON_ROUTE]
+    dest = str(plan.get("destination") or "").strip() or next(
+        (str(p.get("label")) for p in reversed(plan.get("layout_pieces") or []) if isinstance(p, dict) and p.get("label")),
+        "")
+    if route and dest:
+        route[-1]["label"] = dest[:40]
+    return spec
 
 
 def layout_pieces_of(src: str) -> list[str]:
@@ -671,6 +709,15 @@ def layout_stats(start_src: str, src: str, start: str) -> dict | None:
         return None
     return {"start": start, "pieces_start": len(a), "pieces_final": len(b),
             "pieces_changed_from_start": len([x for x in b if x not in set(a)]) + max(0, len(a) - len(b))}
+
+
+def example_changes(plan: dict, src: str) -> int | None:
+    """Pieces of the shipped LAYOUT that differ from the unadapted example it started from (None for freeform)."""
+    name = plan.get("custom_layout")
+    if name not in COMPOSE_TEMPLATES:
+        return None
+    st = layout_stats(f"const LAYOUT = {json.dumps(COMPOSE_TEMPLATES[name][0])};\nconst level", src, name)
+    return st and st["pieces_changed_from_start"]
 
 
 def mechanics_js(plan: dict, catalog: dict | None = None) -> list[str]:
