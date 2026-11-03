@@ -125,7 +125,8 @@
     wireAudio();
 
     // build log
-    $("#g-log").innerHTML = [timeline(t), scores(a.score), callsTable(a.model_calls, a.agents)].filter(Boolean).join("");
+    $("#g-log").innerHTML = [timeline(t), scores(a.score), builderReport(a.stages?.build),
+      callsTable(a.model_calls, a.agents)].filter(Boolean).join("");
   }
 
   // stage order: plan, art, scaffold, build, then eval/repair rounds in the order they ran
@@ -152,7 +153,7 @@
     if (!ks.length) return "";
     const max = Math.max(...ks.map((k) => t[k]));
     const total = ks.reduce((n, k) => n + t[k], 0);
-    return `<div class="panel"><h3>Build timeline <small>${fmtS(total)} total</small></h3><div class="bars">${ks.map((k) => {
+    return `<div class="panel tl"><h3>Build timeline <small>${fmtS(total)} total</small></h3><div class="bars">${ks.map((k) => {
       const [name, sub] = stageLabel(k);
       const kind = k.startsWith("repair") ? "rep" : k.startsWith("eval") ? "eval" : k === "art" ? "art" : "llm";
       return `<div class="brow" data-tip="${esc(name)}: ${t[k].toFixed(1)} s"><span class="bl">${esc(name)}<small>${esc(sub)}</small></span>
@@ -175,6 +176,15 @@
         <span class="bt"><span class="bf ${best ? "best" : "llm"}" style="width:${Math.max(0.6, (v.score / 10) * 100).toFixed(2)}%"></span></span>
         <span class="bv">${esc(v.score)}${best ? ' <em class="kept">KEPT</em>' : ""}</span></div>`;
     }).join("")}</div></div>`;
+  }
+  function builderReport(b) {
+    const r = b?.result;
+    if (!r || (!r.summary && !r.changes?.length)) return "";
+    const list = (xs) => `<ul>${xs.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
+    return `<div class="panel report"><h3>The builder's own report <small>verbatim${b.plays ? ` · played its game ${esc(b.plays)} time${b.plays > 1 ? "s" : ""} while building` : ""}</small></h3>
+      ${r.summary ? `<p class="sum">${esc(r.summary)}</p>` : ""}
+      <div class="cols">${r.changes?.length ? `<div><h4>What it changed</h4>${list(r.changes)}</div>` : ""}
+      ${r.known_issues?.length ? `<div><h4>Known issues it reported</h4>${list(r.known_issues)}</div>` : ""}</div></div>`;
   }
   function callsTable(mc, agents) {
     const roles = Object.entries(mc || {});

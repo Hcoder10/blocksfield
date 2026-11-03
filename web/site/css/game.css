@@ -69,6 +69,7 @@ kbd { display: inline-block; padding: 3px 8px; margin-right: 4px; font: 700 12px
 .log { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; align-items: start; }
 .panel { padding: 24px 26px; background: var(--night-2); border: 3px solid #000; border-radius: 20px; box-shadow: 0 6px 0 #000; }
 .panel.wide { grid-column: 1 / -1; }
+.panel.tl { grid-row: span 2; }
 .panel h3 { margin: 0 0 18px; font: 400 26px/1 var(--display); color: var(--white); }
 .panel h3 small { margin-left: 10px; font: 600 13px/1 var(--body); color: #a9a2cf; letter-spacing: 0; }
 .bars { display: grid; gap: 6px; }
@@ -92,12 +93,17 @@ kbd { display: inline-block; padding: 3px 8px; margin-right: 4px; font: 700 12px
 .calls th { font: 700 12px/1 var(--body); letter-spacing: .1em; text-transform: uppercase; color: #a9a2cf; }
 .calls td { font-variant-numeric: tabular-nums; color: #e8e4ff; }
 .calls tfoot td { font-weight: 700; color: var(--white); border-bottom: 0; }
+.report .sum { margin: 0 0 18px; color: #e8e4ff; font-size: 16px; max-width: 80ch; }
+.report .cols { display: grid; gap: 20px; }
+.report h4 { margin: 0 0 8px; font: 700 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: #a9a2cf; }
+.report ul { margin: 0; padding-left: 18px; color: #d8d3f3; font-size: 14.5px; display: grid; gap: 6px; }
 .mk-final { text-align: center; padding-bottom: 120px; }
 .mk-final-title { font-size: clamp(54px, 7vw, 96px); color: var(--sun); margin-bottom: 34px; }
 
 @media (max-width: 1080px) {
   .spec { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .log { grid-template-columns: 1fr; }
+  .panel.tl { grid-row: auto; }
 }
 @media (max-width: 900px) {
   .vs { grid-template-columns: 1fr; }
