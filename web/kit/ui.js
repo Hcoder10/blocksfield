@@ -216,6 +216,7 @@ export function hud(game, opts = {}) {
   Object.values(C).forEach(c => el.append(c));
   const vign = h('div', 'tk-vignette'); el.prepend(vign);
   U.root.prepend(el);
+  if (U.title) el.style.visibility = 'hidden';   // title screen is up: HUD slides in when it closes
   const H = U.hud = { el, opts, C, counters: [], ownTime: 0, running: false, autoPause: opts.pauseMenu !== false, offs: [], vign, last: {} };
 
   if (opts.title && opts.showTitle) C.tl.append(h('div', 'tk-gametitle tk-ol', [opts.title]));
@@ -508,7 +509,8 @@ function speedometer(game, H, parent, so = {}) {
 // ---------- banners ----------
 export function banner(game, text, opts = {}) {
   const U = ui(game);
-  if (text == null || text === '') throw new Error('UI.banner(game, text, {style}): text is required');
+  if (text && typeof text === 'object') { opts = { ...text, ...opts }; text = text.text ?? text.title; }   // forgive banner(game, {text, style})
+  if (text == null || text === '') throw new Error('UI.banner(game, text, {style}): text is required, e.g. UI.banner(game, "Checkpoint!", {style: "checkpoint"})');
   const { style = 'info', sub = null, duration = style === 'go' ? 0.9 : 1.6 } = opts;
   if (!['go', 'stage_clear', 'checkpoint', 'warning', 'info'].includes(style)) throw new Error(`UI.banner: unknown style "${style}"; styles: go, stage_clear, checkpoint, warning, info`);
   return new Promise((resolve) => {
@@ -682,6 +684,10 @@ export function titleScreen(game, opts = {}) {
   el.addEventListener('pointerdown', onPtr);
   U.title = { el, dismiss, promise: p };
   game.__uiDismissTitle = () => dismiss(true);
+  // never deadlock: start the loop if the game awaited the title before game.start(), and under automation with no
+  // __kit to dismiss it (setup code is still blocked behind the await), let the harness in
+  setTimeout(() => { if (!game.started) game.start(); }, 0);
+  setTimeout(() => { if (!done && navigator.webdriver && !(window.__kit && window.__kit.game === game)) dismiss(true); }, 2500);
   return p;
 }
 

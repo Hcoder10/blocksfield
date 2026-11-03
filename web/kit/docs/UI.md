@@ -72,7 +72,7 @@ slowly orbits the level until the player presses any key or clicks. Then the HUD
 | `pause` / `orbit` | `true` / `true` | pause the game / orbit camera while the title is up |
 
 ```js
-await K.UI.titleScreen(game, { title: 'Starbloom Peaks', subtitle: 'Collect 30 coins before sundown', countdown: true });
+K.UI.titleScreen(game, { title: 'Starbloom Peaks', subtitle: 'Collect 30 coins before sundown', countdown: true });   // no await: finish setup, then game.start()
 ```
 
 ## Banners, toasts, dialog
@@ -93,3 +93,5 @@ own from the events; do not add them again. Win stars: `state.stars` if set, els
 - Several `UI.hud` calls: the last one replaces the HUD; put everything in one call.
 - `UI.banner(game, {text})`: the text is the second argument, a string.
 - Long objective / subtitle text: keep it under ~40 characters.
+- `await UI.titleScreen(...)` before the rest of the setup: don't await it; set everything up, then `game.start()`.
+- `UI.titleScreen(..., { controls: 'WASD: move · Space: jump' })` shows a controls hint line.
