@@ -465,6 +465,7 @@ export function create(game, opts = {}) {
       hv.copy(d).multiplyScalar(power); vy = power * 0.9; p.grounded = false; skipGround = 0.15; character.setEmote('sad', 0.8);
       return true;
     },
+    addVelocity(v) { hv.x += v.x || 0; hv.z += v.z || 0; vy += v.y || 0; if ((v.y || 0) > 0) { p.grounded = false; skipGround = 0.05; } },
     bounce(power = 18) { vy = power; jumpsUsed = 1; canDash = true; p.grounded = false; skipGround = 0.12; character.squash(1.35); },
     boost(seconds = 1, kind = 'pad') {
       p.boostT = Math.max(p.boostT, seconds);

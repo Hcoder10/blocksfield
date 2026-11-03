@@ -47,7 +47,7 @@ function glowSprite(color, size = 2) {
 
 // ---- collectibles --------------------------------------------------------------------------------------------------
 
-export const COLLECTIBLES = {
+export const COLLECTIBLE_DEFS = {
   coin: { color: '#ffc928', value: 1, radius: 1.1 },
   star: { color: '#ffe14d', value: 10, radius: 1.4 },
   gem: { color: '#3ee0ff', value: 5, radius: 1.2 },
@@ -55,6 +55,8 @@ export const COLLECTIBLES = {
   heart: { color: '#ff5c8a', value: 0, radius: 1.2 },
   orb: { color: '#c58bff', value: 1, radius: 1.1 },
 };
+
+export const COLLECTIBLES = Object.keys(COLLECTIBLE_DEFS);   // tags with a built-in look; any other tag is a glowing orb
 
 function starShape(outer = 0.6, inner = 0.27, n = 5) {
   const s = new THREE.Shape();
@@ -68,7 +70,7 @@ function starShape(outer = 0.6, inner = 0.27, n = 5) {
 
 /** Build a collectible's look. tag: coin|star|gem|seed|heart|orb|any (any = orb in opts.color). */
 export function makeCollectible(game, tag = 'coin', opts = {}) {
-  const def = COLLECTIBLES[tag] || { ...COLLECTIBLES.orb, color: opts.color || COLLECTIBLES.orb.color };
+  const def = COLLECTIBLE_DEFS[tag] || { ...COLLECTIBLE_DEFS.orb, color: opts.color || COLLECTIBLE_DEFS.orb.color };
   const color = opts.color || def.color;
   const g = new THREE.Group(); g.name = 'collectible_' + tag;
   const spin = new THREE.Group(); g.add(spin);
@@ -180,6 +182,8 @@ function makeEnemy(game, kind, color) {
 // ---- rules ---------------------------------------------------------------------------------------------------------
 
 const HAZARD_TYPES = ['spinner', 'saw', 'spikes', 'lava', 'killzone', 'bounce', 'boost', 'crumble', 'enemy', 'wind', 'void'];
+export const HAZARDS = HAZARD_TYPES;
+export const ENEMIES = ['patrol', 'chase', 'turret'];
 
 /**
  * Gameplay.rules(game, { level, player, collect: {tag, target} | true, goal: true, timer: true | seconds,
@@ -194,6 +198,10 @@ export function rules(game, opts = {}) {
   for (const k of ['collectibles', 'checkpoints', 'hazards', 'movers', 'route']) if (!Array.isArray(level[k])) level[k] = [];
   game.__level = level; game.__player = player;
   const vehicle = player.type === 'kart' || player.type === 'boat';
+  // vehicles on a track race by default; race: true means default settings
+  if (opts.race === undefined && vehicle && level.track) opts = { ...opts, race: {} };
+  if (opts.race === true) opts = { ...opts, race: {} };
+  if (opts.race && !level.track) { console.warn('Gameplay.rules: race needs level.track; ignoring race (use a race kind such as "race_track")'); opts = { ...opts, race: null }; }
   const root = new THREE.Group(); root.name = 'gameplay'; game.scene.add(root);
 
   // collect config
@@ -213,7 +221,7 @@ export function rules(game, opts = {}) {
   const countdown = typeof opts.timer === 'number' ? opts.timer : null;
   const S = Object.assign(game.state, {
     score: 0, collected: 0, target: collect ? collect.target : 0, collectTag: collect ? collect.tag : null,
-    lives: lives === false ? Infinity : lives, hp: maxHp, maxHp, time: 0, timeLeft: countdown, won: false, lost: false,
+    lives: lives === false ? Infinity : lives, hp: maxHp, maxHp, health: maxHp, maxHealth: maxHp, time: 0, phase: 'playing', objective: '', timeLeft: countdown, won: false, lost: false,
     lap: 0, laps: 0, position: 0, racers: 0, checkpoint: 0, checkpoints: level.checkpoints.length, enemiesLeft: 0, goalOpen: true,
   });
   let dirty = true;
@@ -308,15 +316,15 @@ export function rules(game, opts = {}) {
       const path = (h.path || [p.clone().add(V3(-3, 0, 0)), p.clone().add(V3(3, 0, 0))]).map(v => vec(v, 'saw.path'));
       H.path = path; H.period = h.period || 3;
       const disc = new THREE.Group(); disc.position.y = H.radius * 0.7; g.add(disc);
-      const blade = mesh(new THREE.CylinderGeometry(H.radius, H.radius, 0.12, 24), mat(game, '#d7dbe6', 'metal')); blade.rotation.x = Math.PI / 2; disc.add(blade);
-      for (let i = 0; i < 12; i++) { const t = mesh(new THREE.ConeGeometry(0.14, 0.35, 4), mat(game, '#d7dbe6', 'metal')); const a = i / 12 * Math.PI * 2; t.position.set(Math.cos(a) * H.radius, Math.sin(a) * H.radius, 0); t.rotation.z = a - Math.PI / 2; disc.add(t); }
+      const blade = mesh(new THREE.CylinderGeometry(H.radius, H.radius, 0.12, 24), mat(game, '#dfe3ee')); blade.rotation.x = Math.PI / 2; disc.add(blade);
+      for (let i = 0; i < 12; i++) { const t = mesh(new THREE.ConeGeometry(0.14, 0.35, 4), mat(game, '#dfe3ee')); const a = i / 12 * Math.PI * 2; t.position.set(Math.cos(a) * H.radius, Math.sin(a) * H.radius, 0); t.rotation.z = a - Math.PI / 2; disc.add(t); }
       const hub = mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.2, 12), mat(game, '#ff4d5e')); hub.rotation.x = Math.PI / 2; disc.add(hub);
       H.disc = disc;
     } else if (type === 'spikes') {
       H.size = h.size ? vec(h.size, 'spikes.size') : V3(2, 0.7, 2);
       const base = mesh(new THREE.BoxGeometry(H.size.x, 0.15, H.size.z), mat(game, '#6b6f80')); base.position.y = 0.07; g.add(base);
       const nx = Math.max(1, Math.round(H.size.x / 0.5)), nz = Math.max(1, Math.round(H.size.z / 0.5));
-      const cg = new THREE.ConeGeometry(0.2, H.size.y, 6), cm = mat(game, '#e9ecf4', 'metal');
+      const cg = new THREE.ConeGeometry(0.2, H.size.y, 6), cm = mat(game, '#eef1f8');
       const inst = new THREE.InstancedMesh(cg, cm, nx * nz); inst.castShadow = true; inst.userData.noCollide = true;
       const m4 = new THREE.Matrix4(); let k = 0;
       for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) { m4.makeTranslation(-H.size.x / 2 + (i + 0.5) * H.size.x / nx, H.size.y / 2 + 0.1, -H.size.z / 2 + (j + 0.5) * H.size.z / nz); inst.setMatrixAt(k++, m4); }
@@ -347,9 +355,17 @@ export function rules(game, opts = {}) {
       H.size = h.size ? vec(h.size, 'crumble.size') : V3(4, 0.8, 4);
       const m = h.mesh || mesh(new THREE.BoxGeometry(H.size.x, H.size.y, H.size.z), mat(game, '#c9a46a'));
       if (!h.mesh) { m.position.copy(p); root.add(m); root.remove(g); H.object = m; }
-      H.mesh = m; H.home = m.position.clone(); H.k = Physics.addKinematic(game, m); H.state = 'idle'; H.timer = 0;
+      m.userData.noCollide = false; H.mesh = m; H.home = m.position.clone(); H.k = Physics.addKinematic(game, m); H.state = 'idle'; H.timer = 0;
     } else if (type === 'wind') {
-      H.size = h.size ? vec(h.size, 'wind.size') : V3(3, 8, 3); H.power = h.power || 40;
+      H.size = h.size ? vec(h.size, 'wind.size') : V3(3, 8, 3); H.power = h.power || 90;
+      const fan = mesh(new THREE.CylinderGeometry(H.size.x * 0.45, H.size.x * 0.5, 0.3, 20), mat(game, '#6b6f80')); fan.position.y = 0.15; g.add(fan);
+      const grill = mesh(new THREE.TorusGeometry(H.size.x * 0.4, 0.06, 6, 24), mat(game, '#7ff6ff', 'glow'), false); grill.rotation.x = Math.PI / 2; grill.position.y = 0.32; g.add(grill);
+      H.streaks = [];
+      for (let i = 0; i < 14; i++) {
+        const s = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 1.2), new THREE.MeshBasicMaterial({ color: '#e8fdff', transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }));
+        s.userData.noCollide = true; s.userData.ph = Math.random(); s.position.set((Math.random() - 0.5) * H.size.x * 0.8, 0, (Math.random() - 0.5) * H.size.z * 0.8); s.rotation.y = Math.random() * 3;
+        g.add(s); H.streaks.push(s);
+      }
     }
     R.hazards.push(H);
     return H;
@@ -373,7 +389,9 @@ export function rules(game, opts = {}) {
   if (opts.enemies) {
     const list = Array.isArray(opts.enemies) ? opts.enemies : [];
     for (const e of list) addEnemy(e.kind || 'patrol', e.position, e);
-    if (typeof opts.enemies === 'number' && level.route.length > 3) {
+    if (typeof opts.enemies === 'number' && level.spawnPoints && level.spawnPoints.length) {
+      for (let i = 0; i < opts.enemies; i++) addEnemy(['chase', 'patrol', 'turret', 'chase'][i % 4], level.spawnPoints[i % level.spawnPoints.length].clone().add(V3((i >= level.spawnPoints.length ? 2 : 0), 0, 0)));
+    } else if (typeof opts.enemies === 'number' && level.route.length > 3) {
       // spread them along the route, away from spawn and goal
       for (let i = 0; i < opts.enemies; i++) {
         const idx = Math.floor(((i + 1) / (opts.enemies + 1)) * (level.route.length - 1));
@@ -425,7 +443,7 @@ export function rules(game, opts = {}) {
     if (!track || !track.getPointAt) throw new Error('Gameplay.rules: race needs level.track (a CatmullRomCurve3); build a race kind, e.g. Level.build(game, "race_track")');
     const N = 600, samples = [];
     for (let i = 0; i < N; i++) samples.push(track.getPointAt(i / N));
-    race = { track, N, samples, laps: opts.race.laps || 3, width: level.trackWidth || 12, started: false, countdown: opts.race.countdown ?? 3, cdT: 0, lastCd: null, finishOrder: [] };
+    race = { track, N, samples, laps: opts.race.laps || level.laps || 3, width: level.trackWidth || 12, started: false, countdown: opts.race.countdown ?? 3, cdT: 0, lastCd: null, finishOrder: [] };
     S.laps = race.laps; S.lap = 1;
     const nearest = (p, hint) => {
       let best = hint, bd = Infinity;
@@ -465,7 +483,8 @@ export function rules(game, opts = {}) {
       for (const u of [0.18, 0.52, 0.8]) { const t = track.getTangentAt(u); addHazard({ type: 'boost', position: track.getPointAt(u).add(V3(0, 0.03, 0)), yaw: Math.atan2(t.x, t.z) }); }
     }
     // a start/finish arch
-    const p0 = track.getPointAt(0).addScaledVector(t0, 3), arch = new THREE.Group(); arch.position.copy(p0); arch.rotation.y = Math.atan2(t0.x, t0.z); root.add(arch);
+    const p0 = track.getPointAt(0).addScaledVector(t0, 3), arch = new THREE.Group();
+    if (level.goal && level.goal.finishLine) arch.visible = false;      // the level brings its own gantry arch.position.copy(p0); arch.rotation.y = Math.atan2(t0.x, t0.z); root.add(arch);
     const w = race.width / 2 + 1.5;
     for (const s of [-1, 1]) { const post = mesh(new THREE.CylinderGeometry(0.35, 0.4, 6, 12), mat(game, '#f4f1ea')); post.position.set(s * w, 3, 0); arch.add(post); }
     const c = document.createElement('canvas'); c.width = 256; c.height = 32; const x = c.getContext('2d');
@@ -526,6 +545,11 @@ export function rules(game, opts = {}) {
       if (countdown !== null) { S.timeLeft = Math.max(0, countdown - S.time); if (S.timeLeft <= 0) lose('time'); }
     }
     S.goalOpen = !goalLocked();
+    S.health = S.hp; S.maxHealth = maxHp;
+    const phase = S.won ? 'won' : S.lost ? 'lost' : race && !race.started ? 'countdown' : !player.controls.enabled ? 'title' : 'playing';
+    if (phase !== S.phase) { S.phase = phase; changed(); }
+    const obj = objective();
+    if (obj !== S.objective) { S.objective = obj; changed(); }
     // collectibles: bob, spin, magnet, pickup, pop
     for (const it of R.items) {
       const o = it.object;
@@ -650,7 +674,7 @@ export function rules(game, opts = {}) {
           for (const pl of Player.all(game)) {
             if (!pl.alive) continue;
             const dx = pl.position.x - H.position.x, dz = pl.position.z - H.position.z, dy = pl.position.y - H.position.y;
-            if (dx * dx + dz * dz < H.radius * H.radius && dy < 1.0 && dy > -0.5 && pl.velocity.y <= 0.5) { pl.bounce(H.power); H.squash = 1; game.emit('bounce', pl, H); }
+            if (dx * dx + dz * dz < H.radius * H.radius && dy < 1.0 && dy > -0.5 && pl.velocity.y <= 0.5 && t - (H.last || -9) > 0.25) { H.last = t; pl.bounce(H.power); H.squash = 1; game.emit('bounce', pl, H); }
           }
           break;
         }
@@ -680,8 +704,9 @@ export function rules(game, opts = {}) {
           break;
         }
         case 'wind': {
+          for (const s of H.streaks) { const u = (s.userData.ph + H.t * 0.6) % 1; s.position.y = 0.5 + u * H.size.y; s.material.opacity = Math.sin(u * Math.PI) * 0.55; }
           const d = pc.clone().sub(H.position);
-          if (Math.abs(d.x) < H.size.x / 2 && Math.abs(d.z) < H.size.z / 2 && d.y > -0.5 && d.y < H.size.y && player.velocity.y < 18) player.bounce(Math.min(18, player.velocity.y + H.power * dt + 1));
+          if (Math.abs(d.x) < H.size.x / 2 && Math.abs(d.z) < H.size.z / 2 && d.y > -0.5 && d.y < H.size.y && player.velocity.y < 16) player.addVelocity({ y: player.grounded ? 7 - player.velocity.y : Math.min(H.power * dt + (player.velocity.y < 0 ? -player.velocity.y * 0.15 : 0), 16 - player.velocity.y) });
           break;
         }
       }
@@ -745,11 +770,12 @@ export function rules(game, opts = {}) {
       if (!playing || !player.alive) continue;
       const ec = e.position.clone().add(V3(0, e.height * 0.5, 0));
       const d3 = pc.distanceTo(ec);
-      if (d3 < e.radius + (player.radius || 0.5) + 0.15) {
+      const attacking = player.mode === 'dash' || player.mode === 'pound' || player.boostT > 0;
+      if (d3 < e.radius + (player.radius || 0.5) + 0.15 + (attacking && !vehicle ? 1.1 : 0)) {
         const above = player.position.y > e.position.y + e.height * 0.55;
         if ((player.type === 'platformer' || player.type === 'fps') && above && player.velocity.y < 1 && e.kind !== 'turret' || (player.type === 'platformer' && above && e.kind === 'turret' && player.velocity.y < 1)) {
           damageEnemy(e, e.hp, player); player.bounce(15); game.emit('stomp', player, e);
-        } else if (player.mode === 'dash' || player.mode === 'pound' || player.boostT > 0) {
+        } else if (attacking) {
           damageEnemy(e, e.hp, player);
         } else hurtPlayer(player, ec, 1, e);
       }
@@ -768,6 +794,17 @@ export function rules(game, opts = {}) {
     if (dirty) { dirty = false; game.emit('state', S); }
   };
 
+  function objective() {
+    const noun = (n) => { const t = S.collectTag || 'coin'; return n === 1 ? t : t + (/[sxz]$|[^aeiou]y$/.test(t) ? 'es' : 's'); };
+    if (S.won) return race ? `Finished ${ordinal(S.position)}!` : 'You win!';
+    if (S.lost) return S.loseReason === 'time' ? 'Out of time' : 'Game over';
+    if (race) return `Finish ${race.laps} lap${race.laps > 1 ? 's' : ''}`;
+    if (collect && S.collected < S.target) return R.goal ? `Collect ${S.target} ${noun(S.target)}, then reach the goal` : `Collect ${S.target} ${noun(S.target)}`;
+    if (R.goal) return 'Reach the goal!';
+    if (opts.killEnemiesToWin) return 'Defeat every enemy';
+    return '';
+  }
+  const ordinal = (n) => n + (['th', 'st', 'nd', 'rd'][(n % 100 > 10 && n % 100 < 14) ? 0 : n % 10] || 'th');
   function collectors() { return race ? [player] : Player.all(game).filter(p => !p.ai); }
   function nearestRoute(p) {
     let bi = 0, bd = Infinity;
@@ -832,8 +869,9 @@ export function rules(game, opts = {}) {
 export function autopilot(game, opts = {}) {
   if (opts === false || opts === true) opts = { on: opts };
   const on = opts.on !== false;
-  if (game.__autopilot) { game.__autopilot.stop(); }
-  if (!on) return { on: false };
+  if (game.__autopilot) { if (on && !opts.level && !opts.player) return game.__autopilot; game.__autopilot.stop(); }
+  if (!on) return { on: false, enabled: false, start: () => autopilot(game, {}), stop() {} };
+  game.state.autopilotDone = false; game.state.autopilotStuck = false;
   const level = opts.level || game.__level;
   const player = opts.player || game.__player;
   if (!level || !player) throw new Error('Gameplay.autopilot(game, {level, player}): no level/player (call Gameplay.rules or pass them)');
@@ -842,7 +880,11 @@ export function autopilot(game, opts = {}) {
   const T = player.tuning;
   const vehicle = player.type === 'kart' || player.type === 'boat';
   const st = { idx: 0, target: null, item: null, itemT: 0, stuckT: 0, lastProg: 0, lastPos: player.position.clone(), assists: 0, jumpHold: 0, plan: null, wantDouble: false, waitT: 0, lap: 0 };
-  const A = { on: true, status: st, stop() { game.removeUpdate(step); player.setInput(null); A.on = false; if (game.__autopilot === A) game.__autopilot = null; } };
+  const A = {
+    on: true, enabled: true, status: st,
+    stop() { if (!A.on) return A; game.removeUpdate(step); player.setInput(null); A.on = A.enabled = false; if (game.__autopilot === A) game.__autopilot = null; return A; },
+    start() { if (A.on) return A; if (game.__autopilot && game.__autopilot !== A) game.__autopilot.stop(); A.on = A.enabled = true; st.idx = nearestIdx(); st.noProg = 0; game.update(step, -5); game.__autopilot = A; return A; },
+  };
   const jumpV = Math.sqrt(2 * (T.riseGravity || 34) * (T.jumpHeight || 4.5));
   const dblV = T.doubleJumpHeight ? Math.sqrt(2 * T.riseGravity * T.doubleJumpHeight) : 0;
   const nearestIdx = () => {
@@ -882,7 +924,11 @@ export function autopilot(game, opts = {}) {
     if (!player.alive || dt <= 0) return;
     const S = game.state;
     const p = player.position;
-    if (S.won || S.lost) { player.setInput(0, 0, false, false); return; }
+    if (S.won || S.lost) { if (S.won) S.autopilotDone = true; player.setInput(0, 0, false, false); return; }
+    // progress watchdog (contract: autopilotStuck after 8 s without progress)
+    const progKey = vehicle ? (st.ti ?? 0) : st.idx * 1000 + (S.collected || 0);
+    if (progKey !== st.progKey) { st.progKey = progKey; st.noProg = 0; S.autopilotStuck = false; }
+    else { st.noProg = (st.noProg || 0) + dt; if (st.noProg > 8) S.autopilotStuck = true; }
     if (vehicle || player.type === 'kart' || player.type === 'boat') return vehicleBot(dt);
     // advance route
     while (st.idx < route.length - 1) {

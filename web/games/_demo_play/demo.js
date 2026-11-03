@@ -13,7 +13,7 @@ if (levelKind !== 'test' && K.Level.build) {
   if (K.Look.apply) K.Look.apply(game, q.get('look') || 'toon_bright');
   level = K.Level.build(game, levelKind, { size: 'medium' });
 } else {
-  level = type === 'kart' ? TL.race(game, false) : type === 'boat' ? TL.race(game, true) : type === 'topdown' ? TL.arena(game) : TL.platformer(game);
+  level = type === 'kart' ? TL.race(game, false) : type === 'boat' ? TL.race(game, true) : type === 'topdown' || type === 'fps' ? TL.arena(game) : TL.platformer(game);
 }
 const player = K.Player.create(game, { type, spawn: level.spawn, yaw: level.spawnYaw, colors: { body: q.get('color') || '#ff7a59' } });
 if (type === 'topdown') K.Camera.topdown(game, player);
@@ -23,7 +23,6 @@ const rules = K.Gameplay.rules(game, {
   collect: vehicle ? null : { tag: 'coin' },
   goal: true, timer: true, lives: 3,
   race: vehicle ? { laps: +(q.get('laps') || 2), opponents: +(q.get('opp') ?? 3), countdown: +(q.get('cd') ?? 3) } : null,
-  enemies: type === 'fps' ? [{ kind: 'patrol', position: new THREE.Vector3(4, 6.5, 77) }] : null,
 });
 
 // event log for tests

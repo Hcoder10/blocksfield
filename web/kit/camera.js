@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import * as Physics from './physics.js';
 
+export const MODES = ['follow', 'chase', 'topdown', 'orbit', 'firstPerson'];
 const UP = new THREE.Vector3(0, 1, 0);
 const angWrap = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
 const damp = (k, dt) => 1 - Math.exp(-k * dt);
@@ -66,6 +67,7 @@ export function follow(game, player, opts = {}) {
   needPlayer('follow', player);
   if (player.type === 'kart' || player.type === 'boat') return chase(game, player, opts);
   if (player.type === 'fps') return firstPerson(game, player, opts);
+  if (player.type === 'topdown') return topdown(game, player, opts);
   const o = { distance: 10, height: 1.6, pitch: 0.36, lookAhead: 1.6, autoYaw: 1.4, orbit: true, collide: true, fov: 60, ...opts };
   const d = installDrag(game);
   const st = { yaw: o.yaw ?? player.yaw + Math.PI, pitch: o.pitch, target: player.position.clone().add(new THREE.Vector3(0, o.height, 0)),
@@ -209,11 +211,43 @@ export function orbit(game, opts = {}) {
  */
 export function firstPerson(game, player, opts = {}) {
   needPlayer('firstPerson', player);
-  const o = { eye: 1.55, fov: 72, bob: 0.05, sprintFov: 8, ...opts };
+  const o = { eye: 1.55, fov: 72, bob: 0.05, sprintFov: 8, weapon: true, crosshair: true, ...opts };
   const cam = game.camera;
-  const st = { phase: 0, fov: o.fov, dip: 0 };
+  const st = { phase: 0, fov: o.fov, dip: 0, recoil: 0 };
   game.on('land', (pl, sp) => { if (pl === player) st.dip = Math.min(0.35, (sp || 0) * 0.012); });
-  return install(game, 'firstPerson', o, (dt) => {
+  game.on('shoot', (pl) => { if (pl === player) st.recoil = 1; });
+  // toy blaster + reticle parented to the camera (the camera joins the scene so its children render)
+  const vm = new THREE.Group(); vm.name = 'viewmodel';
+  if (o.weapon || o.crosshair) { if (!cam.parent) game.scene.add(cam); cam.add(vm); }
+  let gun = null, muzzle = null;
+  if (o.weapon) {
+    const tm = (c) => new THREE.MeshToonMaterial({ color: c });
+    gun = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.5), tm(player.character && player.character.mats.body.color ? '#' + player.character.mats.body.color.getHexString() : '#ff7a59'));
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.32, 12), tm('#2a2733')); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.03, -0.38);
+    const tip = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.022, 6, 14), new THREE.MeshBasicMaterial({ color: '#7ff6ff', toneMapped: false })); tip.position.set(0, 0.03, -0.54);
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.12), tm('#2a2733')); grip.position.set(0, -0.15, 0.1); grip.rotation.x = 0.3;
+    const tank = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), new THREE.MeshBasicMaterial({ color: '#ffd23f', toneMapped: false })); tank.position.set(0, 0.12, 0.05);
+    gun.add(body, barrel, tip, grip, tank);
+    muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), new THREE.MeshBasicMaterial({ color: '#fff6a8', toneMapped: false, transparent: true }));
+    muzzle.position.set(0, 0.03, -0.62); muzzle.visible = false; gun.add(muzzle);
+    gun.scale.setScalar(0.45); gun.position.set(0.2, -0.17, -0.42);
+    gun.traverse(m => { if (m.isMesh) { m.renderOrder = 10; m.material.depthTest = false; m.userData.noCollide = true; } });
+    vm.add(gun);
+  }
+  if (o.crosshair) {
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.006, 0.0085, 24), new THREE.MeshBasicMaterial({ color: '#ffffff', depthTest: false, toneMapped: false, transparent: true, opacity: 0.9 }));
+    const dot = new THREE.Mesh(new THREE.CircleGeometry(0.0018, 10), ring.material);
+    ring.position.z = dot.position.z = -0.5; ring.renderOrder = dot.renderOrder = 11; vm.add(ring, dot);
+  }
+  const rig = install(game, 'firstPerson', o, (dt) => {
+    if (gun) {
+      st.recoil = Math.max(0, st.recoil - (dt || 0) * 7);
+      const sp2 = Math.hypot(player.velocity.x, player.velocity.z);
+      gun.position.set(0.2 + Math.sin(st.phase * 0.5) * 0.008 * Math.min(1, sp2 / 9), -0.17 + Math.abs(Math.cos(st.phase * 0.5)) * 0.008 * Math.min(1, sp2 / 9) - st.dip * 0.1, -0.42 + st.recoil * 0.05);
+      gun.rotation.x = st.recoil * 0.25;
+      muzzle.visible = st.recoil > 0.7; muzzle.scale.setScalar(0.6 + st.recoil);
+    }
     const sp = Math.hypot(player.velocity.x, player.velocity.z);
     if (player.grounded) st.phase += (dt || 0) * sp * 1.1;
     const bob = player.grounded ? Math.sin(st.phase) * o.bob * Math.min(1, sp / 9) : 0;
@@ -225,6 +259,9 @@ export function firstPerson(game, player, opts = {}) {
     st.fov += (fov - st.fov) * damp(6, dt || 0.016);
     cam.fov = st.fov; cam.updateProjectionMatrix();
   });
+  const dispose = rig.dispose;
+  rig.dispose = () => { cam.remove(vm); dispose(); };
+  return rig;
 }
 
 /** Stop the active rig (the camera stays where it is). */

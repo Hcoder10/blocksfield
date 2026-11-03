@@ -70,7 +70,11 @@ export function platformer(game) {
   L.hazards.push({ type: 'spinner', position: V(4, 6.5, 81), length: 8, speed: 1.6 });
   L.hazards.push({ type: 'enemy', kind: 'patrol', position: V(1, 6, 51) });
   L.hazards.push({ type: 'spikes', position: V(7, 2.5, 27), size: V(1.6, 0.6, 1.6) });
-  L.hazards.push({ type: 'bounce', position: V(-4, 0, -4), power: 22 });
+  L.hazards.push({ type: 'bounce', position: V(-4, 0.2, -4), power: 22 });
+  L.hazards.push({ type: 'wind', position: V(4, 0.2, -4), size: V(3, 9, 3) });
+  L.hazards.push({ type: 'saw', position: V(4, 6.2, 47), path: [V(1, 6.2, 47), V(7, 6.2, 47)], period: 3 });
+  L.hazards.push({ type: 'crumble', position: V(-6, 0.5, 14), size: V(4, 0.8, 4) });
+  L.hazards.push({ type: 'lava', position: V(-6, 0.25, 4), size: V(2, 0.4, 2) });
   L.goal = { position: V(4, 10, 101), radius: 2 };
   L.bounds.setFromObject(L.group);
   return L;
