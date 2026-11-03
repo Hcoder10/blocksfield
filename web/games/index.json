@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-03T06:07:51-0800",
+ "generated": "2026-11-03T06:12:27-0800",
  "dev": false,
  "space": {
   "level_kind": [
@@ -118,7 +118,7 @@
    "start_layout": null,
    "laid_out": false,
    "mechanics": [],
-   "cutscenes": 0,
+   "cutscenes": 2,
    "species": "bunny"
   },
   {
