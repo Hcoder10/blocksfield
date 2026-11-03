@@ -41,6 +41,8 @@ kbd { display: inline-block; padding: 3px 8px; margin-right: 4px; font: 700 12px
 .mchoice span { font: 700 11px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: #a9a2cf; }
 .mchoice code { font: 600 14.5px/1.2 var(--mono); color: var(--white); }
 .mnotes { margin: 16px 0 0; color: #d8d3f3; font-size: 15px; max-width: 90ch; }
+.moverride { margin: 14px 0 0; padding: 10px 14px; background: rgba(255, 201, 60, .12); border-left: 4px solid var(--sun); border-radius: 6px; color: #f3eedc; font-size: 14.5px; }
+.moverride b { color: var(--sun); }
 ul.mnotes { padding-left: 18px; display: grid; gap: 6px; }
 .failed .why { display: block; margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
 .failed code { font: 600 12.5px/1.4 var(--mono); }

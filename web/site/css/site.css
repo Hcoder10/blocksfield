@@ -190,7 +190,7 @@ section { position: relative; }
 .cast figcaption { padding: 14px 20px; font-size: 14.5px; color: var(--ink-2); }
 .cast figcaption b { color: var(--ink); }
 @media (max-width: 560px) { .cast img { height: 150px; object-fit: cover; } }
-.gen-grid { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 34px; align-items: start; }
+.gen-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: start; }
 .palette { display: grid; gap: 22px; padding: 26px; background: var(--white); border: 3px solid var(--ink);
   border-radius: var(--r); box-shadow: var(--shadow); }
 .palette h4 { margin: 0 0 10px; font: 700 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
@@ -205,7 +205,7 @@ section { position: relative; }
 .gen-table th, .gen-table td { padding: 12px 14px; text-align: left; border-bottom: 2px solid #eadfcd; white-space: nowrap; }
 .gen-table th { background: var(--ink); color: var(--white); font: 700 11.5px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; }
 .gen-table tr:last-child td { border-bottom: 0; }
-.gen-table td:first-child { font-weight: 700; white-space: normal; }
+.gen-table td:first-child { font-weight: 700; white-space: normal; min-width: 220px; }
 .gen-table td:first-child small { display: block; font-weight: 500; color: var(--ink-soft); font-size: 12.5px; }
 .gen-table code { font: 600 13px/1 var(--mono); }
 
