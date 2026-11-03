@@ -309,8 +309,7 @@ footer .tagline { font: 400 clamp(34px, 4.6vw, 60px)/1 var(--display); color: va
 footer p { margin: 10px 0 0; max-width: 60ch; font-size: 15px; }
 footer a { color: var(--white); }
 
-.needs-kb { display: none; }
-@media (hover: none) and (pointer: coarse) { .needs-kb { display: inline-flex; white-space: normal; margin-top: 18px; line-height: 1.35; } }
+.chip.devices { margin-top: 18px; white-space: normal; line-height: 1.35; border-radius: 12px; padding: 8px 12px; }
 
 /* ---------- reveal ---------- */
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
