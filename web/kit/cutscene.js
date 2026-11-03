@@ -84,6 +84,10 @@ export function play(game, urlOrWhen, opts = {}) {
   const t0 = performance.now();
   const prevState = game.state && game.state.cutscene;
   if (game.state) game.state.cutscene = when;
+  // an intro over a game with no title screen: hold the world still until it ends (win / lose clips play over a
+  // finished game, so they don't need this)
+  const heldPause = when === 'intro' && !game.paused;
+  if (heldPause) game.paused = true;
   game.emit && game.emit('cutscene', when, 'start');
   const keyCatch = (ev) => {          // capture phase: the key that skips must not also start / pause the game
     ev.stopImmediatePropagation(); ev.preventDefault();
@@ -102,6 +106,7 @@ export function play(game, urlOrWhen, opts = {}) {
     if (active && active.wrap === wrap) active = null;
     if (game.__cutsceneSkip) game.__cutsceneSkip = null;
     if (game.state) game.state.cutscene = prevState ?? null;
+    if (heldPause) game.paused = false;
     game.emit && game.emit('cutscene', when, 'end', result);
     opts.onEnd && opts.onEnd(result);
     resolveP(result);
@@ -129,7 +134,12 @@ export function install(game, opts = {}) {
   const found = entries(game);
   const C = game.__cutscenes = { found: Object.keys(found), played: [] };
   if (!C.found.length) return C;
-  const go = (when) => { if (C.played.includes(when) || !found[when] || opts[when] === false) return; C.played.push(when); play(game, when); };
+  const go = (when) => {
+    if (C.played.includes(when) || !found[when] || opts[when] === false) return;
+    // the player already got past the title (pressed start before the intro could begin): never cover live play
+    if (when === 'intro' && game.state && game.state.phase && game.state.phase !== 'title' && !(game.__ui && game.__ui.title)) return;
+    C.played.push(when); play(game, when);
+  };
   if (found.intro && opts.intro !== false) {
     // after the first rendered frame, so the title screen is already up underneath
     const start = () => requestAnimationFrame(() => requestAnimationFrame(() => go('intro')));
