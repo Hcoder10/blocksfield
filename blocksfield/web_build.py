@@ -48,7 +48,8 @@ class GameTools:
     """The agent's view of one game: web/games/<id>/ (write: *.js; read: the game and the kit sources)."""
 
     def __init__(self, game_dir: Path, catalog: dict | None, plays_dir: Path, page_rel: str, log=print,
-                 autopilot: float = 8.0) -> None:
+                 autopilot: float = 8.0, hero: str | None = None) -> None:
+        self.hero = hero                  # the plan's species for the pitch's protagonist: builders must keep it
         self.dir = Path(game_dir)
         self.catalog = catalog
         self.plays_dir = Path(plays_dir)
@@ -75,6 +76,11 @@ class GameTools:
         main = p.name == "game.js" and p.parent == self.dir
         probs = web_plan.check_js(src, self.catalog, main=main)
         if main:
+            shipped = web_plan.shipped_choices(self.dir).get("species")
+            if self.hero and shipped and shipped != self.hero:
+                # live: riverbend_canyon's builder turned the pitch's frog into the default kid
+                probs.append(f"the hero must stay the pitch's protagonist: character species '{self.hero}', not "
+                             f"'{shipped}'")
             probs += unused_assets(self.dir, "\n".join(x.read_text(encoding="utf-8") for x in self.dir.rglob("*.js")
                                                        if "assets" not in x.relative_to(self.dir).parts))
         return probs

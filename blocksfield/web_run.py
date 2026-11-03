@@ -254,7 +254,7 @@ class WebBuild:
     def tools(self, tag: str):
         from blocksfield.web_build import GameTools
         gt = GameTools(self.game_dir, self.catalog, self.run_dir / "plays" / tag, self.page_rel, self.log,
-                       autopilot=8.0)
+                       autopilot=8.0, hero=(self.plan.get("character") or {}).get("species"))
         return gt, gt.tools()
 
     async def build_stage(self) -> dict:
