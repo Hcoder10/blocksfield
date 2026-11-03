@@ -185,6 +185,7 @@ export function island(game, opts = {}) {
   const grassA = new THREE.Color(opts.grassColor || pal.grass), grassB = new THREE.Color(pal.grass2);
   const dirt = new THREE.Color(pal.ground), dirt2 = new THREE.Color(pal.ground2);
   const cliffA = new THREE.Color(opts.cliffColor || pal.cliff), cliffB = new THREE.Color(pal.cliff2);
+  const foliageC = new THREE.Color(pal.foliage), bounce = new THREE.Color(pal.ground2).lerp(new THREE.Color(pal.sand || pal.ground), 0.3);
 
   // --- top: polar grid, smooth
   const tv = [], tc = [], ti = [];
@@ -192,9 +193,11 @@ export function island(game, opts = {}) {
   const cc = new THREE.Color();
   const topCol = (x, z, t) => {
     const n = N.noise(x * 0.12 + 7, z * 0.12) * 0.5 + 0.5, m = N.noise(x * 0.5, z * 0.5 + 3) * 0.5 + 0.5;
-    cc.copy(grassA).lerp(grassB, THREE.MathUtils.smoothstep(n, 0.35, 0.75) * 0.85);
-    cc.multiplyScalar(0.92 + 0.12 * m);
-    if (t > 0.9) cc.lerp(grassA.clone().multiplyScalar(0.8), (t - 0.9) * 6);
+    const p2 = N.noise(x * 1.1 + 31, z * 1.1) * 0.5 + 0.5;              // fine painted mottling
+    cc.copy(grassA).lerp(grassB, THREE.MathUtils.smoothstep(n, 0.3, 0.8) * 0.9);
+    cc.lerp(foliageC, THREE.MathUtils.smoothstep(1 - n, 0.55, 0.95) * 0.3);  // cool, deeper patches
+    cc.multiplyScalar((0.9 + 0.1 * m + 0.06 * (p2 - 0.5)) * THREE.MathUtils.lerp(1.08, 0.8, t * t));
+    if (t > 0.88) cc.lerp(grassA.clone().lerp(foliageC, 0.4).multiplyScalar(0.7), Math.min(1, (t - 0.88) * 6));
     return cc;
   };
   { const c0 = topCol(0, 0, 0); tc.push(c0.r, c0.g, c0.b); }
@@ -254,15 +257,21 @@ export function island(game, opts = {}) {
     return pts;
   });
   const tipY = style === 'floating' ? -0.9 - depth * (1.05 + rnd() * 0.15) : null;
-  const sideColor = (y) => {
-    if (y > -1.2) return dirt;
+  const cliffM = cliffA.clone().lerp(cliffB, 0.5).lerp(dirt, 0.15);
+  const sideColor = (y, xm, zm) => {
+    if (y > -0.7) return dirt;
+    if (y > -1.3) return cc.copy(dirt).lerp(dirt2, 0.6);
     const u = THREE.MathUtils.clamp((-y - 1.2) / Math.max(depth, 1), 0, 1);
-    const band = Math.sin(y * 1.3 + so) > 0.25 ? cliffA : cliffB;
-    return cc.copy(band).lerp(cliffB.clone().multiplyScalar(0.7), u * 0.6);
+    const w = Math.sin(y * 1.6 + so + 0.35 * Math.sin(Math.atan2(zm, xm) * 3)) ;   // wavy strata
+    const band = w > 0.45 ? cliffA : w > -0.3 ? cliffM : cliffB;
+    cc.copy(band).multiplyScalar(0.94 + 0.12 * (N.noise(xm * 0.4, y * 0.8 + so) * 0.5 + 0.5));
+    cc.multiplyScalar(THREE.MathUtils.lerp(1.0, 0.62, Math.pow(u, 0.8)));             // darker underneath
+    if (style === 'floating') cc.lerp(bounce.clone().multiplyScalar(0.75), THREE.MathUtils.smoothstep(u, 0.55, 1.0) * 0.35);  // warm bounce
+    return cc;
   };
   const pushTri = (a, b, c) => {
     sv.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
-    const col = sideColor((a.y + b.y + c.y) / 3);
+    const col = sideColor((a.y + b.y + c.y) / 3, (a.x + b.x + c.x) / 3, (a.z + b.z + c.z) / 3);
     for (let i = 0; i < 3; i++) sc.push(col.r, col.g, col.b);
   };
   for (let k = 0; k < rowPts.length - 1; k++) {
@@ -692,7 +701,7 @@ function foliageParts(game, kind) {
   };
   const upNormals = (g) => { const n = g.attributes.normal; for (let i = 0; i < n.count; i++) n.setXYZ(i, 0, 1, 0); return g; };
   switch (kind) {
-    case 'grass': parts = [{ geom: bladeClump(6, 0.28, 0.6, col('grass').multiplyScalar(0.55), col('grass2').multiplyScalar(1.1)), mat: { ...vc, side: 'double', rim: 0 } }]; break;
+    case 'grass': parts = [{ geom: bladeClump(6, 0.28, 0.6, col('grass').lerp(col('foliage'), 0.25).multiplyScalar(0.78), col('grass2').multiplyScalar(1.06)), mat: { ...vc, side: 'double', rim: 0 } }]; break;
     case 'grass_dry': parts = [{ geom: bladeClump(5, 0.25, 0.55, col('ground2'), col('sand').multiplyScalar(1.1), 0.07), mat: { ...vc, side: 'double', rim: 0 } }]; break;
     case 'grass_snow': parts = [{ geom: bladeClump(5, 0.3, 0.6, col('foliage'), col('snow'), 0.08), mat: { ...vc, side: 'double', rim: 0 } }]; break;
     case 'flowers': case 'flowers_glow': {

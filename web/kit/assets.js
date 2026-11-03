@@ -29,19 +29,23 @@ export async function sky(game, name = 'sky', opts = {}) {
     const tex = await new THREE.TextureLoader().loadAsync(e.url);
     tex.mapping = THREE.EquirectangularReflectionMapping;
     tex.colorSpace = THREE.SRGBColorSpace;
-    game.scene.background = tex;
-    game.scene.backgroundIntensity = opts.intensity ?? 1;
-    const pm = new THREE.PMREMGenerator(game.renderer);
-    const env = pm.fromEquirectangular(tex);
-    game.scene.environment = env.texture;
-    pm.dispose();
-    if (game.look && game.look.sky) game.look.sky.visible = false;
+    // the panorama is the BACKDROP only: lighting/environment stay the look's (a bright painted sky driving the PMREM
+    // washes every surface out). opts.environment = true opts back in, at a capped intensity.
+    const hz = (() => { try { return sampleHorizon(tex.image); } catch { return null; } })();
+    if (game.look && game.look.setPanorama) {
+      game.look.setPanorama(tex, { horizon: hz ? hz.row : 0.5, intensity: opts.intensity ?? 0.95 });
+    } else { game.scene.background = tex; game.scene.backgroundIntensity = opts.intensity ?? 0.92; }
+    if (opts.environment) {
+      const pm = new THREE.PMREMGenerator(game.renderer);
+      game.scene.environment = pm.fromEquirectangular(tex).texture;
+      game.scene.environmentIntensity = Math.min(game.scene.environmentIntensity ?? 1, 0.5);
+      pm.dispose();
+    }
     if (game.scene.fog && opts.fogFromSky !== false) {
-      // match fog to the panorama horizon so distant land melts into it
-      try {
-        const c = sampleHorizon(tex.image);
-        if (c) game.scene.fog.color.copy(c);
-      } catch { /* cross-origin or no canvas: keep look fog */ }
+      // fog takes the panorama's horizon colour (half way to the look's own fog colour) and is pushed farther out,
+      // so distant islands melt into the painted horizon without a milky haze over the play area
+      if (hz) game.scene.fog.color.lerp(hz.color, 0.5);
+      if (game.look) game.look.fogMul = opts.fogScale ?? 1.7;
     }
     return true;
   } catch (err) {
@@ -49,14 +53,21 @@ export async function sky(game, name = 'sky', opts = {}) {
     return false;
   }
 }
+// horizon colour of a generated panorama: the brightest row band between 25% and 65% of the height (painted skies
+// rarely put the horizon exactly at the middle)
 function sampleHorizon(img) {
   if (!img || !img.width) return null;
-  const c = document.createElement('canvas'); c.width = 64; c.height = 32;
-  const x = c.getContext('2d'); x.drawImage(img, 0, 0, 64, 32);
-  const d = x.getImageData(0, 15, 64, 2).data;
-  let r = 0, g = 0, b = 0; const n = d.length / 4;
-  for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; }
-  return new THREE.Color().setRGB(r / n / 255, g / n / 255, b / n / 255, THREE.SRGBColorSpace);
+  const W = 64, H = 64, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d'); x.drawImage(img, 0, 0, W, H);
+  const d = x.getImageData(0, 0, W, H).data;
+  let best = -1, br = 0;
+  for (let r = Math.floor(H * 0.25); r < Math.floor(H * 0.65); r++) {
+    let l = 0; for (let i = 0; i < W; i++) { const k = (r * W + i) * 4; l += d[k] * 0.3 + d[k + 1] * 0.6 + d[k + 2] * 0.1; }
+    if (l > best) { best = l; br = r; }
+  }
+  let r = 0, g = 0, b = 0, n = 0;
+  for (let row = Math.max(0, br - 1); row <= Math.min(H - 1, br + 1); row++) for (let i = 0; i < W; i++) { const k = (row * W + i) * 4; r += d[k]; g += d[k + 1]; b += d[k + 2]; n++; }
+  return { color: new THREE.Color().setRGB(r / n / 255, g / n / 255, b / n / 255, THREE.SRGBColorSpace), row: (br + 0.5) / H };
 }
 
 // ------------------------------------------------------------------------------------------------ icons

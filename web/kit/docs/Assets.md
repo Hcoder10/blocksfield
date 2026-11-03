@@ -20,8 +20,10 @@ Assets.ICONS  // drawn fallback icons: coin gem star heart key clock flag trophy
 `"for"` (icons) or `"event"` (sfx) equals the name. Manifest format: see CONTRACT.md "Exact manifest entries".
 
 ## sky
-Sets the equirect panorama as background and environment light, hides the procedural sky and tints the fog to the
-panorama horizon. Call it after `Look.apply`. It is async: `await` it or let it pop in.
+Paints the generated equirect panorama onto the sky dome as the BACKDROP: its painted horizon is lined up with the real
+horizon, the flat lower half fades into a deep sky tone, and fog takes the horizon colour (pushed farther out). Lighting
+and the environment map stay the look's, so a bright panorama never washes the scene out (`{environment: true}` opts
+back in at half strength). Call it after `Look.apply`. It is async: `await` it or let it pop in.
 
 ## prop (Idol splats as voxel props)
 Returns a Group at once (place it immediately); the voxels stream in. `group.userData.ready` resolves `true` when the

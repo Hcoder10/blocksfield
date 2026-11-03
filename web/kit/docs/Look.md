@@ -36,6 +36,9 @@ Look.isNight(game)               // true for neon_night, dark_fantasy
 - `bloom: { strength, radius, threshold }`, `fog: { color, near, far }` (fractions of the level size),
   `edges: { strength: 0 }` (turn ink outlines off), `grade: { saturation, contrast, vignette }`
 
+Guard rails: bloom threshold is kept >= 1.1 (0.85 at night) and strength <= 0.6, fog near >= 0.2, exposure 0.7-1.25,
+because lower values haze the whole scene. You rarely need bloom/fog overrides at all.
+
 ```js
 K.Look.apply(game, 'candy');
 K.Look.apply(game, 'sunset', { palette: { primary: '#ff4f81' }, sun: { elevation: 6 } });

@@ -22,7 +22,7 @@ const BASE = {
     wood: '#b8763f', stone: '#c2bcb0', roof: '#e5533d', metal: '#a8b4c4', cloud: '#ffffff', glow: '#fff4b0',
     ui: '#2b3a67', uiText: '#ffffff', uiAccent: '#ffd23a',
   },
-  sky: { top: '#3d8bff', horizon: '#c4e8ff', bottom: '#eaf6ff', sunSize: 2.2, sunGlow: 0.6, disc: 4, stars: 0, aurora: 0, exponent: 0.55 },
+  sky: { top: '#3d8bff', horizon: '#c4e8ff', bottom: '#86b6ec', sunSize: 2.2, sunGlow: 0.6, disc: 4, stars: 0, aurora: 0, exponent: 0.55 },
   sun: { color: '#fff1d6', intensity: 2.4, elevation: 52, azimuth: 35 },
   hemi: { sky: '#cfe6ff', ground: '#7a8f5a', intensity: 1.0 },
   env: 0.6,
@@ -44,11 +44,12 @@ const LOOKS = {
       trunk: '#c97a9a', flower: '#ffffff', flower2: '#7ff0ff', water: '#7fe6ff', waterDeep: '#5aa8ff', sand: '#ffe2c4',
       wood: '#ff9f86', stone: '#f2e0ff', roof: '#ff6fb0', metal: '#d8c8ff', cloud: '#fff4fb', glow: '#fff2a8',
       ui: '#ff5fa2', uiText: '#ffffff', uiAccent: '#fff35c' },
-    sky: { top: '#7cc6ff', horizon: '#ffd9f0', bottom: '#fff0f8', sunGlow: 0.5 },
+    sky: { top: '#7cc6ff', horizon: '#ffd9f0', bottom: '#b9a2ee', sunGlow: 0.5 },
     sun: { color: '#fff4fa', intensity: 2.6, elevation: 58 },
     hemi: { sky: '#ffe6f6', ground: '#b49ae6', intensity: 1.6 },
+    bloom: { strength: 0.32, radius: 0.4, threshold: 1.6 },
     edges: { color: '#6a3a7a', strength: 0.7 },
-    grade: { saturation: 1.15, contrast: 1.0, vignette: 0.18 },
+    grade: { saturation: 1.12, contrast: 1.08, vignette: 0.2 },
     rim: { color: '#fff0ff', strength: 0.45 },
     flora: { tree_pine: 'tree_round', rock: 'crystal' },
   },
@@ -109,7 +110,7 @@ const LOOKS = {
       trunk: '#7a4e32', flower: '#ff7a8a', flower2: '#fff0a0', water: '#4ab8c8', waterDeep: '#2a6a9a',
       wood: '#b07a46', stone: '#d2c4ae', roof: '#c4583a', cloud: '#fff8ee', glow: '#ffd890',
       ui: '#5a3a2a', uiText: '#fff8ec', uiAccent: '#ffcc4d' },
-    sky: { top: '#76b2e6', horizon: '#ffe4c2', bottom: '#fff2e0', sunGlow: 0.8 },
+    sky: { top: '#76b2e6', horizon: '#ffe4c2', bottom: '#c9a07e', sunGlow: 0.8 },
     sun: { color: '#ffd9a8', intensity: 2.9, elevation: 34, azimuth: 55 },
     hemi: { sky: '#ffe8cc', ground: '#7a6a4a', intensity: 1.4 },
     edges: { color: '#3a2418', strength: 0.75 },
@@ -122,7 +123,7 @@ const LOOKS = {
       trunk: '#8a5a3a', flower: '#ff6a8a', flower2: '#ffe05a', water: '#2ec4c0', waterDeep: '#1a7a9a', sand: '#efce8a',
       wood: '#a8703a', stone: '#d8b890', roof: '#c8643a', cloud: '#fff6ea', glow: '#ffe8a0',
       ui: '#6a3a1a', uiText: '#fff8ea', uiAccent: '#3ae0d0' },
-    sky: { top: '#2e86d6', horizon: '#ffe2b4', bottom: '#fff0d8', sunSize: 2.4, sunGlow: 0.9 },
+    sky: { top: '#2e86d6', horizon: '#ffe2b4', bottom: '#d6a070', sunSize: 2.4, sunGlow: 0.9 },
     sun: { color: '#fff0d4', intensity: 3.2, elevation: 48, azimuth: 20 },
     hemi: { sky: '#d8e8ff', ground: '#c09060', intensity: 1.3 },
     exposure: 0.95,
@@ -137,7 +138,7 @@ const LOOKS = {
       trunk: '#5a4036', flower: '#ff4a6a', flower2: '#9ad8ff', water: '#8ad8ff', waterDeep: '#3a8ac8', foam: '#ffffff',
       sand: '#e8eef8', wood: '#8a5a40', stone: '#a8b4c8', roof: '#c84a4a', cloud: '#ffffff', glow: '#bfe8ff',
       ui: '#24406a', uiText: '#ffffff', uiAccent: '#ffd23a' },
-    sky: { top: '#5a96e0', horizon: '#e6efff', bottom: '#f6f9ff', sunGlow: 0.7 },
+    sky: { top: '#5a96e0', horizon: '#e6efff', bottom: '#9ab8e2', sunGlow: 0.7 },
     sun: { color: '#fff6ec', intensity: 2.3, elevation: 26, azimuth: 40 },
     hemi: { sky: '#dce8ff', ground: '#8a9ab8', intensity: 1.25 },
     exposure: 0.92,
@@ -309,6 +310,7 @@ const SKY_FRAG = `
 uniform vec3 top; uniform vec3 horizon; uniform vec3 bottom; uniform vec3 sunDir; uniform vec3 sunColor;
 uniform float sunSize; uniform float sunGlow; uniform float stars; uniform float aurora; uniform float time;
 uniform float exponent; uniform float discMul;
+uniform sampler2D pano; uniform float panoMix; uniform float panoShift; uniform vec3 panoDeep;
 varying vec3 vDir;
 float hash(vec3 p){ p = fract(p*0.3183099+.1); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
 float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
@@ -343,6 +345,14 @@ void main(){
     float fall = smoothstep(0.02, 0.25, h) * smoothstep(0.85, 0.35, h);
     col += mix(vec3(0.1, 1.0, 0.6), vec3(0.6, 0.2, 1.0), clamp(h * 1.6, 0.0, 1.0)) * band * fall * aurora * 0.45;
   }
+  if (panoMix > 0.0) {
+    // generated panorama as the backdrop: its painted horizon is shifted onto the real horizon, and below the horizon
+    // it fades into a deep sky tone (generated panoramas often pad the lower half with a flat colour)
+    vec2 uv = vec2(atan(d.z, d.x) * 0.15915494 + 0.5, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5 + panoShift);
+    vec3 pc = texture2D(pano, vec2(uv.x, clamp(uv.y, 0.002, 0.998))).rgb;
+    pc = mix(pc, panoDeep, smoothstep(-0.02, -0.4, d.y));
+    col = mix(col, pc, panoMix);
+  }
   gl_FragColor = vec4(col, 1.0);
 }`;
 
@@ -355,6 +365,7 @@ function makeSkyMaterial(p, sunDir) {
       sunColor: { value: new THREE.Color(p.sun.color) }, sunSize: { value: p.sky.sunSize }, sunGlow: { value: p.sky.sunGlow },
       stars: { value: p.sky.stars }, aurora: { value: p.sky.aurora }, time: U.uTime, exponent: { value: p.sky.exponent },
       discMul: { value: (p.sky.disc ?? 4) / 6 },
+      pano: { value: null }, panoMix: { value: 0 }, panoShift: { value: 0 }, panoDeep: { value: new THREE.Color(p.sky.top) },
     },
   });
 }
@@ -426,6 +437,12 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
   if (!LOOKS[name]) throw new Error(`Look.apply: unknown look "${name}"; looks: ${Object.keys(LOOKS).join(', ')}`);
   const p = deepMerge(deepMerge(BASE, LOOKS[name]), overrides || {});
   const quality = overrides.quality || (game.look && game.look.quality) || 'high';
+  // guard rails: overrides may restyle a look but not wreck it (generated games kept setting bloom thresholds < 1,
+  // which blooms every lit surface into a milky haze)
+  p.bloom.threshold = Math.max(p.bloom.threshold, p.night ? 0.85 : 1.1);
+  p.bloom.strength = Math.min(p.bloom.strength, p.night ? 1.0 : 0.6);
+  p.fog.near = Math.max(p.fog.near, 0.2); p.fog.far = Math.max(p.fog.far, p.fog.near + 0.4);
+  p.exposure = THREE.MathUtils.clamp(p.exposure, 0.7, 1.25);
   const { renderer, scene, camera } = game;
   if (game.look) game.look.dispose();
   matCache.clear();
@@ -513,7 +530,7 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
   let shadowRange = 60;
   const look = {
     name, preset: p, palette: { ...p.palette }, quality, sun, hemi, sky, composer, bloom, lookPass, root,
-    sunDir: sunDir.clone(), fogRange: 700,
+    sunDir: sunDir.clone(), fogRange: 700, fogMul: 1,
     focus: null,               // set to a live Vector3 (e.g. player.position) to centre shadows on it
     /** fit fog + shadow range to a level (Box3 or radius) */
     fit(boxOrRadius) {
@@ -523,6 +540,18 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
       lu.edgeFade.value = Math.max(160, r * 2.2);
     },
     /** drop to the low tier at runtime: pixel ratio 1, 1024 shadows, 40% of the grass/flowers, half-res bloom */
+    /** use a generated equirect panorama as the sky backdrop (lighting stays the look's). horizon = row of the painted
+     *  horizon as a fraction from the top (0.5 = a true equirect), deep = colour below the horizon */
+    setPanorama(tex, { horizon = 0.5, deep = null, intensity = 0.95 } = {}) {
+      const u = skyMat.uniforms;
+      u.pano.value = tex; u.panoMix.value = tex ? 1 : 0;
+      u.panoShift.value = THREE.MathUtils.clamp(0.5 - horizon, -0.2, 0.2);
+      u.panoDeep.value.copy(deep ? new THREE.Color(deep) : new THREE.Color(p.sky.top).lerp(new THREE.Color(p.sky.horizon), 0.25).multiplyScalar(0.85));
+      u.discMul.value = tex ? 0 : (p.sky.disc ?? 4) / 6;
+      if (tex) u.pano.value.colorSpace = THREE.SRGBColorSpace;
+      sky.material.uniforms.panoMix.value = tex ? intensity : 0;
+      sky.visible = true;
+    },
     setQuality(q) {
       if (q === look.quality) return;
       look.quality = q;
@@ -565,8 +594,8 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
       focus.copy(camera.position).addScaledVector(fwd, Math.max(t, 10));
     }
     const camDist = camera.position.distanceTo(focus);
-    scene.fog.near = camDist * 0.6 + look.fogRange * p.fog.near;
-    scene.fog.far = camDist * 0.6 + look.fogRange * p.fog.far * 1.4;
+    scene.fog.near = camDist * 0.6 + look.fogRange * p.fog.near * look.fogMul;
+    scene.fog.far = camDist * 0.6 + look.fogRange * p.fog.far * 1.4 * look.fogMul;
     shadowRange = THREE.MathUtils.clamp(camDist * 0.9, 40, 170);
     const sc = sun.shadow.camera;
     if (sc.right !== shadowRange) {
