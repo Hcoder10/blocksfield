@@ -105,23 +105,19 @@ def shot_len(section: str, label: str, base: float) -> float:
 
 # ---------------------------------------------------------------- data
 
-SKIP = {"neon_arena"}          # being re-run (team lead); --skip overrides
+SKIP: set = set()            # ids to leave out (--skip); superseded games are already hidden by index.json
+MAX_GAMES, MIN_CLEAN = 6, 4   # at most 6 games; if fewer than 4 have zero operator interventions, fill by score
 
 
 def games(only: list[str] | None = None, skip: set | None = None) -> list[dict]:
-    """Real generated games only (web/games/<id>, no _ prefix, not dry runs), best judge score first. Uses index.json
-    plus any finished game folder (about.json + gameplay.mp4) the index has not picked up yet."""
+    """The games to show, chosen at render time from web/games/index.json (the gallery generator's list, which hides
+    superseded runs): real generated games only, zero operator interventions first, best judge score first, and the
+    most varied genres (each new player type + level kind is picked before a second game of the same kind).
+    Every game in the result has footage. `only` forces an explicit list in that order."""
     skip = SKIP if skip is None else skip
     idx = json.loads((GAMES / "index.json").read_text(encoding="utf-8"))
-    listed = {g["id"]: g for g in idx.get("games", [])}
-    for d in GAMES.iterdir():
-        if d.is_dir() and not d.name.startswith("_") and d.name not in listed and (d / "about.json").exists() \
-                and (d / "gameplay.mp4").exists():
-            a = json.loads((d / "about.json").read_text(encoding="utf-8"))
-            listed[d.name] = {"id": d.name, "title": a.get("title", d.name), "pitch": a.get("pitch", ""),
-                              "genre": a.get("genre", ""), "score": a.get("score"), "dry_run": a.get("dry_run", False)}
-    out = []
-    for g in listed.values():
+    pool = []
+    for g in idx.get("games", []):
         if g.get("dry_run") or g["id"].startswith("_") or g["id"] in skip or (only and g["id"] not in only):
             continue
         d = GAMES / g["id"]
@@ -132,13 +128,26 @@ def games(only: list[str] | None = None, skip: set | None = None) -> list[dict]:
         g["orbit"] = orbit if orbit.exists() else None
         about = d / "about.json"
         g["about"] = json.loads(about.read_text(encoding="utf-8")) if about.exists() else {}
+        g["interventions"] = len(g["about"].get("operator_interventions") or [])
         g["dir"] = d
         if g["play"]:
-            out.append(g)
-    out.sort(key=lambda g: -g["score_n"])
+            pool.append(g)
     if only:
-        out.sort(key=lambda g: only.index(g["id"]))
-    return out
+        return sorted(pool, key=lambda g: only.index(g["id"]))
+    pool.sort(key=lambda g: -g["score_n"])
+    clean = [g for g in pool if g["interventions"] == 0]
+    ranked = clean + ([g for g in pool if g["interventions"] > 0] if len(clean) < MIN_CLEAN else [])
+    picked, kinds = [], set()
+    for g in ranked:                                   # pass 1: one game per (player type, level kind)
+        k = (g.get("player_type"), g.get("level_kind"))
+        if k not in kinds:
+            picked.append(g); kinds.add(k)
+    for g in ranked:                                   # pass 2: fill by score
+        if g not in picked:
+            picked.append(g)
+    picked = picked[:MAX_GAMES]
+    picked.sort(key=lambda g: (g["interventions"] > 0, -g["score_n"]))
+    return picked
 
 
 def mono(size: int, bold=False) -> ImageFont.FreeTypeFont:
@@ -463,7 +472,8 @@ def how(gs: list[dict], dur: float) -> list[Seg]:
                     ["4 · THE BUILDER WRITES THE GAME / Qwen3.8-27B composes tested kits: look, level, player, gameplay, UI",
                      f"(real file: web/games/{g['id']}/game.js, {len(code)} lines)"]))
     # e) pitch -> kit choices, for an off-template pitch (the game's own mapping notes)
-    gm = next((x for x in gs if x["id"] == MAPPING_GAME and "→" in (x["about"].get("mapping") or {}).get("notes", "")), None)
+    cand = [x for x in gs if x["id"] == MAPPING_GAME] or games(only=[MAPPING_GAME])     # may not be in the games section
+    gm = next((x for x in cand if "→" in (x["about"].get("mapping") or {}).get("notes", "")), None)
     if gm:
         mp = gm["about"]["mapping"]
         rows = []
@@ -772,7 +782,7 @@ def main() -> int:
     ap.add_argument("--games", default="", help="comma-separated game ids in order (default: by judge score)")
     ap.add_argument("--music", default="", help="music bed (default: the top game's music_main.mp3)")
     ap.add_argument("--no-vo", action="store_true")
-    ap.add_argument("--skip", default=",".join(sorted(SKIP)), help="game ids to leave out (default: %(default)s)")
+    ap.add_argument("--skip", default="", help="comma-separated game ids to leave out")
     ap.add_argument("--preview", action="store_true", help="one still per shot to video/v3/preview_*.jpg")
     a = ap.parse_args()
     out = Path(a.out).resolve()
