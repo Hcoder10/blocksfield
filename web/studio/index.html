@@ -1,0 +1,31 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blocksfield Studio</title><link rel="icon" href="/site/img/cube.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/studio/studio.css"></head>
+<body><main class="create" id="create">
+  <section class="hello">
+    <div><h1 class="display outlined">Type a pitch.<span class="l2">Get a game.</span></h1>
+      <p class="lede">One paragraph in, a playable 3D browser game out. <b>Open-weight models plan it, code it, paint it, score it,
+        play it and fix it</b>, all on one RTX&nbsp;5090.</p>
+      <div class="what">
+        <div class="w" style="--c:var(--llm)"><b>Qwen3.8-27B</b><span>plans, codes, playtests, judges</span></div>
+        <div class="w" style="--c:var(--sun)"><b>Qwen-Image · Idol</b><span>concepts, sky, icons, 3D props</span></div>
+        <div class="w" style="--c:var(--bubble)"><b>ACE-Step · Stable Audio</b><span>music and sound</span></div>
+      </div></div>
+    <a class="showcase" id="showcase" href="#"><video muted loop playsinline autoplay></video><span class="chip sun sc-tag">Made from one paragraph</span>
+      <div class="sc-cap"><b id="sc-title"></b><span id="sc-pitch"></span></div></a>
+  </section>
+  <div class="panel pitch-card" id="pitch-card">
+    <textarea id="pitch" spellcheck="false" placeholder=""></textarea>
+    <div class="meta"><span>Game id <code id="slug">…</code></span><span>·</span><span>about 45 minutes on one GPU</span><span>·</span><span>$0 per game</span></div>
+    <div class="bar"><span class="lbl">Try</span>
+      <span class="chip ex" data-ex="platformer"><i>▲</i> Platformer</span>
+      <span class="chip ex" data-ex="kart"><i>◆</i> Kart racer</span>
+      <span class="chip ex" data-ex="cozy"><i>●</i> Cozy town</span>
+      <span class="chip ex" data-ex="neon"><i>■</i> Neon arena</span>
+      <button class="btn big go" id="make"><i class="tri"></i>Make game</button></div>
+  </div>
+  <div class="sec-h"><div><h2 class="display">One GPU, taking turns</h2><p>The 27B model sleeps to host RAM while ComfyUI paints, then wakes up and carries on. Live from the arbiter.</p></div></div>
+  <div id="gpu"></div>
+  <div class="sec-h"><div><h2 class="display">Recent games</h2><p>Every game here came from the pitch on its card.</p></div><a class="btn ghost sm" href="/runs">All games</a></div>
+  <div class="cards" id="cards"></div>
+</main><script type="module" src="/studio/home.js"></script></body></html>
