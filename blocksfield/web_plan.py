@@ -349,6 +349,26 @@ def normalize_plan(plan: dict, en: dict) -> tuple[dict, list[str]]:
     if p.get("player_type") in ("kart", "boat") and vehicle_ok and p.get("level_kind") not in vehicle_ok:
         notes.append(f"level {p.get('level_kind')} -> {vehicle_ok[0]}: a {p['player_type']} needs a drivable level")
         p["level_kind"] = vehicle_ok[0]
+    # quests name villagers: live, a 'deliver' went from "Bramble's porch" to "the big lantern tree" (places, not NPCs)
+    names = [n.get("name") for n in p.get("npcs") or [] if n.get("name")]
+    if p.get("quests"):
+        fixed = []
+        for q in p["quests"]:
+            q = dict(q)
+            if q.get("type") in ("fetch", "talk") and q.get("npc") not in names and names:
+                notes.append(f"quest npc {q.get('npc')!r} is not a villager: -> {names[0]}")
+                q["npc"] = names[0]
+            if q.get("type") == "deliver":
+                if len(names) < 2:
+                    notes.append("deliver quest dropped: it needs two villagers")
+                    continue
+                if q.get("from") not in names:
+                    q["from"] = q["npc"] if q.get("npc") in names else names[0]
+                if q.get("to") not in names or q["to"] == q["from"]:
+                    q["to"] = next(n for n in names if n != q["from"])
+                notes.append(f"deliver quest goes {q['from']} -> {q['to']}")
+            fixed.append(q)
+        p["quests"] = fixed
     want = CAMERA_FOR.get(p.get("player_type"))
     if want and want in en.get("camera", []) and p.get("camera") != want and p.get("player_type") in ("kart", "boat",
                                                                                                      "fps", "topdown"):
