@@ -4,6 +4,8 @@
 import * as THREE from 'three';
 import { reportError } from './core.js';
 import * as Gameplay from './gameplay.js';
+import * as World from './world.js';
+import * as Physics from './physics.js';
 
 // ---- errors: capture from the moment the kit is imported, not just after install ----
 if (!window.__kitErrorHooks) {
@@ -193,6 +195,40 @@ function fitShot(cam, box, dir, target, margin = 0.86, pts = null) {
   return { position: t.clone().addScaledVector(dir, d), target: t };
 }
 
+// highest solid thing under (x, z): World.heightAt (terrain/islands) and a physics ray (buildings, rocks, props)
+function groundAt(game, x, z, top, exclude = null) {
+  let g = null;
+  try { const h = typeof World.heightAt === 'function' ? World.heightAt(game, x, z) : null; if (Number.isFinite(h)) g = h; } catch {}
+  try {
+    if (typeof Physics.raycast === 'function') {
+      const hit = Physics.raycast(game, new THREE.Vector3(x, top, z), new THREE.Vector3(0, -1, 0), top + 2000, exclude ? { excludeCollider: exclude } : {});
+      const y = hit && (hit.point ? hit.point.y : hit.y);
+      if (Number.isFinite(y) && (g == null || y > g)) g = y;
+    }
+  } catch {}
+  return g;
+}
+// keep a survey camera above the ground under it and above everything between it and its target, pitched down a bit
+function clampShot(game, shot, top, { margin = 3, clear = 1.5, exclude = null } = {}) {
+  const p = new THREE.Vector3(...shot.position), t = new THREE.Vector3(...shot.target);
+  const hd = Math.hypot(p.x - t.x, p.z - t.z);
+  if (t.y > p.y - 0.12 * hd) t.y = p.y - 0.12 * hd;                 // look slightly down
+  let raise = 0;
+  const N = 12;
+  for (let i = 0; i < N; i++) {
+    const k = i / N * 0.85;                                         // stop short of the target itself
+    const x = p.x + (t.x - p.x) * k, z = p.z + (t.z - p.z) * k;
+    const g = groundAt(game, x, z, Math.max(top, p.y) + 60, exclude);
+    if (g == null) continue;
+    const need = g + (i === 0 ? margin : clear);
+    const y = p.y + (t.y - p.y) * k;
+    if (y < need) raise = Math.max(raise, (need - y) / (1 - k));
+  }
+  if (raise > 0) { p.y += raise; if (t.y > p.y - 0.12 * hd) t.y = p.y - 0.12 * hd; }
+  shot.position = arr(p, 2); shot.target = arr(t, 2);
+  return shot;
+}
+
 export function survey(game, level, player) {
   const box = frameBox(game, level, player);
   const c = box.getCenter(new THREE.Vector3());
@@ -254,6 +290,7 @@ export function survey(game, level, player) {
     const t = pp.clone().addScaledVector(fwd, 4 * k).add(new THREE.Vector3(0, 0.6 * k, 0));
     push('player', p, t);
   }
+  for (const sh of shots) { try { clampShot(game, sh, box.max.y, { ...(sh.name === 'player' ? { margin: 1.6, clear: 0.6 } : {}), exclude: player && player.collider }); } catch (e) { reportError(e); } }
   return shots;
 }
 
