@@ -281,7 +281,11 @@ def build_brief(plan: dict, catalog_txt: str, assets: dict, scaffold: str) -> st
                if web_plan.doc_names() else "")
             + "game.js ALREADY EXISTS and runs: the pipeline wrote this scaffold from the plan:\n"
             f"```js\n{scaffold}\n```\n\n"
-            "YOUR JOB: turn it into the game in the plan. Build ON the scaffold: keep everything it already does "
+            + ("THIS LEVEL IS COMPOSED FROM PIECES (LAYOUT in game.js, read_doc('Level', 'Compose your own level')): "
+               "reshape LAYOUT into the pitch's space (add, move, resize pieces; movers, water, towers, arches), keep "
+               "route pieces in visiting order with every jump at most 5 u across and 2.5 u up, and fix every "
+               "'[level] ... error' line play_game reports.\n\n" if "Level.compose(" in scaffold else "")
+            + "YOUR JOB: turn it into the game in the plan. Build ON the scaffold: keep everything it already does "
             "(the generated sky, props and splats, the HUD, title, rules) and change it with edit_file; rewriting "
             "game.js from scratch loses work.\n"
             "1. read_doc the modules you will customise (at least Level, Gameplay and UI; Player, FX, World as "
@@ -365,6 +369,10 @@ def findings_text(rep: dict, play_notes: list[str], verdict, catalog: dict | Non
         ref = web_plan.docs_for_error("\n".join(rep["errors"][:10]), catalog)
         if ref:
             lines.append("REFERENCE for the APIs in those errors:\n" + ref[:5000])
+    level_issues = [w for w in rep.get("warnings", []) if "[level]" in w]
+    if level_issues:
+        lines.append("LEVEL LAYOUT ISSUES (Level.compose; 'error' lines must be fixed in LAYOUT):")
+        lines += [f"- {w[:900]}" for w in level_issues[:3]]
     if play_notes:
         lines.append("PLAYTEST:")
         lines += [f"- {n}" for n in play_notes]

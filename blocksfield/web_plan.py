@@ -126,6 +126,9 @@ def enums(catalog: dict | None) -> dict[str, list[str]]:
                           ("mode", "Gameplay", r"^MODES$"), ("quest_type", "Gameplay", r"^QUEST_TYPES$")):
         if v := _pick(c, mod, pat):
             out[key] = v
+    if "compose" in fn_names(c, "Level"):
+        out["level_kind"] = list(out["level_kind"]) + ["custom"]
+        out["custom_layout"] = list(COMPOSE_TEMPLATES)
     if cams := [f for f in ("follow", "chase", "topdown", "orbit", "firstPerson") if f in fn_names(c, "Camera")]:
         out["camera"] = cams
     return out
@@ -147,6 +150,53 @@ def catalog_text(catalog: dict | None, limit: int = 9000) -> str:
 
 
 # --------------------------------------------------------------------------------------------- docs
+def _spiral() -> dict:
+    import math
+    pieces = [{"type": "island", "position": [0, 0, 0], "size": 10},
+              {"type": "island", "position": [0, -2, 26], "size": 6, "route": False},
+              {"type": "tower", "position": [0, -2, 26], "height": 30}]
+    for k in range(11):
+        a = -math.pi / 2 + k * 0.62
+        pieces.append({"type": "pillar", "position": [round(math.cos(a) * 10, 2), round(1.5 + k * 2, 2),
+                                                      round(26 + math.sin(a) * 10, 2)], "size": 3.5 if k == 10 else 1.8})
+    return {"pieces": pieces, "goal": True}
+
+
+# Level.md "Compose your own level" examples (written and autopilot-checked by the kit's author): the starting layouts a
+# builder reshapes when no preset kind fits the pitch's space
+COMPOSE_TEMPLATES = {
+    "spiral_climb": (_spiral(), "a climb up a spiral of pillars around a tall tower above the clouds"),
+    "river_run": ({"ground": {"style": "sand", "y": -3, "size": 300, "hills": 22}, "pieces": [
+        {"type": "water", "position": [30, -1.6, 38], "size": 320},
+        {"type": "cliff", "position": [0, 2, 0], "size": 8},
+        {"type": "platform", "position": [0, 1, 12.5], "size": 2}, {"type": "platform", "position": [4, 1.5, 17.5], "size": 2},
+        {"type": "platform", "position": [9, 2, 22], "size": 2},
+        {"type": "cliff", "position": [16, 4, 30], "size": 7},
+        {"type": "bridge", "from": [20.8, 4, 32.7], "to": [29.2, 4.5, 37.3]},
+        {"type": "cliff", "position": [34, 4.5, 40], "size": 7},
+        {"type": "stairs", "from": [34, 4.5, 45.5], "to": [34, 1, 53]},
+        {"type": "platform", "position": [34, 1, 56], "size": [6, 4, 6]},
+        {"type": "pillar", "position": [34, 2.5, 63]}, {"type": "pillar", "position": [30, 4.5, 68]},
+        {"type": "cliff", "position": [22, 6, 76], "size": 8},
+        {"type": "cliff", "position": [-22, 11, 6], "size": 9, "route": False},
+        {"type": "cliff", "position": [38, 13, 24], "size": 9, "route": False}], "goal": True},
+        "a run down a canyon river: mesas, stepping stones, a bridge and stairs over flooded sand, cliffs either side"),
+    "floating_castle": ({"pieces": [
+        {"type": "island", "position": [0, 0, 0], "size": 9},
+        {"type": "stairs", "from": [0, 0, 6.5], "to": [0, 5, 14]},
+        {"type": "island", "position": [0, 5, 24], "size": 12},
+        {"type": "arch", "position": [0, 5, 15]}, {"type": "wall", "position": [0, 5, 33], "length": 16},
+        {"type": "tower", "position": [-8, 5, 32], "height": 11}, {"type": "tower", "position": [8, 5, 32], "height": 11},
+        {"type": "bridge", "from": [9.5, 5, 27.2], "to": [24.3, 7, 32.1]},
+        {"type": "island", "position": [30, 7, 34], "size": 7},
+        {"type": "pillar", "position": [31, 9, 45]}, {"type": "pillar", "position": [34, 11, 50.5]},
+        {"type": "island", "position": [34, 13, 58], "size": 6},
+        {"type": "mover", "position": [-12, 5, 24], "to": [-26, 7, 30]},
+        {"type": "island", "position": [-31, 7, 32], "size": 5, "route": False}], "goal": True},
+        "a castle in the sky: gate island, stairs to the keep, towers, a bridge and pillars up to the spire"),
+}
+
+
 def kind_descriptions() -> dict[str, str]:
     """Level.md's kinds table -> {kind: "what you get (good for: ...)"}: what the planner reads to match the pitch's
     setting (live: a "desert canyon" pitch got race_track while the catalog had a canyon kind)."""
@@ -176,6 +226,8 @@ def shipped_choices(game_dir: Path) -> dict:
         m = re.search(pat, src, re.S)
         if m:
             out[k] = m.group(1)
+    if "level_kind" not in out and re.search(r"Level\.compose\(", src):
+        out["level_kind"] = "custom"
     return out
 
 
@@ -282,6 +334,8 @@ def plan_schema(en: dict[str, list[str]]) -> dict:
             "lives": {"type": "integer", "minimum": 0, "maximum": 9, "description": "0 = unlimited"},
             "enemies": {"type": "integer", "minimum": 0, "maximum": 12,
                         "description": "patrolling enemies to stomp or avoid (0 = none)"},
+            "custom_layout": {"enum": en.get("custom_layout") or list(COMPOSE_TEMPLATES),
+                              "description": "level_kind custom only: the starting layout the builder reshapes"},
             "character": {"type": "object", "required": ["species", "accessory"],
                           "description": "the hero: the species closest to the pitch's protagonist",
                           "properties": {"species": {"enum": en["species"]}, "accessory": {"enum": en["accessory"]}}},
@@ -348,7 +402,12 @@ def plan_brief(pitch: str, title: str | None, en: dict, catalog_txt: str, docs: 
             "- level_kind (a whole dressed level built in one call). Choose the kind whose SETTING matches the "
             "pitch first, then the player type: karts and boats race on every kind with a track, platformers run "
             "every kind. The kinds:\n"
-            + "".join(f"    {k}: {kind_descriptions().get(k, '')}\n" for k in en["level_kind"])
+            + "".join(f"    {k}: {kind_descriptions().get(k, '')}\n" for k in en["level_kind"] if k != "custom")
+            + ("    custom: ONLY when no kind above fits the pitch's space (a tower climb, a river run, a castle in the "
+               "sky): the level is composed from pieces (islands, cliffs, pillars, bridges, stairs, movers, water) "
+               "starting from custom_layout = "
+               + "; ".join(f"{k} ({d})" for k, (_, d) in COMPOSE_TEMPLATES.items())
+               + ". Say in mapping_notes why no preset kind fits.\n" if "custom" in en["level_kind"] else "")
             + f"- player_type (the controller): one of {', '.join(en['player_type'])}\n"
             f"- camera: one of {', '.join(en['camera'])} (follow for platformers, chase for karts/boats, topdown "
             "for topdown, firstPerson for fps)\n"
@@ -439,10 +498,21 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
     ]
     if "sky" in assets and has("Assets", "sky"):
         lines.append("K.Assets.sky(game, 'sky');                 // generated panorama; pops in when loaded")
-    lines += [
-        f"const level = K.Level.build(game, {j(plan.get('level_kind'))}, {{ size: {j(plan.get('level_size', 'medium'))},"
-        f" collectibles: {int(c.get('count', 30))} }});",
-    ]
+    if plan.get("level_kind") == "custom":
+        spec, _ = COMPOSE_TEMPLATES.get(plan.get("custom_layout"), COMPOSE_TEMPLATES["spiral_climb"])
+        lines += [
+            "// The level, composed from pieces (Level.md \"Compose your own level\"): reshape it to the pitch. Route "
+            "pieces in visiting order;",
+            "// every jump at most 5 u across and 2.5 u up (bridges / stairs / ramps / movers for more).",
+            f"const LAYOUT = {json.dumps(spec)};",
+            f"const level = K.Level.compose(game, {{ ...LAYOUT, collectibles: {int(c.get('count', 30))} }});",
+            "if (level.issueText) console.warn('[level] ' + level.issueText);",
+        ]
+    else:
+        lines += [
+            f"const level = K.Level.build(game, {j(plan.get('level_kind'))}, {{ size: "
+            f"{j(plan.get('level_size', 'medium'))}, collectibles: {int(c.get('count', 30))} }});",
+        ]
     if tag != "coin":
         lines.append(f"for (const c of level.collectibles) if (c.tag === 'coin') c.tag = {j(tag)};   // the plan's pickup")
     ch = plan.get("character") or {}
