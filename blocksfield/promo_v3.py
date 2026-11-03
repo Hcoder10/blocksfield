@@ -56,6 +56,7 @@ VO = [
     ("how", "at:playtest + judge", "Then it plays its own game. A vision model scores each version; the best one ships."),
     ("games", 0.4, "Each of these games came from a single pitch."),
     ("games", -9.0, "They run in the browser. Nothing to install."),       # negative: from the section's end
+    ("mechanics", "at:mechanics beat", "It can write new mechanics too, on top of the kits."),
     ("roblox", 0.4, "And the same pipeline builds real Roblox places, inside Roblox Studio."),
     ("close", 0.6, "Every model is open weight. It runs on one RTX fifty ninety, for zero dollars per generation. "
                    "Blocksfield is open source."),
@@ -130,6 +131,9 @@ def games(only: list[str] | None = None, skip: set | None = None) -> list[dict]:
         g["about"] = json.loads(about.read_text(encoding="utf-8")) if about.exists() else {}
         g["interventions"] = len(g["about"].get("operator_interventions") or [])
         g["dir"] = d
+        js = (d / "game.js").read_text(encoding="utf-8") if (d / "game.js").exists() else ""
+        g["composed"] = "Level.compose(" in js or g.get("level_kind") == "custom"
+        g["mechanics"] = mechanics_snippet(js)
         if g["play"]:
             pool.append(g)
     if only:
@@ -138,6 +142,9 @@ def games(only: list[str] | None = None, skip: set | None = None) -> list[dict]:
     clean = [g for g in pool if g["interventions"] == 0]
     ranked = clean + ([g for g in pool if g["interventions"] > 0] if len(clean) < MIN_CLEAN else [])
     picked, kinds = [], set()
+    comp = next((g for g in pool if g["composed"]), None)   # a model-laid-out level is the best generalization proof
+    if comp:
+        picked.append(comp); kinds.add(comp.get("player_type"))
     for g in ranked:                                   # pass 1: one game per player type (platformer, kart, boat, ...)
         k = g.get("player_type")
         if k not in kinds:
@@ -148,6 +155,34 @@ def games(only: list[str] | None = None, skip: set | None = None) -> list[dict]:
     picked = picked[:MAX_GAMES]
     picked.sort(key=lambda g: (g["interventions"] > 0, -g["score_n"]))
     return picked
+
+
+def mechanics_snippet(js: str) -> list[str] | None:
+    """The first K.Mechanics.<fn>(...) call in a game.js, as source lines (balanced parentheses, at most 14 lines)."""
+    m = re.search(r"^[^\n]*\bMechanics\.\w+\(", js, re.M)
+    if not m:
+        return None
+    i, depth, started = m.start(), 0, False
+    end = len(js)
+    for k in range(m.start(), len(js)):
+        c = js[k]
+        if c == "(":
+            depth += 1; started = True
+        elif c == ")":
+            depth -= 1
+            if started and depth == 0:
+                end = js.find("\n", k)
+                end = len(js) if end < 0 else end
+                break
+    lines = js[i:end].splitlines()
+    # include one leading comment line if the call has one
+    before = js[:i].rstrip("\n").splitlines()
+    if before and before[-1].strip().startswith("//"):
+        lines = [before[-1]] + lines
+    if len(lines) > 14:
+        lines = lines[:13] + ["  …"]
+    ind = min((len(x) - len(x.lstrip()) for x in lines if x.strip()), default=0)
+    return [x[ind:] for x in lines]
 
 
 def mono(size: int, bold=False) -> ImageFont.FreeTypeFont:
@@ -610,7 +645,9 @@ def game_segs(g: dict, dur: float) -> list[Seg]:
         x = x0 + font(60, "Bold").getlength(g["title"]) + 28
         genre = g.get("genre", "").split(" / ")[0]
         x += chip(d, x, y0 + 14, genre if len(genre) <= 30 else genre[:29] + "…", a) + 12
-        chip(d, x, y0 + 14, f"judge score {g['score_n']:.1f} / 10", a, fill=(30, 36, 48), fg=FG)
+        x += chip(d, x, y0 + 14, f"judge score {g['score_n']:.1f} / 10", a, fill=(30, 36, 48), fg=FG) + 12
+        if g.get("composed"):
+            chip(d, x0, y0 - 56, "level laid out by the model (Level.compose)", ramp(gt, 0.6), fill=(255, 120, 90), fg=(20, 10, 8))
         shown = int(total_chars * min(1.0, max(0.0, (gt - 0.4) / 2.6)))
         pa = 1 - ramp(gt, 5.2, 0.6)
         y = y0 + 92
@@ -676,7 +713,9 @@ def close(dur: float) -> Seg:
 
 def build(gs: list[dict]) -> list[Seg]:
     head = cold_open(gs, SECTIONS["open"]) + paid(SECTIONS["paid"]) + studio(gs, SECTIONS["studio"]) + how(gs, SECTIONS["how"])
-    tail = roblox(SECTIONS["roblox"]) + [close(SECTIONS["close"])]
+    mg = next((g for g in gs if g.get("mechanics")), None)
+    beat = [mechanics_beat(mg, shot_len("mechanics", "mechanics beat", 5.0))] if mg else []
+    tail = beat + roblox(SECTIONS["roblox"] - (beat[0].dur - 2.0 if beat else 0)) + [close(SECTIONS["close"])]
     left = LIMIT - sum(s.dur for s in head + tail) - 0.05
     n = max(1, len(gs))
     each = min(GAME_EACH[1], left / n)
@@ -689,6 +728,44 @@ def build(gs: list[dict]) -> list[Seg]:
     return head + mid + tail
 
 
+def mechanics_beat(g: dict, dur: float) -> Seg:
+    """A real game's Mechanics call (from its game.js) beside that game's own gameplay."""
+    fm = mono(28)
+    lines = []
+    for ln in g["mechanics"]:                       # wrap long code lines (continuation indented)
+        ind = len(ln) - len(ln.lstrip())
+        while len(ln) > 52:
+            cut = max(ln.rfind(" ", 0, 52), ind + 20)
+            com = ln.lstrip().startswith("//")
+            lines.append(ln[:cut]); ln = " " * ind + ("// " if com else "    ") + ln[cut:].lstrip()
+        lines.append(ln)
+    st: dict = {}
+
+    def draw(t, i):
+        f = canvas((14, 16, 22))
+        v = st["r"].frame(i)
+        v = v.resize((900, int(900 * H / W)))
+        f.alpha_composite(v, (W - v.width, (H - v.height) // 2))
+        f.alpha_composite(shade(240, 0.9, bottom=False))
+        d = ImageDraw.Draw(f, "RGBA")
+        d.rectangle([0, 0, W - v.width + 6, H], fill=(14, 16, 22, 235))
+        kicker(d, (80, 60), f"New mechanic  ·  {g['title']}", ramp(t, 0.0), size=30)
+        text(d, (80, 100), "The model can add its own mechanics", font(56, "Semibold"), FG, ramp(t, 0.1))
+        shown = int(sum(len(x) for x in lines) * min(1.0, max(0.0, (t - 0.4) / 2.0)))
+        y = 260
+        for ln in lines:
+            col = (125, 135, 156) if ln.strip().startswith("//") else (255, 210, 130) if "Mechanics." in ln else (214, 220, 232)
+            text(d, (80, y), ln[:max(0, shown)], fm, col)
+            shown -= len(ln)
+            y += 40
+        text(d, (80, H - 70), f"web/games/{g['id']}/game.js", font(26, "Regular"), MUTED, ramp(t, 0.5))
+        return f
+    return Seg("5b. Mechanics", "mechanics beat", dur, draw,
+               [f"NEW MECHANIC · {g['title']} / The model can add its own mechanics", "(code, real): " + " ".join(x.strip() for x in lines)],
+               setup=lambda: st.__setitem__("r", VideoReader(g["play"], 2.5, dur)), teardown=lambda: st["r"].close(),
+               fade_in=0.15, fade_out=0.15)
+
+
 def section_spans(segs: list[Seg]) -> dict:
     spans, clock = {}, 0.0
     for s in segs:
@@ -699,7 +776,7 @@ def section_spans(segs: list[Seg]) -> dict:
     return spans
 
 
-SEC_KEY = {"open": "Cold open", "paid": "Paid workflow", "studio": "Studio", "how": "How it works", "games": "The games",
+SEC_KEY = {"mechanics": "Mechanics", "open": "Cold open", "paid": "Paid workflow", "studio": "Studio", "how": "How it works", "games": "The games",
            "roblox": "Roblox", "close": "Close"}
 
 
