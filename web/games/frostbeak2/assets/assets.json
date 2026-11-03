@@ -1,0 +1,101 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "pink dawn panorama: soft peach and rose glow at the horizon fading to pale powder blue above, a low golden-pink sun, wispy cotton clouds, distant snow-capped peaks in lavender haze",
+  "wrap_seam": 0.66
+ },
+ "icon_fish": {
+  "file": "icon_fish.png",
+  "kind": "icon",
+  "prompt": "chibi glittering fish, silver-blue with a pink belly, glossy toon sticker with a soft white shine and tiny sparkle stars",
+  "for": "fish"
+ },
+ "icon_heart": {
+  "file": "icon_heart.png",
+  "kind": "icon",
+  "prompt": "plump toon heart, soft pink with a white highlight, rounded sticker style on a pale blue chip",
+  "for": "lives"
+ },
+ "icon_flag": {
+  "file": "icon_flag.png",
+  "kind": "icon",
+  "prompt": "small toon flag on a snow-capped pole, pink pennant, rounded sticker style",
+  "for": "goal"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "cozy winter lo-fi: music-box and marimba melody, gentle brushed drums, warm pad swells, playful and warm, ~90 BPM"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "bright glittering chime, a tiny bell with a shimmer tail"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "soft plucky pop with a light whoosh"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "muffled snow thud with a powdery puff"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "comical boing-hit, a low thud with a wobble"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "cheerful music-box fanfare with a bell glissando"
+ },
+ "sfx_lose": {
+  "file": "sfx_lose.mp3",
+  "kind": "sfx",
+  "event": "lose",
+  "prompt": "sad little trombone slide with a soft snow thud"
+ },
+ "prop_igloo": {
+  "file": "prop_igloo.json",
+  "kind": "prop",
+  "prompt": "small round igloo of pale ice-blue blocks with a dark arched doorway and a tiny pink scarf draped over the roof",
+  "via": "idol",
+  "parts": 363
+ },
+ "prop_ice_crystal": {
+  "file": "prop_ice_crystal.json",
+  "kind": "prop",
+  "prompt": "chunky faceted ice crystal, pale cyan with white sparkle, rounded toon style",
+  "via": "idol",
+  "parts": 523
+ },
+ "splat_igloo": {
+  "file": "splat_igloo.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "small round igloo of pale ice-blue blocks with a dark arched doorway and a tiny pink scarf draped over the roof",
+  "camera": {
+   "yaw": 0.9726720461001838
+  }
+ },
+ "splat_ice_crystal": {
+  "file": "splat_ice_crystal.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "chunky faceted ice crystal, pale cyan with white sparkle, rounded toon style",
+  "camera": {
+   "yaw": 1.1075913065912026
+  }
+ }
+}

@@ -10,7 +10,7 @@
   "A / D or \u2190 / \u2192: steer",
   "Shift: boost (stacks on boost pads)"
  ],
- "created": "2026-11-03T01:26:48-0800",
+ "created": "2026-11-03T01:52:51-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -188,6 +188,7 @@
   "eval_v0": 85.6,
   "eval_v1": 87.8,
   "eval_v2": 69.5,
+  "finalize": 57.6,
   "plan": 99.3,
   "repair_1": 232.8,
   "repair_2": 121.3,
@@ -196,43 +197,38 @@
  "operator_interventions": [],
  "mapping": {
   "pitch": "Canyon Runner: a desert canyon hover-bike time trial. Rip through red-rock canyons at sunset on a hover-bike, chaining boost pads and hitting every checkpoint before the clock runs out. Warm orange stone, long shadows, dust trails, speed lines.",
-  "notes": "Hover-bike \u2192 kart: the kit's closest vehicle controller (kart/boat are the only vehicles), which also brings the chase camera and vehicle physics group the pitch needs. Time trial \u2192 mode timetrial (laps vs the clock, medals): 2 laps, 0 opponents, 150s timer, goal portal as the finish. Red-rock canyon \u2192 level_kind 'canyon', a whole dressed level with route, checkpoints and goal placements. Sunset fantasy \u2192 look 'sunset' (warm orange grade, low sun, long shadows) rather than 'desert', which reads midday. Dust trails and speed lines \u2192 FX.trail, FX.dust, FX.speedLines. Boost pads \u2192 boost_pad props + the 'boost' hazard. Hover feel \u2192 the built-in 'hover' audio loop. The anonymous hover-bike pilot becomes a chibi robot with a fluttering scarf (closest techy species), teal body chosen as a complementary pop against the orange stone. No enemies: the pitch is a pure speed run, so the timer is the only pressure.",
+  "notes": "Hover-bike \u2192 kart: the kit's closest vehicle controller (kart/boat are the only vehicles), which also brings the chase camera and vehicle physics group the pitch needs. Time trial \u2192 mode timetrial (laps vs the clock, medals): 2 laps, 0 opponents, 150s timer, goal portal as the finish. Red-rock canyon \u2192 level_kind 'canyon', a whole dressed level with route, checkpoints and goal placements. Sunset fantasy \u2192 look 'sunset' (warm orange grade, low sun, long shadows) rather than 'desert', which reads midday. Dust trails and speed lines \u2192 FX.trail, FX.dust, FX.speedLines. Boost pads \u2192 boost_pad props + the 'boost' hazard. Hover feel \u2192 the built-in 'hover' audio loop. The anonymous hover-bike pilot becomes a chibi robot with a fluttering scarf (closest techy species), teal body chosen as a complementary pop against the orange stone. No enemies: the pitch is a pure speed run, so the timer is the only pressure. Builder overrides: the builder changed level_kind from race_track to canyon.",
   "chosen": {
-   "level_kind": "race_track",
+   "level_kind": "canyon",
    "look": "sunset",
    "player_type": "kart",
    "camera": "chase",
    "ui_style": "sleek",
+   "mode": "timetrial",
+   "species": "robot",
    "character": {
     "species": "robot",
     "accessory": "scarf"
    },
    "collectible": "star",
    "collectible_label": "Embers"
-  }
- },
- "model_calls": {
-  "lead": {
-   "calls": 1,
-   "prompt_tokens": 6876,
-   "completion_tokens": 7408,
-   "seconds": 98.4
   },
-  "builder": {
-   "calls": 51,
-   "prompt_tokens": 1012515,
-   "completion_tokens": 12031,
-   "seconds": 376.8
+  "planned": {
+   "level_kind": "race_track",
+   "look": "sunset",
+   "player_type": "kart",
+   "camera": "chase",
+   "ui_style": "sleek",
+   "mode": "timetrial",
+   "species": "robot"
   },
-  "judge": {
-   "calls": 8,
-   "prompt_tokens": 42840,
-   "completion_tokens": 3488,
-   "seconds": 77.1
-  }
+  "builder_overrides": [
+   "the builder changed level_kind from race_track to canyon"
+  ]
  },
+ "model_calls": {},
  "agents": {
-  "live": 4,
+  "live": 0,
   "cached": 0,
   "failed": 0
  },

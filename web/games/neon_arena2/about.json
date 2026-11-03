@@ -11,7 +11,7 @@
   "Shift: boost dash",
   "P / Esc: pause"
  ],
- "created": "2026-11-03T00:54:56-0800",
+ "created": "2026-11-03T01:58:22-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -183,6 +183,7 @@
   "eval_v0": 68.3,
   "eval_v1": 76.8,
   "eval_v2": 68.2,
+  "finalize": 62.7,
   "plan": 77.7,
   "repair_1": 191.6,
   "repair_2": 161.5,
@@ -198,36 +199,29 @@
    "player_type": "topdown",
    "camera": "topdown",
    "ui_style": "scifi",
+   "mode": "waves",
+   "species": "robot",
    "character": {
     "species": "robot",
     "accessory": "none"
    },
    "collectible": "orb",
    "collectible_label": "Energy Cores"
-  }
- },
- "model_calls": {
-  "lead": {
-   "calls": 1,
-   "prompt_tokens": 6845,
-   "completion_tokens": 6167,
-   "seconds": 76.7
   },
-  "builder": {
-   "calls": 54,
-   "prompt_tokens": 1131441,
-   "completion_tokens": 7651,
-   "seconds": 395.1
+  "planned": {
+   "level_kind": "arena",
+   "look": "neon_night",
+   "player_type": "topdown",
+   "camera": "topdown",
+   "ui_style": "scifi",
+   "mode": "waves",
+   "species": "robot"
   },
-  "judge": {
-   "calls": 10,
-   "prompt_tokens": 51896,
-   "completion_tokens": 3646,
-   "seconds": 71.5
-  }
+  "builder_overrides": []
  },
+ "model_calls": {},
  "agents": {
-  "live": 4,
+  "live": 0,
   "cached": 0,
   "failed": 0
  },

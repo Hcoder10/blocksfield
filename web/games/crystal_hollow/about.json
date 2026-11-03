@@ -1,0 +1,319 @@
+{
+ "id": "crystal_hollow",
+ "title": "Crystal Hollow",
+ "tagline": "Blast the shadows. Gather the souls. Survive until dawn.",
+ "pitch": "Crystal Hollow: a dark-fantasy first-person crystal hunt in a moonlit ruined arena. Blast waves of shadow slimes with a glowing wand-blaster, collect floating soul crystals, and survive until dawn. Eerie purple moonlight, glowing runes, chunky stylised stone ruins.",
+ "genre": "dark fantasy first-person arena survival",
+ "controls": [
+  "WASD / arrows: move",
+  "Mouse: aim",
+  "Left click: fire wand blaster",
+  "Esc: pause"
+ ],
+ "created": "2026-11-03T02:01:08-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "v2",
+  "score": 6.0,
+  "play": 8.0,
+  "vision": 4.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 5.13,
+    "play_score": 6.27,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "s0",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "v1",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "v2",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Crystal Hollow",
+  "tagline": "Blast the shadows. Gather the souls. Survive until dawn.",
+  "genre": "dark fantasy first-person arena survival",
+  "core_loop": "Dodge between the pillars, blast the closing shadow slimes with your glowing wand, and snatch the soul crystals they scatter \u2014 survive all five waves until dawn.",
+  "controls": [
+   "WASD / arrows: move",
+   "Mouse: aim",
+   "Left click: fire wand blaster",
+   "Esc: pause"
+  ],
+  "win_condition": "Survive all five waves of shadow slimes until dawn breaks over the arena.",
+  "lose_condition": "Lose all three lives to the slimes before the final wave ends.",
+  "look": "dark_fantasy",
+  "ui_style": "fantasy",
+  "level_kind": "arena",
+  "level_size": "medium",
+  "player_type": "fps",
+  "camera": "firstPerson",
+  "player_colors": {
+   "body": "#3d2b56",
+   "accent": "#a78bfa"
+  },
+  "collectible": {
+   "tag": "orb",
+   "label": "Soul Crystals",
+   "count": 40,
+   "target": 15
+  },
+  "goal": false,
+  "timer_seconds": 0,
+  "lives": 3,
+  "enemies": 0,
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  },
+  "character": {
+   "species": "knight",
+   "accessory": "cape"
+  },
+  "mode": "waves",
+  "waves": {
+   "count": 5,
+   "size": 4
+  },
+  "art_direction": "Deep indigo night washed in violet moonlight; chunky low-poly basalt ruins with ink outlines, glowing cyan soul crystals, and warm ember runes carved into weathered pillars. Soft purple fog pools between the columns under a huge pale moon, everything lit by cool moonlight with warm rune accents \u2014 Hollow Knight's darkness meets Monument Valley's clean geometry.",
+  "concept_shots": [
+   "First-person view down the arena: a chunky stone pillar ring under a huge pale moon, three lurching shadow slimes closing in while a glowing cyan wand beam arcs from the bottom of the screen, purple mist swirling at their feet",
+   "A soul crystal caught mid-air in a burst of cyan sparkles, floating above the rune circle at the arena centre, its light reflecting off the wet basalt floor as embers drift from the carved runes",
+   "The final wave: the player's silhouette framed by broken arches as the last slime bursts into violet mist and the first warm light of dawn creeps over the horizon"
+  ],
+  "assets": {
+   "sky": "moonlit night panorama: deep indigo-to-violet gradient, a huge pale lavender moon low on the horizon, thin silver clouds, scattered stars, faint purple aurora",
+   "icons": [
+    {
+     "name": "soul_orb",
+     "prompt": "glowing cyan soul crystal orb, faceted gem with inner light and a soft halo, dark fantasy icon style",
+     "for": "collect"
+    },
+    {
+     "name": "shadow_skull",
+     "prompt": "hollow violet skull icon with glowing eyes, chunky dark fantasy style",
+     "for": "lives"
+    },
+    {
+     "name": "dawn_moon",
+     "prompt": "crescent moon rising over a tiny shadow slime silhouette, dark fantasy icon",
+     "for": "wave"
+    }
+   ],
+   "music": "dark ambient, brooding and eerie; detuned strings, low taiko pulses, soft bell chimes, 70 bpm, moonlit dread",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "bright glassy chime arpeggio with an ethereal shimmer, like a soul crystal being caught"
+    },
+    {
+     "event": "damage",
+     "prompt": "low muffled thud with a dark crackle, a shadowy impact"
+    },
+    {
+     "event": "death",
+     "prompt": "deep descending whoosh with glass shattering into mist"
+    },
+    {
+     "event": "win",
+     "prompt": "dawn fanfare: warm rising strings and soft bell chimes, hopeful"
+    },
+    {
+     "event": "lose",
+     "prompt": "minor-key dirge, low strings fading into silence"
+    },
+    {
+     "event": "respawn",
+     "prompt": "soft magical glissando chime as the soul returns"
+    }
+   ],
+   "props": [
+    {
+     "name": "rune_stone",
+     "prompt": "a chunky weathered basalt monolith with a single glowing violet rune carved into its face, dark grey stone with purple inlay",
+     "count": 8
+    },
+    {
+     "name": "soul_lantern",
+     "prompt": "a carved dark granite lantern post with a floating cyan flame, chunky low-poly",
+     "count": 6
+    }
+   ]
+  },
+  "features": [
+   "Chase slimes that lurch toward the player and burst into purple mist with a shockwave ring (Gameplay.spawnEnemy 'chase' + FX.burst)",
+   "Glowing rune circle at the arena centre that pulses with FX.ring on each new wave",
+   "Soul crystals bob and spin with sparkle trails (Gameplay.makeCollectible + FX.sparkle)",
+   "Screen shake and hit flash when the player takes a hit (FX.shake + FX.hitFlash)",
+   "Dawn transition: on clearing the final wave the sky lightens with a warm flash and confetti of light motes (FX.flash + FX.confetti)",
+   "Floating '+1' crystal count text on each pickup (FX.text)"
+  ],
+  "mapping_notes": "The pitch maps almost 1:1 onto the kits: first-person crystal hunt = fps player + firstPerson camera in the arena level, with the kit's blaster weapon as the glowing wand. 'Waves of shadow slimes' becomes waves mode (arena survival) with chase enemies as the slimes \u2014 the kit recommends topdown for waves, but the fps blaster is a supported weapon, so we keep the pitch's first-person view rather than switching cameras. 'Soul crystals' are orb collectibles (floating, glowing); in waves mode they are score/soul pickups rather than the win condition, so the target is a soft goal. 'Survive until dawn' is five escalating waves (timer 0, since the waves define the duration), capped by the dawn-flash feature. The moonlit ruined arena is the dark_fantasy look + arena level + generated moonlit sky + rune-stone and soul-lantern props; the kit's arena pillars and walls become the chunky stone cover. The knight is the avatar identity (title/HUD); in first person the player sees the glowing wand blaster."
+ },
+ "timings_s": {
+  "art": 223.3,
+  "build": 456.1,
+  "eval_s0": 67.5,
+  "eval_v0": 74.1,
+  "eval_v1": 91.1,
+  "eval_v2": 82.8,
+  "plan": 139.4,
+  "repair_1": 484.1,
+  "repair_2": 231.1,
+  "scaffold": 2.1
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Crystal Hollow: a dark-fantasy first-person crystal hunt in a moonlit ruined arena. Blast waves of shadow slimes with a glowing wand-blaster, collect floating soul crystals, and survive until dawn. Eerie purple moonlight, glowing runes, chunky stylised stone ruins.",
+  "notes": "The pitch maps almost 1:1 onto the kits: first-person crystal hunt = fps player + firstPerson camera in the arena level, with the kit's blaster weapon as the glowing wand. 'Waves of shadow slimes' becomes waves mode (arena survival) with chase enemies as the slimes \u2014 the kit recommends topdown for waves, but the fps blaster is a supported weapon, so we keep the pitch's first-person view rather than switching cameras. 'Soul crystals' are orb collectibles (floating, glowing); in waves mode they are score/soul pickups rather than the win condition, so the target is a soft goal. 'Survive until dawn' is five escalating waves (timer 0, since the waves define the duration), capped by the dawn-flash feature. The moonlit ruined arena is the dark_fantasy look + arena level + generated moonlit sky + rune-stone and soul-lantern props; the kit's arena pillars and walls become the chunky stone cover. The knight is the avatar identity (title/HUD); in first person the player sees the glowing wand blaster.",
+  "chosen": {
+   "level_kind": "arena",
+   "look": "dark_fantasy",
+   "player_type": "fps",
+   "camera": "firstPerson",
+   "ui_style": "fantasy",
+   "character": {
+    "species": "knight",
+    "accessory": "cape"
+   },
+   "collectible": "orb",
+   "collectible_label": "Soul Crystals"
+  }
+ },
+ "model_calls": {
+  "lead": {
+   "calls": 2,
+   "prompt_tokens": 15225,
+   "completion_tokens": 10973,
+   "seconds": 138.3
+  },
+  "builder": {
+   "calls": 54,
+   "prompt_tokens": 1573151,
+   "completion_tokens": 12883,
+   "seconds": 569.5
+  },
+  "judge": {
+   "calls": 8,
+   "prompt_tokens": 42732,
+   "completion_tokens": 3880,
+   "seconds": 66.8
+  }
+ },
+ "agents": {
+  "live": 4,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 61.6
+    },
+    "icon_soul_orb": {
+     "ok": true,
+     "seconds": 69.9
+    },
+    "icon_shadow_skull": {
+     "ok": true,
+     "seconds": 81.3
+    },
+    "icon_dawn_moon": {
+     "ok": true,
+     "seconds": 91.0
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 108.6
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 112.5
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 113.6
+    },
+    "sfx_death": {
+     "ok": true,
+     "seconds": 114.6
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 115.5
+    },
+    "sfx_lose": {
+     "ok": true,
+     "seconds": 116.5
+    },
+    "sfx_respawn": {
+     "ok": true,
+     "seconds": 117.7
+    },
+    "prop_rune_stone": {
+     "ok": true,
+     "seconds": 180.9
+    },
+    "prop_soul_lantern": {
+     "ok": true,
+     "seconds": 223.3
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Crystal Hollow: dark-fantasy first-person arena survival. Built on the scaffold: dark_fantasy look with violet/cyan palette, purple fog and tuned bloom; generated moonlit sky; medium arena with all 40 collectibles retagged as soul crystals (orbs, target 15); fps knight player (body model hidden, cyan wand bolts); glowing rune circle at the arena centre; 5 escalating waves of chase slimes (size 4, grow 2); fantasy HUD with soul-crystal counter, lives, minimap and wave objective; title screen with the plan's tagline and controls. Plan features wired as events: wave start pulses the rune circle (FX.ring + FX.magic) with a \"Final Wave!\" banner on wave 5, wave-clear cyan ring + banner, slime deaths burst into violet mist + shockwave ring, soul-crystal pickups get cyan sparkle + floating \"+1\", player damage shakes the screen and hit-flashes, and clearing the final wave breaks dawn with a warm flash, light-mote confetti and slow-mo. Audio/FX auto-react to all CONTRACT events, using the generated sfx (collect/hit/death/win/lose/respawn) and music.",
+    "changes": [
+     "Tuned dark_fantasy look: violet accent palette, purple fog, bloom 0.45",
+     "Retagged all 40 level collectibles as 'orb' (soul crystals) and set collect rule to tag orb / target 15",
+     "fps player: knight identity kept in character, model hidden in first person, cyan boltColor for the wand",
+     "Added glowing rune circle (ring + core) at arena centre in the level group",
+     "Rules: waves {count 5, size 4, grow 2, delay 3}, lives 3, dynamic objective text with wave counter",
+     "HUD: soul-crystal counter with generated icon and target 15, lives, minimap, fantasy style, objective line",
+     "Event FX: wave ring + magic pulse at the rune circle, final-wave and wave-clear banners, slime death violet-mist burst + ring, collect sparkle + '+1' text, damage shake + hit flash, dawn flash + confetti + slow-mo on win, dark flash on lose"
+    ],
+    "known_issues": [
+     "The kit auto-drops to 'potato' quality if the test machine runs under ~15 fps (hardware-dependent, not a game bug)",
+     "Slime enemies use the kit's default chase-enemy look (red spiky ball) rather than a custom purple shadow-slime mesh; the kit only exposes colour for spawnEnemy, not shape"
+    ]
+   },
+   "plays": 3
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ }
+}

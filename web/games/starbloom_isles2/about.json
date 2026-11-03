@@ -9,7 +9,7 @@
   "Space: jump (tap again mid-air to double-jump)",
   "Esc / P: pause"
  ],
- "created": "2026-11-03T00:57:19-0800",
+ "created": "2026-11-03T02:00:33-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -181,6 +181,7 @@
   "eval_v0": 56.0,
   "eval_v1": 71.7,
   "eval_v2": 83.7,
+  "finalize": 62.2,
   "plan": 74.5,
   "repair_1": 178.0,
   "repair_2": 182.8,
@@ -196,36 +197,29 @@
    "player_type": "platformer",
    "camera": "follow",
    "ui_style": "arcade",
+   "mode": "collect",
+   "species": "fox",
    "character": {
     "species": "fox",
     "accessory": "scarf"
    },
    "collectible": "star",
    "collectible_label": "Star Blooms"
-  }
- },
- "model_calls": {
-  "lead": {
-   "calls": 1,
-   "prompt_tokens": 6822,
-   "completion_tokens": 5783,
-   "seconds": 73.6
   },
-  "builder": {
-   "calls": 59,
-   "prompt_tokens": 1380637,
-   "completion_tokens": 10575,
-   "seconds": 334.7
+  "planned": {
+   "level_kind": "sky_islands",
+   "look": "toon_bright",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "mode": "collect",
+   "species": "fox"
   },
-  "judge": {
-   "calls": 10,
-   "prompt_tokens": 51870,
-   "completion_tokens": 4297,
-   "seconds": 77.6
-  }
+  "builder_overrides": []
  },
+ "model_calls": {},
  "agents": {
-  "live": 4,
+  "live": 0,
   "cached": 0,
   "failed": 0
  },

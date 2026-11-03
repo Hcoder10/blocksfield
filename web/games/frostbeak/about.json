@@ -309,5 +309,6 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "superseded_by": "frostbeak2"
 }
