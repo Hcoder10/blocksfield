@@ -164,6 +164,7 @@
       grid.innerHTML = games.length ? games.map(card).join("")
         : '<div class="empty">New games are being generated. Check back soon, or watch the Roblox build below.</div>';
       if (games.length <= 2) grid.classList.add(`n${games.length}`);
+      else if (games.length === 4) grid.classList.add("n2");  // 2x2 rather than 3 + an orphan
       grid.querySelectorAll(".card").forEach(wireHover);
       watchReveals();
       const real = games.filter((g) => !g.dev);
