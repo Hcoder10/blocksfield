@@ -11,7 +11,7 @@ const kind = q.get('kind') || 'sky_islands';
 const look = q.get('look') || 'toon_bright';
 const cam = q.get('cam') || 'hero';
 const game = await createGame({ seed: +(q.get('seed') || 1) });
-Look.apply(game, look, { quality: q.get('quality') || 'high' });
+Look.apply(game, look, { quality: q.get('quality') || 'high', autoQuality: q.get('auto') === '1' });
 const t0 = performance.now();
 const level = Level.build(game, kind, { size: q.get('size') || 'medium', seed: +(q.get('seed') || 1), collectibles: 40 });
 const buildMs = performance.now() - t0;
@@ -33,11 +33,11 @@ const eyeM = Look.material(game, { color: '#ffffff' });
 for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 6), eyeM); e.position.set(s * 0.18, 1.3, 0.38); hero.add(e); }
 hero.position.copy(level.spawn).add(new THREE.Vector3(0, -1, 0)); hero.rotation.y = level.spawnYaw; game.scene.add(hero);
 if (level.goal) {
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(level.goal.radius, 0.18, 8, 40).rotateX(Math.PI / 2), Look.material(game, { kind: 'emissive', color: 'good', emissiveIntensity: 2 }));
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(Math.min(level.goal.radius, 3), 0.14, 8, 40).rotateX(Math.PI / 2), Look.material(game, { kind: 'emissive', color: 'good', emissiveIntensity: 0.9 }));
   ring.position.copy(level.goal.position); game.scene.add(ring);
 }
 for (const c of level.checkpoints) {
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(c.radius * 0.6, 0.12, 6, 32).rotateX(Math.PI / 2), Look.material(game, { kind: 'emissive', color: 'secondary', emissiveIntensity: 1.6 }));
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(c.radius * 0.6, 0.12, 6, 32).rotateX(Math.PI / 2), Look.material(game, { kind: 'emissive', color: 'secondary', emissiveIntensity: 0.8 }));
   ring.position.copy(c.position); game.scene.add(ring);
 }
 for (const h of level.hazards.filter(h => h.type === 'boost')) World.prop(game, 'boost_pad', { position: h.position, yaw: h.yaw, collider: false });
@@ -68,6 +68,10 @@ const cams = {
   low: () => along(0.45, 10, 4.5, 2, 10),
   mid: () => along(0.7, 12, 6, -3, 12),
   end: () => along(0.93, 12, 5, 3, 12),
+  // player-height chase cameras (what a follow camera shows while playing)
+  chase: () => along(0.06, 6.5, 2.8, 0, 9),
+  chase_mid: () => along(0.5, 6.5, 2.8, 0, 9),
+  chase_end: () => along(0.85, 6.5, 2.8, 0, 9),
 };
 const orbit = cam === 'orbit';
 function setCam(name) {

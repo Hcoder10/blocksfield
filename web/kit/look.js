@@ -22,7 +22,7 @@ const BASE = {
     wood: '#b8763f', stone: '#c2bcb0', roof: '#e5533d', metal: '#a8b4c4', cloud: '#ffffff', glow: '#fff4b0',
     ui: '#2b3a67', uiText: '#ffffff', uiAccent: '#ffd23a',
   },
-  sky: { top: '#3d8bff', horizon: '#c4e8ff', bottom: '#eaf6ff', sunSize: 2.2, sunGlow: 0.6, stars: 0, aurora: 0, exponent: 0.55 },
+  sky: { top: '#3d8bff', horizon: '#c4e8ff', bottom: '#eaf6ff', sunSize: 2.2, sunGlow: 0.6, disc: 4, stars: 0, aurora: 0, exponent: 0.55 },
   sun: { color: '#fff1d6', intensity: 2.4, elevation: 52, azimuth: 35 },
   hemi: { sky: '#cfe6ff', ground: '#7a8f5a', intensity: 1.0 },
   env: 0.6,
@@ -54,15 +54,15 @@ const LOOKS = {
   },
   sunset: {
     palette: { primary: '#ff6a3d', secondary: '#7a5cff', accent: '#ffd04a', ground: '#b46a48', ground2: '#874a38',
-      grass: '#a8b44a', grass2: '#d6c25a', cliff: '#9a5f50', cliff2: '#6a3c3c', foliage: '#6f9a3a', foliage2: '#e08a3a',
+      grass: '#94b84e', grass2: '#d0c862', cliff: '#9a5f50', cliff2: '#6a3c3c', foliage: '#6f9a3a', foliage2: '#e08a3a',
       trunk: '#6a3a2a', flower: '#ff5a7a', flower2: '#ffd04a', water: '#4a7ac0', waterDeep: '#2a3a7a', foam: '#ffe0c8',
       wood: '#a8603a', stone: '#c49a88', roof: '#c8443a', cloud: '#ffc0a0', glow: '#ffd090',
       ui: '#3a2a5a', uiText: '#fff4e6', uiAccent: '#ffb04a' },
-    sky: { top: '#2e3f86', horizon: '#ff9a5c', bottom: '#ff7a6a', sunSize: 3.2, sunGlow: 1.2, exponent: 0.45 },
+    sky: { top: '#2e3f86', horizon: '#ff9a5c', bottom: '#ff7a6a', sunSize: 2.0, sunGlow: 0.8, disc: 2.2, exponent: 0.45 },
     sun: { color: '#ffb070', intensity: 2.6, elevation: 11, azimuth: 70 },
     hemi: { sky: '#ffb0a0', ground: '#4a3048', intensity: 1.25 },
     exposure: 1.05,
-    bloom: { strength: 0.6, radius: 0.7, threshold: 0.85 },
+    bloom: { strength: 0.45, radius: 0.45, threshold: 1.05 },
     edges: { color: '#2a1430', strength: 0.8 },
     grade: { saturation: 1.12, contrast: 1.08, lift: '#140818', vignette: 0.34 },
     rim: { color: '#ffb080', strength: 0.55 },
@@ -354,7 +354,7 @@ function makeSkyMaterial(p, sunDir) {
       bottom: { value: new THREE.Color(p.sky.bottom) }, sunDir: { value: sunDir.clone() },
       sunColor: { value: new THREE.Color(p.sun.color) }, sunSize: { value: p.sky.sunSize }, sunGlow: { value: p.sky.sunGlow },
       stars: { value: p.sky.stars }, aurora: { value: p.sky.aurora }, time: U.uTime, exponent: { value: p.sky.exponent },
-      discMul: { value: 1 },
+      discMul: { value: (p.sky.disc ?? 4) / 6 },
     },
   });
 }
@@ -468,7 +468,7 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
   try {
     const pm = new THREE.PMREMGenerator(renderer);
     const envScene = new THREE.Scene();
-    const envMat = makeSkyMaterial(p, sunDir); envMat.uniforms.discMul.value = 0.15;
+    const envMat = makeSkyMaterial(p, sunDir); envMat.uniforms.discMul.value = 0.1;
     envScene.add(new THREE.Mesh(new THREE.SphereGeometry(50, 32, 16), envMat));
     envRT = pm.fromScene(envScene, 0.02, 0.1, 200);
     scene.environment = envRT.texture;
@@ -522,7 +522,24 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
       look.fogRange = Math.max(160, r * 2.4);
       lu.edgeFade.value = Math.max(160, r * 2.2);
     },
-    setQuality(q) { look.quality = q; renderer.setPixelRatio(q === 'low' ? 1 : Math.min(window.devicePixelRatio || 1, 2)); },
+    /** drop to the low tier at runtime: pixel ratio 1, 1024 shadows, 40% of the grass/flowers, half-res bloom */
+    setQuality(q) {
+      if (q === look.quality) return;
+      look.quality = q;
+      const low = q === 'low';
+      const pr2 = low ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+      renderer.setPixelRatio(pr2); composer.setPixelRatio(pr2);
+      const sz = renderer.getSize(new THREE.Vector2()); composer.setSize(sz.x, sz.y);
+      const msz = low ? 1024 : 4096;
+      sun.shadow.mapSize.set(msz, msz);
+      if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+      scene.traverse(o => {
+        if (!o.isInstancedMesh || !/^kit:foliage:(grass|flowers)/.test(o.name)) return;
+        if (o.userData.fullCount == null) o.userData.fullCount = o.count;
+        o.count = low ? Math.floor(o.userData.fullCount * 0.4) : o.userData.fullCount;
+      });
+      game.emit('quality', q);
+    },
     dispose() {
       scene.remove(root);
       sky.geometry.dispose(); skyMat.dispose();
@@ -565,6 +582,22 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
     lu.resolution.value.set(rt.width, rt.height);
   }
   game.lateUpdate(tick, 25);
+  // automatic quality: if the first ~2 s of play average under 50 fps, drop to the low tier (judges' laptops)
+  if (overrides.autoQuality !== false && quality === 'high') {
+    let frames = 0, t0 = 0;
+    const probe = () => {
+      frames++;
+      const now = performance.now();
+      if (frames === 20) t0 = now;
+      if (frames > 20 && now - t0 > 2000) {
+        const fps = (frames - 20) / ((now - t0) / 1000);
+        look.measuredFps = fps;
+        if (fps < 50) { console.warn(`[kit] Look: ${fps.toFixed(0)} fps, switching to quality 'low'`); look.setQuality('low'); }
+        game.removeUpdate(probe);
+      }
+    };
+    game.lateUpdate(probe, 99);
+  }
   function onResize() { /* composer resize handled by core; keep uniforms current */ lu.resolution.value.set(rt.width, rt.height); }
   game.on && game.on('resize', onResize);
   tick();

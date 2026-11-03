@@ -40,7 +40,8 @@ level.spawnPoints  (arena) Vector3[] for enemies          level.islands (sky_isl
 The player controller should match these (Player kit defaults do):
 **jump apex 4.5 units, run speed 12 units/s, double jump.** Every jump on `level.route` is at most
 **5 units across** (edge to edge) and **2.5 units up**, so a single jump always makes it and the double jump is
-spare. A single jump covers ~12 units at full run; with the double jump ~18.
+spare. A single jump covers ~11 units at full run; with the double jump ~16. `arena` and `town` need no jumps
+(ramps reach the raised platforms), so `topdown`/`fps` players work there too.
 
 ## Examples
 

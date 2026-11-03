@@ -637,24 +637,24 @@ export function water(game, opts = {}) {
 // ------------------------------------------------------------------------------------------------ foliage
 // each kind -> parts [{geom (with colour), mat (Look.material opts)}], plus collider + placement hints
 const FOLIAGE = {
-  grass:        { density: 1.4, cluster: 0, scale: [0.8, 1.35], wind: 0.22, shadow: false, spacing: 0 },
+  grass:        { density: 1.1, max: 26000, cluster: 0, scale: [0.7, 1.2], wind: 0.22, shadow: false, spacing: 0 },
   grass_dry:    { density: 0.5, scale: [0.8, 1.4], wind: 0.2, shadow: false, spacing: 0 },
   grass_snow:   { density: 0.2, scale: [0.6, 1.0], wind: 0.15, shadow: false, spacing: 0 },
-  flowers:      { density: 0.12, scale: [0.8, 1.3], wind: 0.25, shadow: false, spacing: 0 },
-  flowers_glow: { density: 0.1, scale: [0.8, 1.3], wind: 0.25, shadow: false, spacing: 0 },
-  bush:         { density: 0.02, scale: [0.8, 1.5], wind: 0.015, shadow: true, spacing: 1.6 },
-  bush_snow:    { density: 0.02, scale: [0.8, 1.5], wind: 0.01, shadow: true, spacing: 1.6 },
-  tree_round:   { density: 0.007, scale: [0.85, 1.35], wind: 0.004, shadow: true, spacing: 4, collider: 'trunk' },
-  tree_pine:    { density: 0.007, scale: [0.85, 1.4], wind: 0.003, shadow: true, spacing: 3.5, collider: 'trunk' },
-  tree_pine_snow:{ density: 0.008, scale: [0.85, 1.4], wind: 0.003, shadow: true, spacing: 3.5, collider: 'trunk' },
+  flowers:      { density: 0.12, max: 6000, scale: [0.8, 1.3], wind: 0.25, shadow: false, spacing: 0 },
+  flowers_glow: { density: 0.1, max: 5000, scale: [0.8, 1.3], wind: 0.25, shadow: false, spacing: 0 },
+  bush:         { density: 0.02, max: 1200, scale: [0.8, 1.5], wind: 0.015, shadow: true, spacing: 1.6 },
+  bush_snow:    { density: 0.02, max: 1200, scale: [0.8, 1.5], wind: 0.01, shadow: true, spacing: 1.6 },
+  tree_round:   { density: 0.007, max: 900, scale: [0.85, 1.35], wind: 0.004, shadow: true, spacing: 4, collider: 'trunk' },
+  tree_pine:    { density: 0.007, max: 900, scale: [0.85, 1.4], wind: 0.003, shadow: true, spacing: 3.5, collider: 'trunk' },
+  tree_pine_snow:{ density: 0.008, max: 900, scale: [0.85, 1.4], wind: 0.003, shadow: true, spacing: 3.5, collider: 'trunk' },
   tree_dead:    { density: 0.004, scale: [0.9, 1.4], wind: 0.002, shadow: true, spacing: 4, collider: 'trunk' },
   palm:         { density: 0.004, scale: [0.9, 1.3], wind: 0.004, shadow: true, spacing: 4, collider: 'trunk' },
   cactus:       { density: 0.005, scale: [0.8, 1.3], wind: 0, shadow: true, spacing: 3.5, collider: 'trunk' },
   cactus_small: { density: 0.015, scale: [0.7, 1.2], wind: 0, shadow: true, spacing: 1.5 },
-  mushroom:     { density: 0.02, scale: [0.6, 1.4], wind: 0, shadow: true, spacing: 0.8 },
-  mushroom_glow:{ density: 0.025, scale: [0.6, 1.5], wind: 0, shadow: true, spacing: 0.8 },
-  rock:         { density: 0.008, scale: [0.6, 1.6], wind: 0, shadow: true, spacing: 2, collider: 'rock' },
-  rock_small:   { density: 0.03, scale: [0.5, 1.2], wind: 0, shadow: true, spacing: 0.6 },
+  mushroom:     { density: 0.02, max: 3000, scale: [0.6, 1.4], wind: 0, shadow: true, spacing: 0.8 },
+  mushroom_glow:{ density: 0.025, max: 3000, scale: [0.6, 1.5], wind: 0, shadow: true, spacing: 0.8 },
+  rock:         { density: 0.008, max: 1200, scale: [0.6, 1.6], wind: 0, shadow: true, spacing: 2, collider: 'rock' },
+  rock_small:   { density: 0.03, max: 4000, scale: [0.5, 1.2], wind: 0, shadow: true, spacing: 0.6 },
   crystal:      { density: 0.006, scale: [0.7, 1.5], wind: 0, shadow: true, spacing: 2, collider: 'rock' },
 };
 export const foliageKinds = Object.keys(FOLIAGE);
@@ -696,16 +696,14 @@ function foliageParts(game, kind) {
     case 'grass_dry': parts = [{ geom: bladeClump(7, 0.35, 0.75, col('ground2'), col('sand').multiplyScalar(1.1), 0.07), mat: { ...vc, side: 'double', rim: 0 } }]; break;
     case 'grass_snow': parts = [{ geom: bladeClump(5, 0.3, 0.6, col('foliage'), col('snow'), 0.08), mat: { ...vc, side: 'double', rim: 0 } }]; break;
     case 'flowers': case 'flowers_glow': {
-      const stems = bladeClump(4, 0.35, 0.6, col('foliage').multiplyScalar(0.6), col('grass2'), 0.05);
+      const stems = bladeClump(3, 0.35, 0.55, col('foliage').multiplyScalar(0.6), col('grass2'), 0.05);
       const heads = [];
       const cs = [col('flower'), col('flower2'), new THREE.Color('#ffffff')];
       for (let i = 0; i < 3; i++) {
-        const g = new THREE.IcosahedronGeometry(0.11, 0); g.scale(1, 0.6, 1);
+        const g = new THREE.OctahedronGeometry(0.12, 0); g.scale(1, 0.55, 1);
         const a = i * 2.1;
-        tr(g, Math.cos(a) * 0.18, 0.55 + i * 0.08, Math.sin(a) * 0.18);
+        tr(g, Math.cos(a) * 0.18, 0.5 + i * 0.07, Math.sin(a) * 0.18, 0, a, 0);
         heads.push(upNormals(paint(g, cs[i])));
-        const c = new THREE.IcosahedronGeometry(0.045, 0); tr(c, Math.cos(a) * 0.18, 0.6 + i * 0.08, Math.sin(a) * 0.18);
-        heads.push(upNormals(paint(c, col('flower2').lerp(new THREE.Color('#ffffff'), 0.5))));
       }
       parts = [{ geom: stems, mat: { ...vc, side: 'double', rim: 0 } },
         { geom: merge(heads), mat: kind === 'flowers_glow' ? { ...vc, kind: 'emissive', emissive: pal.flower, emissiveIntensity: 1.1 } : { ...vc, rim: 0.6 } }];
@@ -714,7 +712,7 @@ function foliageParts(game, kind) {
     case 'bush': case 'bush_snow': {
       const gs = [];
       for (let i = 0; i < 3; i++) {
-        const g = blob(0.7 - i * 0.12, 1, N, 0.22, i * 3);
+        const g = blob(0.7 - i * 0.12, 1, N, 0.2, i * 3);
         tr(g, (i - 1) * 0.55, 0.45 + (i === 1 ? 0.2 : 0), (i % 2) * 0.3);
         gs.push(paint(g, (x, y) => kind === 'bush_snow' && y > 0.7 ? col('snow') : col(i === 1 ? 'foliage' : 'foliage').multiplyScalar(0.85 + 0.2 * (y / 1.2))));
       }
@@ -727,7 +725,7 @@ function foliageParts(game, kind) {
       for (let i = 0; i < tp.count; i++) { const y = tp.getY(i); tp.setX(i, tp.getX(i) + Math.sin(y * 0.9) * 0.12); }
       trunk.computeVertexNormals();
       const leaves = [];
-      const blobs = [[0, 3.9, 0, 1.6], [0.95, 3.4, 0.3, 1.1], [-0.8, 3.5, -0.4, 1.15], [0.1, 4.7, -0.2, 1.05]];
+      const blobs = [[0, 4.0, 0, 1.65], [0.95, 3.45, 0.3, 1.15], [-0.85, 3.55, -0.4, 1.2]];
       blobs.forEach(([x, y, z, r], i) => {
         const g = blob(r, 1, N, 0.18, i * 5);
         tr(g, x, y, z);
@@ -868,6 +866,8 @@ export function foliage(game, opts = {}) {
   } else throw new Error('World.foliage: area must be {center, radius}, {min, max} or an island');
   const hAt = area.kind === 'island' ? (x, z) => area.heightAt(x, z) : (x, z) => heightAt(game, x, z);
   const yMin = opts.minY ?? -Infinity, yMax = opts.maxY ?? Infinity;
+  const focus = opts.focus ? opts.focus.filter((_, i) => i % Math.max(1, Math.ceil(opts.focus.length / 120)) === 0).map(p => v3(p)) : null;
+  const focusR = opts.focusRadius ?? 45;
   const clusterOn = opts.cluster ?? (areaSize > 900);          // big areas: trees grow in groves with open meadow between
   const CN = new SimplexNoise({ random: rng32(seed + 1) });
 
@@ -881,10 +881,10 @@ export function foliage(game, opts = {}) {
     const spec = FOLIAGE[kind];
     if (!spec) throw new Error(`World.foliage: unknown kind "${reqKind}"; kinds: ${Object.keys(FOLIAGE).join(', ')}`);
     let n = Math.round(areaSize * spec.density * density * w * (quality === 'low' && spec.spacing === 0 ? 0.4 : 1));
-    n = Math.min(n, opts.max ?? 30000);
+    n = Math.min(n, opts.max ?? spec.max ?? 30000);
     if (n <= 0) continue;
     const mats = [];
-    let tries = n * 4;
+    let tries = n * (focus ? 10 : 4);
     while (mats.length < n && tries-- > 0) {
       const [x, z] = sample();
       if (!inArea(x, z)) continue;
@@ -900,6 +900,10 @@ export function foliage(game, opts = {}) {
       if (spec.spacing > 0) {
         for (const p of placedBig) if (Math.hypot(x - p[0], z - p[1]) < Math.max(spec.spacing, p[2])) { ok = false; break; }
         if (!ok) continue;
+      }
+      if (focus && spec.spacing < 2) {   // small plants crowd the play area; far hills get a sprinkle
+        let fd = Infinity; for (const f of focus) { const d = (f.x - x) ** 2 + (f.z - z) ** 2; if (d < fd) fd = d; }
+        if (fd > focusR * focusR && rnd() > 0.2) continue;
       }
       const y = hAt(x, z);
       if (y == null || y < yMin || y > yMax) continue;

@@ -40,7 +40,7 @@ export function build(game, kind, opts = {}) {
   game.scene.add(group);
   const level = {
     kind, size, seed, spawn: V(0, 2, 0), spawnYaw: 0, bounds: new THREE.Box3(), route: [], checkpoints: [], collectibles: [],
-    hazards: [], movers: [], goal: null, track: null, group, colliders: [], killY: -40,
+    hazards: [], movers: [], goal: null, track: null, group, colliders: [], killY: -40, water: null,
   };
   const prev = World._collect(level.colliders);
   try {
@@ -230,7 +230,11 @@ function skyIslands(ctx) {
     World.foliage(game, { ...P(ctx), area: isl, kinds: { grass: 1, flowers: 1, bush: 1, tree_round: big ? 1 : 0.6, tree_pine: 0.5, mushroom: 0.6, rock: 0.5 },
       seed: ctx.seed * 101 + i });
   });
-  if (islands[0]) World.prop(game, 'sign', { ...P(ctx), position: islands[0].edgePoint(level.spawnYaw + 2.2, 4), yaw: 0.5 });
+  if (islands[0]) {
+    const f = V(Math.sin(level.spawnYaw), 0, Math.cos(level.spawnYaw)), sd = V(f.z, 0, -f.x);
+    const sp = level.spawn.clone().addScaledVector(f, 4).addScaledVector(sd, 3.2);
+    World.prop(game, 'sign', { ...P(ctx), position: islands[0].surfacePoint(sp.x, sp.z), yaw: level.spawnYaw + Math.PI + 0.4 });
+  }
 
   // a bonus side island reached by a moving platform (off the main route)
   {
@@ -287,7 +291,11 @@ function meadowCourse(ctx) {
   // a river crosses the course at ~38% of its length
   const riverT = 0.38, rp = curve.getPointAt(riverT), rtan = curve.getTangentAt(riverT);
   const riverHalf = 4.5;
-  const riverDist = (x, z) => Math.abs((x - rp.x) * rtan.x + (z - rp.z) * rtan.z);   // distance across the river
+  const riverDist = (x, z) => {        // distance across the river; it meanders away from the crossing
+    const u = (x - rp.x) * -rtan.z + (z - rp.z) * rtan.x;
+    const off = (7 * Math.sin(u * 0.045 + 1.3) + 3 * Math.sin(u * 0.11)) * THREE.MathUtils.smoothstep(Math.abs(u), 10, 40);
+    return Math.abs((x - rp.x) * rtan.x + (z - rp.z) * rtan.z - off);
+  };
   const pal = Look.palette(game);
   const dirt = new THREE.Color(pal.ground).lerp(new THREE.Color(pal.sand), 0.35);
   const size = L + 140;
@@ -308,6 +316,7 @@ function meadowCourse(ctx) {
     },
   });
   World.water(game, { ...P(ctx), level: -0.7, size: size, center: V(0, 0, 0), seed: ctx.seed });
+  level.water = { y: -0.7 };
   const gy = (x, z) => ground.heightAt(x, z) ?? 0;
   const route = [];
   const on = (t, lift = 0) => { const p = curve.getPointAt(t); p.y = gy(p.x, p.z) + lift; return p; };
@@ -358,9 +367,10 @@ function meadowCourse(ctx) {
       }
       route.push(b); jumps.push({ from: prevP, to: b, h: 1.6 }); tPrev = t + (riverHalf + 2.5) * dt;
       // a bridge further along the river for looks (off route)
-      const bp = rp.clone().addScaledVector(side, 0).addScaledVector(V(rtan.x, 0, rtan.z), 26);
-      const nrm = V(-rtan.z, 0, rtan.x);
-      const e1 = bp.clone().addScaledVector(nrm, riverHalf + 4), e2 = bp.clone().addScaledVector(nrm, -(riverHalf + 4));
+      const nrm = V(-rtan.z, 0, rtan.x), along = V(rtan.x, 0, rtan.z).normalize(), u0 = -34;
+      const off0 = 7 * Math.sin(u0 * 0.045 + 1.3) + 3 * Math.sin(u0 * 0.11);
+      const bp = rp.clone().addScaledVector(nrm.normalize(), u0).addScaledVector(along, off0);
+      const e1 = bp.clone().addScaledVector(along, riverHalf + 4), e2 = bp.clone().addScaledVector(along, -(riverHalf + 4));
       e1.y = gy(e1.x, e1.z) + 0.1; e2.y = gy(e2.x, e2.z) + 0.1;
       World.prop(game, 'bridge', { ...P(ctx), from: e1, to: e2, width: 3 });
     } else if (sec.type === 'steps') {
@@ -429,7 +439,7 @@ function meadowCourse(ctx) {
   const farm2 = curve.getPointAt(0.8).add(V(0, 0, amp + 24)); farm2.y = gy(farm2.x, farm2.z);
   World.prop(game, 'house', { ...P(ctx), position: farm2.setY(farm2.y - 0.1), yaw: Math.PI + 0.2, width: 6, depth: 5, floors: 2, roofColor: 'secondary' });
   World.foliage(game, { ...P(ctx), area: { min: [-size / 2 + 4, -size / 2 + 4], max: [size / 2 - 4, size / 2 - 4] },
-    kinds: { grass: 1.1, flowers: 1.4, bush: 1, tree_round: 1.2, tree_pine: 0.8, rock: 0.6, mushroom: 0.3 }, density: 0.85, minY: -0.35, seed: ctx.seed + 77 });
+    kinds: { grass: 1.1, flowers: 1.4, bush: 1, tree_round: 1.2, tree_pine: 0.8, rock: 0.6, mushroom: 0.3 }, density: 0.85, minY: -0.35, seed: ctx.seed + 77, focus: samples, focusRadius: 40 });
   World.clouds(game, { ...P(ctx), count: 18, height: 55, radius: size * 0.8, seed: ctx.seed + 9 });
   level.killY = -12;
   level.hazards.push({ type: 'void', y: level.killY, position: V(0, level.killY, 0) });
@@ -504,7 +514,7 @@ function arena(ctx) {
   // spawn points for enemies / bots around the ring
   level.spawnPoints = [0, 1, 2, 3].map(q => { const a = q * Math.PI / 2; const p = V(Math.cos(a) * R * 0.75, 0, Math.sin(a) * R * 0.75); p.y = gy(p.x, p.z) + 1; return p; });
   World.noPlant(game, [V(0, 0, 0)], R + 3);
-  World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: R + 75, inner: R + 3 }, kinds: { grass: 1, flowers: 1, tree_round: 1.4, tree_pine: 1.4, bush: 1, rock: 1 }, seed: ctx.seed + 2 });
+  World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: R + 75, inner: R + 3 }, kinds: { grass: 1, flowers: 1, tree_round: 1.4, tree_pine: 1.4, bush: 1, rock: 1 }, seed: ctx.seed + 2, focus: [V(0, 0, 0)], focusRadius: R + 30 });
   World.clouds(game, { ...P(ctx), count: 16, height: 50, radius: R + 160, seed: ctx.seed });
   level.ground = ground;
   level.bounds = new THREE.Box3(V(-R - 3, -1, -R - 3), V(R + 3, 10, R + 3));
@@ -573,7 +583,7 @@ function town(ctx) {
   for (const p of densify([V(0, 0, -plaza - street), V(0, 0, plaza + street)], 2)) World.noPlant(game, [p], W);
   for (const p of densify([V(-plaza - street, 0, 0), V(plaza + street, 0, 0)], 2)) World.noPlant(game, [p], W);
   const outer = plaza + street + 70;
-  World.foliage(game, { ...P(ctx), area: { min: [-outer, -outer], max: [outer, outer] }, kinds: { grass: 1, flowers: 1.3, bush: 1.2, tree_round: 1.3, tree_pine: 0.8, rock: 0.4 }, density: 0.75, seed: ctx.seed + 5 });
+  World.foliage(game, { ...P(ctx), area: { min: [-outer, -outer], max: [outer, outer] }, kinds: { grass: 1, flowers: 1.3, bush: 1.2, tree_round: 1.3, tree_pine: 0.8, rock: 0.4 }, density: 0.75, seed: ctx.seed + 5, focus: level.route, focusRadius: 30 });
   World.clouds(game, { ...P(ctx), count: 16, height: 55, radius: outer + 80, seed: ctx.seed });
   level.ground = ground;
   level.bounds = new THREE.Box3(V(-plaza - street - 6, -1, -plaza - street - 6), V(plaza + street + 6, 14, plaza + street + 10));
@@ -615,7 +625,7 @@ function raceTrack(ctx) {
   const trackCurve = new THREE.CatmullRomCurve3(pts.slice(0, N), true, 'centripetal');
   level.track = trackCurve;
   // road ribbon: hard-edged colour bands (curb | asphalt | centre line | asphalt | curb), banked
-  const asphalt = new THREE.Color(Look.isNight(game) ? '#2a2640' : '#50525e'), line = new THREE.Color('#f4f4f4');
+  const asphalt = new THREE.Color(Look.isNight(game) ? '#34324a' : '#62646f'), line = new THREE.Color('#f4f4f4');
   const curbA = new THREE.Color(pal.danger), curbB = new THREE.Color('#ffffff'), black = new THREE.Color('#15151a');
   const lanes = [-W / 2 - 1.4, -W / 2, -W / 2 + 0.5, -W / 2 + 0.75, -0.18, 0.18, W / 2 - 0.75, W / 2 - 0.5, W / 2, W / 2 + 1.4];
   const bandColor = (b, i) => {
@@ -652,7 +662,7 @@ function raceTrack(ctx) {
     rg.setAttribute('normal', new THREE.Float32BufferAttribute(nr, 3));
     rg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
     // keep winding facing up
-    const road = new THREE.Mesh(rg, Look.material(game, { color: '#ffffff', vertexColors: true, rim: 0, side: 'double' }));
+    const road = new THREE.Mesh(rg, Look.material(game, { color: '#ffffff', vertexColors: true, rim: 0, side: 'double', emissive: '#16161c', emissiveIntensity: 1 }));
     road.receiveShadow = true; road.name = 'kit:road';
     ctx.group.add(road);
     // collider: a simple indexed strip over the full width
@@ -727,6 +737,7 @@ function raceTrack(ctx) {
   level.goal = { position: pts[0].clone().add(V(0, 0.5, 0)), radius: W / 2 + 1, finishLine: true };
   for (let k = 1; k < 6; k++) { const i = Math.round(N * k / 6); level.checkpoints.push({ position: pts[i].clone().add(V(0, 0.5, 0)), radius: W / 2 + 2, yaw: yawAtI(i), index: k }); }
   level.laps = 3;
+  level.trackWidth = W;
   // start/finish gantry + boost pads on the straightest stretches
   World.prop(game, 'gate', { ...P(ctx), position: pts[1].clone().add(V(0, -0.05, 0)), yaw: yawAtI(1), width: W + 3, height: 7 });
   const straight = [];
@@ -750,6 +761,10 @@ function raceTrack(ctx) {
     const e = edges[i], q = (sgn < 0 ? e.l : e.r).clone().addScaledVector(e.side, sgn * 3.2); q.y = ground.heightAt(q.x, q.z) ?? 0;
     World.prop(game, i % 2 ? 'tire_stack' : 'cone', { ...P(ctx), position: q, collider: false });
   }
+  for (let i = 8; i < N - 8; i += Math.round(N / 22)) {
+    const e = edges[i], q = e.l.clone().addScaledVector(e.side, -3.0); q.y = ground.heightAt(q.x, q.z) ?? 0;
+    World.prop(game, 'lamp', { ...P(ctx), position: q, height: 5, collider: false });
+  }
   for (let i = 0; i < N; i += Math.round(N / 14)) {
     const e = edges[i], q = e.r.clone().addScaledVector(e.side, 6); q.y = ground.heightAt(q.x, q.z) ?? 0;
     World.prop(game, 'flag', { ...P(ctx), position: q, color: i % 2 ? 'primary' : 'secondary', height: 6 });
@@ -757,8 +772,8 @@ function raceTrack(ctx) {
   const noPlant = [];
   for (let i = 0; i < N; i += 2) noPlant.push(pts[i]);
   World.noPlant(game, noPlant, W / 2 + 7);
-  if (lakeR > 0) World.water(game, { ...P(ctx), level: -0.6, size: (lakeR + 10) * 2, center: V(0, 0, 0) });
-  World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: ext - 10 }, kinds: { grass: 0.8, flowers: 1, bush: 1, tree_round: 1.3, tree_pine: 1.3, rock: 0.8 }, density: 0.8, seed: ctx.seed + 8 });
+  if (lakeR > 0) { World.water(game, { ...P(ctx), level: -0.6, size: (lakeR + 10) * 2, center: V(0, 0, 0) }); level.water = { y: -0.6, center: V(0, -0.6, 0), radius: lakeR }; }
+  World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: ext - 10 }, kinds: { grass: 0.8, flowers: 1, bush: 1, tree_round: 1.3, tree_pine: 1.3, rock: 0.8 }, density: 0.8, seed: ctx.seed + 8, focus: level.route, focusRadius: 30 });
   World.clouds(game, { ...P(ctx), count: 20, height: 60, radius: ext, seed: ctx.seed });
   level.ground = ground;
   level.bounds = boundsOf(pts, 12);
