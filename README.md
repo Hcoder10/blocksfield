@@ -1,10 +1,13 @@
 # Blocksfield
 
-**Open-source Higgsfield Games, for Roblox, on one GPU.** Type a pitch and get back a real, playable Roblox
-place, plus the creator kit Higgsfield gets used for in Roblox videos: a thumbnail, an icon and a scored
-gameplay trailer. Every model is open-weight, and they all take turns on a single RTX 5090.
+**Open-source Higgsfield Games, on one GPU.** Type a pitch and get back a playable game: a three.js game that plays
+in any browser from a link (desktop or phone), or a real Roblox place you open in Studio. Open-weight models plan
+it, code it, make its art, music and sound in ComfyUI, play it, look at it and fix it. They all take turns on a single
+RTX 5090, at $0 per generation.
 
 > Entry for Comfy's [Open Source Higgsfield](https://comfy.org/open-source-higgsfield/) challenge. #OpenSourceHiggsfield
+
+**Play the games: https://hcoder10.github.io/blocksfield/**
 
 ## Why
 
@@ -12,6 +15,8 @@ Higgsfield's Games 2.0 turns a prompt into a hosted browser game, using GPT-6 As
 The "Roblox + Higgsfield" videos online work differently: a chatbot writes code, a person pastes it into Studio
 by hand, and Higgsfield makes the promo video. Blocksfield does the whole loop locally:
 
+- **It makes the game, not a trailer.** On the web the result is a game you play from a link, on a phone too;
+  on Roblox it is a place you open, play and publish.
 - **It builds a real Roblox place**, saved as `.rbxlx`, that you open, play and publish. Roblox has 100M+ daily
   players; a hosted demo does not.
 - **The model builds in Studio and looks at what it built.** The world is made in Roblox Studio's edit mode, as real
@@ -27,19 +32,117 @@ by hand, and Higgsfield makes the promo video. Blocksfield does the whole loop l
   sleep mode) while ComfyUI runs an art job, then wakes. A burst of art requests shares one swap. The live
   dashboard shows which model holds the card at each moment.
 
+## Web games (three.js)
+
+The web target turns a pitch into a static three.js game: one `game.js` of a few hundred lines that composes
+**ThreeKit**, our kit library, plus the art, music and sound generated for it. Every finished game is published to
+**https://hcoder10.github.io/blocksfield/** with its thumbnail, a gameplay video and a "How it was made" page (the
+plan, the concept board, every generated asset, the judged versions, the build log and any operator interventions).
+The games play with keyboard or gamepad on desktop, and with touch on phones (landscape).
+
+### How a game gets made
+
+`python -m blocksfield.web_run` runs these stages. Each stage's result is kept in `runs/web_<id>/stages/`, so a run
+resumes after the last finished stage, and `--redo <stage>` reruns a stage and everything after it.
+
+1. **Plan.** The lead (Qwen3.8-27B) designs the game as schema-checked JSON whose enums are the kits' own option
+   lists (level kind, look, player type, rules, assets), read from the kit code itself.
+2. **Art, in one burst through the arbiter.** A concept board (Qwen-Image-2.1), which is the judge's target; a sky
+   panorama; UI icons (Qwen-Image-2.1 + BiRefNet cut-outs); music (ACE-Step 1.5); sound effects (Stable Audio 3);
+   and props: Idol lifts a generated image to a Gaussian splat, shipped both as a `.spz` splat rendered in the browser
+   (Spark) and as voxel boxes (`blocksfield/splat_to_parts.py`) for the fallback and the collider.
+3. **Scaffold.** A working `index.html` + `game.js` generated straight from the plan.
+4. **Build.** A builder agent customises `game.js` with file tools and the kit docs, and plays the game in real
+   Chrome (`play_game`) as it works.
+5. **Judge and repair.** Every version is played by the autopilot bot in Chrome through `window.__kit` (does it load,
+   console errors, how far it moved, what it collected) for a play score, and a vision judge scores survey shots and
+   the player's view against the concept board. The combined score is the mean of the two (a broken game never wins
+   on looks). A repair agent fixes what the judge found. The best version is kept: fewer errors first, then the
+   playtest, then, within the judge's noise, a pairwise A/B judge. A repair never ships a regression.
+6. **Finalize.** The best version is restored; the thumbnail, an autopilot gameplay video and `about.json` are
+   written to `web/games/<id>/`.
+
+### Run it (web)
+
+Same GPU box as the Roblox target (step 1 of "Run it (Roblox)" below). The laptop needs Python and Chrome; no Roblox
+Studio.
+```bash
+export BLOCKSFIELD_BOX="-p <ssh port> root@<box>"
+python -m blocksfield.web_run --check                                   # tunnel, arbiter, LLM, Chrome, kit catalog
+python -m blocksfield.web_run "A neon kart race around a seaside track at night ..." --id neon_drift
+python -m blocksfield.web_queue runs/web_queue.json --max 2             # keep the box busy: a JSON list of {id, pitch}
+python web/tools/build_index.py                                          # games/index.json for the gallery
+python deploy/publish_pages.py --push                                    # publish web/ to GitHub Pages
+```
+`deploy/launch_web.ps1 -Pitch "..." -Id <id>` starts a detached build on Windows. `--dry-run` uses a fake LLM and
+fake ComfyUI with real Chrome. `--intervention "..."` records a hand edit in the game's `about.json`, and the gallery
+shows it on the game's page.
+
+### Blocksfield Studio
+
+The app face of the web pipeline: a local web app where you type a pitch and watch the game get made. It shows the
+plan, the concept board, every generated asset (sky, icons, music, sound, props), the builder's playtests, each judged
+version with its scores, and finally the playable three.js game. A live strip shows who holds the GPU second by second
+(the 27B LLM or ComfyUI), read from the arbiter. A finished build can be replayed "live" (`/run/<id>?replay=auto`,
+labelled as a replay in the UI).
+
+```bash
+python -m blocksfield.studio                    # http://127.0.0.1:8420/  (needs the arbiter tunnel for the live GPU strip)
+python -m blocksfield.studio --allow-launch     # also lets "Make game" start real builds (blocksfield.web_run)
+python -m blocksfield.studio_record --run neon_drift   # a scripted 15 s 1920x1080 clip -> video/studio_take.mp4
+```
+Without `--allow-launch` the pitch box never starts a build; it opens the latest run instead. With it, "Make game"
+runs `python -m blocksfield.web_run "<pitch>" --id <slug>` detached (set `BLOCKSFIELD_BOX` as above), logging to
+`runs/web_<id>/build.log`, and opens that run's live view. Pages: `/` (create), `/run/<id>` (a build), `/runs` (every
+web game).
+
+### ThreeKit: the web kit library
+
+The same idea as the Roblox kits below: the model composes tested, good-looking parts and never writes a shader,
+physics or UI CSS. `web/kit/CONTRACT.md` is the shared API, and each module has a doc the builder reads.
+
+| Module | What it gives a game | Doc |
+|---|---|---|
+| `core.js` | `createGame`: renderer, scene, camera, Rapier physics world, game loop, events, assets manifest | [CONTRACT.md](web/kit/CONTRACT.md) |
+| `look.js` | One-call art direction (toon_bright, candy, sunset, neon_night, dark_fantasy, cozy, desert, snow, realistic): sky, sun and shadows, fog, ink outlines, bloom, grade, toon materials, a palette | [Look.md](web/kit/docs/Look.md) |
+| `world.js` | Terrain, islands, water, plazas, instanced foliage, clouds, props, static batching | [World.md](web/kit/docs/World.md) |
+| `level.js` | One call builds a dressed, playable level: `sky_islands`, `meadow_course`, `arena`, `town`, `race_track`, `lagoon`, `canyon` | [Level.md](web/kit/docs/Level.md) |
+| `assets.js` | Generated sky panoramas, icons, textures, music, sfx and Idol splat props, each with a procedural fallback | [Assets.md](web/kit/docs/Assets.md) |
+| `physics.js` | Rapier helpers: colliders, kinematic movers, sensors, raycasts | [Physics.md](web/kit/docs/Physics.md) |
+| `player.js` | Controllers (platformer, kart, boat, topdown, fps) with a procedural character, keyboard + gamepad | [Player.md](web/kit/docs/Player.md) |
+| `camera.js` | Follow, chase, orbit and top-down cameras with collision and smoothing | [Camera.md](web/kit/docs/Camera.md) |
+| `gameplay.js` | Collectibles, checkpoints, hazards, enemies, goal, timer, lives, races with AI opponents, and the autopilot bot | [Gameplay.md](web/kit/docs/Gameplay.md) |
+| `ui.js` | A HUD bound to the game state, banners, title / pause / win / lose screens, dialog, countdown; five styles | [UI.md](web/kit/docs/UI.md) |
+| `fx.js` | GPU particles, confetti, trails, floating text, screen shake, hit flash, speed lines, slow-mo | [FX.md](web/kit/docs/FX.md) |
+| `audio.js` | Music with crossfade, sfx with variation, procedural fallback sounds; wired to game events automatically | [Audio.md](web/kit/docs/Audio.md) |
+| `debug.js` | `window.__kit`: the harness API (survey cameras, state, input, autopilot) the playtests and the judge use | [Debug.md](web/kit/docs/Debug.md) |
+| `touch.js` | Phones: a virtual joystick and buttons per player type, camera drag, tap to start, a rotate-your-phone hint | automatic |
+
+**Every game gets these without asking:** touch controls on phones, and graphics quality tiers. A short probe at the
+start picks `high`, `low` (no shadows or bloom, FXAA, fewer grass blades) or `potato` (lower resolution, no
+post-processing) from the measured frame rate; `?quality=low` (or `high`, `potato`) on the URL forces a tier.
+
 ## Models (all open weights)
+
+The web games use the LLM, Qwen-Image-2.1 + BiRefNet, Idol, ACE-Step and Stable Audio; in the browser they run on
+three.js, Rapier (physics) and Spark (Gaussian splats).
 
 | Role | Model | Runs in |
 |---|---|---|
-| Game design, Luau code, vision judge | Qwen3.8-27B NVFP4 (`RedHatAI/Qwen3.8-27B-NVFP4`) | vLLM 0.32 (sleep mode) |
+| Game design, Luau / JavaScript code, vision judge | Qwen3.8-27B NVFP4 (`RedHatAI/Qwen3.8-27B-NVFP4`) | vLLM 0.32 (sleep mode) |
 | Concept art, UI art, icons, thumbnail | Qwen-Image-2.1 turbo int8 + BiRefNet cut-outs | ComfyUI |
-| 3D props (meshes) | TRELLIS.2 → decimated under Roblox's 20k-triangle limit | ComfyUI |
-| Procedural props | Idol (`speridlabs/idol`, image → Gaussian splat in ~2 s) → voxel / blob Parts | ComfyUI (custom node in `comfy_nodes/idol`) |
-| Trailer | LTX-2.5 distilled NVFP4, image-to-video | ComfyUI |
+| 3D props (meshes, Roblox) | TRELLIS.2 → decimated under Roblox's 20k-triangle limit | ComfyUI |
+| Procedural props | Idol (`speridlabs/idol`, image → Gaussian splat in ~2 s) → voxel / blob Parts (Roblox); `.spz` splat + voxels (web) | ComfyUI (custom node in `comfy_nodes/idol`) |
+| Trailer (Roblox) | LTX-2.5 distilled NVFP4, image-to-video | ComfyUI |
 | Music | ACE-Step 1.5 turbo | ComfyUI |
 | Sound effects | Stable Audio 3 small-sfx (t5gemma text encoder) | ComfyUI |
+| Demo video voiceover only (not part of the pipeline) | Kokoro TTS | local |
 
-## The kit library: why a 27B model can make good-looking games
+## Roblox target
+
+The original target: a pitch becomes a real Roblox place, built inside Roblox Studio.
+
+### The kit library: why a 27B model can make good-looking games
 
 A local 27B model can't write a vehicle controller, an animated HUD or a lighting rig to the standard of a top
 Roblox game. In our live runs it reliably failed in the same ways: geometry that renders as nothing, noon lighting
@@ -68,7 +171,7 @@ code, and `PropKit.spawn` places it. If Idol is unavailable it voxelises a TRELL
 The ComfyUI asset tools (above) fill the kits' art slots: generated skyboxes, tileable textures, UI art, icons,
 sound effects and music.
 
-## How it fits together
+### How it fits together
 
 ```
  laptop (Windows/Mac)                          GPU box (one RTX 5090)
@@ -98,13 +201,13 @@ sound effects and music.
 - The build harness, which handles plan → style guide → architecture → build → Studio capture → vision judge →
   repair → polish, is [cybus-harness](https://github.com/Hcoder10/cybus-harness/tree/blocksfield) (branch `blocksfield`).
 
-## Try the demo game (no GPU needed)
+### Try the Roblox demo game (no GPU needed)
 
 `examples/starbloom_peaks.rbxlx` is Starbloom Peaks, the game in the demo video, as the pipeline built it. Open it in
 Roblox Studio and press Play. For its one generated UI glyph, first copy `examples/content/cybus` into Studio's
 content folder (Windows: `%LOCALAPPDATA%\Roblox\Versions\<version>\content\`); without it the star icon is blank.
 
-## Run it
+### Run it (Roblox)
 
 You need a Linux GPU box with one 32 GB card (we use a rented RTX 5090) and a Windows or Mac machine with Roblox
 Studio. They can be the same machine.
@@ -144,7 +247,7 @@ sets it).
 **Optional: 3D props.** Set `ROBLOX_API_KEY` (Open Cloud, Assets read and write) and `ROBLOX_CREATOR_ID`. Builders then
 also get a `generate_model` tool (Qwen-Image → TRELLIS.2 → decimated GLB → uploaded → loaded into the place).
 
-### The ComfyUI workflows
+#### The ComfyUI workflows
 
 `workflows/api/` holds the API-format workflows the arbiter runs, with `{{param}}` slots and defaults in
 `<name>.meta.json`:
@@ -163,24 +266,6 @@ also get a `generate_model` tool (Qwen-Image → TRELLIS.2 → decimated GLB →
 Drag any of them into ComfyUI to see and edit the graph. `python -m blocksfield.comfy run <name> key=value`
 runs one headless.
 
-## Blocksfield Studio
-
-The app face of the web pipeline: a local web app where you type a pitch and watch the game get made. It shows the
-plan, the concept board, every generated asset (sky, icons, music, sound, props), the builder's playtests, each judged
-version with its scores, and finally the playable three.js game. A live strip shows who holds the GPU second by second
-(the 27B LLM or ComfyUI), read from the arbiter. A finished build can be replayed "live" (`/run/<id>?replay=auto`,
-labelled as a replay in the UI).
-
-```bash
-python -m blocksfield.studio                    # http://127.0.0.1:8420/  (needs the arbiter tunnel for the live GPU strip)
-python -m blocksfield.studio --allow-launch     # also lets "Make game" start real builds (blocksfield.web_run)
-python -m blocksfield.studio_record --run neon_drift   # a scripted 15 s 1920x1080 clip -> video/studio_take.mp4
-```
-Without `--allow-launch` the pitch box never starts a build; it opens the latest run instead. With it, "Make game"
-runs `python -m blocksfield.web_run "<pitch>" --id <slug>` detached (set `BLOCKSFIELD_BOX` as in step 3), logging to
-`runs/web_<id>/build.log`, and opens that run's live view. Pages: `/` (create), `/run/<id>` (a build), `/runs` (every
-web game).
-
 ## License
 
 MIT for this repository (see `LICENSE`). Each model keeps its own licence (see the table above); check them before any
@@ -191,7 +276,11 @@ commercial use.
 - **What's verified.** Every kit was screenshotted in Studio: UIKit, LookKit and WorldKit2 look good; ControllerKit
   and GameplayKit run without errors (their *feel* has not been playtested by a person); FXKit was retuned after its
   first Studio pass showed effects too small. All six ComfyUI asset tools ran end to end on the 5090.
-- **Operator interventions.** Where a build's own code crashed on a one-line bug its repair rounds missed, we fixed
+- **Web games: operator interventions.** Every web game records any hand action in its `about.json`
+  (`operator_interventions`), and its gallery page lists them. Most were re-running a stage after an LLM outage or a
+  pipeline fix (`--redo`, `--backfill-assets`); some games have none. A game with interventions can be replaced in the
+  gallery by a fresh, untouched re-run (`superseded_by`).
+- **Roblox: operator interventions.** Where a build's own code crashed on a one-line bug its repair rounds missed, we fixed
   that line by hand so the rest of the build could be judged, and we logged every such edit in the run's
   `OPERATOR_NOTES.md`. Everything else in a game is written by the local model.
 - **What we learned running a 27B model as the builder.** It composes kits well but cannot tune a look. Left free in
