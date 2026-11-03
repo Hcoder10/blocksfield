@@ -16,7 +16,7 @@ Camera.MODES                           // ['follow', 'chase', 'topdown', 'orbit'
 | function | options (defaults) |
 |---|---|
 | `follow` | `distance` 10, `height` 1.6 (look-at above the feet), `pitch` 0.36 rad (+ = looking down), `lookAhead` 1.6, `autoYaw` 1.4 (swing-behind speed, 0 = never), `orbit` true (mouse drag / right stick / wheel zoom), `collide` true, `fov` 60, `yaw` (start; default behind the player) |
-| `chase` | `distance` 7.5, `height` 2.6, `lookAt` 1.2, `fov` 64, `boostFov` 14, `speedFov` 8, `stiffness` 5 |
+| `chase` | `distance` 7.5, `height` 2.6, `lookAt` 1.2, `fov` 64, `boostFov` 10, `speedFov` 6, `stiffness` 5 (dolly-zooms in as the FOV widens, so the vehicle keeps its size) |
 | `topdown` | `height` 22, `pitch` 1.0 rad (1.57 = straight down), `yaw` 0 (camera south, looking north / -Z), `lookAhead` 2.5, `fov` 50 |
 | `orbit` | `target` Vector3 or a player, `radius` 30, `height` 12, `speed` 0.12 rad/s, `lookHeight` 0, `fov` 55 |
 | `firstPerson` | `eye` 1.55, `fov` 72, `bob` 0.05, `sprintFov` 8, `weapon` true, `crosshair` true |

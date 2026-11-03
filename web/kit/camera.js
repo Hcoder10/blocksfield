@@ -203,7 +203,7 @@ function occluders(game, player) {
 export function chase(game, player, opts = {}) {
   if (!player && game) player = game.__player;
   needPlayer('chase', player);
-  const o = { distance: 7.5, height: 2.6, lookAt: 1.2, fov: 64, boostFov: 14, speedFov: 8, stiffness: 5, collide: true, ...opts };
+  const o = { distance: 7.5, height: 2.6, lookAt: 1.2, fov: 64, boostFov: 10, speedFov: 6, stiffness: 5, collide: true, ...opts };
   const st = { yaw: player.yaw, pos: new THREE.Vector3(), target: new THREE.Vector3(), first: true, fov: o.fov, kick: 0 };
   const cam = game.camera;
   const maxS = (player.tuning && player.tuning.maxSpeed) || 30;
@@ -218,7 +218,8 @@ export function chase(game, player, opts = {}) {
     if (st.first) st.yaw = want;
     st.yaw += angWrap(want - st.yaw) * damp(o.stiffness, dt);
     const f = new THREE.Vector3(Math.sin(st.yaw), 0, Math.cos(st.yaw));
-    const dist = o.distance + Math.min(1, sp / maxS) * 0.8 + st.kick * 0.5;
+    // dolly-zoom: as the FOV widens with speed, move in so the vehicle keeps its size on screen
+    const dist = (o.distance + Math.min(1, sp / maxS) * 0.8) * Math.tan(o.fov * Math.PI / 360) / Math.tan(st.fov * Math.PI / 360);
     const tgt = p.clone().add(new THREE.Vector3(0, o.lookAt, 0)).addScaledVector(f, 2.5);
     let desired = p.clone().addScaledVector(f, -dist).add(new THREE.Vector3(0, o.height, 0));
     if (o.collide) desired = pullIn(game, p.clone().add(new THREE.Vector3(0, 1.5, 0)), desired, player, 2);
