@@ -1,0 +1,314 @@
+{
+ "id": "neon_drift",
+ "title": "Neon Drift Circuit",
+ "tagline": "Drift the neon, charge the boost, out-run five rivals under a giant synthwave sun.",
+ "pitch": "Neon Drift Circuit: a synthwave arcade kart racer at night. Drift through glowing neon corners, charge drift boosts, hit boost pads and race five rivals over three laps on a track lined with glowing palm trees and a giant setting sun. Pumping synth music, a slick sci-fi HUD with speedometer, lap counter and position.",
+ "genre": "Synthwave arcade kart racing",
+ "controls": [
+  "W / \u2191: accelerate",
+  "S / \u2193: brake / reverse",
+  "A / D or \u2190 / \u2192: steer",
+  "Space: hold to drift, release for boost",
+  "R: reset kart to track"
+ ],
+ "created": "2026-11-02T21:05:35-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "v2",
+  "score": 7.5,
+  "play": 8.0,
+  "vision": 7.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 7.0,
+    "play_score": 8.0,
+    "vision_score": 6.0
+   },
+   {
+    "tag": "s0",
+    "score": 7.0,
+    "play_score": 8.0,
+    "vision_score": 6.0
+   },
+   {
+    "tag": "v1",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "v2",
+    "score": 7.5,
+    "play_score": 8.0,
+    "vision_score": 7.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Neon Drift Circuit",
+  "tagline": "Drift the neon, charge the boost, out-run five rivals under a giant synthwave sun.",
+  "genre": "Synthwave arcade kart racing",
+  "core_loop": "Steer the kart around a neon night circuit, hold drifts in corners to charge nitro, ride boost pads and grab Volt Orbs, then release the boost to overtake rivals across three laps.",
+  "controls": [
+   "W / \u2191: accelerate",
+   "S / \u2193: brake / reverse",
+   "A / D or \u2190 / \u2192: steer",
+   "Space: hold to drift, release for boost",
+   "R: reset kart to track"
+  ],
+  "win_condition": "Finish 3 laps in 1st place ahead of the five rivals (placement shown on the win screen).",
+  "lose_condition": "Finish the race in 5th or 6th place.",
+  "look": "neon_night",
+  "level_kind": "race_track",
+  "player_type": "kart",
+  "camera": "chase",
+  "level_size": "medium",
+  "player_colors": {
+   "body": "#00f0ff",
+   "accent": "#ff2d95"
+  },
+  "collectible": {
+   "tag": "orb",
+   "label": "Volt Orbs",
+   "count": 24,
+   "target": 10
+  },
+  "goal": true,
+  "timer_seconds": 0,
+  "lives": 0,
+  "enemies": 0,
+  "race": {
+   "laps": 3,
+   "opponents": 5
+  },
+  "ui_style": "scifi",
+  "art_direction": "Synthwave palette: deep indigo night, hot magenta and cyan neon, a giant striped setting sun bleeding orange-pink on the horizon. Glossy black asphalt with glowing grid lines, chrome-and-plastic karts, palm trees rim-lit in pink, soft bloom on every light source. References: OutRun, Synthwave '84, retro-futurist arcade cabinets.",
+  "concept_shots": [
+   "Low chase cam behind the player's cyan kart drifting a glowing hairpin \u2014 magenta tire smoke, speed lines, a grid of boost pads ahead, and the giant striped sun sinking behind the horizon.",
+   "Start grid at dusk: six karts lined up on the neon start line, palm trees glowing pink along both sides of the track, checkered banner and a 3-2-1 countdown over the sci-fi HUD.",
+   "Victory moment: the kart crosses the finish line in 1st place as confetti bursts, a big '1ST' banner and trophy icon flash on the HUD with the synth fanfare."
+  ],
+  "assets": {
+   "sky": "Synthwave night panorama: deep purple-to-black gradient, a giant striped setting sun half-sunk on the horizon, scattered stars and a faint aurora haze, distant neon city skyline silhouette.",
+   "icons": [
+    {
+     "name": "speedo",
+     "prompt": "Glossy cyan speedometer gauge icon with a bright needle, synthwave neon style, dark rounded badge",
+     "for": "speed"
+    },
+    {
+     "name": "lap_ring",
+     "prompt": "Magenta checkered lap-counter ring icon with a glowing arc, neon synthwave style",
+     "for": "lap"
+    },
+    {
+     "name": "pos_crown",
+     "prompt": "Neon gold position crown icon with cyan glow outline, synthwave arcade style",
+     "for": "pos"
+    },
+    {
+     "name": "orb_icon",
+     "prompt": "Glowing cyan energy orb icon with magenta core, synthwave neon style",
+     "for": "orbs"
+    }
+   ],
+   "music": "Pumping synthwave / retrowave: driving four-on-the-floor kick, arpeggiated sawtooth leads, sidechained bass, 118 BPM, neon-night energy.",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "Bright crystal pling with a short rising synth arpeggio, crisp and sparkly"
+    },
+    {
+     "event": "boost",
+     "prompt": "Rising synth sweep into a nitro whoosh burst with a subtle pitch drop at the end"
+    },
+    {
+     "event": "checkpoint",
+     "prompt": "Two-note synth bell lap chime, warm and punchy"
+    },
+    {
+     "event": "damage",
+     "prompt": "Kart scrape and collision thud with light distortion and a low rumble"
+    },
+    {
+     "event": "win",
+     "prompt": "Triumphant synth fanfare arpeggio with a shimmering pad tail"
+    },
+    {
+     "event": "lose",
+     "prompt": "Descending minor synth sting, moody and short"
+    }
+   ],
+   "props": [
+    {
+     "name": "neon_palm",
+     "prompt": "One stylized palm tree with a glowing magenta frond crown and a cyan neon ring around the trunk, synthwave silhouette",
+     "count": 12
+    },
+    {
+     "name": "boost_pylon",
+     "prompt": "One solid chrome-and-magenta boost pylon with a glowing cyan chevron arrow, arcade style",
+     "count": 6
+    }
+   ]
+  },
+  "features": [
+   "Drift boost: holding Space in a corner charges a nitro bar; releasing fires a burst with speed lines and a cyan trail",
+   "Boost pads scattered on straights that launch the kart with a shockwave ring and whoosh",
+   "Five AI rival karts in distinct neon colors with nameplates, rubber-banded to keep the pack tight",
+   "Speed lines, screen shake and tire-smoke trail at top speed and while drifting",
+   "Lap banner + chime each lap, position toasts when overtaking rivals",
+   "Slow-mo on the final lap's finish straight, then trophy, placement and confetti on the win screen"
+  ]
+ },
+ "timings_s": {
+  "art": 220.4,
+  "build": 668.4,
+  "eval_s0": 111.6,
+  "eval_v0": 58.8,
+  "eval_v1": 49.8,
+  "eval_v2": 122.0,
+  "plan": 83.7,
+  "repair_1": 147.1,
+  "repair_2": 409.6,
+  "scaffold": 0.6
+ },
+ "model_calls": {
+  "lead": {
+   "calls": 1,
+   "prompt_tokens": 5771,
+   "completion_tokens": 3958,
+   "seconds": 83.5
+  },
+  "builder": {
+   "calls": 55,
+   "prompt_tokens": 1431293,
+   "completion_tokens": 7786,
+   "seconds": 927.6
+  },
+  "judge": {
+   "calls": 10,
+   "prompt_tokens": 51970,
+   "completion_tokens": 3961,
+   "seconds": 199.0
+  }
+ },
+ "agents": {
+  "live": 4,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 85.3
+    },
+    "icon_speedo": {
+     "ok": true,
+     "seconds": 94.7
+    },
+    "icon_lap_ring": {
+     "ok": true,
+     "seconds": 104.9
+    },
+    "icon_pos_crown": {
+     "ok": true,
+     "seconds": 115.3
+    },
+    "icon_orb_icon": {
+     "ok": true,
+     "seconds": 125.1
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 147.0
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 151.9
+    },
+    "sfx_boost": {
+     "ok": true,
+     "seconds": 152.9
+    },
+    "sfx_checkpoint": {
+     "ok": true,
+     "seconds": 153.7
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 155.0
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 156.3
+    },
+    "sfx_lose": {
+     "ok": true,
+     "seconds": 157.5
+    },
+    "prop_neon_palm": {
+     "ok": true,
+     "seconds": 197.6
+    },
+    "prop_boost_pylon": {
+     "ok": true,
+     "seconds": 220.4
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Neon Drift Circuit: a synthwave arcade kart racer built on the neon_night look. The player's cyan/magenta kart races 5 AI rivals over 3 laps on a medium race_track under a giant striped setting sun, with 24 Volt Orbs (10 to target), boost pads, drift-boost, and a full sci-fi HUD.\n\nBuilt from the scaffold by adding the plan's features:\n- Level: race_track (medium, seed 7) with collectibles retagged 'orb'; decorative generated props (neon palms + boost pylons) placed along the route on the ground.\n- Player: kart with body #00f0ff / accent #ff2d95, chase camera.\n- Rules: 3 laps, 5 opponents, countdown, collect target 10, goal, count-up timer; onWin fires confetti + star burst + white flash, onLose fires a magenta flash.\n- UI: scifi HUD with Volt Orb counter (generated orb icon), timer, lap, live position (gold/silver/bronze), km/h speedometer, minimap, and objective \"Finish 3 laps in 1st place\". Title screen sells the fantasy with tagline + control credit and a 3-2-1-GO countdown.\n- Custom juice: cyan boost trail on the kart, magenta tire smoke + speed lines on drift, shockwave ring + speed lines + boost SFX on boost, sparkle burst + collect SFX on pickup, lap banners + chime (with a \"FINAL LAP!\" warning banner), and overtake/slip position toasts. Slow-mo + speed lines trigger on the final lap's finish straight.\n- FX.auto + Audio.auto wire the rest (collect/checkpoint/damage/win/lose sounds and effects); Debug.install retained and game ends with game.start().\n\nVerified via play_game (multiple runs): zero console errors, player moves along the route, collects orbs (21/24 in a 25s autopilot), races the rivals, and the position toasts fire.",
+    "changes": [
+     "Retagged level collectibles to 'orb' (Volt Orbs, target 10)",
+     "Placed generated neon-palm and boost-pylon props along the route",
+     "Configured race rules: 3 laps, 5 AI opponents, countdown, count-up timer, onWin/onLose callbacks",
+     "Built scifi HUD: orb counter w/ generated icon, timer, lap, position, km/h speedometer, minimap, objective",
+     "Title screen with tagline, controls credit and 3-2-1-GO countdown",
+     "Added custom FX: cyan boost trail, magenta drift smoke, boost shockwave ring, collect sparkles, lap/final-lap banners, overtake/slip toasts, final-lap slow-mo",
+     "Wired generated SFX (boost, collect, checkpoint) on the matching events"
+    ],
+    "known_issues": [
+     "Autopilot tends to bunch up near the finish on the final lap, so a full 3-lap win was not observed in the 25s test window (race still in progress, no errors); the win/lose screens are wired via rules callbacks + FX.auto and will fire on completion.",
+     "Slow-mo on the final-lap finish straight is approximated by the last checkpoint rather than exact route progress."
+    ]
+   },
+   "plays": 5
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Neon Drift Circuit: a synthwave arcade kart racer at night. Drift through glowing neon corners, charge drift boosts, hit boost pads and race five rivals over three laps on a track lined with glowing palm trees and a giant setting sun. Pumping synth music, a slick sci-fi HUD with speedometer, lap counter and position.",
+  "notes": null,
+  "chosen": {
+   "level_kind": "race_track",
+   "look": "neon_night",
+   "player_type": "kart",
+   "camera": "chase",
+   "ui_style": "scifi"
+  }
+ }
+}

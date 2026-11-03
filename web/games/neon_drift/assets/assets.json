@@ -1,0 +1,89 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Synthwave night panorama: deep purple-to-black gradient, a giant striped setting sun half-sunk on the horizon, scattered stars and a faint aurora haze, distant neon city skyline silhouette.",
+  "wrap_seam": 0.64
+ },
+ "icon_speedo": {
+  "file": "icon_speedo.png",
+  "kind": "icon",
+  "prompt": "Glossy cyan speedometer gauge icon with a bright needle, synthwave neon style, dark rounded badge",
+  "for": "speed"
+ },
+ "icon_lap_ring": {
+  "file": "icon_lap_ring.png",
+  "kind": "icon",
+  "prompt": "Magenta checkered lap-counter ring icon with a glowing arc, neon synthwave style",
+  "for": "lap"
+ },
+ "icon_pos_crown": {
+  "file": "icon_pos_crown.png",
+  "kind": "icon",
+  "prompt": "Neon gold position crown icon with cyan glow outline, synthwave arcade style",
+  "for": "pos"
+ },
+ "icon_orb_icon": {
+  "file": "icon_orb_icon.png",
+  "kind": "icon",
+  "prompt": "Glowing cyan energy orb icon with magenta core, synthwave neon style",
+  "for": "orbs"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Pumping synthwave / retrowave: driving four-on-the-floor kick, arpeggiated sawtooth leads, sidechained bass, 118 BPM, neon-night energy."
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "Bright crystal pling with a short rising synth arpeggio, crisp and sparkly"
+ },
+ "sfx_boost": {
+  "file": "sfx_boost.mp3",
+  "kind": "sfx",
+  "event": "boost",
+  "prompt": "Rising synth sweep into a nitro whoosh burst with a subtle pitch drop at the end"
+ },
+ "sfx_checkpoint": {
+  "file": "sfx_checkpoint.mp3",
+  "kind": "sfx",
+  "event": "checkpoint",
+  "prompt": "Two-note synth bell lap chime, warm and punchy"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "Kart scrape and collision thud with light distortion and a low rumble"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "Triumphant synth fanfare arpeggio with a shimmering pad tail"
+ },
+ "sfx_lose": {
+  "file": "sfx_lose.mp3",
+  "kind": "sfx",
+  "event": "lose",
+  "prompt": "Descending minor synth sting, moody and short"
+ },
+ "prop_neon_palm": {
+  "file": "prop_neon_palm.json",
+  "kind": "prop",
+  "prompt": "One stylized palm tree with a glowing magenta frond crown and a cyan neon ring around the trunk, synthwave silhouette",
+  "via": "idol",
+  "parts": 477
+ },
+ "prop_boost_pylon": {
+  "file": "prop_boost_pylon.json",
+  "kind": "prop",
+  "prompt": "One solid chrome-and-magenta boost pylon with a glowing cyan chevron arrow, arcade style",
+  "via": "idol",
+  "parts": 318
+ }
+}

@@ -1,0 +1,75 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Golden hour panorama: low honey sun, peach and amber gradient fading to soft dusk blue at the top, puffy warm clouds, a few distant birds",
+  "wrap_seam": 0.92
+ },
+ "icon_lantern": {
+  "file": "icon_lantern.png",
+  "kind": "icon",
+  "prompt": "chibi paper lantern with warm amber glow, rounded cozy icon style, soft outline",
+  "for": "lanterns"
+ },
+ "icon_letter": {
+  "file": "icon_letter.png",
+  "kind": "icon",
+  "prompt": "a folded cream letter with a red wax seal, rounded cozy icon style"
+ },
+ "icon_tree": {
+  "file": "icon_tree.png",
+  "kind": "icon",
+  "prompt": "a small tree with glowing amber lanterns on its branches, rounded cozy icon style"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "soft acoustic folk: fingerpicked guitar, ukulele, gentle handclaps and a music-box melody, warm and unhurried, ~80 bpm"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "a warm little bell chime with a soft pluck, like a lantern being lifted"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "a soft woosh with a tiny springy boing"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "a muffled cushiony thud, gentle and light"
+ },
+ "sfx_checkpoint": {
+  "file": "sfx_checkpoint.mp3",
+  "kind": "sfx",
+  "event": "checkpoint",
+  "prompt": "a gentle two-note chime arpeggio, like a doorbell"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "a warm music-box fanfare with bells and soft applause"
+ },
+ "prop_lantern_post": {
+  "file": "prop_lantern_post.json",
+  "kind": "prop",
+  "prompt": "a short wooden post with a round glowing amber paper lantern on top, warm light, cozy rounded voxel shapes",
+  "via": "idol",
+  "parts": 420
+ },
+ "prop_mailbox": {
+  "file": "prop_mailbox.json",
+  "kind": "prop",
+  "prompt": "a small wooden mailbox with a red flag and a cream letter peeking out, rounded cozy voxel",
+  "via": "idol",
+  "parts": 409
+ }
+}
