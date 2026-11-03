@@ -178,8 +178,14 @@
     if (!dims.length || !games.length) return;
     // per-game rows/columns only for dimensions some game has recorded (species arrived after the first games)
     const shown = dims.filter(([k]) => games.some((g) => g[k]));
-    $("#gen-eq").innerHTML = dims.map(([k, label]) => `<b>${space[k].length}</b> ${label}`).join('<span class="x">×</span>') +
-      '<span class="tail">, composed by the model</span>';
+    // Lead with what ComfyUI makes per game; cutscenes are counted, since not every game has them
+    const cut = games.filter((g) => g.cutscenes).length;
+    const cutText = !cut ? "" : cut === games.length ? " and LTX-2.5 cutscenes"
+      : `, plus LTX-2.5 cutscenes for ${cut} of ${games.length} games`;
+    $("#gen-eq").innerHTML = `Made for each game by ComfyUI: concept art, sky panorama, UI icons, music, sound effects` +
+      `${cut === games.length ? ", " : " and "}Gaussian-splat 3D props${cutText}.` +
+      '<span class="gen-sub">The model writes the game and lays out levels on our ThreeKit library (preset levels, looks and ' +
+      'characters, or levels it composes itself).</span>';
     $("#gen-palette").innerHTML = shown.map(([k, label]) => {
       const n = {};
       games.forEach((g) => { if (g[k]) n[g[k]] = (n[g[k]] || 0) + 1; });
