@@ -83,6 +83,12 @@ export const COLLECTIBLE_DEFS = {
   gem: { color: '#3ee0ff', value: 5, radius: 1.2 },
   seed: { color: '#8ee05a', value: 2, radius: 1.1 },
   heart: { color: '#ff5c8a', value: 0, radius: 1.2 },
+  lantern: { color: '#ffb347', value: 2, radius: 1.2 },
+  letter: { color: '#fff4dc', value: 2, radius: 1.2 },
+  apple: { color: '#ff4d4d', value: 2, radius: 1.1 },
+  flower: { color: '#ff8fd0', value: 2, radius: 1.1 },
+  gift: { color: '#5fb8ff', value: 2, radius: 1.2 },
+  key: { color: '#ffd23f', value: 2, radius: 1.1 },
   orb: { color: '#c58bff', value: 1, radius: 1.1 },
 };
 
@@ -127,6 +133,32 @@ export function makeCollectible(game, tag = 'coin', opts = {}) {
     const s = new THREE.Shape(); s.moveTo(0, -0.45); s.bezierCurveTo(0.6, -0.05, 0.45, 0.45, 0, 0.2); s.bezierCurveTo(-0.45, 0.45, -0.6, -0.05, 0, -0.45);
     const geo = new THREE.ExtrudeGeometry(s, { depth: 0.18, bevelEnabled: true, bevelSize: 0.06, bevelThickness: 0.06 }); geo.center();
     spin.add(mesh(geo, mat(game, color, 'pickup', { glow: 0.6 })));
+  } else if (tag === 'lantern') {
+    const frame = mat(game, '#5a3a22');
+    const glass = mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.42, 8), new THREE.MeshBasicMaterial({ color: '#ffd27a', toneMapped: false })); spin.add(glass);
+    for (const y of [-0.24, 0.24]) { const cap = mesh(new THREE.CylinderGeometry(y > 0 ? 0.14 : 0.27, 0.27, 0.08, 8), frame); cap.position.y = y; spin.add(cap); }
+    const hook = mesh(new THREE.TorusGeometry(0.09, 0.025, 6, 12), frame); hook.position.y = 0.36; spin.add(hook);
+  } else if (tag === 'letter') {
+    const env = mesh(new THREE.BoxGeometry(0.62, 0.42, 0.05), mat(game, color, 'pickup', { glow: 0.25 })); spin.add(env);
+    const flap = mesh(new THREE.ConeGeometry(0.31, 0.2, 4), mat(game, '#f2dcb6')); flap.rotation.set(Math.PI / 2, Math.PI / 4, 0); flap.scale.set(1.4, 1, 0.1); flap.position.set(0, 0.08, 0.03); spin.add(flap);
+    const seal = mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.03, 12), mat(game, '#e8413c', 'pickup')); seal.rotation.x = Math.PI / 2; seal.position.set(0, 0, 0.05); spin.add(seal);
+  } else if (tag === 'apple') {
+    const a = mesh(new THREE.SphereGeometry(0.34, 16, 12), mat(game, color, 'pickup', { glow: 0.3 })); a.scale.y = 0.9; spin.add(a);
+    const st = mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.18, 6), mat(game, '#5a3a22')); st.position.y = 0.34; spin.add(st);
+    const lf = mesh(new THREE.SphereGeometry(0.1, 8, 6), mat(game, '#6fd16a')); lf.scale.set(1.4, 0.3, 0.7); lf.position.set(0.1, 0.38, 0); spin.add(lf);
+  } else if (tag === 'flower') {
+    const c0 = mesh(new THREE.SphereGeometry(0.11, 10, 8), mat(game, '#ffd23f', 'pickup')); spin.add(c0);
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; const p = mesh(new THREE.SphereGeometry(0.13, 10, 8), mat(game, color, 'pickup', { glow: 0.3 })); p.scale.set(1, 1, 0.4); p.position.set(Math.cos(a) * 0.2, Math.sin(a) * 0.2, 0); spin.add(p); }
+  } else if (tag === 'gift') {
+    spin.add(mesh(new THREE.BoxGeometry(0.5, 0.42, 0.5), mat(game, color, 'pickup', { glow: 0.25 })));
+    const rib = mat(game, '#ff5c8a', 'pickup');
+    spin.add(mesh(new THREE.BoxGeometry(0.52, 0.44, 0.1), rib)); spin.add(mesh(new THREE.BoxGeometry(0.1, 0.44, 0.52), rib));
+    for (const s of [-1, 1]) { const bow = mesh(new THREE.TorusGeometry(0.09, 0.03, 6, 12), rib); bow.position.set(0.08 * s, 0.28, 0); bow.rotation.y = Math.PI / 2; spin.add(bow); }
+  } else if (tag === 'key') {
+    const km = mat(game, color, 'pickup', { glow: 0.4, metal: 0.6 });
+    const ring = mesh(new THREE.TorusGeometry(0.14, 0.05, 8, 16), km); ring.position.y = 0.22; spin.add(ring);
+    const shaft = mesh(new THREE.BoxGeometry(0.07, 0.42, 0.07), km); shaft.position.y = -0.05; spin.add(shaft);
+    for (const y of [-0.2, -0.1]) { const t = mesh(new THREE.BoxGeometry(0.14, 0.06, 0.07), km); t.position.set(0.07, y, 0); spin.add(t); }
   } else {
     spin.add(mesh(new THREE.IcosahedronGeometry(0.42, 1), mat(game, color, 'pickup', { glow: 0.7, flat: true })));
   }
@@ -255,6 +287,15 @@ export function rules(game, opts = {}) {
   // vehicles on a track race by default; race: true means default settings
   if (opts.race === undefined && vehicle && level.track) opts = { ...opts, race: {} };
   if (opts.race === true) opts = { ...opts, race: {} };
+  if (opts.mode != null && opts.mode !== '') {
+    const mode = String(opts.mode).toLowerCase().replace(/[\s_-]/g, '');
+    if (!MODES.includes(mode)) throw new Error(`Gameplay.rules: unknown mode "${opts.mode}"; modes: ${MODES.join(', ')}`);
+    if (mode === 'timetrial') opts = { ...opts, race: { ...(opts.race && opts.race !== true ? opts.race : {}), timeTrial: true } };
+    if (mode === 'race' && !opts.race) opts = { ...opts, race: {} };
+    if (mode === 'waves' && !opts.waves) opts = { ...opts, waves: 5 };
+    if (mode === 'quests' && !(opts.quests && opts.quests.length)) throw new Error('Gameplay.rules: mode "quests" needs quests: [{ type: "fetch", npc: "Mira", item: "lantern", count: 3 }, ...] and npcs');
+    if (mode === 'goal' && opts.goal === undefined) opts = { ...opts, goal: true };
+  }
   if (opts.race && !level.track) { console.warn('Gameplay.rules: race needs level.track; ignoring race (use a race kind such as "race_track")'); opts = { ...opts, race: null }; }
   const root = new THREE.Group(); root.name = 'gameplay'; game.scene.add(root);
 
@@ -330,7 +371,7 @@ export function rules(game, opts = {}) {
     g.traverse(o => { o.userData.noCollide = true; });
     R.goal = { position: gp.clone(), radius: level.goal.radius || 2, object: g, ring, disc, beam, glow, stars, reached: false };
   }
-  const goalLocked = () => !!(collect && R.goal && S.collected < S.target);
+  const goalLocked = () => !!(R.goal && ((collect && S.collected < S.target) || (Q && Q.quests.some(q => !q.done))));
 
   // ---- movers
   for (const m of level.movers) {
@@ -558,7 +599,7 @@ export function rules(game, opts = {}) {
     const mk = (pl, isPlayer) => ({ player: pl, isPlayer, idx: nearest(pl.position, null), lap: 1, half: false, finished: false, progress: 0, lane: 0 });
     R.racers.push(mk(player, true));
     // AI opponents
-    const nOpp = opts.race.opponents ?? 3;
+    const nOpp = opts.race.opponents ?? (opts.race.timeTrial ? 0 : 3);
     const palette = ['#5b8cff', '#ffd23f', '#b56bff', '#3ddc97', '#ff5fa2', '#ff9a3c'];
     const t0 = track.getTangentAt(0), side = V3(t0.z, 0, -t0.x).normalize();
     const startP = player.position.clone();
@@ -617,7 +658,8 @@ export function rules(game, opts = {}) {
 
   function doCollect(it, by) {
     it.collected = true; it.t = 0;
-    if (!collect || it.tag === collect.tag) S.collected += collect ? 1 : 0;
+    if (it.quest && Q) Q.collected(it);
+    else if (!collect || it.tag === collect.tag) S.collected += collect ? 1 : 0;
     S.score += it.value;
     if (it.tag === 'heart' && S.hp < maxHp) S.hp++;
     changed();
@@ -823,6 +865,12 @@ export function rules(game, opts = {}) {
     for (const e of R.enemies) {
       e.t += dt;
       if (grace && e.alive) { e.body.position.y = Math.abs(Math.sin(e.t * 3)) * 0.1; continue; }
+      if (e.spawnT > 0) {
+        e.spawnT -= dt; const k = THREE.MathUtils.clamp(1 - e.spawnT / 0.45, 0.01, 1);
+        e.object.scale.setScalar(k < 1 ? k * (1 + Math.sin(k * Math.PI) * 0.3) : 1);
+        if (e.spawnT <= 0) { e.object.scale.setScalar(1); burst(e.position.clone().add(V3(0, 0.6, 0)), '#ffffff', 8, 4); }
+        continue;
+      }
       if (!e.alive) {
         e.deadT += dt;
         e.object.scale.set(1 + e.deadT * 2, Math.max(0.05, 1 - e.deadT * 6), 1 + e.deadT * 2);
@@ -946,6 +994,7 @@ export function rules(game, opts = {}) {
     for (let i = tracers.length - 1; i >= 0; i--) { const tr = tracers[i]; tr.t -= dt; tr.line.material.opacity = Math.max(0, tr.t / 0.08); if (tr.t <= 0) { root.remove(tr.line); tracers.splice(i, 1); } }
     // race
     if (race) raceStep(dt, t);
+    if (Q) Q.update(dt); if (W) W.update(dt); if (TT) TT.update(dt);
     if (opts.killEnemiesToWin && S.enemiesLeft <= 0 && R.enemies.length) win();
     if (dirty) { dirty = false; game.emit('state', S); }
   };
@@ -956,6 +1005,10 @@ export function rules(game, opts = {}) {
       if (collect && collect.label) return collect.label;
       const t = S.collectTag || 'coin'; return n === 1 ? t : t + (/[sxz]$|[^aeiou]y$/.test(t) ? 'es' : 's');
     };
+    if (Q && !S.won && !S.lost) { const qt = Q.text(); if (qt) return qt; }
+    if (W && !S.won && !S.lost) return W.text();
+    if (TT && S.won) return S.medal && S.medal !== 'none' ? `${S.medal[0].toUpperCase() + S.medal.slice(1)} medal! ${fmtTime(S.raceTime)}` : `Finished in ${fmtTime(S.raceTime)}`;
+    if (TT && !S.lost) return `Time trial: lap ${S.lap}/${race.laps}, gold ${fmtTime(TT.medals.gold)}`;
     if (S.won) return race ? `Finished ${ordinal(S.position)}!` : 'You win!';
     if (S.lost) return S.loseReason === 'time' ? 'Out of time' : 'Game over';
     if (race) return `Finish ${race.laps} lap${race.laps > 1 ? 's' : ''}`;
@@ -991,8 +1044,8 @@ export function rules(game, opts = {}) {
         r.half = false; r.lap++;
         if (r.lap > race.laps) {
           r.finished = true; r.place = race.finishOrder.push(r);
-          if (r.isPlayer) { S.position = r.place; S.lap = race.laps; changed(); game.emit('lap', player, race.laps + 1); win(); }
-        } else if (r.isPlayer) { S.lap = r.lap; changed(); game.emit('lap', player, r.lap); }
+          if (r.isPlayer) { S.position = r.place; S.lap = race.laps; if (TT) { TT.lap(); TT.finish(); } changed(); game.emit('lap', player, race.laps + 1); win(); }
+        } else if (r.isPlayer) { S.lap = r.lap; if (TT) TT.lap(); changed(); game.emit('lap', player, r.lap); }
       } else if (pu < 0.15 && u > 0.85) { /* went backwards over the line */ }
       r.progress = r.finished ? 1e6 - r.place : r.lap + u;
       // respawn on the track where you fell off, facing along it
@@ -1018,6 +1071,212 @@ export function rules(game, opts = {}) {
     r.drive.width = race.width; r.drive.lane = r.lane + Math.sin(game.time * 0.3 + r.player.ai.skill * 10) * race.width * 0.15;
     if (r.finished) { driveTrack(game, r.player, race.samples, r.idx, race.track.getLength(), r.drive, dt, 0.35); return; }
     driveTrack(game, r.player, race.samples, r.idx, race.track.getLength(), r.drive, dt, scale);
+  }
+
+  // ---- quests (fetch / deliver / talk) ----------------------------------------------------------------------------
+  let Q = null;
+  if (opts.quests && opts.quests.length) {
+    if (opts.npcs) npcs(game, opts.npcs);
+    const all = game.__npcs || [];
+    const byName = (n, where) => {
+      const f = all.find(x => x.name.toLowerCase() === String(n || '').toLowerCase());
+      if (!f) throw new Error(`Gameplay.rules: quest ${where} "${n}" is not an NPC; NPCs: ${all.map(x => x.name).join(', ') || '(none: pass npcs: [{name, species, position}] or call Gameplay.npcs first)'}`);
+      return f;
+    };
+    const quests = opts.quests.map((q0, qi) => {
+      const type = q0.type || (q0.to ? 'deliver' : q0.item ? 'fetch' : 'talk');
+      if (!QUEST_TYPES.includes(type)) throw new Error(`Gameplay.rules: unknown quest type "${type}"; types: ${QUEST_TYPES.join(', ')}`);
+      const q = { ...q0, type, index: qi, done: false, accepted: false, have: 0, picked: false, count: type === 'fetch' ? Math.max(1, q0.count || 3) : 1, item: q0.item || (type === 'deliver' ? 'letter' : 'gift') };
+      if (type === 'fetch') { q.giver = byName(q0.npc || q0.to, 'npc'); }
+      if (type === 'deliver') { q.giver = byName(q0.from || q0.npc, 'from'); q.target = byName(q0.to, 'to'); }
+      if (type === 'talk') { q.giver = byName(q0.npc || q0.to, 'npc'); }
+      const itemWord = (n) => (q.label || q.item) + (n > 1 && !/s$/.test(q.label || q.item) ? 's' : '');
+      q.describe = () => type === 'fetch' ? `Bring ${q.count} ${itemWord(q.count)} to ${q.giver.name} (${Math.min(q.have, q.count)}/${q.count})`
+        : type === 'deliver' ? (q.picked ? `Deliver the ${q.label || q.item} to ${q.target.name}` : `Pick up the ${q.label || q.item} from ${q.giver.name}`)
+          : `Talk to ${q.giver.name}`;
+      q.giver.quests.push(q); if (q.target) q.target.quests.push(q);
+      // fetch items: the level's own placements with that tag, else spread along the route
+      if (type === 'fetch') {
+        const own = level.collectibles.filter(c => c.tag === q.item);
+        const spots = own.length >= q.count ? own.slice(0, q.count).map(c => vec(c.position, 'quest item'))
+          : questSpots(level, q.count, qi, quests_n());
+        q.items = spots.map(p => { const it = addCollectible(p, q.item, { value: 2 }); it.quest = q; return it; });
+      }
+      return q;
+    });
+    function quests_n() { return opts.quests.length; }
+    // carried items trail behind the player
+    const carry = [];
+    const addCarry = (q) => { const { group } = makeCollectible(game, q.item); group.scale.setScalar(0.55); group.userData.q = q; root.add(group); group.position.copy(player.position); carry.push(group); };
+    const dropCarry = (q, to) => {
+      for (let i = carry.length - 1; i >= 0; i--) if (carry[i].userData.q === q) {
+        const g = carry[i]; carry.splice(i, 1);
+        flying.push({ g, from: g.position.clone(), to: to.object.position.clone().add(V3(0, 1.6, 0)), t: 0 });
+      }
+    };
+    const flying = [];
+    const complete = (q, npc) => {
+      q.done = true; npc.say(q.thanks || pick(THANKS), 3.5); npc.character.setEmote('happy', 2.5);
+      if (q.type !== 'talk') dropCarry(q, npc);
+      S.questsDone = quests.filter(x => x.done).length; changed();
+      burst(npc.object.position.clone().add(V3(0, 2, 0)), '#ffd23f', 16, 6);
+      game.emit('questDone', q, npc);
+      if (quests.every(x => x.done)) {
+        game.emit('questsDone');
+        if (R.goal && opts.goal !== false) { S.goalOpen = true; game.emit('goalOpen', R.goal); } else win();
+      }
+    };
+    const onApproach = (npc) => {
+      for (const q of npc.quests) {
+        if (q.done) continue;
+        if (q.type === 'talk' && q.giver === npc) { complete(q, npc); return true; }
+        if (q.type === 'fetch' && q.giver === npc) {
+          if (q.have >= q.count) { complete(q, npc); return true; }
+          q.accepted = true; npc.say(q.ask || `Could you bring me ${q.count} ${q.label || q.item}${q.count > 1 ? 's' : ''}? (${q.have}/${q.count})`, 4); changed(); return true;
+        }
+        if (q.type === 'deliver') {
+          if (q.giver === npc && !q.picked) { q.picked = q.accepted = true; addCarry(q); npc.say(q.ask || `Please take this ${q.label || q.item} to ${q.target.name}!`, 4); changed(); game.emit('questItem', q); return true; }
+          if (q.target === npc && q.picked) { complete(q, npc); return true; }
+        }
+      }
+      return false;
+    };
+    for (const n of all) n.onApproach = onApproach;
+    S.questsTotal = quests.length; S.questsDone = 0;
+    Q = {
+      quests,
+      collected(it) { const q = it.quest; q.have++; q.accepted = true; addCarry(q); changed(); },
+      update(dt) {
+        // trail of carried items
+        let prev = player.position.clone().add(V3(0, 2.1, 0));
+        carry.forEach((g, i) => {
+          const back = V3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)).multiplyScalar(0.55 + i * 0.5);
+          const want = player.position.clone().add(V3(0, 1.4 + Math.sin(game.time * 4 + i) * 0.12, 0)).add(back);
+          g.position.lerp(want, Math.min(1, dt * (10 - Math.min(i, 6))));
+          g.userData.spin.rotation.y += dt * 2; prev = g.position;
+        });
+        for (let i = flying.length - 1; i >= 0; i--) {
+          const f = flying[i]; f.t += dt * 2.2; const k = Math.min(1, f.t);
+          f.g.position.lerpVectors(f.from, f.to, k).add(V3(0, Math.sin(k * Math.PI) * 1.5, 0)); f.g.scale.setScalar(0.55 * (1 - k * 0.7));
+          if (k >= 1) { root.remove(f.g); flying.splice(i, 1); }
+        }
+        // markers: ! has a quest for you, ? ready to hand in, nothing when done
+        for (const n of all) {
+          let m = null;
+          for (const q of n.quests) {
+            if (q.done) continue;
+            const ready = (q.type === 'fetch' && q.giver === n && q.have >= q.count) || (q.type === 'deliver' && q.target === n && q.picked) || (q.type === 'talk');
+            if (ready) { m = '?'; break; }
+            if (q.giver === n && !(q.type === 'deliver' && q.picked)) m = m || '!';
+          }
+          n.setMarker(m);
+        }
+        S.quests = quests.map(q => (q.done ? '✓ ' : '') + q.describe());
+      },
+      text() { const q = quests.find(x => !x.done); return q ? q.describe() : null; },
+    };
+    R.quests = quests;
+  }
+
+  // ---- waves (arena survival) -------------------------------------------------------------------------------------
+  let W = null;
+  if (opts.waves) {
+    const wo = typeof opts.waves === 'number' ? { count: opts.waves } : { ...opts.waves };
+    const cfg = { count: wo.count || 5, size: wo.size || 3, grow: wo.grow ?? 2, delay: wo.delay ?? 2.5, kinds: wo.kinds || null, hpGrow: wo.hpGrow ?? 3 };
+    S.wave = 0; S.waves = cfg.count;
+    W = { state: 'wait', t: 0, alive: [] };
+    const spawnPoints = () => {
+      const pts = (level.spawnPoints && level.spawnPoints.length) ? level.spawnPoints.map(p => p.clone()) : [];
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2 + game.rand(); pts.push(player.position.clone().add(V3(Math.cos(a) * 15, 2, Math.sin(a) * 15))); }
+      // only spots the player can see (inside the arena, not behind its walls)
+      const eye = player.position.clone().add(V3(0, 1.2, 0));
+      return pts.filter(p => p.distanceTo(player.position) > 8).map(p => { const gy = Physics.groundAt(game, p.x, p.z, p.y + 6, 20); return gy === null ? null : p.setY(gy); })
+        .filter(p => { if (!p) return false; const d = p.clone().add(V3(0, 1.2, 0)).sub(eye); return !Physics.raycast(game, eye, d, d.length() - 0.5, { excludeCollider: player.collider }); });
+    };
+    const startWave = () => {
+      S.wave++; changed();
+      const n = cfg.size + cfg.grow * (S.wave - 1);
+      const kinds = cfg.kinds || (S.wave === 1 ? ['chase', 'patrol'] : S.wave % 3 === 0 ? ['chase', 'turret', 'chase', 'patrol'] : ['chase', 'patrol', 'chase']);
+      const pts = spawnPoints().sort(() => game.rand() - 0.5);
+      W.alive = [];
+      for (let i = 0; i < n; i++) {
+        const p = pts.length ? pts[i % pts.length].clone().add(V3((game.rand() - 0.5) * 3, 0, (game.rand() - 0.5) * 3)) : player.position.clone().add(V3(10, 0, 0));
+        const e = addEnemy(kinds[i % kinds.length], p, { hp: (kinds[i % kinds.length] === 'turret' ? 3 : 2) + Math.floor((S.wave - 1) / cfg.hpGrow) });
+        e.spawnT = 0.6 + i * 0.12; e.object.scale.setScalar(0.01);
+        W.alive.push(e);
+      }
+      game.emit('wave', S.wave, cfg.count);
+      uiBanner(`Wave ${S.wave}`, { style: S.wave === cfg.count ? 'warning' : 'go', sub: S.wave === cfg.count ? 'Final wave!' : `${n} enemies` });
+      W.state = 'fight';
+    };
+    W.update = (dt) => {
+      if (!player.controls.enabled || S.won || S.lost) return;
+      W.t += dt;
+      // stragglers (stuck behind walls / far away) come back into the fight
+      for (const e of W.alive) {
+        if (!e.alive || e.spawnT > 0) continue;
+        const eye = player.position.clone().add(V3(0, 1.2, 0)), d = e.position.clone().add(V3(0, 1, 0)).sub(eye);
+        const hidden = d.length() > 22 || Physics.raycast(game, eye, d, d.length() - 0.8, { excludeCollider: player.collider });
+        e.lostT = hidden ? (e.lostT || 0) + dt : 0;
+        if (e.lostT > 8) { const pts = spawnPoints(); if (pts.length) { e.position.copy(pts[0]); e.home.copy(pts[0]); e.spawnT = 0.45; e.object.scale.setScalar(0.01); e.lostT = 0; } }
+      }
+      if (W.state === 'wait' && W.t > (S.wave === 0 ? 1.5 : cfg.delay)) { W.t = 0; startWave(); }
+      else if (W.state === 'fight' && W.alive.every(e => !e.alive)) {
+        W.state = 'wait'; W.t = 0; game.emit('waveClear', S.wave, cfg.count);
+        if (S.wave >= cfg.count) win(); else uiBanner('Wave clear!', { style: 'stage_clear' });
+      }
+    };
+    W.text = () => W.state === 'fight' ? `Wave ${S.wave}/${cfg.count}: defeat ${W.alive.filter(e => e.alive).length} enemies` : S.wave ? `Wave ${S.wave + 1} incoming...` : `Survive ${cfg.count} waves`;
+  }
+  function uiBanner(text, o) {
+    try { if (game.__ui && UIm && typeof UIm.banner === 'function') UIm.banner(game, text, o); } catch (e) { /* UI optional */ }
+  }
+
+  // ---- time trial (racers): gates, lap times, medals ------------------------------------------------------------------
+  let TT = null;
+  if (race && opts.race.timeTrial) {
+    const len = race.track.getLength() * race.laps, vmax = (player.tuning && player.tuning.maxSpeed) || 30;
+    const est = len / (vmax * 0.95);                     // gold = a clean run with drift boosts
+    const m = opts.race.medals || {};
+    TT = { medals: { gold: m.gold || +(est).toFixed(1), silver: m.silver || +(est * 1.15).toFixed(1), bronze: m.bronze || +(est * 1.35).toFixed(1) }, lapStart: null, gates: [], next: 0 };
+    S.medals = TT.medals; S.targetTime = TT.medals.gold; S.lapTime = 0; S.bestLap = null; S.lastLap = null; S.raceTime = 0; S.medal = null;
+    // gates: the level's checkpoints if it has them, else 5 along the track
+    const gateU = (level.checkpoints && level.checkpoints.length ? level.checkpoints.map(c => race.nearest(vec(c.position, 'checkpoint'), null) / race.N) : [0.2, 0.4, 0.6, 0.8]).sort((a, b) => a - b);
+    for (const u of gateU) {
+      const p = race.track.getPointAt(u), tg = race.track.getTangentAt(u), w = race.width / 2 + 0.6;
+      const g = new THREE.Group(); g.position.copy(p); g.rotation.y = Math.atan2(tg.x, tg.z); root.add(g);
+      const glowM = new THREE.MeshBasicMaterial({ color: '#5ff3ff', toneMapped: false, transparent: true, opacity: 0.9 });
+      for (const s of [-1, 1]) { const post = mesh(new THREE.CylinderGeometry(0.22, 0.26, 4.4, 10), glowM, false); post.position.set(s * w, 2.2, 0); g.add(post); }
+      const bar = mesh(new THREE.BoxGeometry(w * 2 + 0.4, 0.3, 0.3), glowM, false); bar.position.y = 4.4; g.add(bar);
+      const sheet = new THREE.Mesh(new THREE.PlaneGeometry(w * 2, 4.2), new THREE.MeshBasicMaterial({ color: '#5ff3ff', transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false, toneMapped: false }));
+      sheet.position.y = 2.2; sheet.userData.noCollide = true; g.add(sheet);
+      TT.gates.push({ u, idx: Math.round(u * race.N), g, mat: glowM, sheet, flash: 0 });
+    }
+    TT.update = (dt) => {
+      for (const G of TT.gates) { G.flash = Math.max(0, G.flash - dt * 2); G.sheet.material.opacity = 0.12 + G.flash * 0.4; }
+      if (!race.started || S.won) return;
+      const r = R.racers[0];
+      if (TT.lapStart === null) TT.lapStart = game.time;
+      S.raceTime = +(S.raceTime + dt).toFixed(3); S.lapTime = +(game.time - TT.lapStart).toFixed(2);
+      const prev = TT.prevIdx ?? r.idx, N = race.N; TT.prevIdx = r.idx;
+      if ((r.idx - prev + N) % N < N / 4) for (const G of TT.gates) {
+        const crossed = prev <= r.idx ? (G.idx > prev && G.idx <= r.idx) : (G.idx > prev || G.idx <= r.idx);
+        if (!crossed) continue;
+        G.flash = 1; TT.next++;
+        game.emit('checkpoint', { index: TT.gates.indexOf(G), position: G.g.position.clone(), split: S.raceTime, gate: true });
+      }
+      for (const G of TT.gates) G.mat.color.set(G.flash > 0.4 ? '#7dffb0' : '#5ff3ff');
+    };
+    TT.lap = () => {
+      const lt = game.time - TT.lapStart; TT.lapStart = game.time;
+      S.lastLap = +lt.toFixed(2); if (S.bestLap === null || lt < S.bestLap) { S.bestLap = +lt.toFixed(2); game.emit('bestLap', S.bestLap); }
+      changed();
+    };
+    TT.finish = () => {
+      const t = S.raceTime; S.medal = t <= TT.medals.gold ? 'gold' : t <= TT.medals.silver ? 'silver' : t <= TT.medals.bronze ? 'bronze' : 'none';
+      changed(); game.emit('medal', S.medal, t);
+      uiBanner(S.medal === 'none' ? `Time ${fmtTime(t)}` : `${S.medal[0].toUpperCase() + S.medal.slice(1)} medal!`, { style: 'stage_clear', sub: fmtTime(t) });
+    };
   }
 
   game.update(update, 10);
@@ -1137,7 +1396,8 @@ export function autopilot(game, opts = {}) {
       return;
     }
     // progress watchdog (contract: autopilotStuck after 8 s without progress)
-    const progKey = vehicle ? (st.ti ?? 0) : st.idx * 1000 + (S.collected || 0);
+    const qProg = game.__rules && game.__rules.quests ? game.__rules.quests.reduce((a, q) => a + q.have + (q.picked ? 1 : 0) + (q.done ? 5 : 0), 0) : 0;
+    const progKey = vehicle ? (st.ti ?? 0) : st.idx * 1000 + (S.collected || 0) + qProg * 100000 + (S.wave || 0) * 1e7 + (S.enemiesLeft || 0) * 1e9;
     if (progKey !== st.progKey) { st.progKey = progKey; st.noProg = 0; S.autopilotStuck = false; }
     else { st.noProg = (st.noProg || 0) + dt; if (st.noProg > 8) S.autopilotStuck = true; }
     if (vehicle || player.type === 'kart' || player.type === 'boat') return vehicleBot(dt);
@@ -1182,6 +1442,27 @@ export function autopilot(game, opts = {}) {
       const left = R.items.filter(i => !i.collected && i.tag === game.state.collectTag);
       left.sort((a, b) => a.home.distanceTo(p) - b.home.distanceTo(p));
       if (left[0]) { goalP = left[0].home; left[0].skip = false; st.item = left[0]; }
+    }
+    // quests first: fetch items, then walk to whoever wants them
+    if (R && R.quests) {
+      const q = R.quests.find(x => !x.done);
+      if (q) {
+        let qt = null;
+        if (q.type === 'fetch' && q.have < q.count) {
+          const left = q.items.filter(i => !i.collected).sort((a, b) => a.home.distanceTo(p) - b.home.distanceTo(p));
+          if (left[0]) { qt = left[0].home; st.item = null; }
+        }
+        if (!qt) qt = (q.type === 'deliver' && q.picked ? q.target : q.giver).position;
+        // no straight line (houses in the way)? walk the route toward the route point nearest the target
+        const dq = V3(qt.x - p.x, 0, qt.z - p.z), dl = dq.length();
+        const blocked = dl > 2 && Physics.raycast(game, p.clone().add(V3(0, 1, 0)), dq, dl, { excludeCollider: player.collider });
+        if (blocked && route.length > 2) {
+          const near = (pt) => { let bi = 0, bd = Infinity; route.forEach((r, i) => { const d = (r.x - pt.x) ** 2 + (r.z - pt.z) ** 2; if (d < bd) { bd = d; bi = i; } }); return bi; };
+          const ti = near(qt), ci = near(p);
+          if (ti !== ci) { let ni = ci + Math.sign(ti - ci); if (route[ci].distanceTo(p) > 2.5) ni = ci; qt = route[ni]; }
+        }
+        goalP = qt; if (st.item && st.item.home.distanceTo(p) > 5) st.item = null;
+      }
     }
     const tgt = st.item ? st.item.home : goalP;
     const to = V3(tgt.x - p.x, 0, tgt.z - p.z); const dist = to.length();
@@ -1284,7 +1565,7 @@ export function autopilot(game, opts = {}) {
     }
     if (player.grounded) { st.usedEmergency = false; st.spinDbl = false; if (!onMover) st.lastGround = p.clone(); }
     // stuck far from progress: assist teleport onto the current waypoint
-    const prog = st.idx + (st.item ? 0.5 : 0) - dist * 0.01;
+    const prog = st.idx + (st.item ? 0.5 : 0) - dist * 0.01 + qProg * 10;
     if (prog > st.lastProg + 0.05) { st.lastProg = prog; st.stuckClock = 0; }
     st.stuckClock = (st.stuckClock || 0) + dt;
     if (st.stuckClock > 6) {
@@ -1308,6 +1589,7 @@ export function autopilot(game, opts = {}) {
       let near = null, nd = 1e9, inRange = false;
       for (const e of R.enemies) { if (!e.alive) continue; const d = e.position.distanceTo(p); if (d < (player.tuning.range || 20) * 0.9) inRange = true; if (d < nd) { nd = d; near = e; } }
       if (near && nd < 5) { const away = p.clone().sub(near.position).setY(0).normalize(); mx = mx * 0.4 + away.x; mz = mz * 0.4 + away.z; const l = Math.hypot(mx, mz) || 1; mx /= l; mz /= l; }
+      else if (near && S.waves && nd > 10) { const to = near.position.clone().sub(p).setY(0).normalize(); mx = to.x; mz = to.z; }   // waves: hunt
       player.setInput(mx, mz, inRange, near && nd < 2.2, { world: true });
     } else if (player.type === 'topdown' && R) {
       // dash is an edge-triggered press: tap it (press / release) while an enemy is in reach
@@ -1398,4 +1680,160 @@ function driveTrack(game, pl, samples, idx, length, st, dt, throttleScale = 1) {
     const q = samples[(idx + 6) % N].clone(); pl.teleport(q.setY(q.y + 0.6), Math.atan2(tan.x, tan.z));
   }
   pl.setInput(THREE.MathUtils.clamp(-d * 2.2, -1, 1), throttle, !!st.drift, false);
+}
+
+// ---- modes, NPCs, quests ---------------------------------------------------------------------------------------------
+
+export const MODES = ['collect', 'goal', 'race', 'timetrial', 'waves', 'quests'];
+export const QUEST_TYPES = ['fetch', 'deliver', 'talk'];
+const THANKS = ['Thank you so much!', 'You are a star!', 'Wonderful, thank you!', 'Oh! You found them!'];
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+export function fmtTime(t) { if (t == null) return '--'; const m = Math.floor(t / 60), s = t - m * 60; return `${m}:${s.toFixed(1).padStart(4, '0')}`; }
+
+// UI is optional: used only when the game made a HUD (dialogs, wave banners). Loaded lazily so gameplay never needs it.
+let UIm = null;
+import('./ui.js').then(m => { UIm = m; }).catch(() => {});
+
+// spread n quest items along the route (skipping the start), a little to the side
+function questSpots(level, n, qi, qn) {
+  const route = level.route && level.route.length ? level.route : [level.spawn || V3()];
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const f = 0.15 + 0.8 * ((i + (qi + 0.5) / Math.max(1, qn)) / n);
+    const k = Math.min(route.length - 1, Math.floor(f * (route.length - 1)));
+    const a = route[k], b = route[Math.min(route.length - 1, k + 1)];
+    const side = V3(b.z - a.z, 0, a.x - b.x); if (side.lengthSq() > 1e-6) side.normalize();
+    out.push(a.clone().addScaledVector(side, (i % 2 ? 1 : -1) * 1.2).add(V3(0, 1.1, 0)));
+  }
+  return out;
+}
+
+function canvasSprite(w, h, worldH, draw) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, depthTest: false, toneMapped: false }));
+  s.scale.set(worldH * w / h, worldH, 1); s.renderOrder = 20; s.userData.noCollide = true; s.userData.canvas = c;
+  return s;
+}
+function markerSprite(ch, color) {
+  return canvasSprite(64, 96, 0.95, (x, w, h) => {
+    x.font = 'bold 86px system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.lineWidth = 12; x.strokeStyle = '#2a1d3a'; x.strokeText(ch, w / 2, h / 2 + 4); x.fillStyle = color; x.fillText(ch, w / 2, h / 2 + 4);
+  });
+}
+function wrapText(x, text, maxW) {
+  const words = String(text).split(/\s+/), lines = []; let line = '';
+  for (const w of words) { const t = line ? line + ' ' + w : w; if (x.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }
+  if (line) lines.push(line); return lines.slice(0, 4);
+}
+function bubbleSprite(name, text) {
+  const probe = document.createElement('canvas').getContext('2d'); probe.font = '600 30px system-ui, sans-serif';
+  const lines = wrapText(probe, text, 420);
+  const h = 40 + lines.length * 38 + (name ? 34 : 0) + 22;
+  return canvasSprite(480, h, h / 480 * 3.0, (x, w) => {
+    const r = 22, bh = h - 22;
+    x.fillStyle = 'rgba(42,29,58,0.25)'; x.beginPath(); x.roundRect(6, 8, w - 8, bh - 2, r); x.fill();
+    x.fillStyle = '#fffaf0'; x.strokeStyle = '#2a1d3a'; x.lineWidth = 5;
+    x.beginPath(); x.roundRect(3, 3, w - 10, bh - 6, r); x.fill(); x.stroke();
+    x.beginPath(); x.moveTo(w / 2 - 18, bh - 5); x.lineTo(w / 2, h - 3); x.lineTo(w / 2 + 18, bh - 5); x.closePath(); x.fill(); x.stroke();
+    x.fillStyle = '#fffaf0'; x.fillRect(w / 2 - 15, bh - 9, 30, 6);
+    let y = 22;
+    if (name) { x.font = 'bold 26px system-ui, sans-serif'; x.fillStyle = '#e8572f'; x.fillText(name, 26, y + 18); y += 34; }
+    x.font = '600 30px system-ui, sans-serif'; x.fillStyle = '#2a1d3a';
+    for (const l of lines) { x.fillText(l, 26, y + 24); y += 38; }
+  });
+}
+
+/**
+ * Gameplay.npcs(game, [{ name, species, colors, accessory, position, yaw, lines: ['Hi!', ...] }]) -> npc[]
+ * Friendly characters (Player.SPECIES chibis) that idle, turn to face you, wave, show a speech bubble when you come
+ * close, and open the full dialog (UI.dialog) on the action key (E). A "!" floats over NPCs with a quest for you,
+ * "?" when you can hand it in. Missing positions are spread along level.route. Quests: Gameplay.rules({quests}).
+ */
+export function npcs(game, list = []) {
+  if (!game || !game.scene) throw new Error('Gameplay.npcs(game, list): first argument must be the game from createGame()');
+  if (!Array.isArray(list)) list = [list];
+  const all = game.__npcs || (game.__npcs = []);
+  const made = [];
+  for (const def0 of list) {
+    const def = typeof def0 === 'string' ? { name: def0 } : { ...def0 };
+    const i = all.length;
+    const species = def.species || ['bunny', 'cat', 'bear', 'fox', 'frog', 'penguin'][i % 6];
+    const ch = Player.makeCharacter(game, def.colors || {}, { species, accessory: def.accessory || 'none' });
+    const level = game.__level || game.level;
+    let pos;
+    if (def.position) pos = vec(def.position, `npcs[${i}].position`);
+    else {
+      const route = level && level.route && level.route.length ? level.route : [V3(4 * i, 0, 0)];
+      const k = Math.min(route.length - 1, Math.floor(route.length * (0.3 + 0.22 * i)) % route.length);
+      const a = route[k], b = route[Math.min(route.length - 1, k + 1)];
+      const side = V3(b.z - a.z, 0, a.x - b.x); if (side.lengthSq() > 1e-6) side.normalize();
+      pos = a.clone().addScaledVector(side, 2.2); def.anchor = a.clone();
+    }
+    ch.object.position.copy(pos); ch.object.rotation.y = def.yaw || 0; game.scene.add(ch.object);
+    const head = new THREE.Group(); head.position.y = 2.35; ch.object.add(head);
+    const npc = {
+      name: def.name || ['Mira', 'Bo', 'Pip', 'Juniper', 'Tock', 'Fen'][i % 6], species, position: ch.object.position, object: ch.object, character: ch,
+      lines: [].concat(def.lines || [`Hi, I'm ${def.name || 'here'}!`]), quests: [], near: false, lineIdx: 0, bubble: null, bubbleT: 0, marker: null, markerSprite: null,
+      yaw: def.yaw || 0, snapped: !!def.noSnap, onApproach: null, anchor: def.anchor || null,
+      say(text, seconds = 3.5) {
+        if (npc.bubble) { head.remove(npc.bubble); npc.bubble.material.map.dispose(); }
+        npc.bubble = bubbleSprite(npc.name, text); npc.bubble.position.y = 0.9 + npc.bubble.scale.y / 2; head.add(npc.bubble); npc.bubbleT = seconds;
+        game.emit('npcSay', npc, text);
+      },
+      setMarker(m) {
+        if (m === npc.marker) return; npc.marker = m;
+        if (npc.markerSprite) head.remove(npc.markerSprite);
+        npc.markerSprite = m ? markerSprite(m, m === '?' ? '#ffd23f' : '#ffe14d') : null;
+        if (npc.markerSprite) head.add(npc.markerSprite);
+      },
+      talk() {
+        // the full dialog when the game has a HUD; otherwise speech bubbles line by line
+        if (game.__ui && UIm && typeof UIm.dialog === 'function' && !npc.talking) {
+          const pl = game.__player; npc.talking = true; if (pl) pl.controls.enabled = false;
+          const p = UIm.dialog(game, { name: npc.name, lines: npc.lines });
+          Promise.resolve(p).finally(() => { npc.talking = false; if (pl) setTimeout(() => { pl.controls.enabled = true; }, 150); });
+        } else npc.say(npc.lines[npc.lineIdx++ % npc.lines.length], 3.5);
+        game.emit('npcTalk', npc);
+      },
+    };
+    all.push(npc); made.push(npc);
+  }
+  if (!game.__npcUpdate) {
+    let eWas = false;
+    game.__npcUpdate = game.update((dt) => {
+      const pl = game.__player;
+      const eNow = Player.keyDown('KeyE') || Player.keyDown('Enter');
+      const ePressed = eNow && !eWas; eWas = eNow;
+      for (const n of game.__npcs) {
+        if (!n.snapped && game.frame > 2) {
+          n.snapped = true;
+          // auto-placed beside the route: if that spot is blocked (a wall, a stall, a drop), stand on the route itself
+          if (n.anchor) {
+            const side = n.position.clone().sub(n.anchor).setY(0), len = side.length();
+            const wall = len > 0.1 && Physics.raycast(game, n.anchor.clone().add(V3(0, 1, 0)), side, len + 0.6);
+            const gy0 = Physics.groundAt(game, n.position.x, n.position.z, n.position.y + 3, 10);
+            if (wall || gy0 === null || Math.abs(gy0 - n.anchor.y) > 0.8) n.position.copy(n.anchor).addScaledVector(side.normalize(), 0.9);
+          }
+          const gy = Physics.groundAt(game, n.position.x, n.position.z, n.position.y + 3, 10); if (gy !== null) n.position.y = gy;
+        }
+        const d = pl ? Math.hypot(pl.position.x - n.position.x, pl.position.z - n.position.z) : 1e9;
+        // turn to face the player when they are close, idle otherwise
+        if (d < 7 && pl) { const want = Math.atan2(pl.position.x - n.position.x, pl.position.z - n.position.z); n.object.rotation.y += angWrap(want - n.object.rotation.y) * Math.min(1, dt * 5); }
+        else n.object.rotation.y += angWrap(n.yaw - n.object.rotation.y) * Math.min(1, dt * 2);
+        n.character.animate(dt, { speed: 0, vy: 0, grounded: true, mode: 'idle', vel: V3() });
+        if (n.markerSprite) n.markerSprite.position.y = Math.sin(game.time * 3 + n.lineIdx) * 0.12;
+        if (n.bubble) { n.bubbleT -= dt; n.bubble.material.opacity = Math.min(1, n.bubbleT * 3); if (n.bubbleT <= 0) { n.object.children.forEach(() => {}); n.bubble.parent.remove(n.bubble); n.bubble = null; } }
+        if (!pl || !pl.alive) continue;
+        if (d < 3.2 && Math.abs(pl.position.y - n.position.y) < 3 && !n.near) {
+          n.near = true;
+          const handled = n.onApproach ? n.onApproach(n) : false;
+          if (!handled) { n.character.setEmote('wave', 1.6); n.say(n.lines[n.lineIdx++ % n.lines.length]); }
+        } else if (d > 4.5) n.near = false;
+        if (ePressed && d < 3.5) n.talk();
+      }
+    }, 11);
+  }
+  return made;
 }

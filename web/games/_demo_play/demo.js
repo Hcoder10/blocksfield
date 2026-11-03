@@ -18,16 +18,20 @@ if (levelKind !== 'test' && K.Level.build) {
 const player = K.Player.create(game, { type, spawn: level.spawn, yaw: level.spawnYaw, character: { species: q.get('species') || 'kid', accessory: q.get('acc') || undefined }, colors: q.get('color') ? { body: q.get('color') } : {} });
 if (type === 'topdown') K.Camera.topdown(game, player);
 else K.Camera.follow(game, player);
+const mode = q.get('mode') || null;
 const rules = K.Gameplay.rules(game, {
-  level, player,
-  collect: vehicle ? null : { tag: 'coin' },
-  goal: true, timer: true, lives: 3, enemies: q.get('enemies') ? +q.get('enemies') : null,
-  race: vehicle ? { laps: +(q.get('laps') || 2), opponents: +(q.get('opp') ?? 3), countdown: +(q.get('cd') ?? 3) } : null,
+  level, player, mode,
+  collect: vehicle || mode ? null : { tag: 'coin', label: q.get('label') || undefined },
+  goal: !mode, timer: true, lives: 3, enemies: q.get('enemies') ? +q.get('enemies') : null,
+  race: vehicle ? { laps: +(q.get('laps') || 2), opponents: +(q.get('opp') ?? 3), countdown: +(q.get('cd') ?? 3), timeTrial: mode === 'timetrial' } : null,
+  waves: mode === 'waves' ? { count: +(q.get('waves') || 3) } : undefined,
+  npcs: mode === 'quests' ? [{ name: 'Mira', species: 'bunny', lines: ['The festival is tonight!', 'Our lanterns blew away in the wind...'] }, { name: 'Bo', species: 'bear', accessory: 'hat', lines: ['Hmm? A letter for me?'] }] : undefined,
+  quests: mode === 'quests' ? [{ type: 'fetch', npc: 'Mira', item: 'lantern', count: 3 }, { type: 'deliver', from: 'Mira', to: 'Bo', item: 'letter' }] : undefined,
 });
 
 // event log for tests
 const log = window.__events = [];
-for (const ev of ['collect', 'checkpoint', 'damage', 'death', 'respawn', 'goal', 'win', 'lose', 'jump', 'land', 'boost', 'lap', 'drift', 'dash', 'countdown', 'goalLocked', 'stomp', 'bounce'])
+for (const ev of ['collect', 'checkpoint', 'damage', 'death', 'respawn', 'goal', 'win', 'lose', 'jump', 'land', 'boost', 'lap', 'drift', 'dash', 'countdown', 'goalLocked', 'stomp', 'bounce', 'questDone', 'questsDone', 'wave', 'waveClear', 'medal', 'bestLap', 'npcSay'])
   game.on(ev, (a, b) => log.push({ ev, t: +game.time.toFixed(2), a: a && (a.name || a.tag || a.kind || a.index) || a, b: typeof b === 'number' ? +b.toFixed(1) : b }));
 
 const hud = document.getElementById('hud');

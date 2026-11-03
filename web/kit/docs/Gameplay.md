@@ -5,18 +5,22 @@ platforms, enemies, the goal portal, timer, lives, health and races with AI oppo
 emits the events UI / FX / Audio react to. `Gameplay.autopilot` is a bot that plays the level (demo footage, tests).
 
 ```js
-Gameplay.rules(game, { level, player, collect, goal = true, timer, lives = 3, hp = 3, enemies, race,
-                       killEnemiesToWin, scoreToWin, onWin, onLose }) -> rules
+Gameplay.rules(game, { level, player, mode, collect, goal = true, timer, lives = 3, hp = 3, enemies, race, waves,
+                       npcs, quests, objective, killEnemiesToWin, scoreToWin, onWin, onLose }) -> rules
+Gameplay.npcs(game, [{ name, species, colors, accessory, position, yaw, lines }]) -> npc[]   // villagers to talk to
+Gameplay.MODES          // ['collect', 'goal', 'race', 'timetrial', 'waves', 'quests']
+Gameplay.QUEST_TYPES    // ['fetch', 'deliver', 'talk']
 Gameplay.autopilot(game, { level, player }) -> { start(), stop(), enabled }   // Gameplay.autopilot(game, false) stops
 Gameplay.spawnEnemy(game, kind, position, { hp, speed, range, color })
 Gameplay.spawnCollectible(game, position, tag = 'coin', { value, color })
-Gameplay.COLLECTIBLES   // ['coin', 'star', 'gem', 'seed', 'heart', 'orb']   (any other tag = glowing orb)
+Gameplay.COLLECTIBLES   // ['coin', 'star', 'gem', 'seed', 'heart', 'orb', 'lantern', 'letter', 'apple', 'flower', 'gift', 'key'] (other tags = glowing orb)
 Gameplay.HAZARDS        // ['spinner', 'saw', 'spikes', 'lava', 'killzone', 'bounce', 'boost', 'crumble', 'enemy', 'wind', 'void']
 Gameplay.ENEMIES        // ['patrol', 'chase', 'turret']
 ```
 
 | option | values | default / meaning |
 |---|---|---|
+| `mode` | one of `Gameplay.MODES` (shorthand; the options below can also be given directly): `'collect'`, `'goal'`, `'race'`, `'timetrial'` (= `race: { timeTrial: true }`), `'waves'` (= `waves: 5`), `'quests'` (needs `quests` + `npcs`) | inferred |
 | `level` | the object `Level.build` returned (required) | |
 | `player` | the object `Player.create` returned (required) | |
 | `collect` | `{ tag, target, label }`, `true`, or `null` (`label` = what the HUD calls them, e.g. 'Energy Cores'; used in the objective text) | `tag` = most common tag in the level; `target` = all of them (capped to what exists). With a goal: the goal portal stays locked (grey) until `target` is collected. Without a goal: collecting `target` wins. |
@@ -26,6 +30,9 @@ Gameplay.ENEMIES        // ['patrol', 'chase', 'turret']
 | `hp` | hits per life | 3 (platformer/topdown/fps), 1 (vehicles). Hazards and enemies cost 1 hp with knockback; falling / lava = instant death |
 | `enemies` | number (arena: its spawn points, farthest from the player first; other levels: spread along the route) or `[{ kind, position, hp, speed, range }]` | none. Enemies wait 2 s after play starts |
 | `race` | `{ laps, opponents = 3, aiSpeed = 0.94, countdown = 3 }` or `true` | automatic for kart/boat on a level with `level.track`; laps default `level.laps` or 3 |
+| `waves` | number of waves, or `{ count = 5, size = 3, grow = 2, delay = 2.5, kinds, hpGrow = 3 }`: arena survival, win after the last wave | off |
+| `npcs` | NPC list, same as `Gameplay.npcs` (created for you) | none |
+| `quests` | `[{ type: 'fetch', npc, item, count = 3 }, { type: 'deliver', from, to, item = 'letter' }, { type: 'talk', npc }]`, optional `label`, `ask`, `thanks` text per quest | off |
 | `killEnemiesToWin` | `true`: win when every enemy is defeated | |
 | `scoreToWin` | number: win at this score | |
 | `objective` | string or `(state) => string`: the objective text (`state.objective`); wins over the generated one | generated from the rules |
@@ -89,11 +96,45 @@ K.Gameplay.rules(game, { level, player, collect: { tag: 'star', target: 1 } });
 game.on('win', () => K.UI.banner && K.UI.banner(game, 'You did it!'));
 ```
 
+## Modes
+
+**Quests (villagers, fetch & deliver).** NPCs are Player.SPECIES chibis that idle, turn to face you, wave and show a
+speech bubble when you walk up; E opens the full dialog (UI.dialog when the game has a HUD). A yellow `!` floats over
+an NPC with a quest for you, a gold `?` when you can hand it in. `fetch`: the quest items (the level's placements with
+that tag, else spread along the route) trail behind you as you pick them up; walk back to the NPC to hand them in.
+`deliver`: walk up to `from` to get the item, then to `to`. `talk`: just visit. `state.objective` is the current quest
+("Bring 3 lanterns to Mira (1/3)"), `state.quests` the log, `state.questsDone / questsTotal`. All done -> win (or, with
+`goal: true` and a level goal, the portal opens). Events: `questDone(quest, npc)`, `questsDone`, `questItem`, `npcSay`, `npcTalk`.
+
+```js
+K.Gameplay.rules(game, { level, player, mode: 'quests', lives: 3,
+  npcs: [{ name: 'Mira', species: 'bunny', lines: ['The festival is tonight!'] }, { name: 'Bo', species: 'bear', accessory: 'hat' }],
+  quests: [{ type: 'fetch', npc: 'Mira', item: 'lantern', count: 3 }, { type: 'deliver', from: 'Mira', to: 'Bo', item: 'letter' }] });
+```
+
+**Waves (arena survival, best with a topdown blaster).** Enemies spawn in growing waves at the arena's spawn points
+(or around you), popping in; a banner announces each wave (UI.banner when there is a HUD). `state.wave / waves`,
+`state.enemiesLeft`; win after the last wave. Events: `wave(n, total)`, `waveClear(n, total)`.
+
+```js
+K.Gameplay.rules(game, { level, player, mode: 'waves', waves: { count: 5, size: 4 }, lives: 3, timer: true });
+```
+
+**Time trial (karts / boats on a track).** No AI racers; glowing checkpoint gates (the level's checkpoints, else 4)
+flash as you pass them (`checkpoint` event with `split`); lap timer, `state.lapTime`, `lastLap`, `bestLap`,
+`raceTime`, medal targets `state.medals = {gold, silver, bronze}` (seconds, auto from track length and top speed, or
+`race: { medals: {...} }`), `state.targetTime` (gold) and at the finish `state.medal` = 'gold'|'silver'|'bronze'|'none'.
+Events: `bestLap(t)`, `medal(tier, time)`.
+
+```js
+K.Gameplay.rules(game, { level, player, mode: 'timetrial', race: { laps: 3 } });
+```
+
 ## Autopilot
 
 `Gameplay.autopilot(game)` (or `__kit.autopilot(true)`) plays the level with the real controls: follows `level.route`,
 simulates each jump arc before taking it, times spinner bars, rides moving platforms, hops hazards, stomps / dashes /
-shoots enemies, detours for coins it can walk to, roams for the last coins when the goal is still locked, and drifts
+shoots enemies, does quests (collects the items, then walks the route to the NPC), fights waves, detours for coins it can walk to, roams for the last coins when the goal is still locked, and drifts
 through corners in races. If it makes no progress for 6 s it nudges the player to the next route point (counted in
 `status.assists`). Use it for attract-mode footage: `K.Gameplay.autopilot(game)` right after `rules`.
 
