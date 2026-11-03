@@ -487,7 +487,10 @@ class WebBuild:
         if chosen.get("level_kind") == "custom" and start_src.exists() and (self.game_dir / "game.js").exists():
             mapping["layout"] = self.wp.layout_stats(start_src.read_text(encoding="utf-8"),
                                                      (self.game_dir / "game.js").read_text(encoding="utf-8"),
-                                                     self.plan.get("custom_layout") or "example")
+                                                     self.plan.get("custom_layout") or "example"
+                                                     if "Level.compose(" in start_src.read_text(encoding="utf-8")
+                                                     else f"builder (scaffold was the {planned.get('level_kind')} "
+                                                          f"preset)")
             if mapping["layout"] and (ex := self.wp.example_changes(
                     self.plan, (self.game_dir / "game.js").read_text(encoding="utf-8"))) is not None:
                 mapping["layout"]["pieces_changed_from_example"] = ex

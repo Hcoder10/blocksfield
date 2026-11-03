@@ -698,9 +698,15 @@ def adapt_template(plan: dict) -> dict:
 def layout_pieces_of(src: str) -> list[str]:
     """The piece objects of game.js's LAYOUT, normalised (quotes/whitespace), for diffing against the start."""
     m = re.search(r"const\s+LAYOUT\s*=\s*(.*?);\s*\n\s*const\s+level", src, re.S)
-    if not m:
+    if m:
+        body = m.group(1)
+    elif "Level.compose(" in src:     # builders rename or inline the spec: every piece object in the file
+        body = src
+    else:
         return []
-    return [re.sub(r"[\s'\"]", "", x) for x in re.findall(r"\{[^{}]*type[^{}]*\}", m.group(1))]
+    kinds = "|".join(DEFAULT_ENUMS["piece"])
+    return [re.sub(r"[\s'\"]", "", x) for x in re.findall(r"\{[^{}]*type['\"]?\s*:\s*['\"](?:" + kinds
+                                                         + r")['\"][^{}]*\}", body)]
 
 
 def layout_stats(start_src: str, src: str, start: str) -> dict | None:
