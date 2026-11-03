@@ -1236,7 +1236,7 @@ export function rules(game, opts = {}) {
   let TT = null;
   if (race && opts.race.timeTrial) {
     const len = race.track.getLength() * race.laps, vmax = (player.tuning && player.tuning.maxSpeed) || 30;
-    const est = len / (vmax * 0.95);                     // gold = a clean run with drift boosts
+    const est = len / (vmax * (player.type === 'boat' ? 0.8 : 0.95));   // gold = a clean run with drift boosts (boats slide more)
     const m = opts.race.medals || {};
     TT = { medals: { gold: m.gold || +(est).toFixed(1), silver: m.silver || +(est * 1.15).toFixed(1), bronze: m.bronze || +(est * 1.35).toFixed(1) }, lapStart: null, gates: [], next: 0 };
     S.medals = TT.medals; S.targetTime = TT.medals.gold; S.lapTime = 0; S.bestLap = null; S.lastLap = null; S.raceTime = 0; S.medal = null;
