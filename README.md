@@ -294,7 +294,9 @@ commercial use.
   (`operator_interventions`), and its gallery page lists them. All 15 games in the gallery have zero. Nine earlier
   runs are superseded (`superseded_by`) by fresh re-runs of the same pitch and are no longer listed. Five of them had
   interventions, mostly re-running a stage after an LLM outage or a pipeline fix (`--redo`, `--backfill-assets`).
-  Their folders and records are still in `web/games/`.
+  Their folders and records are still in `web/games/`. Four games (Turbo Treats, Spire Climb, Riverbend Canyon,
+  Vault Hopper) record a separate incident (`incidents`): a duplicate builder process of the pipeline ran on their
+  run directories for four minutes and was killed.
 - **Roblox: operator interventions.** Where a build's own code crashed on a one-line bug its repair rounds missed, we fixed
   that line by hand so the rest of the build could be judged, and we logged every such edit in the run's
   `OPERATOR_NOTES.md`. Everything else in a game is written by the local model.

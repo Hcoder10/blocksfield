@@ -7,7 +7,7 @@
 | Built with ComfyUI | Yes: every image, prop, music and sound job is a ComfyUI workflow (`workflows/api/`) run through the arbiter, plus a custom node (`comfy_nodes/idol`) |
 | Repo with an open-source licence and enough setup detail to run it locally | MIT `LICENSE` in all three repos; README "Web games: Run it (web)", "Run it (Roblox)" (GPU box + laptop) and "Try the Roblox demo game" |
 | Repo holds app code, workflow files, licence, local run instructions | Yes: pipeline (`blocksfield/`), ThreeKit (`web/kit/`), Studio app (`web/studio/`, `blocksfield/studio.py`), workflows, licence, README |
-| Demo video, two minutes max | `video/promo_v3.mp4` (1:59.95, 1080p30), rendered by `blocksfield/promo_v3.py`. Kokoro TTS voiceover (the operator had COVID; noted in the video) |
+| Demo video, two minutes max | `video/promo_v3.mp4` (1:59.8, 1080p30), rendered by `blocksfield/promo_v3.py`. Kokoro TTS voiceover (the operator had COVID; noted in the video) |
 | Other tools/models explained in the demo video | Models card plus the pipeline steps; the Studio app shows the GPU time-slicing live |
 | Lawful, SFW, no unlicensed IP or likenesses | Game art, music and sound are generated; the games are our own; Roblox Studio is shown as a platform |
 | Most Innovative: video must explain why it is innovative | Voiceover: it makes the game, not a trailer; the model plays and looks at its own game and fixes it; one GPU, open weights |
@@ -47,7 +47,8 @@
 These are the 15 games in the gallery (`web/games/index.json`). Every one is a fresh run with zero operator
 interventions. Nine earlier runs (`canyon_runner`, `cloudhop`, `frostbeak`, `lagoon_rush`, `lantern_lane`,
 `neon_arena`, `riverbend_canyon`, `spire_climb`, `starbloom_isles`) are superseded by re-runs of the same pitch and
-are no longer listed; five of them had interventions, still recorded in their `about.json`.
+are no longer listed; five of them had interventions, still recorded in their `about.json`. After the kit was frozen
+(`64143bb`), every listed game was re-recorded and re-scored the same way, and the scores above are from that pass.
 
 How to read the table:
 - **Build time** is the minutes recorded in the index.
@@ -100,8 +101,8 @@ browser, and native Parts on Roblox.
    gets it as a splat rendered in the browser (Spark) with a voxel collider and fallback, or, on Roblox, as editable
    native Parts.
 6. **The model lays out its own levels and invents mechanics.** Beyond the preset level kinds,
-   `Level.compose` lets the model build a level from route pieces in its own order and shape (Spire Climb, Riverbend
-   Canyon). `Mechanics` lets it add or change mechanics, each from one call:
+   `Level.compose` lets the model build a level from route pieces in its own order and shape. In Riverbend Canyon
+   the builder laid out all 21 pieces; in Spire Climb it changed 6 of the scaffold's 14. `Mechanics` lets it add or change mechanics, each from one call:
    - tuning: speed, jump, air jumps, dash, glide, size;
    - power-ups;
    - interactables: keys and doors, switches, crates, zones;
@@ -138,6 +139,13 @@ closed APIs. Cost: $0 per generation; the one rented RTX 5090 was $0.68/hour.
 - **Operator interventions are recorded per game.** Every web game's `about.json` lists any hand action
   (`operator_interventions`), and its gallery page shows the count and the list. All 15 games in the gallery have
   zero.
+- **Incidents are recorded separately.** Four games record an incident in `about.json` (`incidents`): Turbo Treats,
+  Spire Climb, Riverbend Canyon and Vault Hopper. A duplicate builder process of the same pipeline ran on their run
+  directories from 04:48 to 04:52 and was killed.
+  - Turbo Treats and Spire Climb: `game.js` was not written during that window.
+  - Riverbend Canyon and Vault Hopper: `game.js` was written during it, so it may include writes from the duplicate.
+  
+  Either way, it was the pipeline's own builder, not a person.
 - **Superseded runs.** Nine earlier runs are superseded (`superseded_by` in their `about.json`) by fresh re-runs of
   the same pitch, and only the re-runs are listed. Five of the nine had interventions, mostly re-running a stage after
   an LLM outage or a pipeline fix (`--redo`, `--backfill-assets`); one sky was re-made by hand with the pipeline's
