@@ -56,6 +56,7 @@ VO = [
     ("how", "at:playtest + judge", "Then it plays its own game. A vision model scores each version; the best one ships."),
     ("games", 0.4, "Each of these games came from a single pitch."),
     ("games", -9.0, "They run in the browser. Nothing to install."),       # negative: from the section's end
+    ("ltx", "at:ltx beat", "Intro and victory cutscenes are made with LTX two point five."),
     ("mechanics", "at:mechanics beat", "It can write new mechanics too, on top of the kits."),
     ("roblox", 0.4, "And the same pipeline builds real Roblox places, inside Roblox Studio."),
     ("close", 0.6, "Every model is open weight. It runs on one RTX fifty ninety, for zero dollars per generation. "
@@ -715,6 +716,9 @@ def build(gs: list[dict]) -> list[Seg]:
     head = cold_open(gs, SECTIONS["open"]) + paid(SECTIONS["paid"]) + studio(gs, SECTIONS["studio"]) + how(gs, SECTIONS["how"])
     mg = next((g for g in gs if g.get("mechanics")), None)
     beat = [mechanics_beat(mg, shot_len("mechanics", "mechanics beat", 5.0))] if mg else []
+    cg = cutscene_game(gs)
+    if cg:
+        beat = [ltx_beat(cg, shot_len("ltx", "ltx beat", 5.0))] + beat
     tail = beat + roblox(SECTIONS["roblox"] - (beat[0].dur - 2.0 if beat else 0)) + [close(SECTIONS["close"])]
     left = LIMIT - sum(s.dur for s in head + tail) - 0.05
     n = max(1, len(gs))
@@ -726,6 +730,51 @@ def build(gs: list[dict]) -> list[Seg]:
     for g in gs[:n]:
         mid += game_segs(g, each)
     return head + mid + tail
+
+
+def cutscene_game(gs: list[dict]) -> dict | None:
+    """The best shown (else any shipped) game with LTX-2.5 intro + win cutscenes."""
+    for g in gs + [x for x in games(only=None, skip=set()) if x not in gs]:
+        a = g["dir"] / "assets"
+        if (a / "cutscene_intro.mp4").exists() and (a / "cutscene_win.mp4").exists():
+            return g
+    return None
+
+
+def ltx_beat(g: dict, dur: float) -> Seg:
+    """The game's generated intro and win cutscenes side by side, labelled LTX-2.5."""
+    a = g["dir"] / "assets"
+    st: dict = {}
+    pw, ph = 900, 506
+
+    def draw(t, i):
+        f = canvas((10, 11, 16))
+        for k, key in enumerate(("intro", "win")):
+            v = st[key].frame(i)
+            v = v.resize((pw, ph))
+            x = 40 + k * (pw + 40)
+            f.alpha_composite(v, (x, 300))
+            d = ImageDraw.Draw(f, "RGBA")
+            chip(d, x, 300 + ph + 18, f"{key} cutscene", ramp(t, 0.3 + 0.2 * k), fill=(30, 36, 48), fg=FG, size=26)
+        d = ImageDraw.Draw(f, "RGBA")
+        kicker(d, (80, 110), f"Cutscenes  ·  {g['title']}", ramp(t, 0.0), size=30)
+        text(d, (80, 150), "Intro and victory cutscenes, generated with LTX-2.5", font(60, "Semibold"), FG, ramp(t, 0.1))
+        text(d, (80, H - 70), "image-to-video from the game's own concept art, with generated sound  ·  a uniform post-build stage",
+             font(28, "Regular"), MUTED, ramp(t, 0.5))
+        return f
+
+    def setup():
+        st["intro"] = VideoReader(a / "cutscene_intro.mp4", 0.2, dur)
+        st["win"] = VideoReader(a / "cutscene_win.mp4", 0.2, dur)
+
+    def teardown():
+        for r in st.values():
+            r.close()
+    return Seg("5c. LTX", "ltx beat", dur, draw,
+               [f"CUTSCENES · {g['title']} / Intro and victory cutscenes, generated with LTX-2.5",
+                "image-to-video from the game's own concept art, with generated sound · a uniform post-build stage"],
+               audio=[(a / "cutscene_win.mp4", 0.2, 0.2 + dur, 0.0, -24.0 - lufs(a / "cutscene_win.mp4") + 0)] if probe(a / "cutscene_win.mp4")["audio"] else [],
+               setup=setup, teardown=teardown, fade_in=0.15, fade_out=0.15)
 
 
 def mechanics_beat(g: dict, dur: float) -> Seg:
@@ -776,7 +825,7 @@ def section_spans(segs: list[Seg]) -> dict:
     return spans
 
 
-SEC_KEY = {"mechanics": "Mechanics", "open": "Cold open", "paid": "Paid workflow", "studio": "Studio", "how": "How it works", "games": "The games",
+SEC_KEY = {"ltx": "LTX", "mechanics": "Mechanics", "open": "Cold open", "paid": "Paid workflow", "studio": "Studio", "how": "How it works", "games": "The games",
            "roblox": "Roblox", "close": "Close"}
 
 
