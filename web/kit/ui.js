@@ -391,7 +391,8 @@ function minimap(game, H, parent, mo = {}) {
     // frame what the player travels (route, pickups, checkpoints), not the whole ocean
     try { const lv = { ...level, bounds: null, group: null }; const b = frameBox(game, lv, null); return b; } catch { return null; }
   };
-  const ink = () => getComputedStyle(H.el).getPropertyValue('--tk-ink').trim() || '#0b1020';
+  let inkC = null, accC = null, styleSeen = null;
+  const ink = () => inkC;
   M.draw = () => {
     const now = performance.now();
     if (now - lastDraw < 50) return;
@@ -399,6 +400,7 @@ function minimap(game, H, parent, mo = {}) {
     const level = (mo.level) || levelOf(game, H);
     if (!level) return;
     if (!bounds || M.level !== level) { bounds = getBounds(level); M.level = level; route = null; }
+    if (styleSeen !== game.__ui.style) { const cs = getComputedStyle(H.el); inkC = cs.getPropertyValue('--tk-ink').trim() || '#0b1020'; accC = cs.getPropertyValue('--tk-p').trim() || '#ffd23c'; styleSeen = game.__ui.style; }
     if (!bounds) return;
     const dpr = Math.min(2, devicePixelRatio || 1), W = Math.round(box.clientWidth * dpr), Hh = Math.round(box.clientHeight * dpr);
     if (!W || !Hh) return;
@@ -452,7 +454,7 @@ function minimap(game, H, parent, mo = {}) {
       ctx.save(); ctx.translate(x, y); ctx.rotate(-M.ang + Math.PI);
       const s = 7.5 * dpr;
       ctx.beginPath(); ctx.moveTo(0, -s * 1.3); ctx.lineTo(s, s); ctx.lineTo(0, s * 0.45); ctx.lineTo(-s, s); ctx.closePath();
-      ctx.fillStyle = getComputedStyle(H.el).getPropertyValue('--tk-p').trim() || '#ffd23c'; ctx.fill();
+      ctx.fillStyle = accC; ctx.fill();
       ctx.lineWidth = 2.2 * dpr; ctx.strokeStyle = ink(); ctx.stroke();
       ctx.restore();
     }
@@ -721,9 +723,9 @@ function autoStats(game) {
   if (H && H.timer) { const { t } = readTimer(game, H); const f = fmtTime(t); out.push({ label: 'Time', value: f.main + f.frac }); }
   else if (num(st.time) != null) { const f = fmtTime(st.time); out.push({ label: 'Time', value: f.main + f.frac }); }
   if (H) for (const k of H.counters) { const { v, t } = readCounter(game, k.c); out.push({ label: k.c.label || k.c.id, value: t != null ? `${v} / ${t}` : String(v), n: v }); }
-  if (num(st.score) != null && !(H && H.counters.some(k => k.c.id === 'score'))) out.push({ label: 'Score', value: st.score.toLocaleString(), n: st.score });
+  if (num(st.score) != null && st.score !== st.collected && !(H && H.counters.some(k => k.c.id === 'score'))) out.push({ label: 'Score', value: st.score.toLocaleString(), n: st.score });
   if (num(st.deaths) != null) out.push({ label: 'Falls', value: String(st.deaths) });
-  if (num(st.position) != null) out.push({ label: 'Place', value: `${st.position}${ordinal(st.position)}` });
+  if (num(st.position) > 0) out.push({ label: 'Place', value: `${st.position}${ordinal(st.position)}` });
   return out;
 }
 function autoStarCount(game) {
@@ -732,8 +734,8 @@ function autoStarCount(game) {
   let s = 1;
   if (H && H.counters.length) { const all = H.counters.every(k => { const { v, t } = readCounter(game, k.c); return t == null || v >= t; }); if (all) s++; }
   else s++;
-  if ((num(st.deaths) ?? 0) === 0 && (num(st.damageTaken) ?? 0) === 0) s++;
-  if (num(st.position) != null) s = st.position === 1 ? 3 : st.position <= 3 ? 2 : 1;
+  if ((num(st.deaths) ?? 0) === 0 && (num(st.damageTaken) ?? 0) === 0 && (num(st.health) == null || st.health >= (num(st.maxHealth) ?? st.health))) s++;
+  if (num(st.position) > 0) s = st.position === 1 ? 3 : st.position <= 3 ? 2 : 1;
   return Math.min(3, s);
 }
 function starSvg(on, u) {

@@ -300,17 +300,18 @@ export function confetti(game, pos = null, opts = {}) {
     s.confetti = { im, N, parts: [] };
   }
   const C = s.confetti, cs = palette(colors);
-  let origin, rain = !pos;
-  if (rain) {
-    const cam = game.camera, f = new THREE.Vector3(); cam.getWorldDirection(f);
-    origin = cam.position.clone().addScaledVector(f, 9); origin.y += 6;
+  let origin, rain = !pos, right = null, fwd = null;
+  if (rain) {   // a curtain 10-17 units in front of the view, so no chip ever fills the screen
+    const cam = viewCamera(game); fwd = new THREE.Vector3(); cam.getWorldDirection(fwd); fwd.y = 0; if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, -1); fwd.normalize();
+    right = new THREE.Vector3(-fwd.z, 0, fwd.x);
+    origin = cam.position.clone().addScaledVector(fwd, 13.5); origin.y += 5;
   } else origin = positionOf(pos);
   const k = Math.min(count, C.N - C.parts.length);
   for (let i = 0; i < k; i++) {
     let v;
     if (rain) v = new THREE.Vector3((R() - 0.5) * 3, R() * 2, (R() - 0.5) * 3);
     else { v = sphere(new THREE.Vector3(), 1); v.y = Math.abs(v.y) + 1.2; v.normalize().multiplyScalar(speed * (0.5 + R() * 0.7)); }
-    const o = rain ? new THREE.Vector3((R() - 0.5) * spread * 3, R() * 3, (R() - 0.5) * spread * 2) : new THREE.Vector3();
+    const o = rain ? right.clone().multiplyScalar((R() - 0.5) * spread * 3.4).addScaledVector(fwd, (R() - 0.5) * 7).setY(R() * 4) : new THREE.Vector3();
     C.parts.push({ p: origin.clone().add(o), v, q: new THREE.Quaternion().random(), w: new THREE.Vector3(R() - 0.5, R() - 0.5, R() - 0.5).multiplyScalar(14), t: 0, life: rain ? 4 + R() * 2 : 2.6 + R() * 1.6,
       c: cs[Math.floor(R() * cs.length)], ph: R() * 6, s: size * (0.7 + R() * 0.6) });
   }
