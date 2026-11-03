@@ -73,11 +73,18 @@ export function follow(game, player, opts = {}) {
   const o = { distance: 10, height: 1.6, pitch: 0.36, lookAhead: 1.6, autoYaw: 1.4, orbit: true, collide: true, fov: 60, ...opts };
   const d = installDrag(game);
   const st = { yaw: o.yaw ?? player.yaw + Math.PI, pitch: o.pitch, target: player.position.clone().add(new THREE.Vector3(0, o.height, 0)),
-    ahead: new THREE.Vector3(), groundY: player.position.y, manualT: 0, dist: o.distance, pos: new THREE.Vector3(), first: true, zoom: 1 };
+    ahead: new THREE.Vector3(), groundY: player.position.y, manualT: 0, dist: o.distance, pos: new THREE.Vector3(), first: true, zoom: 1,
+    last: player.position.clone(), deadAt: null };
   const cam = game.camera;
-  return install(game, 'follow', o, (dt) => {
+  const occ = occluders(game, player);
+  const rig = install(game, 'follow', o, (dt) => {
     if (dt <= 0 && !st.first) dt = 1 / 60;
-    const p = player.position, v = player.velocity;
+    let p = player.position; const v = player.velocity;
+    // respawn / teleport: cut to the new spot instead of flying the camera across the level
+    if (p.distanceTo(st.last) > 6) { st.first = true; st.groundY = p.y; st.ahead.set(0, 0, 0); }
+    st.last.copy(p);
+    // falling to death: hold the shot where they fell (don't chase the body into the abyss)
+    if (!player.alive) { cam.position.copy(st.pos); cam.lookAt(st.target); return; }   // hold the last shot until respawn
     // input orbit
     const [lx, ly] = padLook();
     if (o.orbit && (d.dx || d.dy || lx || ly)) {
@@ -88,18 +95,27 @@ export function follow(game, player, opts = {}) {
     if (d.wheel) { st.zoom = THREE.MathUtils.clamp(st.zoom + d.wheel * 0.1, 0.5, 2); d.wheel = 0; }
     st.manualT -= dt;
     // vertical: track the ground height, not every jump (Mario-style), unless falling below it or climbing far above
-    if (player.grounded || !player.alive) st.groundY = p.y;
-    else if (p.y < st.groundY) st.groundY = p.y;
+    if (player.grounded) st.groundY = p.y;
+    else if (p.y < st.groundY) {
+      // dropping to a lower platform: follow it down; falling into the void: hold the shot on the ledge
+      const below = Physics.raycast(game, p.clone().add(new THREE.Vector3(0, 0.5, 0)), new THREE.Vector3(0, -1, 0), 25, { excludeCollider: player.collider });
+      if (below) st.groundY = Math.max(p.y, below.point.y);
+      else { st.groundY = Math.max(p.y, (st.voidHold ??= st.groundY) - 3); st.inVoid = true; }
+    }
+    if (player.grounded) { st.voidHold = undefined; st.inVoid = false; (st.ledge ??= new THREE.Vector3()).copy(p); }
     else if (p.y > st.groundY + 4) st.groundY = p.y - 4;
     // look-ahead along horizontal velocity
     const hv = new THREE.Vector3(v.x, 0, v.z);
     st.ahead.lerp(hv.clone().multiplyScalar(o.lookAhead / 12), damp(3, dt));
     // keep the player in frame on big jumps: the target rises once they are 2 above the tracked ground
     const want = new THREE.Vector3(p.x, Math.max(st.groundY + o.height, p.y + o.height - 2), p.z).add(st.ahead);
+    // falling off the world: keep the ledge they fell from in the shot
+    if (st.inVoid && st.ledge) { want.x = st.ledge.x * 0.6 + want.x * 0.4; want.z = st.ledge.z * 0.6 + want.z * 0.4; }
     if (st.first) st.target.copy(want);
     st.target.x += (want.x - st.target.x) * damp(10, dt);
     st.target.z += (want.z - st.target.z) * damp(10, dt);
-    st.target.y += (want.y - st.target.y) * damp(player.grounded ? 6 : 3, dt);
+    // follow drops quickly (a long fall must not leave the player below the frame), jumps lazily
+    st.target.y += (want.y - st.target.y) * damp(player.grounded ? 6 : want.y < st.target.y - 1 ? 9 : 3, dt);
     // auto-swing behind a running player (not while they run at the camera)
     const sp = hv.length();
     if (o.autoYaw > 0 && sp > 1 && st.manualT <= 0) {
@@ -110,18 +126,74 @@ export function follow(game, player, opts = {}) {
       st.yaw += angWrap(behind - st.yaw) * Math.min(1, o.autoYaw * k * Math.min(1, sp / 12) * dt);
     }
     const dist = o.distance * st.zoom;
-    const off = new THREE.Vector3(Math.sin(st.yaw) * Math.cos(st.pitch), Math.sin(st.pitch), Math.cos(st.yaw) * Math.cos(st.pitch)).multiplyScalar(dist);
+    // falling: tilt down a little more so the landing spot is in view
+    const pitch = Math.max(0.12, st.pitch + (player.alive && v.y < -6 ? Math.min(0.35, -v.y * 0.012) : 0));
+    const off = new THREE.Vector3(Math.sin(st.yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(st.yaw) * Math.cos(pitch)).multiplyScalar(dist);
     let desired = st.target.clone().add(off);
     if (o.collide) desired = pullIn(game, st.target, desired, player);
     if (st.first) st.pos.copy(desired);
     // pull in fast, ease back out slowly
     const nearer = desired.distanceTo(st.target) < st.pos.distanceTo(st.target);
     st.pos.lerp(desired, damp(nearer ? 25 : 8, dt));
+    // never look up at the sky: the camera stays above the point it looks at
+    if (st.pos.y < st.target.y + 0.6) st.pos.y = st.target.y + 0.6;
+    // and never trails far behind its ideal spot
+    const lag = st.pos.distanceTo(desired); if (lag > 4) st.pos.lerp(desired, 1 - 4 / lag);
     cam.position.copy(st.pos);
     cam.lookAt(st.target);
     if (cam.fov !== o.fov) { cam.fov += (o.fov - cam.fov) * damp(6, dt); cam.updateProjectionMatrix(); }
+    occ.update(dt);
     st.first = false;
   });
+  const dispose = rig.dispose; rig.dispose = () => { occ.clear(); dispose(); };
+  return rig;
+}
+
+// Fade whatever still hides the player after the collision pull-in (clouds, waterfalls, canopies, props without
+// colliders): those meshes get their own faded material copy while they block the view, then get the original back.
+function occluders(game, player) {
+  const ray = new THREE.Raycaster(), faded = new Map(), cam = game.camera;
+  const head = new THREE.Vector3(), to = new THREE.Vector3();
+  let k = 0, cands = [], candT = 0;
+  const skip = (o) => { for (let q = o; q; q = q.parent) if (q === player.object || q.userData.noOcclude) return true; return false; };
+  function collect() {
+    cands = [];
+    game.scene.traverse(o => {
+      if (!o.isMesh || !o.visible || o.isSprite || skip(o)) return;
+      if (o.isInstancedMesh && o.count > 64) return;                     // grass / flowers: tiny, never hide the hero
+      if (!o.geometry) return;
+      if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+      const sc = o.getWorldScale(new THREE.Vector3());
+      if (o.geometry.boundingSphere.radius * Math.max(sc.x, sc.y, sc.z) > 30) return;   // terrain, water, sky domes
+      cands.push(o);
+    });
+  }
+  return {
+    update(dt) {
+      candT -= dt; if (candT <= 0) { collect(); candT = 2; }
+      if ((k++ % 3) === 0) {
+        const hits = new Set();
+        for (const h of [1.0, 1.7]) {
+          head.copy(player.position).y += h;
+          to.subVectors(head, cam.position); const len = to.length(); if (len < 0.5) continue;
+          ray.set(cam.position, to.divideScalar(len)); ray.far = len - 0.6; ray.near = 0.1;
+          for (const hit of ray.intersectObjects(cands, false)) hits.add(hit.object);
+        }
+        for (const m of hits) if (!faded.has(m)) {
+          const orig = m.material, mats = Array.isArray(orig) ? orig.map(x => x.clone()) : orig.clone();
+          for (const x of [].concat(mats)) { x.transparent = true; x.depthWrite = false; x.userData.baseOpacity = x.opacity; }
+          m.material = mats; faded.set(m, { orig, mats, a: 1, hit: true });
+        }
+        for (const [m, f] of faded) f.hit = hits.has(m);
+      }
+      for (const [m, f] of faded) {
+        f.a += ((f.hit ? 0.22 : 1) - f.a) * Math.min(1, dt * 8);
+        for (const x of [].concat(f.mats)) x.opacity = x.userData.baseOpacity * f.a;
+        if (!f.hit && f.a > 0.97) { m.material = f.orig; for (const x of [].concat(f.mats)) x.dispose(); faded.delete(m); }
+      }
+    },
+    clear() { for (const [m, f] of faded) m.material = f.orig; faded.clear(); },
+  };
 }
 
 /**
@@ -146,7 +218,7 @@ export function chase(game, player, opts = {}) {
     if (st.first) st.yaw = want;
     st.yaw += angWrap(want - st.yaw) * damp(o.stiffness, dt);
     const f = new THREE.Vector3(Math.sin(st.yaw), 0, Math.cos(st.yaw));
-    const dist = o.distance + Math.min(1, sp / maxS) * 1.5 + st.kick * 1.2;
+    const dist = o.distance + Math.min(1, sp / maxS) * 0.8 + st.kick * 0.5;
     const tgt = p.clone().add(new THREE.Vector3(0, o.lookAt, 0)).addScaledVector(f, 2.5);
     let desired = p.clone().addScaledVector(f, -dist).add(new THREE.Vector3(0, o.height, 0));
     if (o.collide) desired = pullIn(game, p.clone().add(new THREE.Vector3(0, 1.5, 0)), desired, player, 2);
@@ -155,7 +227,7 @@ export function chase(game, player, opts = {}) {
     st.pos.z += (desired.z - st.pos.z) * damp(10, dt);
     st.pos.y += (desired.y - st.pos.y) * damp(5, dt);
     // never trail more than a few units behind the ideal spot (boosts, teleports, respawns)
-    const lag = st.pos.distanceTo(desired), maxLag = 2.5 + sp * 0.04;
+    const lag = st.pos.distanceTo(desired), maxLag = 1.2 + sp * 0.015;
     if (lag > maxLag) st.pos.lerp(desired, 1 - maxLag / lag);
     st.target.lerp(tgt, damp(14, dt));
     cam.position.copy(st.pos);
