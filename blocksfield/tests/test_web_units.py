@@ -53,7 +53,7 @@ def test_scaffold_is_valid_js_using_only_real_apis():
               "prop_mushroom": {"kind": "prop", "file": "p.json"}}
     src = web_plan.scaffold_js(web_fake.FAKE_PLAN, CATALOG, assets)
     assert web_plan.check_js(src, CATALOG) == []
-    assert "K.Assets.sky(game, 'sky')" in src and '"icon": "bloom"' in src
+    assert "K.Assets.sky(game, 'sky')" in src and '"icon": "icon_bloom"' in src
 
 
 def test_check_js_catches_invented_apis_syntax_and_forbidden_code():

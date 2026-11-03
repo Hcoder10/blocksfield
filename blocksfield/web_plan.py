@@ -22,6 +22,8 @@ DEFAULT_ENUMS = {
     "level_kind": ["sky_islands", "meadow_course", "arena", "town", "race_track"],
     "player_type": ["platformer", "kart", "boat", "topdown", "fps"],
     "camera": ["follow", "chase", "topdown", "orbit", "firstPerson"],
+    "collectible": ["coin", "star", "gem", "seed", "orb"],
+    "ui_style": ["arcade", "cozy", "sleek", "fantasy", "scifi"],
 }
 CAMERA_FOR = {"platformer": "follow", "kart": "chase", "boat": "chase", "topdown": "topdown", "fps": "firstPerson"}
 
@@ -111,6 +113,10 @@ def enums(catalog: dict | None) -> dict[str, list[str]]:
         out["level_kind"] = v
     if v := _pick(c, "Player", r"type"):
         out["player_type"] = v
+    if v := _pick(c, "Gameplay", r"^COLLECTIBLES$"):
+        out["collectible"] = [t for t in v if t != "heart"]
+    if v := _pick(c, "UI", r"^STYLES$"):
+        out["ui_style"] = v
     if cams := [f for f in ("follow", "chase", "topdown", "orbit", "firstPerson") if f in fn_names(c, "Camera")]:
         out["camera"] = cams
     return out
@@ -150,6 +156,19 @@ def read_doc(name: str, section: str = "", limit: int = 14000) -> str:
     if section:
         text = doc_section(text, section) or f"(no section mentioning {section!r} in {path.name}; whole doc:)\n{text}"
     return text if len(text) <= limit else text[:limit] + f"\n... [{len(text) - limit} more chars: ask for a section]"
+
+
+def docs_digest(limit: int = 5000) -> str:
+    """One entry per kit doc: its first paragraph and its section headings (what to read_doc for)."""
+    out = []
+    for name in doc_names():
+        text = (DOCS / f"{name}.md").read_text(encoding="utf-8")
+        paras = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip() and not p.strip().startswith("#")]
+        heads = [h.lstrip("#").strip() for h in re.findall(r"^#{2,3} .+$", text, re.M)]
+        out.append(f"- {name}: {' '.join((paras[0] if paras else '').split())[:280]}"
+                   + (f"\n    sections: {'; '.join(heads)[:400]}" if heads else ""))
+    text = "\n".join(out)
+    return text if len(text) <= limit else text[:limit] + "\n..."
 
 
 def doc_section(text: str, needle: str, max_lines: int = 60) -> str:
@@ -196,7 +215,8 @@ def plan_schema(en: dict[str, list[str]]) -> dict:
     s = {"type": "string", "minLength": 1}
     return {
         "type": "object",
-        "required": ["title", "tagline", "genre", "core_loop", "controls", "win_condition", "look", "level_kind",
+        "required": ["title", "tagline", "genre", "core_loop", "controls", "win_condition", "look", "ui_style",
+                     "level_kind",
                      "level_size", "player_type", "camera", "player_colors", "collectible", "goal", "timer_seconds",
                      "lives", "enemies", "race", "art_direction", "concept_shots", "assets", "features"],
         "properties": {
@@ -206,14 +226,14 @@ def plan_schema(en: dict[str, list[str]]) -> dict:
                          "description": "e.g. 'WASD / arrows: move', 'Space: jump'"},
             "win_condition": s, "lose_condition": {"type": "string"},
             "look": {"enum": en["look"]}, "level_kind": {"enum": en["level_kind"]},
+            "ui_style": {"enum": en["ui_style"], "description": "HUD/menu style"},
             "level_size": {"enum": ["small", "medium", "large"]},
             "player_type": {"enum": en["player_type"]}, "camera": {"enum": en["camera"]},
             "player_colors": {"type": "object", "required": ["body", "accent"],
                               "properties": {"body": hexc, "accent": hexc}},
             "collectible": {"type": "object", "required": ["tag", "label", "count", "target"], "properties": {
-                "tag": {"type": "string", "pattern": "^[a-z][a-z0-9_]{1,20}$",
-                        "description": "one word: coin, gem, star, crystal, fish, shard..."},
-                "label": {**s, "maxLength": 20}, "count": {"type": "integer", "minimum": 5, "maximum": 80},
+                "tag": {"enum": en["collectible"], "description": "the pickup's look"},
+                "label": {**s, "maxLength": 20, "description": "what the game calls it: Blooms, Shards, Fish..."}, "count": {"type": "integer", "minimum": 5, "maximum": 80},
                 "target": {"type": "integer", "minimum": 1, "maximum": 80}}},
             "goal": {"type": "boolean", "description": "a goal/finish the player must reach"},
             "timer_seconds": {"type": "integer", "minimum": 0, "maximum": 600, "description": "0 = no time limit"},
@@ -267,6 +287,7 @@ def plan_brief(pitch: str, title: str | None, en: dict, catalog_txt: str, docs: 
             "for topdown, firstPerson for fps)\n"
             "- a collectible (count placed along the level, target needed to win), goal, timer, lives, enemies, and "
             "race laps/opponents (laps 0 unless it is a race: a race level with a kart or boat)\n"
+            "  (karts and boats only drive well on race_track or town; platformer / topdown / fps fit every level)\n"
             "- player colours, the art direction, 2-3 concept shots (the visual target the game is judged against)\n"
             "- generated assets: a sky panorama, 2-4 HUD icons, a music loop, 4-6 sound effects (one per gameplay "
             "event), 0-2 props (single solid objects like a mushroom, crate, lantern, statue; they become voxel "
@@ -275,7 +296,7 @@ def plan_brief(pitch: str, title: str | None, en: dict, catalog_txt: str, docs: 
             "Match the pitch's fantasy with the closest kit choices; if the pitch asks for something the kits cannot "
             "do, keep its mood and theme and pick the closest playable loop.\n\n"
             f"THE KIT CATALOG (every function and option list that exists):\n{catalog_txt}\n\n"
-            + (f"Kit docs available to the builder: {', '.join(docs)}\n\n" if docs else "")
+            + (f"THE KIT DOCS (what each module offers):\n{docs_digest(4000)}\n\n" if docs else "")
             + "Call `submit` with the plan.")
 
 
@@ -287,6 +308,11 @@ def normalize_plan(plan: dict, en: dict) -> tuple[dict, list[str]]:
     if c.get("target", 0) > c.get("count", 0):
         c["target"] = max(1, int(c.get("count", 10) * 0.75))
         notes.append(f"collectible target lowered to {c['target']} (more than were placed)")
+    # measured (scaffold sweep, Nov 2): karts and boats fall off sky islands and stall on the meadow course's hurdles
+    vehicle_ok = [k for k in ("race_track", "town") if k in en.get("level_kind", [])]
+    if p.get("player_type") in ("kart", "boat") and vehicle_ok and p.get("level_kind") not in vehicle_ok:
+        notes.append(f"level {p.get('level_kind')} -> {vehicle_ok[0]}: a {p['player_type']} needs a drivable level")
+        p["level_kind"] = vehicle_ok[0]
     want = CAMERA_FOR.get(p.get("player_type"))
     if want and want in en.get("camera", []) and p.get("camera") != want and p.get("player_type") in ("kart", "boat",
                                                                                                      "fps", "topdown"):
@@ -297,18 +323,20 @@ def normalize_plan(plan: dict, en: dict) -> tuple[dict, list[str]]:
 
 # --------------------------------------------------------------------------------------------- the scaffold
 def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = None) -> str:
-    """A complete, conservative game.js from the plan: the CONTRACT skeleton with the plan's choices filled in. The
-    builder starts from this (a working game) and customises it, instead of writing a game from nothing."""
+    """A complete, conservative game.js from the plan, written to the kit docs (Level.md, Gameplay.md, UI.md, Assets.md):
+    the CONTRACT skeleton with the plan's choices filled in. The builder starts from this working game and customises
+    it, instead of writing a game from nothing."""
     c = plan.get("collectible") or {}
     tag = c.get("tag", "coin")
     target = int(c.get("target", 10))
     j = json.dumps
     has = (lambda mod, fn: fn in fn_names(catalog, mod)) if catalog else (lambda mod, fn: True)
     assets = assets or {}
-    icon = next((n.removeprefix("icon_") for n, e in assets.items() if e.get("kind") == "icon"
-                 and (e.get("for") in (tag, "coins", "collect") or tag in n)), tag)
+    icon = next((n for n, e in assets.items() if e.get("kind") == "icon"
+                 and (e.get("for") in (tag, "coins", "coin", "collect") or tag in n)), tag)
     timer = int(plan.get("timer_seconds") or 0)
-    controls = " · ".join(plan.get("controls") or [])[:120]
+    race = plan.get("race") or {}
+    racing = bool(int(race.get("laps") or 0)) and "race" in str(plan.get("level_kind"))
     lines = [
         "import * as K from 'kit';",
         "",
@@ -317,42 +345,58 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
         f"K.Look.apply(game, {j(plan.get('look', 'toon_bright'))});",
     ]
     if "sky" in assets and has("Assets", "sky"):
-        lines.append("K.Assets.sky(game, 'sky');")
+        lines.append("K.Assets.sky(game, 'sky');                 // generated panorama; pops in when loaded")
     lines += [
         f"const level = K.Level.build(game, {j(plan.get('level_kind'))}, {{ size: {j(plan.get('level_size', 'medium'))},"
         f" collectibles: {int(c.get('count', 30))} }});",
-        f"const player = K.Player.create(game, {{ type: {j(plan.get('player_type'))}, spawn: level.spawn, "
-        f"yaw: level.spawnYaw, colors: {j(plan.get('player_colors') or {})} }});",
     ]
+    if tag != "coin":
+        lines.append(f"for (const c of level.collectibles) if (c.tag === 'coin') c.tag = {j(tag)};   // the plan's pickup")
+    lines.append(f"const player = K.Player.create(game, {{ type: {j(plan.get('player_type'))}, spawn: level.spawn, "
+                 f"yaw: level.spawnYaw, colors: {j(plan.get('player_colors') or {})} }});")
     cam = plan.get("camera") or CAMERA_FOR.get(plan.get("player_type"), "follow")
     lines.append(f"K.Camera.{cam}(game, player);" if cam != "orbit" else "K.Camera.orbit(game, { target: player });")
+    props = [n for n, e in assets.items() if e.get("kind") == "prop"][:2] if has("Assets", "prop") else []
+    if props:
+        lines += [
+            "// generated voxel props beside the route, standing on the ground",
+            f"const PROPS = {j(props)};",
+            "for (let i = 3, k = 0; i < level.route.length - 2; i += 3, k++) {",
+            "  const a = level.route[i], b = level.route[i + 1];",
+            "  const side = new K.THREE.Vector3(b.z - a.z, 0, a.x - b.x).normalize().multiplyScalar(k % 2 ? 3.5 : -3.5);",
+            "  const x = a.x + side.x, z = a.z + side.z, y = K.World.heightAt(game, x, z);",
+            "  if (y == null || Math.abs(y - a.y) > 2) continue;",
+            "  K.Assets.prop(game, PROPS[k % PROPS.length], { position: [x, y, z], rotationY: k * 1.3, "
+            "height: 2.2 + (k % 3) * 0.6, fallback: 'mushroom' });",
+            "}",
+        ]
     rules = {"level": None, "player": None, "collect": {"tag": tag, "target": target}, "goal": bool(plan.get("goal")),
              "timer": timer or False, "lives": int(plan.get("lives") or 0) or False}
     if int(plan.get("enemies") or 0):
         rules["enemies"] = int(plan["enemies"])
-    race = plan.get("race") or {}
-    if int(race.get("laps") or 0):
+    if racing:
         rules["race"] = {"laps": int(race["laps"]), "opponents": int(race.get("opponents") or 0)}
     rules_js = j(rules).replace('"level": null', "level").replace('"player": null', "player")
     lines.append(f"const rules = K.Gameplay.rules(game, {rules_js});")
-    for p in [n for n, e in assets.items() if e.get("kind") == "prop"][:2]:
-        if has("Assets", "prop"):
-            lines.append(f"K.Assets.scatter(game, {j(p)}, {{ level, count: 8 }});"
-                         if catalog and has("Assets", "scatter") else
-                         f"for (let i = 2; i < level.route.length - 1; i += Math.max(1, Math.floor(level.route.length "
-                         f"/ 6))) K.Assets.prop(game, {j(p)}, {{ position: level.route[i].clone().add(new K.THREE"
-                         f".Vector3(6, 0, 3)), scale: 3 }});")
-    hud = {"title": plan.get("title"), "counters": [{"id": tag, "icon": icon, "label": c.get("label", "Coins")}],
-           "timer": bool(timer)}
+    hud = {"counters": [{"id": "collected", "icon": icon, "label": c.get("label", "Coins")}],
+           "timer": bool(timer) or racing, "lives": bool(plan.get("lives")), "minimap": True,
+           "objective": str(plan.get("win_condition", ""))[:60]}
+    if plan.get("ui_style"):
+        hud["style"] = plan["ui_style"]
+    if racing:
+        hud.update(lap=True, position=True, speedometer=True)
     lines.append(f"K.UI.hud(game, {j(hud)});")
-    lines.append(f"K.UI.titleScreen(game, {j({'title': plan.get('title'), 'subtitle': plan.get('tagline', ''), 'controls': controls, 'start': 'Press Space'})});")
+    controls = " · ".join(plan.get("controls") or [])[:120]
+    title = {"title": plan.get("title"), "subtitle": plan.get("tagline", ""), "start": "Press Space",
+             "credit": controls, "countdown": racing}
+    lines.append(f"K.UI.titleScreen(game, {j(title)});   // not awaited: it pauses the game until a key")
     if has("FX", "auto"):
         lines.append("K.FX.auto(game);")
     if has("Audio", "auto"):
         lines.append("K.Audio.auto(game);")
     else:
         lines.append("if (game.asset('music_main')) K.Audio.music(game, game.asset('music_main'));")
-    lines += ["K.Debug.install(game, { level, player, rules });", "game.start();", ""]
+    lines += ["K.Debug.install(game, { level, player });", "game.start();", ""]
     return "\n".join(lines)
 
 
@@ -406,6 +450,11 @@ def check_js(src: str, catalog: dict | None, main: bool = True) -> list[str]:
     for pat, why in FORBIDDEN:
         if re.search(pat, src):
             probs.append(f"forbidden: {why}")
+    m_title = re.search(r"\bawait\s+(?:K\.)?UI\.titleScreen\(", src)
+    m_start = re.search(r"\.start\(\s*\)", src)
+    if m_title and (not m_start or m_title.start() < m_start.start()):
+        probs.append("`await UI.titleScreen(...)` before game.start() hangs the page on a black screen (the title waits "
+                     "for a key, but nothing renders yet): call K.UI.titleScreen(game, {...}) without await")
     if main:
         if "Debug.install" not in src:
             probs.append("game.js must call K.Debug.install(game, { level, player }) (the harness drives the game "

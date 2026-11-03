@@ -20,7 +20,7 @@ FAKE_PLAN = {
     "genre": "3D collect-a-thon platformer",
     "core_loop": "Run and jump across floating islands collecting star blooms, then reach the beacon.",
     "controls": ["WASD / arrows: move", "Space: jump"], "win_condition": "Collect 20 blooms and reach the beacon",
-    "lose_condition": "Fall too many times", "look": "toon_bright", "level_kind": "sky_islands",
+    "lose_condition": "Fall too many times", "look": "toon_bright", "ui_style": "arcade", "level_kind": "sky_islands",
     "level_size": "medium", "player_type": "platformer", "camera": "follow",
     "player_colors": {"body": "#ff7a59", "accent": "#ffd166"},
     "collectible": {"tag": "coin", "label": "Blooms", "count": 30, "target": 20},
@@ -46,7 +46,7 @@ def _pick_enum(schema: dict, value):
 def plan_for(params: dict) -> dict:
     p = json.loads(json.dumps(FAKE_PLAN))
     props = params.get("properties", {})
-    for k in ("look", "level_kind", "player_type", "camera", "level_size"):
+    for k in ("look", "ui_style", "level_kind", "player_type", "camera", "level_size"):
         if k in props:
             p[k] = _pick_enum(props[k], p[k])
     return p

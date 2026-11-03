@@ -253,7 +253,9 @@ def build_brief(plan: dict, catalog_txt: str, assets: dict, scaffold: str) -> st
     return (f"THE GAME PLAN:\n{json.dumps(plan, indent=1)}\n\n"
             f"THE KIT CATALOG (every function and option list that exists):\n{catalog_txt}\n\n"
             f"GENERATED ASSETS in assets/assets.json (use them by name: game.asset(name), K.Assets.*):\n{man}\n\n"
-            "game.js ALREADY EXISTS and runs: the pipeline wrote this scaffold from the plan:\n"
+            + (f"THE KIT DOCS (read_doc(name, section) for details):\n{web_plan.docs_digest()}\n\n"
+               if web_plan.doc_names() else "")
+            + "game.js ALREADY EXISTS and runs: the pipeline wrote this scaffold from the plan:\n"
             f"```js\n{scaffold}\n```\n\n"
             "YOUR JOB: turn it into the game in the plan.\n"
             "1. read_doc the modules you will customise (at least Level, Gameplay and UI; Player, FX, World as "
