@@ -12,7 +12,7 @@
   "P / Esc: pause"
  ],
  "mechanics": [],
- "created": "2026-11-03T05:31:46-0800",
+ "created": "2026-11-03T05:50:37-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -24,7 +24,7 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "rerecord_1103_052916",
+  "best": "rerecord_1103_054811",
   "score": 6.5,
   "play": 8.0,
   "vision": 5.0,
@@ -55,6 +55,12 @@
    },
    {
     "tag": "rerecord_1103_052916",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "rerecord_1103_054811",
     "score": 6.5,
     "play_score": 8.0,
     "vision_score": 5.0
@@ -187,6 +193,7 @@
   "art": 249.7,
   "build": 231.3,
   "eval_rerecord_1103_052916": 73.6,
+  "eval_rerecord_1103_054811": 77.1,
   "eval_s0": 77.5,
   "eval_v0": 82.1,
   "eval_v1": 74.5,
@@ -231,8 +238,8 @@
   "judge": {
    "calls": 1,
    "prompt_tokens": 6174,
-   "completion_tokens": 873,
-   "seconds": 14.3
+   "completion_tokens": 1070,
+   "seconds": 19.5
   }
  },
  "agents": {
@@ -341,6 +348,20 @@
     "deaths": 0
    },
    "previous_score": 6.0
+  },
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:49",
+   "score": 6.5,
+   "autopilot": {
+    "moved": 98.5,
+    "collected_end": 15,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.5
   }
  ]
 }
