@@ -299,10 +299,14 @@ class WebBuild:
             except Exception as e:  # noqa: BLE001  -- a judge failure must not stop the build
                 self.log(f"eval {tag}: judge failed: {type(e).__name__}: {e}")
         vision = verdict.score if verdict is not None and not verdict.raw.get("_failed") else None
+        unused = wb.unused_assets(self.game_dir, "".join(x.read_text(encoding="utf-8")
+                                                         for x in (vdir / "src").rglob("*.js")))
         score = wb.combined(ps, vision)
         rec = {"tag": tag, "score": score, "play_score": ps, "vision_score": vision, "play_notes": notes,
                "errors": rep["errors"][:10], "autopilot": rep.get("autopilot"), "ready": rep["ready"],
-               "findings": wb.findings_text(rep, notes, verdict, self.catalog),
+               "findings": wb.findings_text(rep, notes, verdict, self.catalog)
+               + "".join(f"\nUNUSED ASSET: {u}" for u in unused),
+               "unused_assets": len(unused),
                "verdict": verdict.raw if verdict is not None else None, "shots": rep.get("shots"),
                "sheet": rep.get("sheet")}
         self.stages.put(f"eval_{tag}", rec, time.time() - t)
@@ -317,6 +321,8 @@ class WebBuild:
             return new if len(new["errors"]) < len(old["errors"]) else old
         # Absolute vision scores of two versions are not comparable (live: the same scaffold scored 6 and 7, the
         # builder's version 4 and 5, all judged on the same kit art), so only the playtest decides outright.
+        if new.get("unused_assets", 0) != old.get("unused_assets", 0) and abs(new["play_score"] - old["play_score"]) < 1:
+            return new if new.get("unused_assets", 0) < old.get("unused_assets", 0) else old   # keeps generated art
         if abs(new["play_score"] - old["play_score"]) >= 1 or "judge" not in self.roles:
             return new if new["score"] > old["score"] else old
         key = f"pair_{new['tag']}_{old['tag']}"

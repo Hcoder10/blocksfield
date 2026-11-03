@@ -68,7 +68,12 @@ class GameTools:
         return self.dir / rel
 
     def _problems(self, p: Path, src: str) -> list[str]:
-        return web_plan.check_js(src, self.catalog, main=p.name == "game.js" and p.parent == self.dir)
+        main = p.name == "game.js" and p.parent == self.dir
+        probs = web_plan.check_js(src, self.catalog, main=main)
+        if main:
+            probs += unused_assets(self.dir, "\n".join(x.read_text(encoding="utf-8") for x in self.dir.rglob("*.js")
+                                                       if "assets" not in x.relative_to(self.dir).parts))
+        return probs
 
     def _report(self, what: str, p: Path, src: str) -> str:
         probs = self._problems(p, src)
@@ -223,6 +228,21 @@ class GameTools:
         ]
 
 
+USE = {"prop": "K.Assets.prop(game, '{n}', {{ position, height }})", "splat": "K.Assets.splat(game, '{n}', "
+       "{{ position, height }})", "sky": "K.Assets.sky(game, '{n}')"}
+
+
+def unused_assets(game_dir: Path, src: str) -> list[str]:
+    """Generated scenery the game's code never names. Live: builders rewrote game.js from scratch and dropped the
+    scaffold's splat landmarks, so assets generated for the game never showed."""
+    try:
+        man = json.loads((Path(game_dir) / "assets" / "assets.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return [f"generated {e.get('kind')} '{n}' is never used: keep it in the game, e.g. {USE[e['kind']].format(n=n)}"
+            for n, e in man.items() if e.get("kind") in USE and n not in src]
+
+
 def play_text(rep: dict, score: float, notes: list[str], catalog: dict | None) -> str:
     lines = [f"ready: {rep['ready']} (after {rep.get('load_s')} s); play score {score}/10"]
     if rep["errors"]:
@@ -257,7 +277,9 @@ def build_brief(plan: dict, catalog_txt: str, assets: dict, scaffold: str) -> st
                if web_plan.doc_names() else "")
             + "game.js ALREADY EXISTS and runs: the pipeline wrote this scaffold from the plan:\n"
             f"```js\n{scaffold}\n```\n\n"
-            "YOUR JOB: turn it into the game in the plan.\n"
+            "YOUR JOB: turn it into the game in the plan. Build ON the scaffold: keep everything it already does "
+            "(the generated sky, props and splats, the HUD, title, rules) and change it with edit_file; rewriting "
+            "game.js from scratch loses work.\n"
             "1. read_doc the modules you will customise (at least Level, Gameplay and UI; Player, FX, World as "
             "needed). Use only options they document.\n"
             "2. Make it THIS game, not the default: tune the level options, colours and HUD to the plan; add the "
