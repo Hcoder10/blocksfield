@@ -106,7 +106,8 @@ physics or UI CSS. `web/kit/CONTRACT.md` is the shared API, and each module has 
 | `core.js` | `createGame`: renderer, scene, camera, Rapier physics world, game loop, events, assets manifest | [CONTRACT.md](web/kit/CONTRACT.md) |
 | `look.js` | One-call art direction (toon_bright, candy, sunset, neon_night, dark_fantasy, cozy, desert, snow, realistic): sky, sun and shadows, fog, ink outlines, bloom, grade, toon materials, a palette | [Look.md](web/kit/docs/Look.md) |
 | `world.js` | Terrain, islands, water, plazas, instanced foliage, clouds, props, static batching | [World.md](web/kit/docs/World.md) |
-| `level.js` | One call builds a dressed, playable level: `sky_islands`, `meadow_course`, `arena`, `town`, `race_track`, `lagoon`, `canyon` | [Level.md](web/kit/docs/Level.md) |
+| `level.js` | One call builds a dressed, playable level: `sky_islands`, `meadow_course`, `arena`, `town`, `race_track`, `lagoon`, `canyon`; or the model lays out its own level from pieces with `Level.compose` | [Level.md](web/kit/docs/Level.md) |
+| `mechanics.js` | The model adds or changes mechanics: tuning (speed, jump, air jumps, dash, glide, size), power-ups, interactables (keys and doors, switches, crates, zones...), trigger -> effect rules, and a sandboxed custom hook for anything else | [Mechanics.md](web/kit/docs/Mechanics.md) |
 | `assets.js` | Generated sky panoramas, icons, textures, music, sfx and Idol splat props, each with a procedural fallback | [Assets.md](web/kit/docs/Assets.md) |
 | `physics.js` | Rapier helpers: colliders, kinematic movers, sensors, raycasts | [Physics.md](web/kit/docs/Physics.md) |
 | `player.js` | Controllers (platformer, kart, boat, topdown, fps) with a procedural character, keyboard + gamepad | [Player.md](web/kit/docs/Player.md) |
@@ -117,14 +118,27 @@ physics or UI CSS. `web/kit/CONTRACT.md` is the shared API, and each module has 
 | `audio.js` | Music with crossfade, sfx with variation, procedural fallback sounds; wired to game events automatically | [Audio.md](web/kit/docs/Audio.md) |
 | `debug.js` | `window.__kit`: the harness API (survey cameras, state, input, autopilot) the playtests and the judge use | [Debug.md](web/kit/docs/Debug.md) |
 | `touch.js` | Phones: a virtual joystick and buttons per player type, camera drag, tap to start, a rotate-your-phone hint | automatic |
+| `assist.js` | Unsticks the player: `R` (or the ↺ button on phones) resets you a little way back; karts stuck or off the track and boats run aground are put back on their own | automatic |
+| `cutscene.js` | Plays a game's intro / win / lose clips (LTX-2.5, see below), skippable with any key or a tap | automatic |
 
-**Every game gets these without asking:** touch controls on phones, and graphics quality tiers. A short probe at the
-start picks `high`, `low` (no shadows or bloom, FXAA, fewer grass blades) or `potato` (lower resolution, no
-post-processing) from the measured frame rate; `?quality=low` (or `high`, `potato`) on the URL forces a tier.
+**Every game gets these without asking:** touch controls on phones, the reset assist, cutscenes when the game has
+them, and graphics quality tiers. A probe measures the frame rate during play and picks `high`, `low` (no shadows or
+bloom, FXAA, fewer grass blades) or `potato` (lower resolution, no post-processing); `?quality=low` (or `high`,
+`potato`) on the URL forces a tier.
+
+**What the model uses them for.** In the current gallery, Spire Climb and Riverbend Canyon lay out their own levels
+with `Level.compose`. Turbo Treats, Spire Climb, Riverbend Canyon and Vault Hopper add their own mechanics, for
+example a Sugar Rush speed rule, glide power-ups, key-and-door vaults and a floor-is-lava rule. Turbo Treats (oil
+slicks that spin your kart out) and Riverbend Canyon (log rafts you ride) also write custom sandboxed code.
+
+**Cutscenes.** After a game is built, a uniform pipeline stage animates its concept frames into short intro, win
+and lose clips with LTX-2.5 (image-to-video, in ComfyUI). Before a clip is published, an agent reviews a frame sheet
+of it and drops any clip with garbled lettering or an off-model character, so some games have fewer clips or none.
+Each game's `about.json` (`post_stages`) lists the clips it shipped.
 
 ## Models (all open weights)
 
-The web games use the LLM, Qwen-Image-2.1 + BiRefNet, Idol, ACE-Step and Stable Audio; in the browser they run on
+The web games use the LLM, Qwen-Image-2.1 + BiRefNet, Idol, ACE-Step, Stable Audio and LTX-2.5 (cutscenes); in the browser they run on
 three.js, Rapier (physics) and Spark (Gaussian splats).
 
 | Role | Model | Runs in |
@@ -133,7 +147,7 @@ three.js, Rapier (physics) and Spark (Gaussian splats).
 | Concept art, UI art, icons, thumbnail | Qwen-Image-2.1 turbo int8 + BiRefNet cut-outs | ComfyUI |
 | 3D props (meshes, Roblox) | TRELLIS.2 → decimated under Roblox's 20k-triangle limit | ComfyUI |
 | Procedural props | Idol (`speridlabs/idol`, image → Gaussian splat in ~2 s) → voxel / blob Parts (Roblox); `.spz` splat + voxels (web) | ComfyUI (custom node in `comfy_nodes/idol`) |
-| Trailer (Roblox) | LTX-2.5 distilled NVFP4, image-to-video | ComfyUI |
+| Web game cutscenes; Roblox trailer | LTX-2.5 distilled NVFP4, image-to-video | ComfyUI |
 | Music | ACE-Step 1.5 turbo | ComfyUI |
 | Sound effects | Stable Audio 3 small-sfx (t5gemma text encoder) | ComfyUI |
 | Demo video voiceover only (not part of the pipeline) | Kokoro TTS | local |
@@ -277,9 +291,10 @@ commercial use.
   and GameplayKit run without errors (their *feel* has not been playtested by a person); FXKit was retuned after its
   first Studio pass showed effects too small. All six ComfyUI asset tools ran end to end on the 5090.
 - **Web games: operator interventions.** Every web game records any hand action in its `about.json`
-  (`operator_interventions`), and its gallery page lists them. Most were re-running a stage after an LLM outage or a
-  pipeline fix (`--redo`, `--backfill-assets`); some games have none. A game with interventions can be replaced in the
-  gallery by a fresh, untouched re-run (`superseded_by`).
+  (`operator_interventions`), and its gallery page lists them. All 15 games in the gallery have zero. Nine earlier
+  runs are superseded (`superseded_by`) by fresh re-runs of the same pitch and are no longer listed. Five of them had
+  interventions, mostly re-running a stage after an LLM outage or a pipeline fix (`--redo`, `--backfill-assets`).
+  Their folders and records are still in `web/games/`.
 - **Roblox: operator interventions.** Where a build's own code crashed on a one-line bug its repair rounds missed, we fixed
   that line by hand so the rest of the build could be judged, and we logged every such edit in the run's
   `OPERATOR_NOTES.md`. Everything else in a game is written by the local model.

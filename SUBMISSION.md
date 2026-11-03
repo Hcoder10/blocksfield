@@ -7,7 +7,7 @@
 | Built with ComfyUI | Yes: every image, prop, music and sound job is a ComfyUI workflow (`workflows/api/`) run through the arbiter, plus a custom node (`comfy_nodes/idol`) |
 | Repo with an open-source licence and enough setup detail to run it locally | MIT `LICENSE` in all three repos; README "Web games: Run it (web)", "Run it (Roblox)" (GPU box + laptop) and "Try the Roblox demo game" |
 | Repo holds app code, workflow files, licence, local run instructions | Yes: pipeline (`blocksfield/`), ThreeKit (`web/kit/`), Studio app (`web/studio/`, `blocksfield/studio.py`), workflows, licence, README |
-| Demo video, two minutes max | `video/promo_v3.mp4`, rendered by `blocksfield/promo_v3.py` (<= 2:00, 1080p30; the latest render is `video/promo_v3_draft.mp4`). Kokoro TTS voiceover (the operator had COVID; noted in the video) |
+| Demo video, two minutes max | `video/promo_v3.mp4` (1:59.95, 1080p30), rendered by `blocksfield/promo_v3.py`. Kokoro TTS voiceover (the operator had COVID; noted in the video) |
 | Other tools/models explained in the demo video | Models card plus the pipeline steps; the Studio app shows the GPU time-slicing live |
 | Lawful, SFW, no unlicensed IP or likenesses | Game art, music and sound are generated; the games are our own; Roblox Studio is shown as a platform |
 | Most Innovative: video must explain why it is innovative | Voiceover: it makes the game, not a trailer; the model plays and looks at its own game and fixes it; one GPU, open weights |
@@ -26,21 +26,36 @@
 
 ## The web games (from each game's `web/games/<id>/about.json`)
 
-| Game | Genre | Judge score | Build time | Operator interventions |
-|---|---|---|---|---|
-| Neon Drift Circuit (`neon_drift`) | Synthwave arcade kart racing | 7.5 | 31 min | 0 |
-| Starbloom Isles (`starbloom_isles`) | Toon 3D platformer | 7.0 | 29 min | 6 |
-| Neon Arena (`neon_arena2`, fresh re-run of the same pitch) | Top-down synthwave arena shooter | 6.14 | 30 min | 0 |
-| Cloudhop Meadows (`cloudhop`) | 3D platformer | 6.06 | 24 min | 3 |
-| Lagoon Rush (`lagoon_rush`) | Arcade boat racing | 5.92 | 23 min | 2 |
-| Canyon Runner (`canyon_runner`) | Hover-bike time trial / kart racer | 5.75 | 30 min | 1 |
-| Frostbeak (`frostbeak`) | Cozy platformer | 5.7 | 28 min | 1 |
-| Neon Arena (`neon_arena`) | Top-down arena survival | 5.28 | 30 min | 0 |
-| Lantern Lane (`lantern_lane`) | Cozy collect-a-thon / village adventure | 5.22 | 33 min | 0 |
+| Game | Genre | Judge score | Build time | Operator interventions | Model-made level / mechanics | Cutscenes |
+|---|---|---|---|---|---|---|
+| Neon Drift Circuit (`neon_drift`) | Synthwave arcade kart racing | 7.0 | 35 min | 0 | - | intro, win, lose |
+| Cloudhop Meadows (`cloudhop2`) | 3D platformer / collect-and-climb | 7.0 | 40 min | 0 | - | intro, win |
+| Frostbeak (`frostbeak2`) | Cozy platformer | 6.5 | 27 min | 0 | - | intro |
+| Turbo Treats (`turbo_treats`) | Candy arcade kart racer | 6.5 | 78 min | 0 | rule (Sugar Rush), 2 custom (oil-slick spin-outs, leader's gumdrop trail) | - |
+| Crystal Hollow (`crystal_hollow`) | Dark fantasy first-person arena survival | 6.5 | 33 min | 0 | - | intro, win, lose |
+| Bumble Dash (`bumble_dash`) | Bouncy obstacle-course platformer | 6.5 | 39 min | 0 | - | intro, win |
+| Dune Raiders (`dune_raiders`) | Top-down action treasure hunt | 6.5 | 27 min | 0 | - | intro, win |
+| Starbloom Isles (`starbloom_isles2`) | Toon 3D platformer | 6.3 | 35 min | 0 | - | intro, win, lose |
+| Neon Arena (`neon_arena2`) | Top-down synthwave arena shooter | 6.29 | 33 min | 0 | - | intro, win, lose |
+| Canyon Runner (`canyon_runner2`) | Arcade hover-bike time trial | 6.17 | 30 min | 0 | - | intro, win, lose |
+| Spire Climb (`spire_climb2`) | Cozy 3D platformer | 6.0 | 72 min | 0 | `Level.compose`; tuning, glide power-ups, a rule | - |
+| Lantern Lane (`lantern_lane2`) | Cozy village collect and quest | 6.0 | 34 min | 0 | - | intro |
+| Riverbend Canyon (`riverbend_canyon2`) | Stylised 3D platformer | 5.89 | 79 min | 0 | `Level.compose`; tuning, zones, 2 rules, custom (rideable log rafts) | - |
+| Vault Hopper (`vault_hopper`) | Toon 3D platformer heist | 5.6 | 76 min | 0 | keys and doors, switch gate, crates, magnet, 4 rules (floor is lava, guard waves...) | - |
+| Lagoon Rush (`lagoon_rush2`) | Arcade boat racing | 5.42 | 41 min | 0 | - | intro |
 
-Build time is the sum of the stage timings in `about.json`. The judge score is the mean of the autopilot play score
-and the vision judge's score against the concept board, out of 10. This table is a snapshot: re-runs still finishing
-replace the games they supersede.
+These are the 15 games in the gallery (`web/games/index.json`). Every one is a fresh run with zero operator
+interventions. Nine earlier runs (`canyon_runner`, `cloudhop`, `frostbeak`, `lagoon_rush`, `lantern_lane`,
+`neon_arena`, `riverbend_canyon`, `spire_climb`, `starbloom_isles`) are superseded by re-runs of the same pitch and
+are no longer listed; five of them had interventions, still recorded in their `about.json`.
+
+How to read the table:
+- **Build time** is the minutes recorded in the index.
+- **Judge score** is the mean of the autopilot play score and the vision judge's score against the concept board,
+  out of 10.
+- **Model-made level / mechanics** is what the game's own code calls (`K.Level.compose`, `K.Mechanics.*`), also
+  listed in `about.json` (`mechanics`).
+- **Cutscenes** are the LTX-2.5 clips that passed the agent's frame-sheet review.
 
 ## Form answers (paste-ready)
 
@@ -84,11 +99,30 @@ browser, and native Parts on Roblox.
 5. **Image -> splat -> game.** Qwen-Image draws a prop, the Idol custom node lifts it to a Gaussian splat, and the game
    gets it as a splat rendered in the browser (Spark) with a voxel collider and fallback, or, on Roblox, as editable
    native Parts.
-6. **Export and publish.** Each web game is a static folder (`web/games/<id>/`) published to GitHub Pages with its
+6. **The model lays out its own levels and invents mechanics.** Beyond the preset level kinds,
+   `Level.compose` lets the model build a level from route pieces in its own order and shape (Spire Climb, Riverbend
+   Canyon). `Mechanics` lets it add or change mechanics, each from one call:
+   - tuning: speed, jump, air jumps, dash, glide, size;
+   - power-ups;
+   - interactables: keys and doors, switches, crates, zones;
+   - trigger -> effect rules;
+   - a sandboxed custom hook for anything else.
+
+   The games that use it are Turbo Treats, Spire Climb, Riverbend Canyon and Vault Hopper. Turbo Treats' oil
+   slicks and Riverbend Canyon's rideable rafts are model-written custom code. The UI shows each mechanic as it
+   fires.
+7. **Cutscenes as a pipeline stage.** After the build, LTX-2.5 (image-to-video in ComfyUI) animates concept frames
+   into intro, win and lose clips. The kit plays them and they can be skipped. An agent reviews a frame sheet of
+   every clip and drops any with garbled lettering or an off-model character. 11 of the 15 games ship clips.
+8. **Playable by anyone.** Every game gets the same extras from the kit:
+   - touch controls on phones;
+   - a reset assist: `R` or a button, and karts and boats that get stuck are put back on their own;
+   - graphics quality tiers picked from the frame rate measured during play.
+9. **Export and publish.** Each web game is a static folder (`web/games/<id>/`) published to GitHub Pages with its
    making-of record; on Roblox the Studio-built world is exported to a `.rbxlx` place.
 
-**Open weights.** Qwen3.8-27B (NVFP4), Qwen-Image-2.1, BiRefNet, Idol, ACE-Step 1.5, Stable Audio 3; for the Roblox
-target also TRELLIS.2 and LTX-2.5. Kokoro TTS is used only for the demo video's voiceover. No partner nodes, no
+**Open weights.** Qwen3.8-27B (NVFP4), Qwen-Image-2.1, BiRefNet, Idol, ACE-Step 1.5, Stable Audio 3, LTX-2.5 (web
+cutscenes and the Roblox trailer); for the Roblox target also TRELLIS.2. Kokoro TTS is used only for the demo video's voiceover. No partner nodes, no
 closed APIs. Cost: $0 per generation; the one rented RTX 5090 was $0.68/hour.
 
 ## Social post (draft)
@@ -102,13 +136,14 @@ closed APIs. Cost: $0 per generation; the one rented RTX 5090 was $0.68/hour.
 ## Honest notes
 
 - **Operator interventions are recorded per game.** Every web game's `about.json` lists any hand action
-  (`operator_interventions`), and its gallery page shows the count and the list. Most were re-running a stage after an
-  LLM outage or a pipeline fix (`--redo`, `--backfill-assets`); one sky was re-made by hand with the pipeline's fixed
-  panorama code. Neon Drift Circuit, both Neon Arena runs and Lantern Lane have none.
-- **Untouched games come first.** The demo video picks games with zero interventions first (`blocksfield/promo_v3.py`).
-  Pitches are also re-run fresh, with no hand edits (`neon_arena2` is done; `starbloom_isles2` was building at the time
-  of writing). A finished re-run that is marked as the replacement (`superseded_by` in the original's `about.json`)
-  takes the original's place in the gallery; until then both stay listed with their own intervention records.
+  (`operator_interventions`), and its gallery page shows the count and the list. All 15 games in the gallery have
+  zero.
+- **Superseded runs.** Nine earlier runs are superseded (`superseded_by` in their `about.json`) by fresh re-runs of
+  the same pitch, and only the re-runs are listed. Five of the nine had interventions, mostly re-running a stage after
+  an LLM outage or a pipeline fix (`--redo`, `--backfill-assets`); one sky was re-made by hand with the pipeline's
+  fixed panorama code. Their folders and records stay in `web/games/`.
+- **Cutscene review is an agent's, not a person's.** The frame-sheet check that decides which LTX-2.5 clips ship was
+  done by an agent (the kit-ui-fx agent), not by a human.
 - **The judge is a 27B model.** Its absolute vision scores are noisy (the same scaffold has scored 6 and 7), so
   version selection uses the playtest first and a pairwise A/B judge for close calls. Scores are comparable within a
   game, not across games.
