@@ -9,7 +9,7 @@
   "Shift: boost",
   "Esc / P: pause"
  ],
- "created": "2026-11-02T21:37:40-0800",
+ "created": "2026-11-02T22:55:49-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -22,32 +22,32 @@
  "survey": "about/survey.jpg",
  "score": {
   "best": "v2",
-  "score": 6.0,
-  "play": 7.0,
+  "score": 5.92,
+  "play": 6.83,
   "vision": 5.0,
   "versions": [
    {
     "tag": "v0",
-    "score": 6.0,
-    "play_score": 7.0,
+    "score": 5.92,
+    "play_score": 6.83,
     "vision_score": 5.0
    },
    {
     "tag": "s0",
-    "score": 6.0,
-    "play_score": 7.0,
+    "score": 5.92,
+    "play_score": 6.83,
     "vision_score": 5.0
    },
    {
     "tag": "v1",
-    "score": 6.0,
-    "play_score": 7.0,
+    "score": 5.92,
+    "play_score": 6.83,
     "vision_score": 5.0
    },
    {
     "tag": "v2",
-    "score": 6.0,
-    "play_score": 7.0,
+    "score": 5.92,
+    "play_score": 6.83,
     "vision_score": 5.0
    }
   ]
@@ -176,15 +176,15 @@
  },
  "timings_s": {
   "art": 214.3,
-  "build": 330.0,
-  "eval_s0": 67.7,
-  "eval_v0": 87.2,
-  "eval_v1": 72.2,
-  "eval_v2": 83.2,
+  "build": 196.8,
+  "eval_s0": 59.0,
+  "eval_v0": 63.6,
+  "eval_v1": 47.7,
+  "eval_v2": 55.4,
   "plan": 70.4,
-  "repair_1": 358.0,
-  "repair_2": 65.9,
-  "scaffold": 3.8
+  "repair_1": 293.3,
+  "repair_2": 365.6,
+  "scaffold": 6.1
  },
  "operator_interventions": [],
  "mapping": {
@@ -203,15 +203,15 @@
  "model_calls": {
   "builder": {
    "calls": 48,
-   "prompt_tokens": 1093956,
-   "completion_tokens": 7448,
-   "seconds": 576.2
+   "prompt_tokens": 1251099,
+   "completion_tokens": 8972,
+   "seconds": 541.4
   },
   "judge": {
    "calls": 10,
    "prompt_tokens": 51936,
-   "completion_tokens": 4032,
-   "seconds": 125.7
+   "completion_tokens": 3559,
+   "seconds": 91.7
   }
  },
  "agents": {
@@ -275,10 +275,8 @@
      "seconds": 170.0
     },
     "prop_buoy": {
-     "ok": false,
-     "error": "RuntimeError: the voxel prop shipped, but the splat could not be converted to .spz",
-     "reason": "RuntimeError: the voxel prop shipped, but the splat could not be converted to .spz",
-     "seconds": 214.3
+     "ok": true,
+     "seconds": 84.8
     }
    }
   },
@@ -287,20 +285,19 @@
   },
   "build": {
    "result": {
-    "summary": "Lagoon Rush: a sunny tropical jet-boat race on the lagoon level. Coral-red player boat with a white foam wake trails behind, three AI rivals in distinct hull colours chase, and the goal is to finish 3 laps in 1st place. Starfish pickups (12 of 24) line the course; boost pads and a jump ramp come from the level's own placements. Custom FX layers on top of FX.auto: speed lines + splash + shake on boost, splash bursts on jump/land, star bursts on starfish, checkpoint rings, FINAL LAP banner, confetti + star burst on win, dark red flash on lose. Arcade HUD with starfish counter, timer, lap, position, speedometer, and minimap. Title screen with tagline and 3-2-1-GO countdown.",
+    "summary": "Lagoon Rush: a sunny tropical jet-boat race. Skim across a turquoise lagoon past palm beaches, a striped lighthouse and buoy-lined lanes, hit boost pads and a jump ramp, and beat three rival boats over three laps. Bright, splashy, summery toon colours.\n\nThe scaffold already produced a working lagoon race; I tuned it into the planned game:\n- Kept the lagoon level (medium), boat player in coral-red/yellow, chase camera, and the generated lighthouse + buoy props and Gaussian-splat landmarks placed beside the route.\n- Starfish pickups (star tag, target 12 of 24) with the generated starfish HUD icon.\n- 3-lap race vs 3 AI rivals (kit rubber-banding keeps the pack tight), arcade HUD with lap, position, speedometer, timer, minimap and objective.\n- Custom win/lose screens (winScreen/loseScreen: false on the HUD, driven by rules onWin/onLose) showing finish position, laps, starfish and time \u2014 win in 1st, lose if out-raced.\n- Plan juice: continuous white foam wake trail behind the boat, splash burst + shake on hard landings, speed-line flare on boost, and a star pop on each starfish pickup.\n- Title screen sells the fantasy with the tagline, controls credit and a 3-2-1-GO countdown.",
     "changes": [
-     "Added FX.trail white foam wake behind the player boat",
-     "Custom FX handlers: boost (speedLines + splash + shake), jump/land (splash bursts, shake on hard landing), collect (starBurst for starfish), checkpoint (ring), lap (FINAL LAP / LAP N banners + shake), win (confetti + starBurst), lose (dark red flash)",
-     "Tuned HUD: starfish counter with generated icon, timer, lap, position, speedometer (km/h), minimap, arcade style, custom win/lose screen titles",
-     "Title screen tagline: 'Skim the turquoise \u00b7 chain the boosts \u00b7 beat 3 rivals'",
-     "Player boat colour: coral red body with sunny yellow accent",
-     "Race config: 3 laps, 3 opponents, aiSpeed 0.94, 3s countdown"
+     "Added onWin/onLose callbacks to Gameplay.rules with custom K.UI.winScreen / K.UI.loseScreen showing finish position, laps, starfish and time; disabled the HUD's automatic win/lose screens (winScreen/loseScreen: false)",
+     "Added a continuous white foam wake trail behind the boat (K.FX.trail)",
+     "Wired event juice: splash + shake on hard landings, speed-lines on boost, starBurst on starfish collect",
+     "Tuned HUD objective text and title-screen subtitle to the plan"
     ],
     "known_issues": [
-     "Autopilot doesn't finish the full 3-lap race in the 25s test window (expected \u2014 a full race takes longer); the core loop (move, collect, race) is verified working"
+     "The generated lagoon's backdrop reads more grassy-meadow than turquoise-postcard; the water, buoys, palms and lighthouse carry the tropical theme but the shoreline hills stay green",
+     "Autopilot tends to sit 3rd/4th (AI rubber-banding), so the win screen is hard to trigger in an autopilot run \u2014 the lose screen path is the more common autopilot outcome"
     ]
    },
-   "plays": 2
+   "plays": 3
   }
  },
  "models": {

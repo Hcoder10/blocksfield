@@ -9,7 +9,7 @@
   "Space: hop",
   "Esc / P: pause"
  ],
- "created": "2026-11-02T22:17:49-0800",
+ "created": "2026-11-02T22:58:22-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -22,33 +22,33 @@
  "survey": "about/survey.jpg",
  "score": {
   "best": "v2",
-  "score": 7.8,
-  "play": 7.8,
-  "vision": null,
+  "score": 5.7,
+  "play": 7.4,
+  "vision": 4.0,
   "versions": [
    {
     "tag": "v0",
-    "score": 7.6,
-    "play_score": 7.6,
-    "vision_score": null
+    "score": 6.2,
+    "play_score": 7.4,
+    "vision_score": 5.0
    },
    {
     "tag": "s0",
-    "score": 7.8,
-    "play_score": 7.8,
-    "vision_score": null
+    "score": 6.1,
+    "play_score": 7.2,
+    "vision_score": 5.0
    },
    {
     "tag": "v1",
-    "score": 7.6,
-    "play_score": 7.6,
-    "vision_score": null
+    "score": 5.7,
+    "play_score": 7.4,
+    "vision_score": 4.0
    },
    {
     "tag": "v2",
-    "score": 7.8,
-    "play_score": 7.8,
-    "vision_score": null
+    "score": 5.7,
+    "play_score": 7.4,
+    "vision_score": 4.0
    }
   ]
  },
@@ -170,14 +170,14 @@
  },
  "timings_s": {
   "art": 218.4,
-  "build": 47.1,
-  "eval_s0": 96.2,
-  "eval_v0": 110.9,
-  "eval_v1": 103.4,
-  "eval_v2": 94.4,
+  "build": 292.7,
+  "eval_s0": 47.6,
+  "eval_v0": 80.1,
+  "eval_v1": 47.0,
+  "eval_v2": 67.2,
   "plan": 78.0,
-  "repair_1": 46.0,
-  "repair_2": 47.6,
+  "repair_1": 575.2,
+  "repair_2": 288.8,
   "scaffold": 1.1
  },
  "operator_interventions": [],
@@ -195,17 +195,23 @@
   }
  },
  "model_calls": {
+  "builder": {
+   "calls": 52,
+   "prompt_tokens": 1521980,
+   "completion_tokens": 12152,
+   "seconds": 674.8
+  },
   "judge": {
-   "calls": 2,
-   "prompt_tokens": 9070,
-   "completion_tokens": 139,
-   "seconds": 15.8
+   "calls": 10,
+   "prompt_tokens": 51906,
+   "completion_tokens": 3388,
+   "seconds": 71.0
   }
  },
  "agents": {
-  "live": 0,
+  "live": 3,
   "cached": 0,
-  "failed": 3
+  "failed": 0
  },
  "stages": {
   "art": {
@@ -274,8 +280,25 @@
    "problems": []
   },
   "build": {
-   "result": null,
-   "plays": 0
+   "result": {
+    "summary": "Frostbeak is a cozy platformer: a chibi penguin (navy body, pink scarf) waddles and hops across dawn-lit floating ice floes, collecting 20 of 30 glittering fish orbs while dodging patrolling snowballs, then races the 180s timer up to the summit igloo portal. The look is crisp blue-white snow under a soft pink dawn sky (low pale sun, pink fog, low pink cloud sea below the floes), with a cozy cream-pill HUD using the generated fish icon, minimap, timer and hearts. The title screen sells the fantasy with tagline and controls.",
+    "changes": [
+     "Tuned the snow look to a pink dawn: low warm sun (elevation 11), rose-pink horizon/bottom sky, pink fog, gentle bloom",
+     "Made the player a penguin with a pink scarf accent (navy body #26324b / accent #ff8fab) to read as Frostbeak",
+     "Added a soft pink ice powder-trail behind the player (belly-slide feel)",
+     "Dressed the route with chunky voxel snowmen props, warm lanterns, and Gaussian-splat snowman landmarks",
+     "Added a low pink cloud sea drifting below the floes (dawn fog in the valley)",
+     "Configured rules: collect 20/30 orbs, goal portal, 180s countdown, 3 lives, 5 patrol snowball enemies",
+     "Added extra juice: '+1' pink text on every fish pickup and a star-burst at the goal",
+     "HUD in cozy style with generated fish icon counter, timer, lives, minimap, and custom win/lose screens",
+     "Wired generated music + SFX via Audio.auto with a collect/jump/land/hit/boost/win map"
+    ],
+    "known_issues": [
+     "A benign Spark WebGL program-info log warning appears when the Gaussian-splat snowman landmarks stream in (not a console error; does not affect gameplay)",
+     "Autopilot did not fully reach the goal within the 25s test window, but it moved 245u, collected 23/30 fish and unlocked the goal portal, confirming the route is playable and winnable"
+    ]
+   },
+   "plays": 3
   }
  },
  "models": {

@@ -94,5 +94,14 @@
   "camera": {
    "yaw": 1.9075253542459458
   }
+ },
+ "splat_buoy": {
+  "file": "splat_buoy.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "A small round bobbing buoy, glossy red-and-white horizontal stripes, a tiny yellow horn on top, chunky rounded shape",
+  "camera": {
+   "yaw": 1.2739677835153467
+  }
  }
 }
