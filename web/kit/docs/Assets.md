@@ -8,6 +8,7 @@ await Assets.sky(game, 'sky')            -> true if the panorama loaded (else th
 Assets.icon('coin', game, { fallback }) -> image url (manifest icon, or a drawn icon; fallback:true forces the drawn one)
 Assets.texture('bricks', { game, repeat: [4, 4], fallback: 'noise'|'checker'|'grid'|'stripes' }) -> THREE.Texture
 Assets.prop(game, 'prop_mushroom', { position, rotationY = 0, scale = 1, height, collider = true, fallback = 'crate' }) -> Group
+Assets.splat(game, 'splat_tree', { position, scale = 1, height, rotationY = 0, collider = true, fallback = 'crate' }) -> Group
 Assets.music('music_main', game), Assets.sfx('collect', game) -> url | null
 Assets.has(game, name) -> boolean
 await Assets.verify(game) -> [removed names]   // drop manifest entries whose file is missing (optional, once at start)
@@ -46,3 +47,24 @@ K.UI.hud(game, { counters: [{ id: 'coins', icon: K.Assets.icon('coin', game) }] 
 - Waiting on `Assets.prop(...).userData.ready` before starting the game: not needed, it pops in.
 - Passing `game` as the first argument to `icon`/`texture`: the name comes first (`icon('coin', game)`).
 - Hard-coding file paths: use names from the manifest; missing ones fall back on their own.
+
+## splat (real Gaussian splats, rendered with Spark)
+Idol turns each generated prop image into a 3D Gaussian splat. `Assets.splat` draws it as a real splat in the game
+(Spark, MIT, `vendor/spark`, loaded only when the first splat is requested). Returns a Group at once; the splat streams
+in (about 1-2 s). `group.userData.ready` resolves `'splat'`, `'voxel'` (a same-name voxel prop was used) or `'prop'`
+(a `World.prop` fallback kind). Orientation is fixed for Idol (`up: 'idol'`), the prop is normalised to bottom centre,
+`scale` = longest side in units (or `height`), stray floaters are hidden, a soft contact shadow and one box collider are
+added, and the colours are tinted toward the look's ambient light (darker at night).
+
+```js
+K.Assets.splat(game, 'splat_tree', { position: [6, 0, -4], scale: 6 });            // a 6-unit tall blossom tree
+K.Assets.splat(game, 'splat_mushroom', { position: level.spawn, scale: 2, fallback: 'rock' });
+```
+Manifest entry: `{"kind": "splat", "file": "splat_tree.spz", "up": "idol"}` (`.spz` preferred, about 5x smaller than
+`.ply`; `web/tools/ply_to_spz.py` converts; `.ply` and `.splat` also load). Optional `"camera": {"yaw": radians}` turns
+the side Idol's input camera saw toward -Z.
+
+Use splats for **hero scenery and landmarks at mid distance** (trees, giant mushrooms, statues, a shrine): they look
+painterly and rich from 5+ units away, and slightly grainy right up against the camera. 4-8 splats per scene is plenty
+(130k Gaussians each). They are not lit by the sun and cast no real shadow; avoid using them for things the player
+must read exactly (platforms, pickups).

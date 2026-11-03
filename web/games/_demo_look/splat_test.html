@@ -1,0 +1,39 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>splat test</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}#hud{position:fixed;left:10px;top:8px;font:12px monospace;color:#fff;text-shadow:0 1px 2px #000}</style>
+<script type="importmap">{"imports":{"three":"../../vendor/three/three.module.js","three/addons/":"../../vendor/three/addons/"}}</script>
+</head><body><div id="hud"></div><script type="module">
+// ?look=toon_bright&cam=hero|near|far&kind=sky_islands
+import * as THREE from 'three';
+import { createGame } from '../../kit/core.js';
+import * as Look from '../../kit/look.js';
+import * as Level from '../../kit/level.js';
+import * as Assets from '../../kit/assets.js';
+const q = new URLSearchParams(location.search);
+const game = await createGame({ assets: './assets/splat_manifest.json' });
+Look.apply(game, q.get('look') || 'toon_bright');
+const level = Level.build(game, q.get('kind') || 'sky_islands', { size: 'small', seed: 2, collectibles: 0 });
+const s = level.spawn.clone().add(new THREE.Vector3(0, -1, 0));
+const f = new THREE.Vector3(Math.sin(level.spawnYaw), 0, Math.cos(level.spawnYaw)), sd = new THREE.Vector3(f.z, 0, -f.x);
+const at = (fw, side) => { const p = s.clone().addScaledVector(f, fw).addScaledVector(sd, side); const h = (level.islands ? level.islands[0].heightAt(p.x, p.z) : null); if (h != null) p.y = h; return p; };
+const props = [
+  Assets.splat(game, 'splat_tree', { position: at(9, -5), scale: 6 }),
+  Assets.splat(game, 'splat_mushroom', { position: at(6.5, -1.2), scale: 2.4 }),
+  Assets.splat(game, 'splat_flower', { position: at(3.5, 1.2), scale: 1.5 }),
+  Assets.splat(game, 'splat_plot', { position: at(8.5, 3.8), scale: 2.0 }),
+  Assets.splat(game, 'splat_missing', { position: at(1.5, -3.5), rotationY: level.spawnYaw + 2.6, fallback: 'chest' }),
+];
+const cams = {
+  hero: [s.clone().addScaledVector(f, -6).add(new THREE.Vector3(0, 3.2, 0)), s.clone().addScaledVector(f, 8).add(new THREE.Vector3(0, 1.5, 0))],
+  near: [s.clone().addScaledVector(f, 0).addScaledVector(sd, 1).add(new THREE.Vector3(0, 2, 0)), at(5, 2).add(new THREE.Vector3(0, 1, 0))],
+  far: [s.clone().addScaledVector(f, -16).addScaledVector(sd, 6).add(new THREE.Vector3(0, 8, 0)), s.clone().addScaledVector(f, 6)],
+};
+const [cp, ct] = cams[q.get('cam') || 'hero'];
+game.cameraOverride = { position: cp, target: ct };
+const frames = []; let last = performance.now();
+game.lateUpdate(() => { const n = performance.now(); frames.push(n - last); last = n; if (frames.length > 200) frames.shift(); }, 99);
+game.start();
+const t0 = performance.now();
+const ready = await Promise.all(props.map(p => p.userData.ready));
+const loadMs = performance.now() - t0;
+setTimeout(() => { window.__kit = { ready: true, state: () => ({ ready, loadMs: Math.round(loadMs), fps: +(1000 / (frames.reduce((a, b) => a + b, 0) / frames.length)).toFixed(0), errors: (window.__kitErrors || []).length }) }; }, 1500);
+</script></body></html>

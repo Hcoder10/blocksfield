@@ -1,0 +1,6 @@
+{"splat_tree": {"kind": "splat", "file": "splats/BlossomTree.spz"},
+ "splat_mushroom": {"kind": "splat", "file": "splats/LilacMushroom.spz"},
+ "splat_flower": {"kind": "splat", "file": "splats/StarbloomFlower.spz"},
+ "splat_plot": {"kind": "splat", "file": "splats/FlowerPlot.spz"},
+ "splat_bud": {"kind": "splat", "file": "splats/BlossomBud.spz"},
+ "prop_mushroom": {"kind": "prop", "file": "prop_mushroom.json"}}

@@ -127,6 +127,7 @@ icon:  {"kind":"icon","file":"icon_coin.png","for":"coin"}       RGBA cut-out, t
 music: {"kind":"music","file":"music_main.mp3","loop":true}      key "music_main" autoplays on first input
 sfx:   {"kind":"sfx","file":"sfx_collect.mp3","event":"collect"} event in collect|jump|land|damage|death|checkpoint|goal|win|lose|boost|start
 prop:  {"kind":"prop","file":"prop_mushroom.json"}
+splat: {"kind":"splat","file":"splat_mushroom.spz","up":"idol"}  Idol 3DGS (.spz preferred, .ply ok; optional "camera":{"yaw"}); Assets.splat
 ```
 Prop JSON (from splat_to_parts): `{name, style:"voxel", size:[x,y,z] (longest = 1, Y up, origin bottom-centre,
 front = -Z), palette:["#rrggbb",...], parts:[{p:[x,y,z] centre, s:[x,y,z] size, c:paletteIndex}]}` (a few hundred

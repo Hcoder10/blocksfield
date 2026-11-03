@@ -273,3 +273,128 @@ export async function verify(game) {
   if (gone.length) console.warn('[kit] Assets.verify: missing files, using fallbacks for', gone.join(', '));
   return gone;
 }
+
+// ------------------------------------------------------------------------------------------------ Gaussian splats (Spark)
+// Spark (vendor/spark, MIT) is imported lazily on the first splat so games without splats never pay for it.
+let sparkMod = null;
+async function sparkFor(game) {
+  sparkMod = sparkMod || import('../vendor/spark/spark.module.js');
+  const S = await sparkMod;
+  if (!game._spark) {
+    game._spark = new S.SparkRenderer({ renderer: game.renderer, depthWrite: true });
+    game._spark.name = 'kit:spark';
+    game.scene.add(game._spark);
+  }
+  return S;
+}
+const splatTint = (game) => {
+  // splats are pre-lit: pull them toward the look's ambient so they sit in the scene (darker + tinted at night)
+  const L = game.look && game.look.preset;
+  if (!L) return new THREE.Color(1, 1, 1);
+  const c = new THREE.Color(1, 1, 1).lerp(new THREE.Color(L.hemi.sky), L.night ? 0.55 : 0.22);
+  c.lerp(new THREE.Color(L.sun.color), 0.12);
+  return c.multiplyScalar(L.night ? 0.62 : 1.0);
+};
+let blobTex = null;
+function blobShadow(radius) {
+  if (!blobTex) {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(0.6, 'rgba(0,0,0,0.25)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+    blobTex = new THREE.CanvasTexture(c);
+  }
+  const m = new THREE.Mesh(new THREE.CircleGeometry(radius, 24).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false, fog: true }));
+  m.position.y = 0.03; m.renderOrder = 1; m.name = 'kit:splat-shadow';
+  return m;
+}
+const pct = (arr, p) => { const a = Float32Array.from(arr).sort(); return a[Math.min(a.length - 1, Math.max(0, Math.floor(p * (a.length - 1))))]; };
+
+/**
+ * Assets.splat(game, name, { position=[0,0,0] (bottom centre), scale=1 (longest side in units), height, rotationY=0,
+ *   collider=true, up='idol'|'y'|'z', camera:{yaw}, minOpacity=0.15, tint, shadow=true, url, fallback='crate' }) -> Group
+ * Renders a real 3D Gaussian splat (.ply / .spz / .splat) from the manifest ({"kind":"splat","file":"prop_x.ply"}) with
+ * Spark. Returned at once; userData.ready resolves 'splat' | 'voxel' | 'prop' (what was shown in the end).
+ */
+export function splat(game, name, opts = {}) {
+  if (!game || !game.scene) throw new Error('Assets.splat(game, name, opts): first argument must be the game from createGame()');
+  const group = new THREE.Group(); group.name = 'kit:splat:' + name;
+  const pos = World.v3(opts.position);
+  group.position.copy(pos); group.rotation.y = opts.rotationY ?? opts.yaw ?? 0;
+  (opts.parent || game.scene).add(group);
+  const e = entry(game, name, 'splat');
+  const url = opts.url || (e && e.url);
+  const fallback = async () => {
+    // same-name voxel prop if the manifest has one, else a World.prop kind
+    const ve = entry(game, name, 'prop') || entry(game, name.replace(/^splat_/, 'prop_'), 'prop');
+    if (ve) {
+      const p = prop(game, ve === entry(game, name, 'prop') ? name : name.replace(/^splat_/, 'prop_'), { ...opts, position: [0, 0, 0], parent: group, rotationY: 0 });
+      if (await p.userData.ready) return 'voxel';
+      group.remove(p);
+    }
+    const kind = World.propKinds.includes(opts.fallback) ? opts.fallback : 'crate';
+    const g = World.prop(game, kind, { ...opts, position: pos, yaw: group.rotation.y, parent: game.scene, collider: opts.collider });
+    game.scene.remove(g); g.position.set(0, 0, 0); g.rotation.set(0, 0, 0); group.add(g);
+    return 'prop';
+  };
+  if (!url) { group.userData.ready = fallback(); return group; }
+  group.userData.ready = (async () => {
+    try {
+      const S = await sparkFor(game);
+      const mesh = new S.SplatMesh({ url });
+      await mesh.initialized;
+      const up = opts.up || (e && e.up) || 'idol';
+      const qUp = new THREE.Quaternion();
+      if (up === 'idol') qUp.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI);            // (x, -y, -z)
+      else if (up === 'z') qUp.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);     // (x, z, -y)
+      const cam = opts.camera || (e && e.camera);
+      if (cam && cam.yaw != null) {   // spin so the side Idol's input camera saw faces -Z (splat_to_parts.face_camera)
+        const vx = Math.sin(cam.yaw), vz = -Math.cos(cam.yaw), d = -Math.PI / 2 - Math.atan2(vz, vx);
+        qUp.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -d));
+      }
+      // robust bounds (0.5..99.5 percentile of the visible Gaussians), in game axes
+      const minOp = opts.minOpacity ?? 0.15;
+      const xs = [], ys = [], zs = [], v = new THREE.Vector3();
+      mesh.forEachSplat((i, c, s, q, op) => { if (op >= minOp) { v.copy(c).applyQuaternion(qUp); xs.push(v.x); ys.push(v.y); zs.push(v.z); } });
+      if (xs.length < 50) throw new Error(`only ${xs.length} visible splats`);
+      const lo = new THREE.Vector3(pct(xs, 0.005), pct(ys, 0.005), pct(zs, 0.005));
+      const hi = new THREE.Vector3(pct(xs, 0.995), pct(ys, 0.995), pct(zs, 0.995));
+      const pad = 0.02 * Math.max(hi.x - lo.x, hi.y - lo.y, hi.z - lo.z);
+      lo.subScalar(pad); hi.addScalar(pad);
+      // hide floaters and near-invisible Gaussians so the prop reads clean
+      const ps = mesh.packedSplats;
+      if (ps && ps.setSplat) {
+        let hidden = 0;
+        ps.forEachSplat((i, c, s, q, op, col) => {
+          v.copy(c).applyQuaternion(qUp);
+          if (op < minOp * 0.5 || v.x < lo.x || v.y < lo.y || v.z < lo.z || v.x > hi.x || v.y > hi.y || v.z > hi.z) { ps.setSplat(i, c, s, q, 0, col); hidden++; }
+        });
+        if (hidden) ps.needsUpdate = true;
+      }
+      const size = hi.clone().sub(lo);
+      const ext = Math.max(size.x, size.y, size.z);
+      const k = opts.height ? opts.height / size.y : (opts.scale ?? 1) / ext;
+      const centre = new THREE.Vector3((lo.x + hi.x) / 2, lo.y, (lo.z + hi.z) / 2);
+      mesh.quaternion.copy(qUp);
+      mesh.position.copy(centre).negate();
+      mesh.recolor = opts.tint ? new THREE.Color(opts.tint) : splatTint(game);
+      const scaler = new THREE.Group(); scaler.scale.setScalar(k); scaler.add(mesh);
+      group.add(scaler);
+      if (opts.shadow !== false) group.add(blobShadow(Math.max(size.x, size.z) * k * 0.55));
+      group.updateMatrixWorld(true);
+      group.userData.size = size.clone().multiplyScalar(k);
+      group.userData.splat = mesh;
+      if (opts.collider !== false) {
+        const half = size.clone().multiplyScalar(k / 2);
+        half.x *= 0.7; half.z *= 0.7;            // splat silhouettes are rounder than their box
+        World.colliderBox(game, new THREE.Vector3(0, half.y, 0).applyMatrix4(group.matrixWorld), half, group.rotation.y, { what: 'splat' });
+      }
+      return 'splat';
+    } catch (err) {
+      console.warn(`[kit] Assets.splat: "${name}" (${url}) failed, using fallback`, err);
+      return fallback();
+    }
+  })();
+  return group;
+}
