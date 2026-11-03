@@ -1712,8 +1712,10 @@ function canvasSprite(w, h, worldH, draw) {
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   draw(c.getContext('2d'), w, h);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, depthTest: false, toneMapped: false }));
-  s.scale.set(worldH * w / h, worldH, 1); s.renderOrder = 20; s.userData.noCollide = true; s.userData.canvas = c;
+  // depth-writing (alphaTest cut-out) so the look's outline post-pass treats the bubble as a surface instead of
+  // drawing the edges of the scene behind it across the text
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: false, alphaTest: 0.5, depthWrite: true, depthTest: true, toneMapped: false }));
+  s.scale.set(worldH * w / h, worldH, 1); s.renderOrder = 20; s.userData.noCollide = true; s.userData.canvas = c; s.userData.w = worldH * w / h; s.userData.h = worldH;
   return s;
 }
 function markerSprite(ch, color) {
@@ -1824,7 +1826,7 @@ export function npcs(game, list = []) {
         else n.object.rotation.y += angWrap(n.yaw - n.object.rotation.y) * Math.min(1, dt * 2);
         n.character.animate(dt, { speed: 0, vy: 0, grounded: true, mode: 'idle', vel: V3() });
         if (n.markerSprite) n.markerSprite.position.y = Math.sin(game.time * 3 + n.lineIdx) * 0.12;
-        if (n.bubble) { n.bubbleT -= dt; n.bubble.material.opacity = Math.min(1, n.bubbleT * 3); if (n.bubbleT <= 0) { n.object.children.forEach(() => {}); n.bubble.parent.remove(n.bubble); n.bubble = null; } }
+        if (n.bubble) { n.bubbleT -= dt; n.bubble.scale.setScalar(1); n.bubble.scale.set(n.bubble.userData.w * Math.min(1, n.bubbleT * 4 + 0.001), n.bubble.userData.h * Math.min(1, n.bubbleT * 4 + 0.001), 1); if (n.bubbleT <= 0) { n.object.children.forEach(() => {}); n.bubble.parent.remove(n.bubble); n.bubble = null; } }
         if (!pl || !pl.alive) continue;
         if (d < 3.2 && Math.abs(pl.position.y - n.position.y) < 3 && !n.near) {
           n.near = true;
