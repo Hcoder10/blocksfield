@@ -48,7 +48,8 @@
   // ---- gallery ----
   const gameUrl = (g, f) => `games/${encodeURIComponent(g.id)}/${f}`;
   function card(g) {
-    const thumb = g.thumbnail ? `<img src="${esc(gameUrl(g, g.thumbnail))}" alt="" loading="lazy">` : "";
+    const thumbSrc = g.card_thumb || (g.thumbnail ? gameUrl(g, g.thumbnail) : "");  // card_thumb: brighter real frame
+    const thumb = thumbSrc ? `<img src="${esc(thumbSrc)}" alt="" loading="lazy">` : "";
     const video = g.video ? `<video muted loop playsinline preload="none" data-src="${esc(gameUrl(g, g.video))}"></video>` : "";
     const meta = [];
     const ops = g.interventions
@@ -160,7 +161,7 @@
     }
     if (!ex.length) return;
     $("#beyond-grid").innerHTML = ex.slice(0, 2).map(({ g, badge, body }) => `<a class="beyond-ex reveal" href="site/game.html?id=${encodeURIComponent(g.id)}#beyond">
-      ${g.thumbnail ? `<img src="${esc(gameUrl(g, g.thumbnail))}" alt="" loading="lazy">` : ""}
+      ${g.card_thumb || g.thumbnail ? `<img src="${esc(g.card_thumb || gameUrl(g, g.thumbnail))}" alt="" loading="lazy">` : ""}
       <div class="bx"><p class="badges">${badge}</p><h3>${esc(g.title || g.id)}</h3>${body}<span class="go">How it was made →</span></div></a>`).join("");
     $("#beyond").hidden = false;
     watchReveals();
@@ -211,7 +212,7 @@
       if (first) $("#play-now").href = gameUrl(first, first.play);
       startReel([
         ...pool.slice(0, 5).map((g) => ({
-          video: gameUrl(g, g.video), poster: g.thumbnail ? gameUrl(g, g.thumbnail) : "", pitch: g.pitch,
+          video: gameUrl(g, g.video), poster: g.card_thumb || (g.thumbnail ? gameUrl(g, g.thumbnail) : ""), pitch: g.pitch,
           tag: `Web game · ${g.title}`,
         })),
         ...ROBLOX_REEL,

@@ -136,6 +136,8 @@ def check(out: Path) -> list[str]:
             problems.append(f"{g['id']}: pitch is missing or too short to be real: {g.get('pitch')!r}")
         if not (g.get("title") or "").strip():
             problems.append(f"{g['id']}: no title")
+        if g.get("card_thumb") and not (out / g["card_thumb"]).exists():
+            problems.append(f"index.json: {g['id']} card_thumb missing: {g['card_thumb']}")
         for k in ("play", "thumbnail", "video"):
             if g.get(k) and not (out / "games" / g["id"] / g[k]).exists():
                 problems.append(f"index.json: {g['id']} {k} missing: {g[k]}")

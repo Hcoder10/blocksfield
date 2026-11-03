@@ -251,7 +251,7 @@
   // vehicle drift input (jump or action); the right stick turns the orbit/follow camera, not the vehicles' chase cam
   const PAD = {
     platformer: "left stick move · A jump · X / RB dash · B ground pound · right stick camera",
-    kart: "left stick steer and throttle · hold A or X / RB in a turn to drift, release to boost",
+    kart: "left stick steer (push up to accelerate, down to brake) · hold A, X, RB or RT in a turn to drift, release to boost",
     topdown: "left stick move · A jump (fire in blaster games) · X / RB dash",
     fps: "left stick move · A jump and fire · X / RB action",
   };
@@ -263,7 +263,7 @@
     if (!hasControls) rows.push(["Keyboard", h[0]]);
     rows.push(["Phone", h[1]]);
     rows.push(["Gamepad", PAD[type] || PAD.platformer]);
-    rows.push(["Pause", "Esc / P"]);
+    rows.push(["Pause / reset", "Esc / P pause · R puts you back on the route"]);
     return `<h3>How to play</h3><dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
       <p class="howto-foot">Phones: play in landscape. Weak laptop? Open <a href="${esc(url(play))}?quality=low">the low-quality version</a>.</p>`;
   }

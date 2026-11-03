@@ -30,7 +30,7 @@ def render(root: Path, out: Path | None = None) -> Path:
         games = []
     if games:
         g = games[0]
-        img = "../games/{}/{}".format(g["id"], g["thumbnail"])
+        img = "../" + g["card_thumb"] if g.get("card_thumb") else "../games/{}/{}".format(g["id"], g["thumbnail"])
         qs = f"?img={quote(img)}&pitch={quote(g.get('pitch') or '')}"
     srv, port = shot.serve(root)
     try:

@@ -53,6 +53,48 @@ def checked_controls(d: Path, controls: list) -> list:
     return out
 
 
+DARK = 30  # mean luminance (0-255) below which a card reads as a black box; neon looks sit at 45-60 and look right
+
+
+def card_thumb(d: Path, e: dict) -> str | None:
+    """Site-side presentation: when the pipeline's thumbnail is too dark, use the brightest real frame of the game's
+    own gameplay video (never concept art). Written to <web>/site/media/thumbs/<id>.jpg next to whichever games dir is
+    being indexed (the repo, or a pages build); the game's own files are not touched. Returns a web-root path."""
+    import shutil
+    import subprocess
+    import tempfile
+    try:
+        from PIL import Image, ImageStat
+    except ImportError:
+        return None
+    thumb, video = e.get("thumbnail"), e.get("video")
+    if not thumb or not video or not (d / thumb).exists() or not (d / video).exists():
+        return None
+    with Image.open(d / thumb) as im:
+        if ImageStat.Stat(im.convert("L")).mean[0] >= DARK:
+            return None
+    out = d.parent.parent / "site" / "media" / "thumbs" / f"{d.name}.jpg"
+    rel = f"site/media/thumbs/{d.name}.jpg"
+    if out.exists() and out.stat().st_mtime >= (d / video).stat().st_mtime:
+        return rel
+    if not shutil.which("ffmpeg"):
+        return None
+    best, best_l = None, -1.0
+    with tempfile.TemporaryDirectory() as td:
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-i", str(d / video), "-vf", "fps=1,scale=1280:-2",
+                        str(Path(td) / "f%03d.jpg")], check=False)
+        for f in sorted(Path(td).glob("f*.jpg")):
+            with Image.open(f) as im:
+                lum = ImageStat.Stat(im.convert("L")).mean[0]
+            if lum > best_l:
+                best, best_l = f, lum
+        if best is None or best_l <= DARK * 1.2:
+            return None
+        out.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(best, out)
+    return rel
+
+
 def game_entry(d: Path) -> dict | None:
     try:
         about = json.loads((d / "about.json").read_text(encoding="utf-8"))
@@ -60,6 +102,7 @@ def game_entry(d: Path) -> dict | None:
         return None
     e = {"id": d.name, **{k: about.get(k) for k in CARD_KEYS}}
     e["play"] = e["play"] or "index.html"
+    e["card_thumb"] = card_thumb(d, e)
     if e.get("controls"):
         e["controls"] = checked_controls(d, e["controls"])
     for k in ("thumbnail", "video"):
