@@ -276,7 +276,7 @@ async def make_skybox(prompt: str) -> tuple[dict, Image.Image, Image.Image]:
 async def make_sfx(prompt: str, seconds: float, variants: int = 1) -> list[bytes]:
     secs = max(1, int(round(seconds)))
     files = await run_job("sfx", {"prompt": f"{prompt.strip().rstrip('.')}. {SFX}. Length: {secs} seconds.",
-                                  "seconds": float(seconds), "variants": int(variants), "seed": -1})
+                                  "seconds": max(1.0, float(seconds)), "variants": int(variants), "seed": -1})  # Stable Audio min 1 s
     audio = _audio_files(files)
     if not audio:
         raise RuntimeError("sfx workflow produced no audio")
