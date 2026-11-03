@@ -230,9 +230,14 @@ class WebBuild:
             self.log(f"eval {tag}: kept (score {cached['score']})")
             return cached
         t = time.time()
+        vdir = self.run_dir / "versions" / tag
+        if src is None and (vdir / "src").exists():          # re-evaluating a kept version: play exactly that code
+            keep = self.run_dir / "versions" / f"_{tag}_src"
+            shutil.rmtree(keep, ignore_errors=True)
+            shutil.copytree(vdir / "src", keep)
+            src = keep
         if src is not None:
             wb.restore(src, self.game_dir)
-        vdir = self.run_dir / "versions" / tag
         shutil.rmtree(vdir, ignore_errors=True)            # a re-evaluation must not mix in an older run's frames
         wb.snapshot(self.game_dir, vdir / "src")
         rep = await asyncio.to_thread(web_play.play, self.page_rel, vdir / "play", survey=True,
@@ -256,6 +261,32 @@ class WebBuild:
         self.log(f"eval {tag}: score {score} (play {ps}, vision {vision}); {len(rep['errors'])} error(s)")
         return rec
 
+    async def better(self, new: dict, old: dict) -> dict:
+        """The version to keep. Clear gaps (errors, playtest, >= 1 point) decide by score; within the vision judge's
+        noise a pairwise A/B judge decides, and a tie keeps the more-built version (`new` unless it is the scaffold)."""
+        from blocksfield import web_build as wb
+        if len(new["errors"]) != len(old["errors"]):
+            return new if len(new["errors"]) < len(old["errors"]) else old
+        if abs(new["play_score"] - old["play_score"]) >= 1 or abs(new["score"] - old["score"]) >= 1 \
+                or "judge" not in self.roles:
+            return new if new["score"] > old["score"] else old
+        key = f"pair_{new['tag']}_{old['tag']}"
+        got = self.stages.get(key)
+        if got is None:
+            try:
+                pick = await wb.pairwise(self.roles["judge"], wb.capture_images(new)[:3], wb.capture_images(old)[:3],
+                                         self.plan)
+            except Exception as e:  # noqa: BLE001
+                self.log(f"pairwise {new['tag']} vs {old['tag']} failed: {e}")
+                pick = "tie"
+            got = {"prefer": pick}
+            self.stages.put(key, got)
+        pick = got["prefer"]
+        winner = new if pick == "A" else old if pick == "B" else (old if new["tag"] == "s0" else new)
+        self.log(f"pairwise {new['tag']} ({new['score']}) vs {old['tag']} ({old['score']}): {pick} -> keep "
+                 f"{winner['tag']}")
+        return winner
+
     async def judge_and_repair(self) -> dict:
         from blocksfield import web_build as wb
         evals = [await self.evaluate("v0")]
@@ -263,7 +294,7 @@ class WebBuild:
         if (self.run_dir / "scaffold_src").exists():         # the builder must beat the plain scaffold
             s0 = await self.evaluate("s0", self.run_dir / "scaffold_src")
             evals.append(s0)
-            if s0["score"] > best["score"]:
+            if await self.better(s0, best) is s0:
                 self.log(f"eval: the scaffold (s0 {s0['score']}) beat the builder's version (v0 {best['score']})")
                 best = s0
         for rnd in range(1, self.a.repair_rounds + 1):
@@ -284,7 +315,7 @@ class WebBuild:
                 self.stages.put(name, {"result": res, "from": best["tag"], "plays": gt.plays}, time.time() - t)
             ev = await self.evaluate(f"v{rnd}")
             evals.append(ev)
-            if ev["score"] > best["score"] or (ev["score"] == best["score"] and len(ev["errors"]) < len(best["errors"])):
+            if await self.better(ev, best) is ev:
                 best = ev
             else:
                 self.log(f"repair {rnd}: v{rnd} scored {ev['score']} <= best {best['tag']} {best['score']}: kept "

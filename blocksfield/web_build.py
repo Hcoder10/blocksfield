@@ -347,6 +347,29 @@ def findings_text(rep: dict, play_notes: list[str], verdict, catalog: dict | Non
     return "\n".join(lines) or "no findings: polish what you think is weakest"
 
 
+async def pairwise(llm, a: list[bytes], b: list[bytes], plan: dict) -> str:
+    """Which of two versions looks and reads better as this game: 'A', 'B' or 'tie'. Asked in both orders (a single
+    vision score is noisy: live, the plain scaffold outscored the builder's richer version 6 to 5)."""
+    from harness.judge import _parse_json
+    from harness.llm import Message, image_part, text_part
+
+    async def ask(first: list[bytes], second: list[bytes]) -> str:
+        parts = [text_part(f"THE GAME: {plan.get('title')} - {plan.get('tagline')}\nART DIRECTION: "
+                           f"{plan.get('art_direction')}\n\nVERSION A (survey sheet, player view, gameplay):")]
+        parts += [image_part(x) for x in first]
+        parts.append(text_part("VERSION B (same captures):"))
+        parts += [image_part(x) for x in second]
+        parts.append(text_part("Which version is the better game for a player: richer, more finished, more on-brief, "
+                               "more fun-looking? Reply with ONLY JSON: {\"prefer\": \"A\" or \"B\" or \"tie\", "
+                               "\"why\": \"one sentence\"}"))
+        r = await llm.chat([Message("system", WEB_JUDGE_SYSTEM), Message("user", parts)])
+        obj = _parse_json(r.message.content if isinstance(r.message.content, str) else "") or {}
+        return str(obj.get("prefer", "tie")).strip().upper()
+    p1 = await ask(a, b)
+    p2 = {"A": "B", "B": "A"}.get(await ask(b, a), "TIE")
+    return p1 if p1 == p2 and p1 in ("A", "B") else "tie"
+
+
 def combined(play: float, vision: float | None) -> float:
     if vision is None:
         return round(play, 2)

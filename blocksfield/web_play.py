@@ -157,7 +157,8 @@ def play(page_rel: str, out_dir: Path, *, wait: float = 15.0, survey: bool = Tru
                     ev(page, "window.__kit.ui && window.__kit.ui(true)")
                     page.wait_for_timeout(400)
                     if paths:
-                        rep["sheet"] = str(contact_sheet(paths[:4], out_dir / "survey_sheet.png", labels=labels[:4]))
+                        rep["sheet"] = str(contact_sheet(paths[:4], out_dir / "survey_sheet.png", labels=labels[:4],
+                                                         cols=2 if len(paths) == 4 else min(3, len(paths))))
                 snap(page, "player")
                 for chunk in [k for k in keys.split(",") if k.strip()]:
                     key, _, ms = chunk.partition(":")

@@ -74,12 +74,12 @@ def equirect(pano: Image.Image, width: int = EQ_W, height: int = EQ_H, horizon: 
                      dtype=np.float64)
     c_top = np.median(sky[: max(2, top_px // 10)].reshape(-1, 3), axis=0)
     c_hz = np.median(sky[-max(2, top_px // 25):].reshape(-1, 3), axis=0)
-    c_dn = 0.55 * c_hz + 0.45 * c_top * 0.8                 # deeper, bluer haze far below
+    c_dn = 0.3 * c_hz + 0.7 * c_top * 0.92                  # deeper, bluer haze far below
     out = np.empty((height, width, 3))
     out[: half - top_px] = c_top
     out[half - top_px: half] = sky
     y = (np.arange(height) + 0.5) / height                  # 0 zenith .. 1 nadir
-    t = asset_tools._smooth((y[half:] - 0.5) / 0.3)[:, None, None]
+    t = asset_tools._smooth((y[half:] - 0.5) / 0.15)[:, None, None]
     out[half:] = (1 - t) * c_hz + t * c_dn
     up_w = asset_tools._smooth((y - 0.03) / 0.16)[:, None, None]          # fade the top 19% to the zenith colour
     out = up_w * out + (1 - up_w) * c_top
