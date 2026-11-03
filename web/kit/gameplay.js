@@ -491,6 +491,7 @@ export function rules(game, opts = {}) {
     return E;
   }
   R.addEnemy = addEnemy;
+  R.addHazard = (h) => addHazard(h);
 
   for (const h of level.hazards) addHazard(h);
   if (opts.enemies) {
@@ -668,7 +669,7 @@ export function rules(game, opts = {}) {
     it.collected = true; it.t = 0;
     if (it.quest && Q) Q.collected(it);
     else if (!collect || it.tag === collect.tag) S.collected += collect ? 1 : 0;
-    S.score += it.value;
+    S.score += it.value * (game.__scoreMul || 1);
     if (it.tag === 'heart' && S.hp < maxHp) S.hp++;
     changed();
     game.emit('collect', it, by);
@@ -732,7 +733,7 @@ export function rules(game, opts = {}) {
         if (!pl.alive) continue;
         const c = pl.center || pl.position;
         const d = c.distanceTo(o.position);
-        if (pl === player && d < (vehicle ? 4.5 : 3.0) && d > 0.01) {                 // magnet
+        if (pl === player && d < (game.__magnetR || (vehicle ? 4.5 : 3.0)) && d > 0.01) {                 // magnet
           o.position.lerp(c, Math.min(1, dt * (vehicle ? 10 : 6)));
           it.home.lerp(c, Math.min(1, dt * (vehicle ? 10 : 6)));
         }
@@ -979,7 +980,7 @@ export function rules(game, opts = {}) {
       if (!playing || !player.alive) continue;
       const ec = e.position.clone().add(V3(0, e.height * 0.5, 0));
       const d3 = pc.distanceTo(ec);
-      const attacking = player.mode === 'dash' || player.mode === 'pound' || player.boostT > 0;
+      const attacking = player.mode === 'dash' || player.mode === 'pound' || player.boostT > 0 || !!player.invincible;
       if (d3 < e.radius + (player.radius || 0.5) + 0.15 + (attacking && !vehicle ? 1.1 : 0)) {
         const above = player.position.y > e.position.y + e.height * 0.55;
         if ((player.type === 'platformer' || player.type === 'fps') && above && player.velocity.y < 1 && e.kind !== 'turret' || (player.type === 'platformer' && above && e.kind === 'turret' && player.velocity.y < 1)) {
@@ -1021,6 +1022,7 @@ export function rules(game, opts = {}) {
   };
 
   function objective() {
+    if (game.__objectiveOverride) return game.__objectiveOverride;   // Mechanics setObjective
     if (opts.objective) return typeof opts.objective === 'function' ? String(opts.objective(S)) : String(opts.objective);
     const noun = (n) => {
       if (collect && collect.label) return collect.label;
@@ -1479,6 +1481,10 @@ export function autopilot(game, opts = {}) {
       left.sort((a, b) => a.home.distanceTo(p) - b.home.distanceTo(p));
       if (left[0]) { goalP = left[0].home; left[0].skip = false; st.item = left[0]; }
     }
+    // mechanics (keys before doors, switches, ...) can redirect the bot
+    if (game.__mech && typeof game.__mech.botTarget === 'function') {
+      try { const mt = game.__mech.botTarget(player, goalP); if (mt) { goalP = mt; if (st.item && st.item.home.distanceTo(p) > 4) st.item = null; } } catch (e) { /* never break the bot */ }
+    }
     // quests first: fetch items, then walk to whoever wants them
     if (R && R.quests) {
       const q = R.quests.find(x => !x.done);
@@ -1616,6 +1622,7 @@ export function autopilot(game, opts = {}) {
         const pd = V3(st.lastGround.x - p.x, 0, st.lastGround.z - p.z); if (pd.length() > 0.3) { pd.normalize(); mx = pd.x; mz = pd.z; }
       }
     }
+    if (game.__mech && game.__mech.lavaT > 0 && player.grounded && !jump) { jump = true; st.jumpHold = 0.3; }   // floor is lava: keep hopping
     if (player.grounded) { st.usedEmergency = false; st.spinDbl = false; if (!onMover) st.lastGround = p.clone(); }
     // stuck far from progress: assist teleport onto the current waypoint
     const prog = st.idx + (st.item ? 0.5 : 0) - dist * 0.01 + qProg * 10;

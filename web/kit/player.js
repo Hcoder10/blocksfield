@@ -718,7 +718,7 @@ export function create(game, opts = {}) {
     },
     // knockback + invulnerability; gameplay decides if it becomes a death
     hurt(from, power = 10) {
-      if (p.invulnerable > 0 || !p.alive) return false;
+      if (p.invulnerable > 0 || !p.alive || p.shield || p.invincible) return false;
       p.invulnerable = 1.2;
       const d = _a.copy(p.position).sub(from || p.position); d.y = 0; if (d.lengthSq() < 1e-4) d.set(-Math.sin(p.yaw), 0, -Math.cos(p.yaw));
       d.normalize();
@@ -754,7 +754,7 @@ export function create(game, opts = {}) {
   let steerS = 0, driftDir = 0, driftCharge = 0, hopT = 0, lastTier = 0, wallCd = 0;
   let platform = null, fallStartY = pos.y;
   const carry = new THREE.Vector3();
-  let shootClick = false, fpsCd = 0;
+  let shootClick = false, fpsCd = 0, wallT = 0, lastWallN = null;
 
   function readInput() {
     if (!p.controls.enabled || !p.alive) return { x: 0, y: 0, jump: false, action: false, pound: false, world: false };
@@ -854,8 +854,8 @@ export function create(game, opts = {}) {
       const target = _a.copy(wish).multiplyScalar(maxS);
       const ground = p.grounded;
       let rate;
-      if (wl > 0.05) rate = ground ? (hv.dot(target) < 0 ? T.turnAccel : T.accel) : T.airAccel;
-      else rate = ground ? T.decel : T.airDecel;
+      if (wl > 0.05) rate = ground ? (hv.dot(target) < 0 ? T.turnAccel : T.accel) * (T.friction ?? 1) : T.airAccel;
+      else rate = ground ? T.decel * (T.friction ?? 1) : T.airDecel;
       if (!ground && wl < 0.05) target.copy(hv);        // keep momentum in the air
       const dv = target.sub(hv); const dl = dv.length(), step = rate * dt;
       if (dl > step) dv.multiplyScalar(step / dl);
@@ -866,10 +866,17 @@ export function create(game, opts = {}) {
       let g = vy > 0 ? (jumpHeld && !cut ? T.riseGravity : T.cutGravity) : T.fallGravity;
       if (vy > 0 && !jumpHeld) cut = true;
       if (!p.grounded) vy = Math.max(vy - g * dt, -T.maxFall);
+      // glide (Mechanics.tune / power-up): holding jump while falling floats down
+      if (T.glide && !p.grounded && jumpHeld && vy < -(T.glideFall || 3)) vy = -(T.glideFall || 3);
     }
     // jumps
+    wallT -= dt;
     if (buffer > 0 && poundT <= 0) {
-      if (p.grounded || coyote > 0) {
+      if (T.wallJump && !p.grounded && coyote <= 0 && wallT > 0 && lastWallN) {
+        // wall jump: kick off the wall we are touching
+        vy = Math.sqrt(2 * T.riseGravity * T.jumpHeight) * 0.9; hv.copy(lastWallN).multiplyScalar(T.runSpeed * 0.9); buffer = 0; cut = false; wallT = 0;
+        p.yaw = Math.atan2(lastWallN.x, lastWallN.z); character.squash(1.25); game.emit('jump', p, 'wall');
+      } else if (p.grounded || coyote > 0) {
         vy = Math.sqrt(2 * T.riseGravity * T.jumpHeight); jumpsUsed = 1; buffer = 0; coyote = 0; cut = false;
         p.grounded = false; skipGround = 0.1; character.squash(1.3); game.emit('jump', p, 'jump');
       } else if (jumpsUsed < T.jumps && T.doubleJumpHeight > 0) {
@@ -898,6 +905,7 @@ export function create(game, opts = {}) {
     const desired = { x: hv.x * dt, y: vy * dt, z: hv.z * dt };
     const wasGrounded = p.grounded, vyBefore = vy;
     const res = moveCollider(desired, dt);
+    if (res.wallN && !res.grounded) { lastWallN = res.wallN.clone(); wallT = 0.18; }
     skipGround -= dt;
     p.grounded = res.grounded && skipGround <= 0 && vy <= 0.5;
     if (res.ceiling && vy > 0) vy = 0;

@@ -22,6 +22,7 @@ Runs at 60 fps on a laptop GPU at 1280x720 (`quality: 'high'`), and degrades wit
 | `player.js` | B | `Player.create(game, opts)`: controllers (platformer, kart, boat, topdown, fps) + procedural character |
 | `camera.js` | B | follow / orbit / chase / topdown cameras with collision and smoothing |
 | `gameplay.js` | B | collectibles, checkpoints, hazards, movers, enemies, goal, rules, autopilot |
+| `mechanics.js` | B | player tuning, power-ups, interactables (keys, doors, switches, teleporters...), trigger->effect rules, sandboxed custom mechanics |
 | `ui.js` | C | HUD, title/pause/win/lose screens, banners, counters, timer, minimap, speedometer, toasts |
 | `fx.js` | C | particles (bursts, trails, dust, sparkles, confetti), screen shake, hit flash, floating text |
 | `audio.js` | C | music (crossfade, loop), sfx (variation), procedural fallback blips |
@@ -143,3 +144,12 @@ Every module exports its enums so the pipeline reads them from code: `Look.NAMES
 every option's valid values. Autopilot sets `game.state.autopilotDone = true` when it finishes the route (goal
 reached / laps done), or `game.state.autopilotStuck = true` after 8 s without progress.
 
+
+### Mechanics (mechanics.js, binding)
+
+`Mechanics.tune / powerup / give / add / rule / var / custom / get`, enums `Mechanics.POWERUPS`, `INTERACTABLES`,
+`TRIGGERS`, `EFFECTS`, `TUNE_KEYS`, `KEY_COLORS`. Called after `Gameplay.rules`. Events (UI auto-wires them):
+`powerup(player, {type, duration, label})`, `powerupEnd(player, {type})`, `key(player, {color})`, `keyUsed(player,
+{color})`, `door(door, {open} | {locked, color})`, `switch(sw, {on, text?})`, `rule({name, text, seconds})`,
+`mechanic({name, text})`, `prompt({text, key} | null)`, `teleport(player, pad)`. State: `game.state.keys` (colours),
+`game.state.powerups` ({type: secondsLeft}), `game.state.vars`. See docs/Mechanics.md.

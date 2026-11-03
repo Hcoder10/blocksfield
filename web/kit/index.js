@@ -8,6 +8,7 @@ export * as Physics from './physics.js';
 export * as Player from './player.js';
 export * as Camera from './camera.js';
 export * as Gameplay from './gameplay.js';
+export * as Mechanics from './mechanics.js';
 export * as UI from './ui.js';
 export * as FX from './fx.js';
 export * as Audio from './audio.js';
