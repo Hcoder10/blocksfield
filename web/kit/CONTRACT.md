@@ -107,6 +107,9 @@ __kit.input(key, ms)        press a key for ms (also hold/release); same as a re
 __kit.autopilot(on)         a bot plays the level along level.route (jumps, steers, collects); for footage + playtests
 __kit.timeScale(x), __kit.pause(bool), __kit.teleport(pos)
 ```
+Additions (debug.js): `__kit.shot(name)` (camera on a survey shot), `__kit.start()` (dismiss a title screen),
+`__kit.ui(bool)` (hide the UI overlay for clean shots), `releaseKey/releaseAll/press/click`, `overlay()`.
+`__kit.pause(true)` freezes without opening the pause menu; `autopilot(true)` also dismisses the title screen.
 
 ## Generated assets (assets.js)
 
