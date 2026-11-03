@@ -86,7 +86,7 @@
           <p class="kicker" style="--k:#8b93ff">How it works</p>
           <h2 class="display h2">From pitch to playable</h2>
           <p class="lede">A local 27B model is the designer, programmer and playtester. ComfyUI, self-hosted and driven over
-            its HTTP API, is the art department. Nobody touches the game in between.</p>
+            its HTTP API, is the art department. Each web game's making-of page records any operator intervention.</p>
         </div>
       </div>
       <div class="flow reveal">
@@ -96,7 +96,7 @@
         <div class="step" style="--c:var(--bubble)"><h4>Assets</h4><p class="who">ComfyUI · one burst</p><p>Sky, UI icons, music (ACE-Step 1.5), sound effects (Stable Audio 3), props (Qwen-Image → Idol splat → voxels).</p></div>
         <div class="step" style="--c:#8b93ff"><h4>Build</h4><p class="who">Qwen3.8-27B · ThreeKit</p><p>A builder agent composes our kit library into the game's code and plays it in real Chrome as it works.</p></div>
         <div class="step loop" style="--c:var(--grass)"><h4>Playtest + judge</h4><p class="who">autopilot bot · vision</p><p>A bot plays the game. The model looks at the screenshots and scores them against the concept board.</p></div>
-        <div class="step loop" style="--c:var(--tomato)"><h4>Repair</h4><p class="who">Qwen3.8-27B</p><p>Fixes what the judge found. The best-scoring version is kept, so a repair never ships a regression.</p></div>
+        <div class="step loop" style="--c:var(--tomato)"><h4>Repair</h4><p class="who">Qwen3.8-27B</p><p>Fixes what the judge found. The best-scoring version is the one that ships, so a repair can never lower the score.</p></div>
         <div class="step" style="--c:var(--sun)"><h4>Game</h4><p class="who">three.js · static page</p><p>Plays from a link, with its thumbnail, gameplay video and a making-of record.</p></div>
         <div class="loopnote" aria-hidden="true">
           <svg viewBox="0 0 460 40" preserveAspectRatio="none"><path d="M345 4 C345 36, 115 36, 115 8" fill="none" stroke="#ffc93c" stroke-width="3.5" stroke-dasharray="7 7"/><path d="M106 16 L115 3 L124 16" fill="none" stroke="#ffc93c" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/></svg>

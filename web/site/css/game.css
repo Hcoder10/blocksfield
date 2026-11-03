@@ -13,6 +13,9 @@ kbd { display: inline-block; padding: 3px 8px; margin-right: 4px; font: 700 12px
 .mk-tint { background: var(--paper-2); }
 .mk-note { margin: 18px 0 0; font-size: 14px; color: var(--ink-soft); }
 .night .mk-note { color: #a9a2cf; }
+.mk-ops { margin-top: 26px; font-size: 15px; color: var(--ink-2); }
+.mk-ops b { color: var(--ink); }
+.mk-ops ul { margin: 8px 0 0; padding-left: 20px; }
 .mk-pitch-wrap { max-width: 900px; }
 .mk-pitch-wrap .kicker { margin-bottom: 40px; }
 .mk-pitch { position: relative; margin: 0; padding: 34px 40px; background: var(--white); border: 3px solid var(--ink);
@@ -66,6 +69,7 @@ kbd { display: inline-block; padding: 3px 8px; margin-right: 4px; font: 700 12px
 .sound .bar { height: 6px; margin-top: 10px; background: #eadfcd; border-radius: 3px; overflow: hidden; }
 .sound .bar span { display: block; height: 100%; width: 0; background: var(--tomato); }
 
+.failed { margin: 26px 0 0; padding: 14px 18px; border: 2px dashed var(--ink-soft); border-radius: 14px; font-size: 14.5px; color: var(--ink-2); }
 .log { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; align-items: start; }
 .panel { padding: 24px 26px; background: var(--night-2); border: 3px solid #000; border-radius: 20px; box-shadow: 0 6px 0 #000; }
 .panel.wide { grid-column: 1 / -1; }

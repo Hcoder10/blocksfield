@@ -64,8 +64,14 @@
       scr.innerHTML = `<img src="${esc(url(a.thumbnail))}" alt="">`;
     }
 
-    // pitch
+    // pitch, and any human hand on the game after it (about.json "operator_interventions"; absent = none recorded)
     $("#g-pitch").textContent = a.pitch || "";
+    let ops = a.operator_interventions ?? [];
+    if (typeof ops === "string") ops = ops.trim() ? [ops] : [];
+    $("#g-ops").innerHTML = ops.length
+      ? `<b>Operator interventions: ${ops.length}.</b> Besides the pitch, a person changed this game:<ul>${ops.map((o) => `<li>${esc(typeof o === "string" ? o : JSON.stringify(o))}</li>`).join("")}</ul>`
+      : "<b>Operator interventions: none recorded.</b> This paragraph is the only human input. Everything below was made from it by local, open-weight models.";
+    if (ops.length) $("#g-facts").insertAdjacentHTML("beforeend", `<span class="chip ink">${ops.length} operator intervention${ops.length > 1 ? "s" : ""}</span>`);
 
     // plan
     const rows = [];
@@ -122,6 +128,19 @@
       <button class="playbtn" data-src="${esc(url("assets/" + v.file))}" aria-label="Play ${esc(k)}"><i></i></button>
       <div class="cap"><span class="chip ${v.kind === "music" ? "pink" : "sky"}">${v.kind === "music" ? "Music · ACE-Step" : `Sound · ${esc(v.event || k)}`}</span>
       <p>“${esc(v.prompt)}”</p><div class="bar"><span></span></div>${secs(k)}</div></div>`).join("")}</div>`);
+    // jobs the plan asked for that ComfyUI did not deliver: say so rather than imply every asset was made
+    const failed = Object.entries(art).filter(([, v]) => v && v.ok === false).map(([k]) => k);
+    if (failed.length) {
+      const groups = {};
+      for (const k of failed) {
+        const [kind, ...rest] = k.split("_");
+        (groups[kind] ||= []).push(rest.join(" ") || kind);
+      }
+      const noun = { sfx: "sound effect", prop: "prop", icon: "icon", music: "music track", sky: "sky" };
+      html.push(`<p class="failed"><b>Requested but not made:</b> ${Object.entries(groups).map(([kind, names]) =>
+        `${names.length} ${esc(noun[kind] || kind)}${names.length > 1 ? "s" : ""} (${names.map(esc).join(", ")})`).join("; ")}.
+        These ComfyUI jobs failed, so they are not among this game's generated assets.</p>`);
+    }
     $("#g-assets").innerHTML = html.join("") || '<p class="empty">No generated assets recorded.</p>';
     wireAudio();
 
