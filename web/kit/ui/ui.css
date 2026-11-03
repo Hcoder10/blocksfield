@@ -299,6 +299,7 @@
 @keyframes tk-breathe { 50% { transform: scale(1.07); opacity: .78; } }
 .tk-key { display: inline-flex; align-items: center; justify-content: center; min-width: 1.8em; height: 1.6em; padding: 0 .45em; border-radius: .3em; font-size: .7em; letter-spacing: .05em;
   background: linear-gradient(180deg, #fff, #d6dde8); color: #1a2233; border: .1em solid #1a2233; box-shadow: 0 .18em 0 #1a2233; text-shadow: none; font-family: var(--tk-body); font-weight: 800; }
+.tk-title .tk-controls { margin-top: 1.4em; font-size: 1.05em; letter-spacing: .08em; color: #fff; opacity: .85; padding: .35em 1em; border-radius: 2em; background: rgba(0, 0, 0, .28); animation: tk-fade-up .5s ease-out both 1.2s; }
 .tk-title .tk-credit { position: absolute; bottom: 2.6vh; font-size: .85em; letter-spacing: .14em; opacity: .7; color: #fff; text-transform: uppercase; }
 .tk-title .tk-sparks { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .tk-title .tk-sparks i { position: absolute; width: .5em; height: .5em; border-radius: 50%; background: var(--tk-p); box-shadow: 0 0 1em var(--tk-p); opacity: 0;
@@ -315,6 +316,7 @@
 .tk-cozy .tk-card { border-color: #6b4630; box-shadow: 0 .35em 0 rgba(90, 56, 38, .55), 0 1.4em 3em rgba(70, 40, 20, .35), inset 0 .2em 0 #fff; }
 .tk-sleek .tk-card { backdrop-filter: blur(18px) saturate(1.3); border-color: var(--tk-edge); box-shadow: 0 1.4em 3em rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .14); }
 .tk-fantasy .tk-card { border-color: var(--tk-edge); box-shadow: 0 0 0 .14em var(--tk-ink), 0 0 0 .36em #2a1b10, 0 0 0 .46em var(--tk-edge), 0 1.4em 3em rgba(0, 0, 0, .6), inset 0 0 2em rgba(217, 171, 76, .2); }
+.tk-scifi .tk-card .tk-head { margin-top: 0; }
 .tk-scifi .tk-card { border: none; clip-path: polygon(1.4em 0, 100% 0, 100% calc(100% - 1.4em), calc(100% - 1.4em) 100%, 0 100%, 0 1.4em);
   box-shadow: inset 0 0 0 1.5px rgba(54, 230, 255, .8), inset 0 0 3em rgba(54, 230, 255, .15); }
 .tk-card .tk-head { font-size: 4.8em; margin-top: -1.05em; margin-bottom: -.1em; }

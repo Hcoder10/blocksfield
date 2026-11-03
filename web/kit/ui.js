@@ -204,8 +204,8 @@ function fmtTime(s, tenths = true) {
   return { main: `${m}:${String(sec).padStart(2, '0')}`, frac: tenths ? `.${t}` : '' };
 }
 const ordinal = (n) => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return s[(v - 20) % 10] || s[v] || s[0]; };
-function playerOf(game, H) { return (H && H.opts.player) || (window.__kit && window.__kit.game === game && window.__kit.player) || game.player || null; }
-function levelOf(game, H) { return (H && (H.opts.level || (H.opts.minimap && H.opts.minimap.level))) || (window.__kit && window.__kit.game === game && window.__kit.level) || game.level || null; }
+function playerOf(game, H) { return (H && H.opts.player) || (window.__kit && window.__kit.game === game && window.__kit.player) || game.__player || game.player || null; }
+function levelOf(game, H) { return (H && (H.opts.level || (H.opts.minimap && H.opts.minimap.level))) || (window.__kit && window.__kit.game === game && window.__kit.level) || game.__level || game.level || null; }
 
 // ---------- HUD ----------
 export function hud(game, opts = {}) {
@@ -305,7 +305,7 @@ function refresh(game, H) {
     if (s !== H.timer.last) { H.timer.val.innerHTML = `${f.main}<small>${f.frac}</small>`; H.timer.last = s; }
     H.timer.box.classList.toggle('tk-urgent', down && t <= 10 && t > 0);
   }
-  if (H.objective && typeof st.objective === 'string' && st.objective !== H.objective.txt.textContent) objective(game, st.objective);
+  if (typeof st.objective === 'string' && st.objective && H.opts.objective !== false && (!H.objective || st.objective !== H.objective.txt.textContent)) objective(game, st.objective);
   if (H.lives) {
     const L = H.lives, v = L.key === 'lives' ? num(st.lives) : (num(st.health) ?? num(st.hp));
     if (v != null && v !== L.last) {
@@ -605,7 +605,7 @@ const restart = () => location.reload();
 // ---------- title screen ----------
 export function titleScreen(game, opts = {}) {
   const U = ui(game, opts);
-  const { title = game.title || document.title || 'Game', subtitle = null, start = 'Press Space', credit = null, pause = true, orbit = true, countdown: cd = false, logo = null } = opts;
+  const { title = game.title || document.title || 'Game', subtitle = null, start = 'Press Space', credit = null, /* controls: 'WASD: move · Space: jump' */ pause = true, orbit = true, countdown: cd = false, logo = null } = opts;
   if (U.title) U.title.dismiss(true);
   const el = h('div', 'tk-screen tk-title');
   const sparks = h('div', 'tk-sparks');
@@ -628,6 +628,7 @@ export function titleScreen(game, opts = {}) {
   if (keyName) { const parts = String(start).split(new RegExp(keyName, 'i')); startEl.append(parts[0] || '', h('span', 'tk-key', [keyName === 'Space' ? 'SPACE' : 'ENTER']), parts[1] || ''); }
   else startEl.append(start);
   el.append(startEl);
+  if (opts.controls) el.append(h('div', 'tk-controls', [String(opts.controls)]));
   if (credit) el.append(h('div', 'tk-credit', [credit]));
   U.root.append(el);
   const wasPaused = game.paused;
@@ -642,7 +643,7 @@ export function titleScreen(game, opts = {}) {
       const level = opts.level || levelOf(game, U.hud);
       const box = frameBox(game, level, null);
       const c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
-      const r = Math.max(s.x, s.z) * 0.62 + 6, y = box.min.y + Math.max(s.y * 0.9, r * 0.42);
+      const r = Math.max(s.x, s.z) * 0.5 + 8, y = box.max.y + r * 0.22;
       const t0 = performance.now();
       ov = { position: new THREE.Vector3(), target: c.clone().setY(box.min.y + s.y * 0.25) };
       orbitFn = game.lateUpdate(() => {
