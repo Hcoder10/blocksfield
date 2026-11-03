@@ -55,6 +55,7 @@ export function play(game, urlOrWhen, opts = {}) {
     justifyContent: 'center', opacity: '0', transition: 'opacity 0.35s ease', cursor: 'pointer', userSelect: 'none' });
   const v = document.createElement('video');
   v.src = url; v.playsInline = true; v.preload = 'auto'; v.volume = opts.volume ?? 1;
+  if (e && e.source) v.poster = game.assets.base + e.source;           // the clip's first image while it loads
   Object.assign(v.style, { width: '100%', height: '100%', objectFit: 'contain', display: 'block' });
   wrap.appendChild(v);
   // letterbox bars (cinematic 2.2:1 feel over the 16:9 clip) + optional caption + skip hint in the UI style
@@ -84,7 +85,7 @@ export function play(game, urlOrWhen, opts = {}) {
   game.emit && game.emit('cutscene', when, 'start');
   const keyCatch = (ev) => {          // capture phase: the key that skips must not also start / pause the game
     ev.stopImmediatePropagation(); ev.preventDefault();
-    if (opts.skippable !== false && performance.now() - t0 > 400) finish('skipped');
+    if (opts.skippable !== false && performance.now() - t0 > 250) finish('skipped');
   };
   const finish = (result) => {
     if (done) return;
@@ -105,7 +106,7 @@ export function play(game, urlOrWhen, opts = {}) {
   const swallow = (ev) => { ev.stopImmediatePropagation(); };
   window.addEventListener('keydown', keyCatch, true);
   window.addEventListener('keyup', swallow, true);
-  wrap.addEventListener('pointerdown', (ev) => { ev.stopPropagation(); if (opts.skippable !== false && performance.now() - t0 > 400) finish('skipped'); });
+  wrap.addEventListener('pointerdown', (ev) => { ev.stopPropagation(); if (opts.skippable !== false && performance.now() - t0 > 250) finish('skipped'); });
   v.addEventListener('ended', () => finish('ended'));
   v.addEventListener('error', () => finish('missing'));
   requestAnimationFrame(() => { wrap.style.opacity = '1'; skip.style.opacity = '0.85'; });

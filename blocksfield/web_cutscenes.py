@@ -78,10 +78,14 @@ def shots(game_dir: Path, about: dict) -> dict:
     concepts = [game_dir / c for c in about.get("concepts", []) if (game_dir / c).exists()]
     cims = [Image.open(c).convert("RGB") for c in concepts]
     gp = game_dir / "gameplay.mp4"
-    intro_img = max(cims, key=colourfulness) if cims else video_frame(gp, 0.15)
-    # the concept that shows the finish / goal is usually the last one; else a late gameplay frame
-    win_img = cims[-1] if len(cims) >= 2 else (video_frame(gp, 0.85) or intro_img)
-    lose_img = video_frame(gp, 0.45) if gp.exists() else (cims[0] if cims else intro_img)
+    # concept images have no HUD (LTX copies HUD text from gameplay frames into garbled digits), so prefer them:
+    # win = the last concept (the planner draws the finish / goal last), intro = the most colourful of the others,
+    # lose = a remaining one; gameplay frames only when the game has fewer concepts
+    win_img = cims[-1] if cims else video_frame(gp, 0.85)
+    rest = cims[:-1]
+    intro_img = max(rest, key=colourfulness) if rest else (cims[0] if cims else video_frame(gp, 0.15))
+    left = [c for c in rest if c is not intro_img]
+    lose_img = left[0] if left else (intro_img if rest else video_frame(gp, 0.45))
     tone = pl["art"].split(".")[0]
     g = pl["genre"].strip().rstrip(".")
     world = f'the world of "{pl["title"]}", a {g[:1].lower() + g[1:]}{"" if g.lower().endswith("game") else " game"}'
