@@ -55,6 +55,12 @@ export function build(game, kind, opts = {}) {
   } finally { World._collect(prev); }
   group.updateMatrixWorld(true);
   if (level.bounds.isEmpty()) level.bounds.setFromObject(group);
+  // no pickup right in front of the camera at the start: none within 4 u of spawn, and on tracks none in the first 15 u
+  {
+    const clear = (level.track || level.trackWidth) ? 15 : 4;
+    level.collectibles = level.collectibles.filter(c => Math.hypot(c.position.x - level.spawn.x, c.position.z - level.spawn.z) > clear
+      || Math.abs(c.position.y - level.spawn.y) > 6);
+  }
   // batch static props per material: hundreds of prop meshes -> a few dozen draws (opts.bake === false to skip)
   if (opts.bake !== false) {
     try { level.batching = World.bake(game, group, { keep: level.movers.map(m => m.mesh) }); }
