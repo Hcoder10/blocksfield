@@ -899,7 +899,7 @@ export function rules(game, opts = {}) {
       }
     }
     // enemies
-    const grace = S.time < 2;
+    const grace = S.time < 2.5;
     for (const e of R.enemies) {
       e.t += dt;
       if (grace && e.alive) { e.body.position.y = Math.abs(Math.sin(e.t * 3)) * 0.1; continue; }
@@ -1319,6 +1319,18 @@ export function rules(game, opts = {}) {
     };
   }
 
+  // nobody starts next to the hero: placed enemies within 12 u of the spawn move to the nearest route point /
+  // spawn point that is at least 12 u away (wave spawns follow the same rule)
+  {
+    const sp = player.position.clone();
+    const cands = [...(level.spawnPoints || []), ...level.route].map(v => v.clone()).filter(v => v.distanceTo(sp) >= 12);
+    for (const e of R.enemies) {
+      if (e.position.distanceTo(sp) >= 12) continue;
+      cands.sort((a, b) => a.distanceTo(e.position) - b.distanceTo(e.position));
+      const to = cands[0] || sp.clone().add(e.position.clone().sub(sp).setY(0).setLength(12));
+      e.position.copy(to); e.home.copy(to);
+    }
+  }
   game.update(update, 10);
   R.dispose = () => { game.removeUpdate(update); game.scene.remove(root); };
   game.__rules = R;
