@@ -192,7 +192,11 @@ export const ENEMIES = ['patrol', 'chase', 'turret'];
  */
 export function rules(game, opts = {}) {
   if (!game || !game.world) throw new Error('Gameplay.rules(game, opts): first argument must be the game from createGame()');
-  const level = opts.level, player = opts.player;
+  const level = opts.level || game.level || game.__level, player = opts.player || game.__player;
+  // forgiving shorthands: collect: 'coin' | 30, timer: '60'
+  if (typeof opts.collect === 'string') opts = { ...opts, collect: { tag: opts.collect } };
+  else if (typeof opts.collect === 'number') opts = { ...opts, collect: { target: opts.collect } };
+  if (typeof opts.timer === 'string' && isFinite(+opts.timer)) opts = { ...opts, timer: +opts.timer };
   if (!level || typeof level !== 'object') throw new Error('Gameplay.rules: opts.level is missing; pass the object Level.build() returned');
   if (!player || !player.position) throw new Error('Gameplay.rules: opts.player is missing; pass the object Player.create() returned');
   for (const k of ['collectibles', 'checkpoints', 'hazards', 'movers', 'route']) if (!Array.isArray(level[k])) level[k] = [];
@@ -216,7 +220,7 @@ export function rules(game, opts = {}) {
       collect.target = avail;
     }
   }
-  const lives = opts.lives === undefined ? 3 : opts.lives;            // Infinity / false = endless
+  const lives = opts.lives === undefined ? (opts.race ? false : 3) : opts.lives;   // races: endless respawns            // Infinity / false = endless
   const maxHp = opts.hp ?? (player.type === 'platformer' || player.type === 'topdown' || player.type === 'fps' ? 3 : 1);
   const countdown = typeof opts.timer === 'number' ? opts.timer : null;
   const S = Object.assign(game.state, {
@@ -224,6 +228,11 @@ export function rules(game, opts = {}) {
     lives: lives === false ? Infinity : lives, hp: maxHp, maxHp, health: maxHp, maxHealth: maxHp, time: 0, phase: 'playing', objective: '', timeLeft: countdown, won: false, lost: false,
     lap: 0, laps: 0, position: 0, racers: 0, checkpoint: 0, checkpoints: level.checkpoints.length, enemiesLeft: 0, goalOpen: true,
   });
+  // CONTRACT: keys are absent when their rule is off (the HUD shows what exists)
+  if (!collect) { delete S.target; delete S.collectTag; }
+  if (!isFinite(S.lives)) delete S.lives;
+  if (countdown === null) delete S.timeLeft;
+  if (!opts.race) { delete S.lap; delete S.laps; delete S.position; delete S.racers; }
   let dirty = true;
   const changed = () => { dirty = true; };
   player.killY = level.killY ?? (level.bounds && isFinite(level.bounds.min.y) ? level.bounds.min.y - 8 : player.killY);
@@ -445,6 +454,13 @@ export function rules(game, opts = {}) {
     for (let i = 0; i < N; i++) samples.push(track.getPointAt(i / N));
     race = { track, N, samples, laps: opts.race.laps || level.laps || 3, width: level.trackWidth || 12, started: false, countdown: opts.race.countdown ?? 3, cdT: 0, lastCd: null, finishOrder: [] };
     S.laps = race.laps; S.lap = 1;
+    // a boat race on a dry track (no water course in this level): boats hover over the road instead of beaching
+    if (player.type === 'boat') {
+      let dry = 0;
+      for (let i = 0; i < 12; i++) { const q = track.getPointAt(i / 12); const gy = Physics.groundAt(game, q.x, q.z, q.y + 10, 30); if (gy !== null && (player.waterLevel === null || gy > player.waterLevel + 0.15)) dry++; }
+      race.hover = dry > 6;
+      if (race.hover) { player.tuning.landDrag = 0; console.info('Gameplay.rules: boat race on a dry track -> hover boats'); }
+    }
     const nearest = (p, hint) => {
       let best = hint, bd = Infinity;
       const scan = hint === null || hint === undefined ? N : 40;
@@ -472,7 +488,7 @@ export function rules(game, opts = {}) {
       if (gy !== null && player.type !== 'boat') at.y = gy + 0.05;
       const bot = Player.create(game, { type: player.type, spawn: at, yaw: player.yaw, name: 'racer' + (i + 1),
         colors: { body: palette[i % palette.length], kart: palette[i % palette.length], boat: palette[i % palette.length], accent: '#ffffff' }, waterLevel: player.waterLevel,
-        tuning: { maxSpeed: player.tuning.maxSpeed * (opts.race.aiSpeed ?? 0.94) * (0.97 + 0.03 * game.rand()) } });
+        tuning: { maxSpeed: player.tuning.maxSpeed * (opts.race.aiSpeed ?? 0.94) * (0.97 + 0.03 * game.rand()), ...(race.hover ? { landDrag: 0 } : {}) } });
       bot.ai = { skill: 0.85 + 0.15 * game.rand(), lane: (game.rand() - 0.5) * race.width * 0.5, drift: false };
       game.__player = player;
       const r = mk(bot, false); r.lane = bot.ai.lane; R.racers.push(r);
@@ -834,6 +850,13 @@ export function rules(game, opts = {}) {
         } else if (r.isPlayer) { S.lap = r.lap; changed(); game.emit('lap', player, r.lap); }
       } else if (pu < 0.15 && u > 0.85) { /* went backwards over the line */ }
       r.progress = r.finished ? 1e6 - r.place : r.lap + u;
+      // respawn on the track where you fell off, facing along it
+      if (r.player.grounded && r.player.alive && (r.idx - (r.cpIdx ?? -99) + race.N) % race.N > 8) {
+        const a = race.samples[r.idx], b = race.samples[(r.idx + 3) % race.N];
+        if (Math.hypot(r.player.position.x - a.x, r.player.position.z - a.z) < race.width * 0.6) {
+          r.cpIdx = r.idx; r.player.respawnPoint.set(a.x, r.player.position.y + 0.3, a.z); r.player.respawnYaw = Math.atan2(b.x - a.x, b.z - a.z);
+        }
+      }
       if (!r.isPlayer) driveAI(r, dt);
     }
     const sorted = [...R.racers].sort((a, b) => b.progress - a.progress);
@@ -896,15 +919,19 @@ export function autopilot(game, opts = {}) {
   game.on('respawn', (p) => { if (p === player && A.on) { st.idx = nearestIdx(); st.plan = null; st.item = null; } });
 
   // simulate a jump arc from p with horizontal velocity hv: returns landing point on ground or null
-  function arcLands(p, hv, v0, double) {
+  // simulate the jump the controller would really do: start from the current horizontal velocity, air-accelerate
+  // toward `want` (desired horizontal velocity). Returns the landing point on solid ground or null.
+  function arcLands(p, want, v0, double) {
     const pos = p.clone(); let vy = v0, used2 = !double; const dt = 1 / 30;
+    const hv = V3(player.velocity.x, 0, player.velocity.z), acc = (T.airAccel || 30) * dt;
     for (let i = 0; i < 90; i++) {
       vy -= (vy > 0 ? T.riseGravity : T.fallGravity) * dt;
       if (!used2 && vy < 2) { vy = dblV; used2 = true; }
+      const dv = want.clone().sub(hv); if (dv.length() > acc) dv.setLength(acc); hv.add(dv);
       pos.addScaledVector(hv, dt); pos.y += vy * dt;
       if (vy < 0) {
         const g = Physics.raycast(game, pos.clone().add(V3(0, 1.2, 0)), V3(0, -1, 0), 1.5 + Math.abs(vy) * dt, { excludeCollider: player.collider });
-        if (g && g.normal.y > 0.6 && !hazardAt(g.point)) return g.point;
+        if (g && g.normal.y > 0.6 && !hazardAt(g.point)) { g.point.kinematic = !!g.kinematic; g.point.t = (i + 1) * dt; return g.point; }
       }
       if (pos.y < p.y - 12) return null;
     }
@@ -913,6 +940,39 @@ export function autopilot(game, opts = {}) {
   function hazardAt(pt) {
     const R = game.__rules; if (!R) return false;
     return R.hazards.some(h => (h.type === 'lava' || h.type === 'killzone' || h.type === 'spikes') && Math.abs(pt.x - h.position.x) < (h.size ? h.size.x / 2 + 0.6 : 1) && Math.abs(pt.z - h.position.z) < (h.size ? h.size.z / 2 + 0.6 : 1));
+  }
+  // would a spinner bar sweep over `pt` around time t (s from now)? landing into the bar costs a heart
+  function spinnerSafe(pt, t) {
+    const R = game.__rules; if (!R) return true;
+    for (const h of R.hazards) {
+      if (h.type !== 'spinner' || !h.arm) continue;
+      const dx = pt.x - h.position.x, dz = pt.z - h.position.z;
+      if (Math.hypot(dx, dz) > h.length / 2 + 0.9 || Math.abs(pt.y - h.position.y) > 2) continue;
+      const w = Math.abs(h.speed) || 1, period = Math.PI / w;
+      let delta = h.speed >= 0 ? Math.atan2(-dz, dx) - h.arm.rotation.y : h.arm.rotation.y - Math.atan2(-dz, dx);
+      delta = ((delta % Math.PI) + Math.PI) % Math.PI;
+      const halfW = Math.asin(Math.min(1, 0.85 / Math.max(Math.hypot(dx, dz), 0.01))) / w;
+      for (let pass = delta / w - period; pass < t + 1; pass += period) if (pass + halfW > t - 0.25 && pass - halfW < t + 0.5) return false;
+    }
+    return true;
+  }
+  function nearRoute(pt, r) {
+    for (let i = Math.max(0, st.idx - 1); i < Math.min(route.length - 1, st.idx + 3); i++) {
+      const a = route[i], b = route[i + 1], ab = b.clone().sub(a), t = THREE.MathUtils.clamp(pt.clone().sub(a).dot(ab) / Math.max(ab.lengthSq(), 1e-6), 0, 1);
+      if (pt.distanceTo(a.clone().addScaledVector(ab, t)) < r) return true;
+    }
+    return false;
+  }
+  function moverNear(pt) {
+    const R = game.__rules; if (!R) return false;
+    return R.movers.some(m => m.path.length > 1 && m.path.some((a, i) => {
+      const b = m.path[(i + 1) % m.path.length]; const ab = b.clone().sub(a), t = THREE.MathUtils.clamp(pt.clone().sub(a).dot(ab) / Math.max(ab.lengthSq(), 1e-6), 0, 1);
+      return Math.hypot(pt.x - (a.x + ab.x * t), pt.z - (a.z + ab.z * t)) < 4 && Math.abs(pt.y - a.y) < 4;
+    }));
+  }
+  function supported(pt) {
+    const g = Physics.raycast(game, pt.clone().add(V3(0, 1.5, 0)), V3(0, -1, 0), 4, { excludeCollider: player.collider });
+    return g && !g.kinematic ? g : null;
   }
   function groundAhead(p, dir, d) {
     const at = p.clone().addScaledVector(dir, d).add(V3(0, 1.0, 0));
@@ -930,8 +990,12 @@ export function autopilot(game, opts = {}) {
     if (progKey !== st.progKey) { st.progKey = progKey; st.noProg = 0; S.autopilotStuck = false; }
     else { st.noProg = (st.noProg || 0) + dt; if (st.noProg > 8) S.autopilotStuck = true; }
     if (vehicle || player.type === 'kart' || player.type === 'boat') return vehicleBot(dt);
+    // moving platforms: ride them instead of aiming at waypoints that hang over the gap
+    const gObj = player.grounded ? player.groundObject : null;
+    const onMover = !!(gObj && gObj.userData && gObj.userData.kinematic);
+    if (onMover) while (st.idx < route.length - 1 && !supported(route[st.idx])) st.idx++;
     // advance route
-    while (st.idx < route.length - 1) {
+    while (player.grounded && st.idx < route.length - 1) {
       const w = route[st.idx], n = route[st.idx + 1];
       const dh = Math.hypot(w.x - p.x, w.z - p.z);
       const toNext = Math.hypot(n.x - p.x, n.z - p.z), seg = Math.hypot(n.x - w.x, n.z - w.z);
@@ -940,13 +1004,20 @@ export function autopilot(game, opts = {}) {
     }
     // detour for nearby collectibles (reachable: roughly level, not far off the route)
     const R = game.__rules;
-    if (R && (!st.item || st.item.collected || st.itemT > 3)) {
+    if (R && player.grounded && (!st.item || st.item.collected || st.itemT > 3)) {
       st.item = null; st.itemT = 0;
       let best = null, bd = 7.5;
       for (const it of R.items) {
         if (it.collected || it.skip) continue;
         const dy = it.home.y - p.y, dh = Math.hypot(it.home.x - p.x, it.home.z - p.z);
-        if (dh < bd && dy < 3.8 && dy > -1.5) { const g = Physics.raycast(game, it.home, V3(0, -1, 0), 4); if (g && !hazardAt(g.point)) { best = it; bd = dh; } }
+        if (dh < bd && dy < 3.8 && dy > -1.5) {
+          // only items we can walk to: solid ground under the item AND along the way (no gap jumps for a detour)
+          const g = Physics.raycast(game, it.home, V3(0, -1, 0), 4);
+          if (!g || g.kinematic || hazardAt(g.point) || Math.abs(g.point.y - p.y) > 2.6) continue;
+          let walk = true;
+          for (const f of [0.33, 0.66]) { const q = p.clone().lerp(it.home, f); const gq = Physics.raycast(game, V3(q.x, Math.max(p.y, g.point.y) + 1.5, q.z), V3(0, -1, 0), 4.5, { excludeCollider: player.collider }); if (!gq || gq.kinematic || hazardAt(gq.point)) { walk = false; break; } }
+          if (walk || nearRoute(it.home, 2.2)) { best = it; bd = dh; }
+        }
       }
       st.item = best;
     }
@@ -967,21 +1038,32 @@ export function autopilot(game, opts = {}) {
     if (dist < 0.4) { mx = 0; mz = 0; }
     // slow down near a target on a small platform
     if (dist < 2 && !st.item) { mx *= dist / 2; mz *= dist / 2; }
+    const tgtSupported = !!supported(tgt);
     const sp = Math.hypot(player.velocity.x, player.velocity.z);
     if (player.grounded) {
-      st.plan = null; st.wantDouble = false;
+      st.plan = null; st.wantDouble = false; st.hopInPlace = false; st.waiting = false;
       const dy = tgt.y - p.y;
       const g1 = groundAhead(p, dir, 1.1), g2 = groundAhead(p, dir, 0.6);
       const edge = !g1 || g1.point.y < p.y - 1.4;
       const hv = dir.clone().multiplyScalar(Math.max(sp, T.runSpeed * 0.95));
-      if (edge && dist > 1.5) {
+      if (onMover && dist > 1.5) {
+        // riding: stay near the platform centre until a jump to the next solid waypoint lands
+        const hvR = dir.clone().multiplyScalar(T.runSpeed * 0.95);
+        const land = arcLands(p, hvR, jumpV, false) || (dblV ? arcLands(p, hvR, jumpV, true) : null);
+        if (edge && land && !land.kinematic && Math.hypot(land.x - tgt.x, land.z - tgt.z) < dist) { jump = true; st.plan = land; st.wantDouble = !arcLands(p, hvR, jumpV, false); }
+        else if (!edge) { /* keep walking toward the edge */ }
+        else { const c = gObj.getWorldPosition(V3()); const tc = V3(c.x - p.x, 0, c.z - p.z); mx = tc.x * 0.4; mz = tc.z * 0.4; }
+      } else if (edge && dist > 1.5) {
         // gap or drop: walk off if the target is below and there is ground under the drop, else jump if an arc lands
         const dropOk = g1 && dy < -0.8;
         if (!dropOk) {
+          const ok = (l) => l && l.y > p.y - 6 && (!l.kinematic || Math.hypot(l.x - p.x, l.z - p.z) < 4.5) && spinnerSafe(l, l.t);
           const land = arcLands(p, hv, jumpV, false);
-          if (land && land.y > p.y - 6) { jump = true; st.plan = land; }
-          else if (dblV) { const land2 = arcLands(p, hv, jumpV, true); if (land2) { jump = true; st.wantDouble = true; st.plan = land2; } }
-          if (!jump) { if (!g2) { mx = -dir.x * 0.4; mz = -dir.z * 0.4; } else { mx *= 0.15; mz *= 0.15; } st.waitT += dt; if (st.waitT > 1.5) { jump = true; st.wantDouble = !!dblV; st.waitT = 0; } }
+          if (ok(land)) { jump = true; st.plan = land; }
+          else if (dblV) { const land2 = arcLands(p, hv, jumpV, true); if (ok(land2)) { jump = true; st.wantDouble = true; st.plan = land2; } }
+          // nothing to land on yet: if a moving platform serves this gap, wait for it (we walk on when it docks)
+          const moverGap = moverNear(p.clone().addScaledVector(dir, 3.5));
+          if (!jump) { if (!g2) { mx = -dir.x * 0.4; mz = -dir.z * 0.4; } else { mx = 0; mz = 0; } st.waiting = true; st.waitT += dt; if (st.waitT > (moverGap ? 12 : tgtSupported ? 1.5 : 7)) { jump = true; st.wantDouble = !!dblV; st.waitT = 0; mx = dir.x; mz = dir.z; } }
         }
       } else st.waitT = 0;
       // ledge above: jump when close
@@ -989,20 +1071,38 @@ export function autopilot(game, opts = {}) {
       // enemies: stomp; spinner bars: hop over
       if (!jump && R) {
         for (const e of R.enemies) if (e.alive && e.kind !== 'turret' && e.position.distanceTo(p) < 3.2 && Math.abs(e.position.y - p.y) < 1.5) { jump = true; break; }
-        for (const h of R.hazards) if (h.type === 'spinner' && h.arm) {
-          const c = h.position.clone().add(V3(0, h.height, 0)), a = h.arm.rotation.y, half = h.length / 2;
-          const bd = V3(Math.cos(a), 0, -Math.sin(a));
-          const A2 = c.clone().addScaledVector(bd, -half), B2 = c.clone().addScaledVector(bd, half);
-          const ab = B2.clone().sub(A2), tt = THREE.MathUtils.clamp(p.clone().sub(A2).dot(ab) / ab.lengthSq(), 0, 1);
-          const dd = Math.hypot(p.x - (A2.x + ab.x * tt), p.z - (A2.z + ab.z * tt));
-          if (dd < 2.4 && Math.abs(c.y - p.y - 0.9) < 1.5) { jump = true; break; }
+        for (const h of R.hazards) {
+          if (h.type === 'spinner' && h.arm) {
+            // time until the bar sweeps over us; hop just before it arrives
+            const c = h.position, dx = p.x - c.x, dz = p.z - c.z, r = Math.hypot(dx, dz);
+            if (r > h.length / 2 + 1.2 || Math.abs(c.y + h.height - p.y - 0.9) > 1.5) continue;
+            const phi = Math.atan2(-dz, dx), a = h.arm.rotation.y, w = Math.abs(h.speed) || 1;
+            let delta = h.speed >= 0 ? phi - a : a - phi;
+            delta = ((delta % Math.PI) + Math.PI) % Math.PI;
+            // the bar is thick: its edge reaches us halfW radians before its centre line
+            const halfW = Math.asin(Math.min(1, 0.85 / Math.max(r, 0.01)));
+            const tEdge = (delta - halfW) / w;
+            if (tEdge < 0.3 || delta > Math.PI - halfW) { jump = true; st.jumpHold = 0.45; break; }
+          } else if ((h.type === 'spikes' || h.type === 'lava' || h.type === 'saw') && !jump) {
+            // hop over a hazard right ahead on our path
+            const ahead = p.clone().addScaledVector(dir, 1.6);
+            const hs = h.size ? Math.max(h.size.x, h.size.z) / 2 + 0.5 : (h.radius || 1) + 0.6;
+            const hp = h.type === 'saw' ? h.object.position : h.position;
+            if (Math.hypot(ahead.x - hp.x, ahead.z - hp.z) < hs && Math.abs(hp.y - p.y) < 2) { jump = true; st.jumpHold = 0.45; break; }
+          }
         }
       }
       // stuck against something: hop
       if (!jump && sp < 1.5 && dist > 2 && (Math.abs(mx) + Math.abs(mz)) > 0.5) { st.stuckT += dt; if (st.stuckT > 0.35) { jump = true; st.stuckT = 0; } }
-      if (jump) st.jumpHold = 0.45;
+      if (jump) {
+        st.jumpHold = 0.45; st.jumpDir = dir.clone();
+        // hops that aren't gap jumps (enemy, spinner, stuck) at a ledge go straight up and land where they started
+        st.hopInPlace = !st.plan && !st.wantDouble && edge && !(onMover && st.plan);
+        if (st.hopInPlace) { mx = 0; mz = 0; }
+      }
     } else {
       // air: hold jump for full height, double-jump at apex if planned or if falling short of the target ledge
+      if (st.hopInPlace) { mx = 0; mz = 0; }
       if (st.jumpHold > 0) { st.jumpHold -= dt; jump = true; }
       if (st.wantDouble && player.velocity.y < 2) { jump = false; st.wantDouble = false; st.dblNext = true; }
       else if (st.dblNext) { jump = true; st.dblNext = false; st.jumpHold = 0.3; }
@@ -1010,9 +1110,27 @@ export function autopilot(game, opts = {}) {
         const below = Physics.raycast(game, p.clone().add(V3(0, 0.5, 0)), V3(0, -1, 0), 6, { excludeCollider: player.collider });
         if (!below) { st.usedEmergency = true; jump = false; st.dblNext = true; }
       }
-      if (st.plan) { const pd = V3(st.plan.x - p.x, 0, st.plan.z - p.z); if (pd.length() > 0.5) { pd.normalize(); mx = pd.x; mz = pd.z; } }
+      // coming down into a spinner's sweep: spend the double jump
+      if (R && dblV && !st.dblNext && player.velocity.y < 0 && !st.spinDbl) for (const h of R.hazards) if (h.type === 'spinner' && h.arm) {
+        const c = h.position, dx = p.x - c.x, dz = p.z - c.z;
+        if (Math.hypot(dx, dz) > h.length / 2 + 1 || p.y - c.y > 1.6 || p.y < c.y - 0.5) continue;
+        let delta = h.speed >= 0 ? Math.atan2(-dz, dx) - h.arm.rotation.y : h.arm.rotation.y - Math.atan2(-dz, dx);
+        delta = ((delta % Math.PI) + Math.PI) % Math.PI;
+        const halfW = Math.asin(Math.min(1, 0.85 / Math.max(Math.hypot(dx, dz), 0.01)));
+        if ((delta - halfW) / (Math.abs(h.speed) || 1) < 0.35) { st.dblNext = true; st.spinDbl = true; jump = false; }
+      }
+      if (st.plan) {
+        // steer onto the planned landing; once we have flown past it (too high), keep going forward, never turn back
+        const pd = V3(st.plan.x - p.x, 0, st.plan.z - p.z);
+        if (st.jumpDir && pd.dot(st.jumpDir) < 0) st.plan = null;
+        else if (pd.length() > 0.5) { pd.normalize(); mx = pd.x; mz = pd.z; }
+      }
+      else if (st.lastGround && !Physics.raycast(game, p.clone().add(V3(0, 0.5, 0)), V3(0, -1, 0), 10, { excludeCollider: player.collider }) && !supported(tgt)) {
+        // nothing under us and the target hangs in the air: head back to where we last stood
+        const pd = V3(st.lastGround.x - p.x, 0, st.lastGround.z - p.z); if (pd.length() > 0.3) { pd.normalize(); mx = pd.x; mz = pd.z; }
+      }
     }
-    if (player.grounded) st.usedEmergency = false;
+    if (player.grounded) { st.usedEmergency = false; st.spinDbl = false; if (!onMover) st.lastGround = p.clone(); }
     // stuck far from progress: assist teleport onto the current waypoint
     const prog = st.idx + (st.item ? 0.5 : 0) - dist * 0.01;
     if (prog > st.lastProg + 0.05) { st.lastProg = prog; st.stuckClock = 0; }
@@ -1021,6 +1139,7 @@ export function autopilot(game, opts = {}) {
       st.stuckClock = 0; st.assists++;
       if (st.item) st.item.skip = true; else { const w = route[Math.min(st.idx, route.length - 1)]; player.teleport(w.clone().add(V3(0, 0.5, 0)), player.yaw); }
     }
+    if (game.__apTrace) game.__apTrace.push([+game.time.toFixed(2), p.x.toFixed(1) + ',' + p.y.toFixed(1) + ',' + p.z.toFixed(1), st.idx, player.grounded ? 'G' : 'A', jump ? 'J' : '', st.item ? 'item' : '', st.plan ? 'plan' : '', (+mx).toFixed(2) + ',' + (+mz).toFixed(2)]);
     player.setInput(mx, mz, jump, action, { world: true });
     if (player.type === 'fps' && player._bot) {
       const want = Math.atan2(mx, mz);

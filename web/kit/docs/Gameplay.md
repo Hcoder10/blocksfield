@@ -22,7 +22,7 @@ Gameplay.ENEMIES        // ['patrol', 'chase', 'turret']
 | `collect` | `{ tag, target }`, `true`, or `null` | `tag` = most common tag in the level; `target` = all of them (capped to what exists). With a goal: the goal portal stays locked (grey) until `target` is collected. Without a goal: collecting `target` wins. |
 | `goal` | `true` / `false` | `true`: touching `level.goal` wins (if unlocked) |
 | `timer` | `true` (count up) or seconds (count down; `lose('time')` at 0) | off |
-| `lives` | number or `false` (endless) | 3; each death costs one, 0 = `lose('lives')` |
+| `lives` | number or `false` (endless) | 3 (races: endless); each death costs one, 0 = `lose('lives')` |
 | `hp` | hits per life | 3 (platformer/topdown/fps), 1 (vehicles). Hazards and enemies cost 1 hp with knockback; falling / lava = instant death |
 | `enemies` | number (spread along the route / arena spawn points) or `[{ kind, position, hp, speed, range }]` | none |
 | `race` | `{ laps, opponents = 3, aiSpeed = 0.94, countdown = 3 }` or `true` | automatic for kart/boat on a level with `level.track`; laps default `level.laps` or 3 |

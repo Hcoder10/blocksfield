@@ -21,7 +21,7 @@ else K.Camera.follow(game, player);
 const rules = K.Gameplay.rules(game, {
   level, player,
   collect: vehicle ? null : { tag: 'coin' },
-  goal: true, timer: true, lives: 3,
+  goal: true, timer: true, lives: 3, enemies: q.get('enemies') ? +q.get('enemies') : null,
   race: vehicle ? { laps: +(q.get('laps') || 2), opponents: +(q.get('opp') ?? 3), countdown: +(q.get('cd') ?? 3) } : null,
 });
 

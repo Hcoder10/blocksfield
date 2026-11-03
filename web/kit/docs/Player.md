@@ -52,7 +52,8 @@ player.controls.enabled = false      // freeze input (title screens, cutscenes)
 player.respawnPoint / .respawnYaw    // checkpoints update these
 player.teleport(pos, yaw)  player.respawn()  player.die(reason)  player.hurt(fromPos, power)  player.bounce(power)
 player.boost(seconds)                // speed burst (karts: boost pad / item)
-player.setInput(x, y, jump, action)  // bot input, same meaning as the keys (x right, y forward); setInput(null) = keyboard again
+player.setInput(x, y, jump, action)  // bot input, same meaning as the keys (x right, y forward); call it EVERY frame
+                                     // (it expires after 0.3 s and the keyboard takes over); setInput(null) = keyboard now
 player.character.setColors({ body: '#3ad' })   player.character.setEmote('wave'|'happy'|'sad'|'win'|'none', seconds)
 ```
 

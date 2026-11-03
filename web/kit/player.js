@@ -6,6 +6,10 @@ import * as Physics from './physics.js';
 import * as Look from './look.js';
 
 export const TYPES = ['platformer', 'kart', 'boat', 'topdown', 'fps'];
+const ALIASES = { platform: 'platformer', jumper: 'platformer', runner: 'platformer', character: 'platformer', '3d': 'platformer', thirdperson: 'platformer',
+  car: 'kart', racer: 'kart', racing: 'kart', vehicle: 'kart', go_kart: 'kart', gokart: 'kart', ship: 'boat', jetski: 'boat', jet_ski: 'boat', speedboat: 'boat',
+  top_down: 'topdown', 'top-down': 'topdown', twinstick: 'topdown', twin_stick: 'topdown', arena: 'topdown',
+  first_person: 'fps', 'first-person': 'fps', firstperson: 'fps', shooter: 'fps' };
 
 // Feel presets. Speeds u/s, accelerations u/s^2, times s. Every key can be overridden: Player.create(game, {tuning: {...}}).
 export const TUNING = {
@@ -374,14 +378,19 @@ const angWrap = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI
  */
 export function create(game, opts = {}) {
   if (!game || !game.world) throw new Error('Player.create(game, opts): first argument must be the game from createGame()');
-  const type = opts.type || 'platformer';
+  let type = String(opts.type || 'platformer').toLowerCase();
+  if (!TYPES.includes(type) && ALIASES[type]) { console.warn(`Player.create: type "${type}" -> "${ALIASES[type]}"`); type = ALIASES[type]; }
   if (!TYPES.includes(type)) throw new Error(`Player.create: unknown type "${type}"; types: ${TYPES.join(', ')}`);
   installInput(game);
   const R = game.RAPIER, world = game.world;
   const tune = { ...TUNING[type], ...(opts.tuning || {}) };
   if (opts.tuning && opts.tuning.drift) tune.drift = { ...TUNING[type].drift, ...opts.tuning.drift };
   const vehicle = type === 'kart' || type === 'boat';
-  const spawn = (opts.spawn && opts.spawn.isVector3) ? opts.spawn.clone() : new THREE.Vector3(...(opts.spawn || [0, 2, 0]));
+  const sp0 = opts.spawn;
+  const spawn = sp0 && sp0.isVector3 ? sp0.clone() : Array.isArray(sp0) ? new THREE.Vector3(...sp0)
+    : sp0 && typeof sp0.x === 'number' ? new THREE.Vector3(sp0.x, sp0.y || 0, sp0.z || 0)
+    : game.level && game.level.spawn ? game.level.spawn.clone() : new THREE.Vector3(0, 2, 0);
+  if (opts.yaw === undefined && opts.spawnYaw === undefined && !sp0 && game.level) opts = { ...opts, yaw: game.level.spawnYaw || 0 };
   const colors = { ...DEFAULT_COLORS, ...(opts.colors || {}) };
 
   // collider: capsule for characters, ball for vehicles. pos = collider centre.
@@ -434,7 +443,7 @@ export function create(game, opts = {}) {
     _bot: null,
     setInput(x, y, jump = false, action = false, extra = {}) {
       if (x === null || x === undefined) { p._bot = null; return; }
-      p._bot = { x: +x || 0, y: +y || 0, jump: !!jump, action: !!action, pound: !!extra.pound, world: !!extra.world };
+      p._bot = { x: +x || 0, y: +y || 0, jump: !!jump, action: !!action, pound: !!extra.pound, world: !!extra.world }; p._botT = game.time;
     },
     teleport(at, yaw) {
       const v = at.isVector3 ? at : new THREE.Vector3(...at);
@@ -480,7 +489,8 @@ export function create(game, opts = {}) {
     },
   };
   p.object.rotation.y = p.yaw;
-  if (vehicle && p.waterLevel === null && game.__level && game.__level.water) p.waterLevel = game.__level.water.y ?? game.__level.water;
+  const lv = game.__level || game.level;
+  if (vehicle && p.waterLevel === null && lv && lv.water) p.waterLevel = lv.water.y ?? lv.water;
   if (type === 'boat' && p.waterLevel === null) p.waterLevel = 0;
   Physics.actors(game).push(p);
   if (!game.__player) game.__player = p;
@@ -497,7 +507,8 @@ export function create(game, opts = {}) {
 
   function readInput() {
     if (!p.controls.enabled || !p.alive) return { x: 0, y: 0, jump: false, action: false, pound: false, world: false };
-    if (p._bot) return p._bot;
+    // bot input holds while it is refreshed (every frame); a stale one hands control back to the keyboard
+    if (p._bot && game.time - p._botT < 0.3) return p._bot;
     return (p._read || readKeys)();
   }
 
@@ -871,7 +882,7 @@ export function create(game, opts = {}) {
     const turn = (keyDown('ArrowLeft') || keyDown('KeyQ') ? 1 : 0) - (keyDown('ArrowRight') ? 1 : 0);
     p.lookYaw += turn * tune.keyTurn * dt - (inp.lookX || 0) * tune.keyTurn * dt;
     p.lookPitch -= (inp.lookY || 0) * tune.keyTurn * dt;
-    if (p._bot && p._bot.lookYaw !== undefined) p.lookYaw = p._bot.lookYaw;
+    if (p._bot && game.time - p._botT < 0.3 && p._bot.lookYaw !== undefined) p.lookYaw = p._bot.lookYaw;
     p.lookPitch = THREE.MathUtils.clamp(p.lookPitch, -1.4, 1.4);
   }
   // in FPS, arrows turn instead of strafe

@@ -64,6 +64,7 @@ function pullIn(game, from, to, player, minDist = 1.2) {
  *         collide=true, fov=60, yaw (initial; default behind the player) }
  */
 export function follow(game, player, opts = {}) {
+  if (!player && game) player = game.__player;
   needPlayer('follow', player);
   if (player.type === 'kart' || player.type === 'boat') return chase(game, player, opts);
   if (player.type === 'fps') return firstPerson(game, player, opts);
@@ -127,6 +128,7 @@ export function follow(game, player, opts = {}) {
  * opts: { distance=7.5, height=2.6, lookAt=1.2, fov=64, boostFov=14, speedFov=8, stiffness=5 }
  */
 export function chase(game, player, opts = {}) {
+  if (!player && game) player = game.__player;
   needPlayer('chase', player);
   const o = { distance: 7.5, height: 2.6, lookAt: 1.2, fov: 64, boostFov: 14, speedFov: 8, stiffness: 5, collide: true, ...opts };
   const st = { yaw: player.yaw, pos: new THREE.Vector3(), target: new THREE.Vector3(), first: true, fov: o.fov, kick: 0 };
@@ -151,6 +153,9 @@ export function chase(game, player, opts = {}) {
     st.pos.x += (desired.x - st.pos.x) * damp(10, dt);
     st.pos.z += (desired.z - st.pos.z) * damp(10, dt);
     st.pos.y += (desired.y - st.pos.y) * damp(5, dt);
+    // never trail more than a few units behind the ideal spot (boosts, teleports, respawns)
+    const lag = st.pos.distanceTo(desired), maxLag = 2.5 + sp * 0.04;
+    if (lag > maxLag) st.pos.lerp(desired, 1 - maxLag / lag);
     st.target.lerp(tgt, damp(14, dt));
     cam.position.copy(st.pos);
     cam.lookAt(st.target);
@@ -168,6 +173,7 @@ export function chase(game, player, opts = {}) {
  *         looking north/-Z), lookAhead=2.5, fov=50 }
  */
 export function topdown(game, player, opts = {}) {
+  if (player === undefined && game) player = game.__player || null;
   const o = { height: 22, pitch: 1.0, yaw: 0, lookAhead: 2.5, fov: 50, ...opts };
   const st = { target: new THREE.Vector3(), ahead: new THREE.Vector3(), first: true };
   const cam = game.camera;
@@ -210,6 +216,7 @@ export function orbit(game, opts = {}) {
  * opts: { eye=1.55, fov=72, bob=0.05, sprintFov=8 }
  */
 export function firstPerson(game, player, opts = {}) {
+  if (!player && game) player = game.__player;
   needPlayer('firstPerson', player);
   const o = { eye: 1.55, fov: 72, bob: 0.05, sprintFov: 8, weapon: true, crosshair: true, ...opts };
   const cam = game.camera;
