@@ -329,7 +329,7 @@ class WebBuild:
             except Exception as e:  # noqa: BLE001
                 self.log(f"pairwise {new['tag']} vs {old['tag']} failed: {e}")
                 pick = "tie"
-            got = {"prefer": pick}
+            got = {"prefer": pick, "why": list(getattr(wb.pairwise, "last_why", []))}
             self.stages.put(key, got)
         pick = got["prefer"]
         winner = new if pick == "A" else old if pick == "B" else (old if new["tag"] == "s0" else new)

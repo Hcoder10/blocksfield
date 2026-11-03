@@ -369,9 +369,12 @@ async def pairwise(llm, a: list[bytes], b: list[bytes], plan: dict) -> str:
                                "\"why\": \"one sentence\"}"))
         r = await llm.chat([Message("system", WEB_JUDGE_SYSTEM), Message("user", parts)])
         obj = _parse_json(r.message.content if isinstance(r.message.content, str) else "") or {}
+        whys.append(str(obj.get("why", ""))[:300])
         return str(obj.get("prefer", "tie")).strip().upper()
+    whys: list[str] = []
     p1 = await ask(a, b)
     p2 = {"A": "B", "B": "A"}.get(await ask(b, a), "TIE")
+    pairwise.last_why = whys                       # why each order picked what it did (logged by the caller)
     return p1 if p1 == p2 and p1 in ("A", "B") else "tie"
 
 
