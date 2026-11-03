@@ -1631,7 +1631,7 @@ export function compose(game, spec = {}) {
     collectibles: [], hazards: [], movers: [], goal: null, track: null, group, colliders: [], killY: -40, water: null, issues: [],
     pieces: [],
   };
-  const ctx = { group };
+  const ctx = { group, game };
   const issue = (severity, piece, message) => level.issues.push({ severity, piece, message });
   const dressing = spec.dressing ?? 'auto';
   const prev = World._collect(level.colliders);
