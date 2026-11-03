@@ -461,7 +461,7 @@ export function rules(game, opts = {}) {
       let dry = 0;
       for (let i = 0; i < 12; i++) { const q = track.getPointAt(i / 12); const gy = Physics.groundAt(game, q.x, q.z, q.y + 10, 30); if (gy !== null && (player.waterLevel === null || gy > player.waterLevel + 0.15)) dry++; }
       race.hover = dry > 6;
-      if (race.hover) { player.tuning.landDrag = 0; console.info('Gameplay.rules: boat race on a dry track -> hover boats'); }
+      if (race.hover) { Object.assign(player.tuning, { landDrag: 0, grip: 6, driftGrip: 1.8 }); console.info('Gameplay.rules: boat race on a dry track -> hover boats'); }
     }
     const nearest = (p, hint) => {
       let best = hint, bd = Infinity;
@@ -490,7 +490,7 @@ export function rules(game, opts = {}) {
       if (gy !== null && player.type !== 'boat') at.y = gy + 0.05;
       const bot = Player.create(game, { type: player.type, spawn: at, yaw: player.yaw, name: 'racer' + (i + 1),
         colors: { body: palette[i % palette.length], kart: palette[i % palette.length], boat: palette[i % palette.length], accent: '#ffffff' }, waterLevel: player.waterLevel,
-        tuning: { maxSpeed: player.tuning.maxSpeed * (opts.race.aiSpeed ?? 0.94) * (0.97 + 0.03 * game.rand()), ...(race.hover ? { landDrag: 0 } : {}) } });
+        tuning: { maxSpeed: player.tuning.maxSpeed * (opts.race.aiSpeed ?? 0.94) * (0.97 + 0.03 * game.rand()), ...(race.hover ? { landDrag: 0, grip: 6, driftGrip: 1.8 } : {}) } });
       bot.ai = { skill: 0.85 + 0.15 * game.rand(), lane: (game.rand() - 0.5) * race.width * 0.5, drift: false };
       game.__player = player;
       const r = mk(bot, false); r.lane = bot.ai.lane; R.racers.push(r);
@@ -1157,7 +1157,8 @@ export function autopilot(game, opts = {}) {
       }
     }
     if (player.type === 'topdown' && R) {
-      for (const e of R.enemies) if (e.alive && e.position.distanceTo(p) < 4.5) { const d = e.position.clone().sub(p).setY(0).normalize(); player.setInput(d.x, d.z, false, true, { world: true }); break; }
+      // dash is an edge-triggered press: tap it (press / release) while an enemy is in reach
+      for (const e of R.enemies) if (e.alive && e.position.distanceTo(p) < 4.5) { const d = e.position.clone().sub(p).setY(0).normalize(); st.tap = !st.tap; player.setInput(d.x, d.z, false, st.tap, { world: true }); break; }
     }
   }
 

@@ -24,7 +24,7 @@ Gameplay.ENEMIES        // ['patrol', 'chase', 'turret']
 | `timer` | `true` (count up) or seconds (count down; `lose('time')` at 0) | off |
 | `lives` | number or `false` (endless) | 3 (races: endless); each death costs one, 0 = `lose('lives')` |
 | `hp` | hits per life | 3 (platformer/topdown/fps), 1 (vehicles). Hazards and enemies cost 1 hp with knockback; falling / lava = instant death |
-| `enemies` | number (spread along the route / arena spawn points) or `[{ kind, position, hp, speed, range }]` | none |
+| `enemies` | number (arena: its spawn points, farthest from the player first; other levels: spread along the route) or `[{ kind, position, hp, speed, range }]` | none. Enemies wait 2 s after play starts |
 | `race` | `{ laps, opponents = 3, aiSpeed = 0.94, countdown = 3 }` or `true` | automatic for kart/boat on a level with `level.track`; laps default `level.laps` or 3 |
 | `killEnemiesToWin` | `true`: win when every enemy is defeated | |
 | `scoreToWin` | number: win at this score | |
@@ -83,6 +83,14 @@ K.Gameplay.rules(game, { level, player, collect: { tag: 'star', target: 1 } });
 
 game.on('win', () => K.UI.banner && K.UI.banner(game, 'You did it!'));
 ```
+
+## Autopilot
+
+`Gameplay.autopilot(game)` (or `__kit.autopilot(true)`) plays the level with the real controls: follows `level.route`,
+simulates each jump arc before taking it, times spinner bars, rides moving platforms, hops hazards, stomps / dashes /
+shoots enemies, detours for coins it can walk to, roams for the last coins when the goal is still locked, and drifts
+through corners in races. If it makes no progress for 6 s it nudges the player to the next route point (counted in
+`status.assists`). Use it for attract-mode footage: `K.Gameplay.autopilot(game)` right after `rules`.
 
 ## Common mistakes
 
