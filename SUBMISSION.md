@@ -51,7 +51,8 @@ are no longer listed; five of them had interventions, still recorded in their `a
 (`64143bb`), every listed game was re-recorded and re-scored the same way, and the scores above are from that pass.
 
 How to read the table:
-- **Build time** is the minutes recorded in the index.
+- **Build time** is the sum of the stage timings in `about.json` (`timings_s`).
+- **Order** is the gallery's: untouched games first, then by judge score, then newest.
 - **Judge score** is the mean of the autopilot play score and the vision judge's score against the concept board,
   out of 10.
 - **Model-made level / mechanics** is what the game's own code calls (`K.Level.compose`, `K.Mechanics.*`), also

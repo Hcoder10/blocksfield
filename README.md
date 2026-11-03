@@ -38,7 +38,10 @@ The web target turns a pitch into a static three.js game: one `game.js` of a few
 **ThreeKit**, our kit library, plus the art, music and sound generated for it. Every finished game is published to
 **https://hcoder10.github.io/blocksfield/** with its thumbnail, a gameplay video and a "How it was made" page (the
 plan, the concept board, every generated asset, the judged versions, the build log and any operator interventions).
-The games play with keyboard or gamepad on desktop, and with touch on phones (landscape).
+The gallery lists untouched games first, ordered by judge score and then newest. A game with operator
+interventions carries a chip with the count, and its making-of page lists every change. A superseded game is hidden
+once its replacement has finished. Today all 15 listed games are untouched. The games play with keyboard or gamepad
+on desktop, and with touch on phones (landscape).
 
 ### How a game gets made
 
