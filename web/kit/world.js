@@ -93,7 +93,9 @@ const tr = (g, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, s = 1, sy = s, sz = 
 let sink = null;
 /** internal: Level.build collects every collider World makes into level.colliders */
 export function _collect(arr) { const prev = sink; sink = arr; return prev; }
+const WORLD_GROUPS = (1 << 16) | 0xffff;     // physics.js GROUPS.world: member 'world', collides with everything
 function record(game, collider, info) {
+  if (collider) { try { collider.setCollisionGroups(WORLD_GROUPS); } catch { /* old rapier */ } collider.__kit = { static: true, what: info.what }; }
   const d = { ...info, collider, handle: collider ? collider.handle : null };
   if (sink) sink.push(d);
   (game.kitColliders = game.kitColliders || []).push(d);
@@ -448,8 +450,8 @@ export function ground(game, opts = {}) {
   const nrm = g.attributes.normal;
   for (let i = 0; i < p.count; i++) {
     const ny = nrm.getY(i);
-    if (ny < 0.85) {
-      c.fromArray(cols, i * 3).lerp(ny < 0.7 ? cliffC : dirtC, THREE.MathUtils.smoothstep(0.85 - ny, 0, 0.2));
+    if (ny < 0.8) {
+      c.fromArray(cols, i * 3).lerp(ny < 0.62 ? cliffC : dirtC, THREE.MathUtils.smoothstep(0.8 - ny, 0, 0.25) * 0.7);
       cols.set([c.r, c.g, c.b], i * 3);
     }
   }
@@ -465,6 +467,72 @@ export function ground(game, opts = {}) {
   };
   surfaces(game).push(gr);
   return gr;
+}
+
+// ------------------------------------------------------------------------------------------------ plaza
+/**
+ * World.plaza(game, { center=[0,0,0] (floor height = center.y), radius=20, ring=2.4 (tile ring width), tile=2.6,
+ *   color='stone', trim='primary' (one ring of coloured tiles), emblem='accent' (centre star), trimAt=0.62 }) -> {mesh, y}
+ * A crisp round tiled floor (arenas, town squares, goal pads), with a collider.
+ */
+export function plaza(game, opts = {}) {
+  needGame(game, 'plaza');
+  const c = v3(opts.center), R = opts.radius ?? 20, rw = opts.ring ?? 2.4, tw = opts.tile ?? 2.6;
+  const rnd = rng32(seedOf(game, opts));
+  const base = C(game, opts.color || 'stone'), trim = C(game, opts.trim || 'primary'), emb = C(game, opts.emblem || 'accent');
+  const grout = base.clone().multiplyScalar(0.55);
+  const v = [], col = [];
+  const quad = (a, b, cc, d, k) => { for (const p of [a, b, cc, a, cc, d]) { v.push(p[0], p[1], p[2]); col.push(k.r, k.g, k.b); } };
+  const y = 0.1;
+  const P = (r, a, yy = y) => [Math.cos(a) * r, yy, Math.sin(a) * r];
+  // grout base disc
+  const SEG = 64;
+  for (let i = 0; i < SEG; i++) { const a0 = i / SEG * Math.PI * 2, a1 = (i + 1) / SEG * Math.PI * 2; quad(P(0, 0, 0.06), P(R + 0.3, a1, 0.06), P(R + 0.3, a0, 0.06), P(0, 0, 0.06), grout); }
+  const rings = Math.ceil(R / rw);
+  const trimRing = Math.round(R * (opts.trimAt ?? 0.62) / rw);
+  for (let k = 0; k < rings; k++) {
+    const r0 = k * rw + (k === 0 ? 0 : 0.06), r1 = Math.min(R, (k + 1) * rw) - 0.06;
+    const n = k === 0 ? 8 : Math.max(8, Math.round(2 * Math.PI * (r0 + r1) / 2 / tw));
+    const off = (k % 2) * Math.PI / n;
+    for (let i = 0; i < n; i++) {
+      const g0 = 0.06 / Math.max(r0, 0.5), g1 = 0.06 / r1;
+      const a0 = off + i / n * Math.PI * 2, a1 = off + (i + 1) / n * Math.PI * 2;
+      let k2 = base.clone().multiplyScalar(0.9 + rnd() * 0.16);
+      if (k === trimRing) k2 = trim.clone().multiplyScalar(0.92 + rnd() * 0.1);
+      if (k === 0) k2 = (i % 2 ? emb : base).clone().multiplyScalar(0.95 + rnd() * 0.08);
+      if (k === 1 && i % 2 === 0) k2 = emb.clone().lerp(base, 0.45);
+      const am = (a0 + a1) / 2;
+      quad(P(r0, a0 + g0), P(r1, a0 + g1), P(r1, am), P(r0, am), k2);
+      quad(P(r0, am), P(r1, am), P(r1, a1 - g1), P(r0, a1 - g0), k2);
+    }
+  }
+  // kerb ring
+  for (let i = 0; i < SEG; i++) {
+    const a0 = i / SEG * Math.PI * 2, a1 = (i + 1) / SEG * Math.PI * 2, k2 = base.clone().multiplyScalar(0.78);
+    quad(P(R + 0.3, a0, 0.25), P(R + 0.3, a1, 0.25), P(R + 1.1, a1, 0.25), P(R + 1.1, a0, 0.25), k2);
+    quad(P(R + 1.1, a0, 0.25), P(R + 1.1, a1, 0.25), P(R + 1.1, a1, -0.4), P(R + 1.1, a0, -0.4), k2.clone().multiplyScalar(0.85));
+    quad(P(R + 0.3, a1, 0.25), P(R + 0.3, a0, 0.25), P(R + 0.3, a0, 0.06), P(R + 0.3, a1, 0.06), k2.clone().multiplyScalar(0.85));
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  // all quads were emitted clockwise from above for the floor; fix winding so faces point up
+  const pa = g.attributes.position.array;
+  for (let i = 0; i < pa.length; i += 9) {
+    const ax = pa[i], az = pa[i + 2], bx = pa[i + 3], bz = pa[i + 5], cx = pa[i + 6], cz = pa[i + 8];
+    const ay = pa[i + 1], by = pa[i + 4], cy = pa[i + 7];
+    const ny = (bz - az) * (cx - ax) - (bx - ax) * (cz - az);
+    const flat = Math.abs(ay - by) < 1e-4 && Math.abs(ay - cy) < 1e-4;
+    if (flat && ny < 0) { for (let k = 0; k < 3; k++) { const t = pa[i + 3 + k]; pa[i + 3 + k] = pa[i + 6 + k]; pa[i + 6 + k] = t; } }
+  }
+  g.computeVertexNormals();
+  const mesh = new THREE.Mesh(g, Look.material(game, { color: '#ffffff', vertexColors: true, rim: 0, side: 'double' }));
+  mesh.position.copy(c); mesh.receiveShadow = true; mesh.name = 'kit:plaza';
+  (opts.parent || game.scene).add(mesh);
+  if (opts.collider !== false) colliderCylinder(game, new THREE.Vector3(c.x, c.y + 0.1 - 0.3, c.z), 0.3, R + 1.1, { what: 'plaza' });
+  const pz = { kind: 'plaza', mesh, y: c.y + y, heightAt(x, z) { return Math.hypot(x - c.x, z - c.z) <= R + 1.1 ? c.y + y : null; } };
+  surfaces(game).push(pz);
+  return pz;
 }
 
 // ------------------------------------------------------------------------------------------------ water
@@ -503,7 +571,7 @@ export function water(game, opts = {}) {
       foam: { value: new THREE.Color(pal.foam) },
       sky: { value: new THREE.Color(Look.preset(game.look ? game.look.name : 'toon_bright').sky.horizon) },
       tDepth: { value: depthTex }, size: { value: size }, center: { value: new THREE.Vector2(center.x, center.z) },
-      waves: { value: waves }, foamGlow: { value: night ? 2.2 : 1.15 },
+      waves: { value: waves }, foamGlow: { value: night ? 1.25 : 1.1 },
     }]),
     vertexShader: `
       uniform float uTime; uniform float waves; varying vec3 vW; varying float vH;
@@ -590,6 +658,8 @@ const FOLIAGE = {
   crystal:      { density: 0.006, scale: [0.7, 1.5], wind: 0, shadow: true, spacing: 2, collider: 'rock' },
 };
 export const foliageKinds = Object.keys(FOLIAGE);
+/** generic kinds a game should ask for (each look remaps them, e.g. desert tree_round -> cactus) */
+export const FOLIAGE_KINDS = ['grass', 'flowers', 'bush', 'tree_round', 'tree_pine', 'mushroom', 'rock', 'crystal', 'palm', 'cactus', 'tree_dead'];
 const partCache = new Map();
 
 function foliageParts(game, kind) {
@@ -622,8 +692,8 @@ function foliageParts(game, kind) {
   };
   const upNormals = (g) => { const n = g.attributes.normal; for (let i = 0; i < n.count; i++) n.setXYZ(i, 0, 1, 0); return g; };
   switch (kind) {
-    case 'grass': parts = [{ geom: bladeClump(6, 0.45, 0.85, col('grass').multiplyScalar(0.55), col('grass2').multiplyScalar(1.1)), mat: { ...vc, side: 'double', rim: 0 } }]; break;
-    case 'grass_dry': parts = [{ geom: bladeClump(7, 0.5, 1.0, col('ground2'), col('sand').multiplyScalar(1.1), 0.07), mat: { ...vc, side: 'double', rim: 0 } }]; break;
+    case 'grass': parts = [{ geom: bladeClump(6, 0.28, 0.6, col('grass').multiplyScalar(0.55), col('grass2').multiplyScalar(1.1)), mat: { ...vc, side: 'double', rim: 0 } }]; break;
+    case 'grass_dry': parts = [{ geom: bladeClump(7, 0.35, 0.75, col('ground2'), col('sand').multiplyScalar(1.1), 0.07), mat: { ...vc, side: 'double', rim: 0 } }]; break;
     case 'grass_snow': parts = [{ geom: bladeClump(5, 0.3, 0.6, col('foliage'), col('snow'), 0.08), mat: { ...vc, side: 'double', rim: 0 } }]; break;
     case 'flowers': case 'flowers_glow': {
       const stems = bladeClump(4, 0.35, 0.6, col('foliage').multiplyScalar(0.6), col('grass2'), 0.05);
@@ -638,7 +708,7 @@ function foliageParts(game, kind) {
         heads.push(upNormals(paint(c, col('flower2').lerp(new THREE.Color('#ffffff'), 0.5))));
       }
       parts = [{ geom: stems, mat: { ...vc, side: 'double', rim: 0 } },
-        { geom: merge(heads), mat: kind === 'flowers_glow' ? { ...vc, kind: 'emissive', emissive: pal.flower, emissiveIntensity: 1.6 } : { ...vc, rim: 0.6 } }];
+        { geom: merge(heads), mat: kind === 'flowers_glow' ? { ...vc, kind: 'emissive', emissive: pal.flower, emissiveIntensity: 1.1 } : { ...vc, rim: 0.6 } }];
       break;
     }
     case 'bush': case 'bush_snow': {
@@ -736,7 +806,7 @@ function foliageParts(game, kind) {
       const capCol = kind === 'mushroom_glow' ? col('accent') : col('primary');
       const capP = paint(cap, (x, y, z) => (Math.sin(x * 14) * Math.sin(z * 14) > 0.55 ? spotsC : capCol));
       parts = [{ geom: merge([paint(stem, new THREE.Color('#f4ead8'))]), mat: vc },
-        { geom: merge([capP]), mat: kind === 'mushroom_glow' ? { ...vc, kind: 'emissive', emissive: pal.accent, emissiveIntensity: 1.4 } : { ...vc, rim: 0.7 } }];
+        { geom: merge([capP]), mat: kind === 'mushroom_glow' ? { ...vc, kind: 'emissive', emissive: pal.accent, emissiveIntensity: 0.9 } : { ...vc, rim: 0.7 } }];
       break;
     }
     case 'rock': case 'rock_small': {
@@ -908,7 +978,7 @@ export function clouds(game, opts = {}) {
     }
     variants.push(merge(gs));
   }
-  const mat = Look.material(game, { color: '#ffffff', vertexColors: true, emissive: pal.cloud, emissiveIntensity: Look.isNight(game) ? 0.05 : 0.22, rim: 1.2 });
+  const mat = Look.material(game, { color: '#ffffff', vertexColors: true, emissive: pal.cloud, emissiveIntensity: Look.isNight(game) ? 0.06 : 0.16, rim: 0.5 });
   const group = new THREE.Group(); group.name = 'kit:clouds';
   const per = Math.ceil(count / 3);
   const items = [];
@@ -963,6 +1033,8 @@ function assemble(game, list, group) {
 export const propKinds = ['crate', 'barrel', 'fence', 'lamp', 'house', 'bridge', 'arch', 'crystal', 'sign', 'flag', 'chest',
   'pillar', 'ramp', 'platform_round', 'platform_box', 'spring_pad', 'rock', 'tree', 'wall', 'fountain', 'gate', 'barrier',
   'cone', 'boost_pad', 'tower', 'bench', 'well', 'stall', 'stairs', 'windmill', 'tire_stack', 'ruins'];
+export const PROPS = propKinds;
+export { FOLIAGE_KINDS as FOLIAGE };
 
 /**
  * World.prop(game, kind, { position=[0,0,0] (base, on the ground), yaw=0 (radians), scale=1, color (main colour),

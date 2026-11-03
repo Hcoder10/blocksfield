@@ -5,11 +5,15 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import * as Look from './look.js';
 import * as World from './world.js';
 
+// manifest lookup: exact key, then "<kind>_<name>", then an entry whose "for" / "event" is the name
 function entry(game, name, kind) {
   const m = game && game.assets && game.assets.manifest;
-  if (!m || !name || !m[name]) return null;
-  const e = m[name];
-  if (kind && e.kind && e.kind !== kind) return null;
+  if (!m || !name) return null;
+  let e = m[name];
+  if (e && kind && e.kind && e.kind !== kind) e = null;
+  if (!e && kind) e = m[kind + '_' + name] || null;
+  if (!e && kind) e = Object.values(m).find(v => v && v.kind === kind && (v.for === name || v.event === name)) || null;
+  if (!e || !e.file) return null;
   return { ...e, url: game.assets.base + e.file };
 }
 function gameOf(a) { return a && a.scene ? a : (typeof window !== 'undefined' ? window.__game : null); }
@@ -57,7 +61,7 @@ function sampleHorizon(img) {
 
 // ------------------------------------------------------------------------------------------------ icons
 const iconCache = new Map();
-const ICONS = ['coin', 'gem', 'star', 'heart', 'key', 'clock', 'flag', 'trophy', 'bolt', 'skull', 'shield', 'leaf', 'fish', 'mushroom', 'crown', 'lap', 'speed'];
+export const ICONS = ['coin', 'gem', 'star', 'heart', 'key', 'clock', 'flag', 'trophy', 'bolt', 'skull', 'shield', 'leaf', 'fish', 'mushroom', 'crown', 'lap', 'speed'];
 /**
  * Assets.icon(name, game?) -> image url (string). Manifest icon if present, otherwise a drawn icon for common names:
  * coin gem star heart key clock flag trophy bolt skull shield leaf fish mushroom crown lap speed (anything else -> a coloured badge).
@@ -154,7 +158,7 @@ export function prop(game, name, opts = {}) {
   if (!game || !game.scene) throw new Error('Assets.prop(game, name, opts): first argument must be the game from createGame()');
   const group = new THREE.Group(); group.name = 'kit:asset:' + name;
   const pos = World.v3(opts.position);
-  group.position.copy(pos); group.rotation.y = opts.yaw ?? 0;
+  group.position.copy(pos); group.rotation.y = opts.rotationY ?? opts.yaw ?? 0;
   (opts.parent || game.scene).add(group);
   const e = entry(game, name, 'prop') || entry(game, name);
   const fallback = () => {
@@ -180,7 +184,42 @@ export function prop(game, name, opts = {}) {
   return group;
 }
 
+// CONTRACT prop format (splat_to_parts): {size:[x,y,z] (longest = 1), palette:[hex], parts:[{p, s, c}]}, Y up, origin
+// bottom-centre, front -Z. scale (default 1) = longest side in units; height overrides it.
+function buildParts(game, group, data, opts) {
+  const parts = data.parts || [];
+  if (!parts.length) throw new Error('prop json has no parts');
+  const size = new THREE.Vector3(...(data.size || [1, 1, 1]));
+  const longest = Math.max(size.x, size.y, size.z, 1e-6);
+  const k = opts.height ? opts.height / Math.max(size.y, 1e-6) : (opts.scale ?? 1) / longest;
+  const pal = (data.palette || []).map(h => new THREE.Color(h));
+  const geo = new RoundedBoxGeometry(1, 1, 1, 1, 0.12);
+  const mat = Look.material(game, { color: '#ffffff', rim: 0.5 });
+  const im = new THREE.InstancedMesh(geo, mat, parts.length);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), c = new THREE.Color();
+  parts.forEach((pt, i) => {
+    const sz = pt.s || [0.05, 0.05, 0.05];
+    m.compose(new THREE.Vector3(...pt.p), q, new THREE.Vector3(Math.max(sz[0], 1e-3) * 1.02, Math.max(sz[1], 1e-3) * 1.02, Math.max(sz[2], 1e-3) * 1.02));
+    im.setMatrixAt(i, m);
+    im.setColorAt(i, typeof pt.c === 'string' ? c.set(pt.c) : (pal[pt.c] || c.set('#cccccc')));
+  });
+  im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
+  im.castShadow = true; im.receiveShadow = true;
+  im.scale.setScalar(k);
+  im.computeBoundingSphere();
+  group.add(im);
+  group.updateMatrixWorld(true);
+  group.userData.size = size.clone().multiplyScalar(k);
+  if (opts.collider !== false) {
+    const half = size.clone().multiplyScalar(k / 2);
+    const cen = new THREE.Vector3(0, half.y, 0).applyMatrix4(group.matrixWorld);
+    World.colliderBox(game, cen, half, group.rotation.y, { what: 'asset' });
+  }
+  return im;
+}
+
 export function buildVoxels(game, group, data, opts = {}) {
+  if (data && Array.isArray(data.parts)) return buildParts(game, group, data, opts);
   const pts = Array.isArray(data) ? data : (data.points || []);
   if (!pts.length) throw new Error('voxel json has no points');
   const vox = data.voxel || 0.05;

@@ -17,7 +17,7 @@ const level = Level.build(game, kind, { size: q.get('size') || 'medium', seed: +
 const buildMs = performance.now() - t0;
 
 // stand-ins for gameplay so screenshots read at the right scale: coins, a hero capsule, checkpoint + goal rings
-const coinMat = Look.material(game, { kind: 'emissive', color: 'accent', emissiveIntensity: 1.6 });
+const coinMat = Look.material(game, { kind: 'emissive', color: 'accent', emissiveIntensity: 0.7 });
 const coinGeo = new THREE.CylinderGeometry(0.55, 0.55, 0.16, 20).rotateX(Math.PI / 2);
 const coins = new THREE.InstancedMesh(coinGeo, coinMat, Math.max(1, level.collectibles.length));
 const m4 = new THREE.Matrix4();

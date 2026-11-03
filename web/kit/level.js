@@ -9,6 +9,8 @@ export const MAX_GAP = 5.0;       // horizontal edge-to-edge gap on the route (s
 export const MAX_RISE = 2.5;      // height gained in one route jump (apex is 4.5)
 export const JUMP_HEIGHT = 4.5, RUN_SPEED = 12;
 export const kinds = ['sky_islands', 'meadow_course', 'arena', 'town', 'race_track'];
+export const KINDS = kinds;
+export const SIZES_LIST = ['small', 'medium', 'large'];
 const SIZES = { small: 0.7, medium: 1, large: 1.45 };
 
 function rng32(a) {
@@ -181,7 +183,8 @@ function skyIslands(ctx) {
     World.prop(game, 'flag', { ...P(ctx), position: gp.clone().add(V(-Math.cos(back) * 3, -0.1, Math.sin(back) * 3)), height: 6 });
   }
   World.noPlant(game, [level.goal.position], 4.5);
-  World.noPlant(game, [level.spawn], 3);
+  World.noPlant(game, [level.spawn], 4);
+  World.noPlant(game, [level.spawn.clone().add(V(-Math.sin(level.spawnYaw) * 7, 0, -Math.cos(level.spawnYaw) * 7))], 3.5);
 
   // checkpoints on every second island
   for (let i = 2; i < islands.length - 1; i += 2) {
@@ -189,6 +192,19 @@ function skyIslands(ctx) {
     level.checkpoints.push({ position: isl.surfacePoint(isl.position.x, isl.position.z).add(V(0, 0.1, 0)), radius: 3 });
   }
 
+  // hazards (Gameplay draws them): spike patches beside the path, a spinner on the widest middle island
+  for (let i = 1; i < islands.length - 1; i++) {
+    const isl = islands[i];
+    if (i % 2 === 1 && isl.radius > 8) {
+      const c = isl.surfacePoint(isl.position.x, isl.position.z), a = rnd() * Math.PI * 2;
+      const sp = isl.surfacePoint(c.x + Math.cos(a) * isl.radius * 0.5, c.z + Math.sin(a) * isl.radius * 0.5);
+      if (level.route.every(r => r.distanceTo(sp) > 3.2)) { level.hazards.push({ type: 'spikes', position: sp, size: V(2, 0.7, 2) }); World.noPlant(game, [sp], 1.8); }
+    }
+  }
+  {
+    const mids = islands.slice(1, -1).sort((a, b) => b.radius - a.radius);
+    if (mids[0] && mids[0].radius > 9.5) { const isl = mids[0]; const c = isl.surfacePoint(isl.position.x, isl.position.z); level.hazards.push({ type: 'spinner', position: c, length: Math.min(9, isl.radius * 0.9), speed: 1.2, height: 0.9 }); World.noPlant(game, [c], 4.8); }
+  }
   // collectibles: coin trail along the route + arcs over every jump
   const coins = [];
   for (const j of jumps) {
@@ -240,7 +256,7 @@ function skyIslands(ctx) {
   let minY = Infinity; for (const isl of islands) minY = Math.min(minY, isl.position.y);
   const ctr = new THREE.Box3().setFromPoints(islands.map(i => i.position)).getCenter(V(0, 0, 0));
   const span = islands.reduce((m, i) => Math.max(m, i.position.distanceTo(ctr) + i.radius), 0);
-  World.clouds(game, { ...P(ctx), count: 30, height: minY - 32 - ctr.y, center: ctr, radius: span + 120, below: true, speed: 1.0, seed: ctx.seed + 5 });
+  World.clouds(game, { ...P(ctx), count: 60, height: minY - 30 - ctr.y, center: ctr, radius: span + 150, below: true, speed: 1.0, seed: ctx.seed + 5 });
   World.clouds(game, { ...P(ctx), count: 14, height: 30, center: ctr, radius: span + 160, speed: 1.6, seed: ctx.seed + 6 });
   for (let k = 0; k < 7; k++) {
     const a = k / 7 * Math.PI * 2 + rnd(), d = span + 70 + rnd() * 110;
@@ -312,7 +328,7 @@ function meadowCourse(ctx) {
     const dt = 1 / L;                               // 1 unit of course length in t
     if (sec.type === 'hurdle') {
       pushPath(tPrev, t - 3 * dt);
-      World.prop(game, 'fence', { ...P(ctx), position: p.clone().setY(gy(p.x, p.z) - 0.1), yaw: yaw + Math.PI / 2, length: 7, scale: 1 });
+      World.prop(game, 'fence', { ...P(ctx), position: p.clone().setY(gy(p.x, p.z) - 0.1), yaw, length: 7, scale: 1 });
       const a = on(t - 3 * dt), b = on(t + 3 * dt);
       jumps.push({ from: a, to: b, h: 2.4 });
       route.push(b); tPrev = t + 3 * dt;
@@ -373,6 +389,11 @@ function meadowCourse(ctx) {
     }
   }
   pushPath(tPrev, 0.985);
+  for (const t of [0.2, 0.46, 0.71, 0.93]) {
+    const p = on(t), yaw = yawAt(t), sd = (t * 10 | 0) % 2 ? 1 : -1;
+    const q = p.clone().add(V(Math.cos(yaw), 0, -Math.sin(yaw)).multiplyScalar(3.4 * sd)); q.y = gy(q.x, q.z);
+    level.hazards.push({ type: 'spikes', position: q, size: V(1.6, 0.6, 1.6) });
+  }
   level.route = route.filter((p, i) => i === 0 || p.distanceTo(route[i - 1]) > 0.5);
   level.spawn = on(0.01, 1.0);
   level.spawnYaw = yawAt(0.02);
@@ -398,7 +419,7 @@ function meadowCourse(ctx) {
     const t = k / 12 + 0.02; if (sections.some(s => Math.abs(s.t - t) < 0.05)) continue;
     const p = on(t), yaw = yawAt(t), side = V(Math.cos(yaw), 0, -Math.sin(yaw)).multiplyScalar(k % 2 ? 4.6 : -4.6);
     const q = p.clone().add(side); q.y = gy(q.x, q.z) - 0.05;
-    World.prop(game, k % 3 === 0 ? 'lamp' : 'fence', { ...P(ctx), position: q, yaw, length: 6 });
+    World.prop(game, k % 3 === 0 ? 'lamp' : 'fence', { ...P(ctx), position: q, yaw: yaw + Math.PI / 2, length: 6 });
   }
   const farm = curve.getPointAt(0.45).add(V(0, 0, -amp - 22));
   farm.y = gy(farm.x, farm.z);
@@ -421,19 +442,11 @@ function arena(ctx) {
   const { game, level, rnd, S } = ctx;
   const R = 34 * S;
   const ground = World.ground(game, { ...P(ctx), size: R * 2 + 160, flat: R + 8, hills: 18, bumps: 0.15, seed: ctx.seed + 3, style: 'grass',
-    paint: (x, z, c) => {
-      const d = Math.hypot(x, z);
-      const pal = Look.palette(game);
-      if (d < R) {
-        const ring = Math.floor(d / 4.2), ang = Math.atan2(z, x);
-        const tile = (Math.floor(ang * (ring + 2) * 0.9) + ring) % 2;
-        c.set(pal.stone).multiplyScalar(tile ? 0.92 : 1.0);
-        if (d < 7) c.set(pal.accent).lerp(new THREE.Color(pal.stone), 0.55);
-        if (Math.abs(d - R * 0.62) < 0.6) c.set(pal.primary).lerp(new THREE.Color(pal.stone), 0.4);
-      } else if (d < R + 2) c.lerp(new THREE.Color(pal.ground), 0.6);
-    },
+    height: (x, z, y) => y * THREE.MathUtils.smoothstep(Math.hypot(x, z), R + 1, R + 8),
+    paint: (x, z, c) => { const d = Math.hypot(x, z); if (d < R + 4) c.lerp(new THREE.Color(Look.palette(game).ground), THREE.MathUtils.smoothstep(R + 4 - d, 0, 2) * 0.5); },
   });
-  const gy = (x, z) => ground.heightAt(x, z) ?? 0;
+  const floor = World.plaza(game, { ...P(ctx), center: V(0, 0, 0), radius: R, trimAt: 0.62, seed: ctx.seed });
+  const gy = (x, z) => World.heightAt(game, x, z) ?? 0;
   // ring wall with 4 gates
   const segs = Math.round(R * 0.55);
   for (let i = 0; i < segs; i++) {
@@ -468,6 +481,7 @@ function arena(ctx) {
     level.collectibles.push({ position: pp.clone().setY(gy(pp.x, pp.z) + ph + 1.2), tag: 'gem' });
   }
   World.prop(game, 'fountain', { ...P(ctx), position: V(0, gy(0, 0) - 0.05, 0), radius: 3.2 });
+  for (let q = 0; q < 4; q++) { const a = q * Math.PI / 2; const p = V(Math.cos(a) * R * 0.5, 0, Math.sin(a) * R * 0.5); p.y = gy(p.x, p.z); level.hazards.push({ type: 'bounce', position: p, power: 22, radius: 1.3 }); }
   for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + 0.2; const p = V(Math.cos(a) * (R - 2.5), 0, Math.sin(a) * (R - 2.5)); p.y = gy(p.x, p.z); World.prop(game, 'lamp', { ...P(ctx), position: p, height: 3.4 }); }
   // route: a loop around the arena
   const route = [];
@@ -506,6 +520,7 @@ function town(ctx) {
   const onStreet = (x, z) => (Math.abs(x) < W / 2 && Math.abs(z) < plaza + street) || (Math.abs(z) < W / 2 && Math.abs(x) < plaza + street) || Math.hypot(x, z) < plaza;
   const size = (plaza + street) * 2 + 120;
   const ground = World.ground(game, { ...P(ctx), size, flat: plaza + street + 16, hills: 22, bumps: 0.12, seed: ctx.seed + 3,
+    height: (x, z, y) => y * THREE.MathUtils.smoothstep(Math.hypot(x, z), plaza - 1, plaza + 5),
     paint: (x, z, c) => {
       if (onStreet(x, z)) {
         const cx = Math.floor(x / 1.1), cz = Math.floor(z / 1.1);
@@ -515,7 +530,8 @@ function town(ctx) {
       }
     },
   });
-  const gy = (x, z) => ground.heightAt(x, z) ?? 0;
+  World.plaza(game, { ...P(ctx), center: V(0, ground.heightAt(0, 0) ?? 0, 0), radius: plaza - 0.5, trim: 'roof', emblem: 'stone', trimAt: 0.75, seed: ctx.seed, collider: true });
+  const gy = (x, z) => World.heightAt(game, x, z) ?? 0;
   World.prop(game, 'fountain', { ...P(ctx), position: V(0, gy(0, 0) - 0.05, 0), radius: 3.6 });
   for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + Math.PI / 4; World.prop(game, 'tree', { ...P(ctx), position: V(Math.cos(a) * 9, gy(Math.cos(a) * 9, Math.sin(a) * 9), Math.sin(a) * 9) }); World.prop(game, 'bench', { ...P(ctx), position: V(Math.cos(a) * 6, gy(0, 0), Math.sin(a) * 6), yaw: -a - Math.PI / 2 }); }
   for (let k = 0; k < 3; k++) { const a = k * 0.5 + 0.9; World.prop(game, 'stall', { ...P(ctx), position: V(Math.cos(a) * 11.5, gy(0, 0), Math.sin(a) * 11.5), yaw: -a - Math.PI / 2, color: ['primary', 'secondary', 'accent'][k] }); }
@@ -583,7 +599,7 @@ function raceTrack(ctx) {
   const hNoise = (t) => 2.6 * Math.sin(t * Math.PI * 2 * 2 + ctx.seed) + 1.4 * Math.sin(t * Math.PI * 2 * 3 + 1.3);
   const pts = [], tans = [], sides = [], banks = [];
   for (let i = 0; i <= N; i++) {
-    const t = i / N, p = curve.getPointAt(t % 1); p.y = 0.25 + hNoise(t) + 2.6;
+    const t = i / N, p = curve.getPointAt(t % 1); p.y = 0.25 + hNoise(t) + 4.4;
     pts.push(p);
     const tg = curve.getTangentAt(t % 1); tans.push(tg);
   }
@@ -598,69 +614,53 @@ function raceTrack(ctx) {
   }
   const trackCurve = new THREE.CatmullRomCurve3(pts.slice(0, N), true, 'centripetal');
   level.track = trackCurve;
-  // road ribbon: asphalt + lines + curbs
-  const vtx = [], col = [], idx = [];
-  const asphalt = new THREE.Color(Look.isNight(game) ? '#262238' : '#4a4d5a'), line = new THREE.Color('#f4f4f4');
-  const curbA = new THREE.Color(pal.danger), curbB = new THREE.Color('#ffffff');
-  const lanes = [-W / 2 - 1.4, -W / 2, -W / 2 + 0.6, -0.15, 0.15, W / 2 - 0.6, W / 2, W / 2 + 1.4];
+  // road ribbon: hard-edged colour bands (curb | asphalt | centre line | asphalt | curb), banked
+  const asphalt = new THREE.Color(Look.isNight(game) ? '#2a2640' : '#50525e'), line = new THREE.Color('#f4f4f4');
+  const curbA = new THREE.Color(pal.danger), curbB = new THREE.Color('#ffffff'), black = new THREE.Color('#15151a');
+  const lanes = [-W / 2 - 1.4, -W / 2, -W / 2 + 0.5, -W / 2 + 0.75, -0.18, 0.18, W / 2 - 0.75, W / 2 - 0.5, W / 2, W / 2 + 1.4];
+  const bandColor = (b, i) => {
+    const d = i * lenT / N;
+    if (b === 0 || b === lanes.length - 2) return Math.floor(d / 2.5) % 2 ? curbA : curbB;
+    if (b === 2 || b === lanes.length - 4) return line;                    // white edge lines
+    if (b === 4) return Math.floor(d / 4) % 2 ? line : asphalt;             // dashed centre
+    if (i < 4 && b > 0 && b < lanes.length - 2) return (b + i) % 2 ? line : black;   // start/finish checker
+    return asphalt;
+  };
   const edges = [];
+  const surf = [];      // per sample: lane points + normal
   for (let i = 0; i <= N; i++) {
-    const p = pts[i % (N + 1)], tg = tans[i];
+    const p = pts[i], tg = tans[i];
     const side = V(tg.z, 0, -tg.x).normalize();
     sides.push(side);
     const bank = banks[i];
-    let s = 0;
-    for (let li = 0; li < lanes.length; li++) {
-      const o = lanes[li];
-      const q = p.clone().addScaledVector(side, o * Math.cos(bank)); q.y += o * Math.sin(bank) + (Math.abs(o) > W / 2 + 0.1 ? 0.06 : 0);
-      vtx.push(q.x, q.y, q.z);
-      const seg = Math.floor(i * lenT / N / 3) % 2;
-      let c;
-      if (li === 0 || li === lanes.length - 1 || li === 1 || li === lanes.length - 2) c = seg ? curbA : curbB;
-      else if (li === 3 || li === 4) c = (Math.floor(i * lenT / N / 4) % 2) ? line : asphalt;
-      else c = asphalt;
-      if (i < 3 && li > 1 && li < 6) c = (Math.floor(o * 1.2 + 10) + i) % 2 ? line : new THREE.Color('#111111');
-      const shade = 0.94 + 0.06 * Math.sin(i * 1.7 + li * 3.1);
-      col.push(c.r * shade, c.g * shade, c.b * shade);
-    }
-    edges.push({ l: p.clone().addScaledVector(side, (-W / 2 - 1.4) * Math.cos(bank)).setY(p.y - (W / 2 + 1.4) * Math.sin(bank)),
-      r: p.clone().addScaledVector(side, (W / 2 + 1.4) * Math.cos(bank)).setY(p.y + (W / 2 + 1.4) * Math.sin(bank)), p, side, bank });
+    const across = side.clone().multiplyScalar(Math.cos(bank)).add(V(0, Math.sin(bank), 0));
+    const nrm = new THREE.Vector3().crossVectors(tg, across).normalize(); if (nrm.y < 0) nrm.negate();
+    surf.push({ q: lanes.map(o => p.clone().addScaledVector(across, o).add(V(0, Math.abs(o) > W / 2 + 0.1 ? 0.04 : 0, 0))), nrm });
+    edges.push({ l: p.clone().addScaledVector(across, -W / 2 - 1.4), r: p.clone().addScaledVector(across, W / 2 + 1.4), p, side, bank });
   }
-  const LN = lanes.length;
-  for (let i = 0; i < N; i++) for (let li = 0; li < LN - 1; li++) {
-    const a = i * LN + li, b = a + 1, c = a + LN, d = c + 1;
-    idx.push(a, c, b, b, c, d);
-  }
-  const rg = new THREE.BufferGeometry();
-  rg.setAttribute('position', new THREE.Float32BufferAttribute(vtx, 3));
-  rg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-  rg.setIndex(idx); rg.computeVertexNormals();
-  const road = new THREE.Mesh(rg, Look.material(game, { color: '#ffffff', vertexColors: true, rim: 0 }));
-  road.receiveShadow = true; road.name = 'kit:road';
-  ctx.group.add(road);
-  World.colliderTrimesh(game, rg, null, { what: 'road' });
-  // road sides (skirt down to the ground) so the raised road reads as an embankment
   {
-    const sv = [], sc = [], si = [];
-    const dirt = new THREE.Color(pal.ground), dirt2 = new THREE.Color(pal.ground2);
-    for (let i = 0; i <= N; i++) {
-      const e = edges[i];
-      for (const [q, sgn] of [[e.l, -1], [e.r, 1]]) {
-        const out = q.clone().addScaledVector(e.side, sgn * 4.5); out.y = -0.6;
-        sv.push(q.x, q.y, q.z, out.x, out.y, out.z);
-        sc.push(dirt.r, dirt.g, dirt.b, dirt2.r, dirt2.g, dirt2.b);
+    const vtx = [], col = [], nr = [];
+    for (let i = 0; i < N; i++) for (let b = 0; b < lanes.length - 1; b++) {
+      const A = surf[i].q[b], B = surf[i].q[b + 1], Cc = surf[i + 1].q[b], D = surf[i + 1].q[b + 1];
+      const c = bandColor(b, i), sh = 0.96 + 0.04 * Math.sin(i * 1.7 + b);
+      for (const [v, n] of [[A, surf[i].nrm], [Cc, surf[i + 1].nrm], [B, surf[i].nrm], [B, surf[i].nrm], [Cc, surf[i + 1].nrm], [D, surf[i + 1].nrm]]) {
+        vtx.push(v.x, v.y, v.z); nr.push(n.x, n.y, n.z); col.push(c.r * sh, c.g * sh, c.b * sh);
       }
     }
-    for (let i = 0; i < N; i++) for (const o of [0, 2]) {
-      const a = i * 4 + o, b = a + 1, c = a + 4, d = c + 1;
-      if (o === 0) si.push(a, b, c, c, b, d); else si.push(a, c, b, b, c, d);
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(sv, 3));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3));
-    g.setIndex(si); g.computeVertexNormals();
-    const m = new THREE.Mesh(g, Look.material(game, { color: '#ffffff', vertexColors: true, side: 'double' }));
-    m.receiveShadow = true; ctx.group.add(m);
+    const rg = new THREE.BufferGeometry();
+    rg.setAttribute('position', new THREE.Float32BufferAttribute(vtx, 3));
+    rg.setAttribute('normal', new THREE.Float32BufferAttribute(nr, 3));
+    rg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    // keep winding facing up
+    const road = new THREE.Mesh(rg, Look.material(game, { color: '#ffffff', vertexColors: true, rim: 0, side: 'double' }));
+    road.receiveShadow = true; road.name = 'kit:road';
+    ctx.group.add(road);
+    // collider: a simple indexed strip over the full width
+    const cv = [], ci = [];
+    for (let i = 0; i <= N; i++) { const a = edges[i].l, b = edges[i].p, c = edges[i].r; cv.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z); }
+    for (let i = 0; i < N; i++) { const a = i * 3; ci.push(a, a + 3, a + 1, a + 1, a + 3, a + 4, a + 1, a + 4, a + 2, a + 2, a + 4, a + 5); }
+    const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(cv, 3)); cg.setIndex(ci);
+    World.colliderTrimesh(game, cg, null, { what: 'road' });
   }
   // barriers: continuous low walls on both sides, collider boxes per segment
   {
@@ -696,7 +696,28 @@ function raceTrack(ctx) {
   }
   // ground: flat meadow under and around the track, hills framing it
   const ext = R * 1.25 + 110;
-  const ground = World.ground(game, { ...P(ctx), size: ext * 2, flat: R * 1.25 + 30, hills: 26, bumps: 0.5, seed: ctx.seed + 3 });
+  const CELL = 12, grid = new Map();
+  for (let i = 0; i < N; i += 2) { const k = Math.floor(pts[i].x / CELL) + ',' + Math.floor(pts[i].z / CELL); (grid.get(k) || grid.set(k, []).get(k)).push(i); }
+  const nearest = (x, z) => {
+    const cx = Math.floor(x / CELL), cz = Math.floor(z / CELL); let bd = Infinity, bi = -1;
+    for (let r = 0; r <= 3 && bi < 0; r++) for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) {
+      if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+      for (const i of grid.get((cx + dx) + ',' + (cz + dz)) || []) { const d = (pts[i].x - x) ** 2 + (pts[i].z - z) ** 2; if (d < bd) { bd = d; bi = i; } }
+    }
+    return bi < 0 ? null : { d: Math.sqrt(bd), i: bi };
+  };
+  const dc = (nearest(0, 0) || { d: 0 }).d;
+  const lakeR = dc > 36 ? Math.min(dc - 24, 34) : 0;
+  const ground = World.ground(game, { ...P(ctx), size: ext * 2, flat: R * 1.25 + 30, hills: 26, bumps: 0.5, seed: ctx.seed + 3,
+    height: (x, z, y) => {
+      if (lakeR > 0) { const dl = Math.hypot(x, z); if (dl < lakeR + 6) y = THREE.MathUtils.lerp(y, -2.4, THREE.MathUtils.smoothstep(lakeR + 6 - dl, 0, 8)); }
+      const n = nearest(x, z); if (!n) return y;
+      const ty = pts[n.i].y - 0.3 - Math.min(n.d, W / 2 + 2) * Math.abs(Math.sin(banks[n.i])) - (n.d < W / 2 + 2 ? 0.2 : 0);
+      const k = THREE.MathUtils.smoothstep(W / 2 + 18 - n.d, 0, 14);
+      return THREE.MathUtils.lerp(y, ty, k);
+    },
+    paint: (x, z, c) => { const n = nearest(x, z); if (n && n.d < W / 2 + 4.5) c.lerp(new THREE.Color(pal.ground), 0.55); },
+  });
   // gameplay placements
   const yawAtI = (i) => Math.atan2(tans[i].x, tans[i].z);
   level.route = [];
@@ -707,7 +728,7 @@ function raceTrack(ctx) {
   for (let k = 1; k < 6; k++) { const i = Math.round(N * k / 6); level.checkpoints.push({ position: pts[i].clone().add(V(0, 0.5, 0)), radius: W / 2 + 2, yaw: yawAtI(i), index: k }); }
   level.laps = 3;
   // start/finish gantry + boost pads on the straightest stretches
-  World.prop(game, 'gate', { ...P(ctx), position: pts[1].clone().add(V(0, -0.05, 0)), yaw: yawAtI(1) + Math.PI / 2, width: W + 3, height: 7 });
+  World.prop(game, 'gate', { ...P(ctx), position: pts[1].clone().add(V(0, -0.05, 0)), yaw: yawAtI(1), width: W + 3, height: 7 });
   const straight = [];
   for (let i = 20; i < N - 20; i++) straight.push([Math.abs(banks[i]), i]);
   straight.sort((a, b) => a[0] - b[0]);
@@ -726,17 +747,17 @@ function raceTrack(ctx) {
   for (let i = 0; i < N; i += 9) {
     const b = banks[i]; if (Math.abs(b) < 0.08) continue;
     const sgn = b > 0 ? -1 : 1;
-    const e = edges[i], q = (sgn < 0 ? e.l : e.r).clone().addScaledVector(e.side, sgn * 3.2); q.y = 0;
+    const e = edges[i], q = (sgn < 0 ? e.l : e.r).clone().addScaledVector(e.side, sgn * 3.2); q.y = ground.heightAt(q.x, q.z) ?? 0;
     World.prop(game, i % 2 ? 'tire_stack' : 'cone', { ...P(ctx), position: q, collider: false });
   }
   for (let i = 0; i < N; i += Math.round(N / 14)) {
-    const e = edges[i], q = e.r.clone().addScaledVector(e.side, 6); q.y = 0;
+    const e = edges[i], q = e.r.clone().addScaledVector(e.side, 6); q.y = ground.heightAt(q.x, q.z) ?? 0;
     World.prop(game, 'flag', { ...P(ctx), position: q, color: i % 2 ? 'primary' : 'secondary', height: 6 });
   }
   const noPlant = [];
   for (let i = 0; i < N; i += 2) noPlant.push(pts[i]);
   World.noPlant(game, noPlant, W / 2 + 7);
-  World.water(game, { ...P(ctx), level: -0.3, size: R * 0.9, center: V(0, 0, 0) });
+  if (lakeR > 0) World.water(game, { ...P(ctx), level: -0.6, size: (lakeR + 10) * 2, center: V(0, 0, 0) });
   World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: ext - 10 }, kinds: { grass: 0.8, flowers: 1, bush: 1, tree_round: 1.3, tree_pine: 1.3, rock: 0.8 }, density: 0.8, seed: ctx.seed + 8 });
   World.clouds(game, { ...P(ctx), count: 20, height: 60, radius: ext, seed: ctx.seed });
   level.ground = ground;
