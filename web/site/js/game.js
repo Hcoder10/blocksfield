@@ -180,7 +180,7 @@
     wireAudio();
 
     // build log
-    $("#g-log").innerHTML = [timeline(t), scores(a.score), postStages(a.post_stages), callsTable(a.model_calls, a.agents),
+    $("#g-log").innerHTML = [timeline(t), scores(a.score), postStages(a.post_stages), incidents(a.incidents), callsTable(a.model_calls, a.agents),
       builderReport(a.stages?.build)].filter(Boolean).join("");
   }
 
@@ -193,6 +193,15 @@
     const c = cutsceneStage(ps);
     return (c && c.model) || "LTX-2.5";
   }
+  // about.json "incidents": pipeline problems during the run, listed as recorded; not operator interventions, no chip
+  function incidents(xs) {
+    const items = (Array.isArray(xs) ? xs : typeof xs === "string" && xs.trim() ? [xs] : [])
+      .map((x) => (typeof x === "string" ? x : JSON.stringify(x))).filter((x) => x.trim());
+    if (!items.length) return "";
+    return `<div class="panel wide incidents"><h3>Incidents <small>pipeline problems during this run, as recorded</small></h3>
+      <ul class="post-list">${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
+  }
+
   // post_stages entries written by web_run ({stage, kit_commit, at}): uniform passes run after every build
   function postStages(ps) {
     const items = (Array.isArray(ps) ? ps : []).filter((x) => x && typeof x === "object" && x.stage);

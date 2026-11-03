@@ -161,6 +161,7 @@ def main() -> None:
                         {"stage": "cutscenes", "model": "LTX-2.5", "run": "uniform pipeline stage after build",
                          "clips": ["intro", "win"], "at": "2026-11-03T05:10:00-0800"}],
         "operator_interventions": [],
+        "incidents": ["fixture incident: two builder agents ran at once; the run was re-recorded after the freeze"],
         "timings_s": {"plan": 41.0, "art": 212.0, "scaffold": 3.0, "build": 640.0, "eval_s0": 70.0, "eval_v0": 66.0,
                       "repair_1": 300.0, "eval_v1": 64.0, "repair_2": 280.0, "eval_v2": 61.0},
         "model_calls": {"lead": {"calls": 2, "prompt_tokens": 9000, "completion_tokens": 2100, "seconds": 40.0},
