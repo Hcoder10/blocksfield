@@ -1231,6 +1231,11 @@ varying vec3 vWPos;
   }
   const gy = (x, z) => ground.heightAt(x, z) ?? 0;
 
+  // race dressing (road, curbs, chevrons) vs ruin dressing (sand path, broken columns, ruin walls): both are built and
+  // one is shown. opts.dress = 'race' | 'ruins' | 'auto' (default): auto decides on the first frame, once
+  // Gameplay.rules has run: a kart / boat player or a lap count means it is raced.
+  const raceDress = new THREE.Group(); raceDress.name = 'kit:canyon:race'; raceDress.userData.dynamic = true; ctx.group.add(raceDress);
+  const ruinDress = new THREE.Group(); ruinDress.name = 'kit:canyon:ruins'; ruinDress.userData.dynamic = true; ctx.group.add(ruinDress);
   // ---- the racing line: a packed-dirt road ribbon draped on the floor, red/white curbs, white edge lines, darker
   // tyre tracks, and chevron boards on the outside of every real bend, so the line reads at speed against the sand
   {
@@ -1267,7 +1272,7 @@ varying vec3 vWPos;
     const rm = Look.material(game, { color: '#ffffff', vertexColors: true, rim: 0.131, side: 'double' });
     rm.polygonOffset = true; rm.polygonOffsetFactor = -2; rm.polygonOffsetUnits = -4;
     const road = new THREE.Mesh(g, rm); road.name = 'kit:canyon:road'; road.receiveShadow = true;
-    ctx.group.add(road);
+    raceDress.add(road);
 
     // chevron boards: red with white arrows, on posts outside each sharp bend, pointing the way
     const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128;
@@ -1297,7 +1302,7 @@ varying vec3 vWPos;
         const lx = Math.cos(th), lz = -Math.sin(th);       // the board's +X (arrow direction) in world space
         board.scale.x = lx * tans[j].x + lz * tans[j].z >= 0 ? 1 : -1;   // arrows point the way the road runs
         grp.traverse(o => { if (o.isMesh) o.castShadow = true; });
-        ctx.group.add(grp);
+        raceDress.add(grp);
       }
     }
   }
@@ -1451,6 +1456,81 @@ varying vec3 vWPos;
   World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: ext - 12 }, kinds: { tree_round: 0.9, bush: 1.2, grass: 0.7, tree_dead: 0.5, rock: 0.6 },
     density: 0.7, seed: ctx.seed + 8, focus: level.route, focusRadius: 26, maxY: 2.6 });
   World.clouds(game, { ...P(ctx), count: 10, height: 75, radius: ext, seed: ctx.seed });
+  // ---- ruin dressing (non-race games): a pale sand path with stone edging, broken columns and ruin walls
+  const ruinColliders = [];
+  {
+    const L = [-W * 0.32 - 0.5, -W * 0.32, W * 0.32, W * 0.32 + 0.5];
+    const edge = new THREE.Color('#b89a74'), sandP = new THREE.Color('#f0d6a8'), sandP2 = new THREE.Color('#e8c992');
+    const pos = [], cl = [];
+    const P3 = (i, o) => { const sd = side(i % N), x = pts[i].x + sd.x * o, z = pts[i].z + sd.z * o; return [x, heightFn(x, z) + 0.05, z]; };
+    for (let i = 0; i < N; i++) for (let b = 0; b < L.length - 1; b++) {
+      const c = b === 1 ? (Math.floor(i / 5) % 2 ? sandP : sandP2) : edge;
+      for (const [ii, oo] of [[i, L[b]], [i + 1, L[b]], [i, L[b + 1]], [i, L[b + 1]], [i + 1, L[b]], [i + 1, L[b + 1]]]) { pos.push(...P3(ii, oo)); cl.push(c.r, c.g, c.b); }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(cl, 3)); g.computeVertexNormals();
+    const pm = Look.material(game, { color: '#ffffff', vertexColors: true, rim: 0.121, side: 'double' });
+    pm.polygonOffset = true; pm.polygonOffsetFactor = -2; pm.polygonOffsetUnits = -4;
+    const path = new THREE.Mesh(g, pm); path.receiveShadow = true; path.name = 'kit:canyon:path'; ruinDress.add(path);
+    // columns (some broken, some fallen) and low ruin walls along the floor edges, kept off the path and the goal
+    const stone = Look.material(game, { color: '#e2c49a' }), stoneD = Look.material(game, { color: '#c9a479' });
+    const colG = new THREE.CylinderGeometry(0.7, 0.8, 1, 10), capG = new THREE.BoxGeometry(2.0, 0.5, 2.0), blockG = new THREE.BoxGeometry(1, 1, 1);
+    const rr = rng32(ctx.seed * 31 + 7);
+    for (let i = 8, k = 0; i < N; i += 9 + Math.floor(rr() * 6), k++) {
+      if (Math.abs(i - goalI) < 10 || i > N - 14) continue;
+      const sg = k % 2 ? 1 : -1, sd = side(i);
+      const q = pts[i].clone().addScaledVector(sd, sg * (W / 2 + 2.5 + rr() * 2.5)); q.y = heightFn(q.x, q.z);
+      const yaw = Math.atan2(tans[i].x, tans[i].z);
+      const kind = rr();
+      if (kind < 0.45) {                                   // standing column, maybe broken
+        const hgt = 2.5 + rr() * 4.5;
+        const col = new THREE.Mesh(colG, stone); col.scale.set(1, hgt, 1); col.position.set(q.x, q.y + hgt / 2 - 0.2, q.z); col.rotation.z = (rr() - 0.5) * 0.12;
+        ruinDress.add(col);
+        if (hgt > 5) { const cap = new THREE.Mesh(capG, stoneD); cap.position.set(q.x, q.y + hgt, q.z); cap.rotation.y = rr(); ruinDress.add(cap); }
+        ruinColliders.push(['cyl', V(q.x, q.y + hgt / 2, q.z), hgt / 2, 0.8]);
+      } else if (kind < 0.7) {                             // fallen column
+        const len = 4 + rr() * 3;
+        const col = new THREE.Mesh(colG, stone); col.scale.set(1, len, 1); col.rotation.z = Math.PI / 2; col.rotation.y = yaw + (rr() - 0.5);
+        col.position.set(q.x, q.y + 0.55, q.z); ruinDress.add(col);
+        ruinColliders.push(['box', V(q.x, q.y + 0.55, q.z), V(len / 2, 0.75, 0.8), col.rotation.y + Math.PI / 2]);
+      } else {                                             // ruin wall with a broken top, along the canyon
+        const len = 5 + rr() * 4, hgt = 1.6 + rr() * 1.8;
+        const n = Math.ceil(len / 1.2);
+        for (let b = 0; b < n; b++) {
+          const hb = hgt * (0.55 + 0.45 * Math.sin(b * 1.7 + k) ** 2);
+          const blk = new THREE.Mesh(blockG, b % 2 ? stone : stoneD);
+          blk.scale.set(1.2, hb, 0.9);
+          const off = (b - (n - 1) / 2) * 1.2;
+          blk.position.set(q.x + Math.sin(yaw) * off, q.y + hb / 2 - 0.1, q.z + Math.cos(yaw) * off); blk.rotation.y = yaw;
+          ruinDress.add(blk);
+        }
+        ruinColliders.push(['box', V(q.x, q.y + hgt / 2, q.z), V(0.5, hgt / 2, len / 2), yaw]);
+      }
+    }
+    ruinDress.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  }
+  let dressed = null;
+  const dress = (raced) => {
+    if (dressed !== null) return;
+    dressed = raced ? 'race' : 'ruins';
+    raceDress.visible = raced; ruinDress.visible = !raced;
+    if (!raced) for (const c of ruinColliders) {
+      if (c[0] === 'cyl') World.colliderCylinder(game, c[1], c[2], c[3], { what: 'ruin' });
+      else World.colliderBox(game, c[1], c[2], c[3], { what: 'ruin' });
+    }
+    level.dress = dressed;
+  };
+  const want = opts(ctx).dress || 'auto';
+  if (want === 'race' || want === 'ruins') dress(want === 'race');
+  else {
+    raceDress.visible = ruinDress.visible = false;
+    const decide = () => {
+      game.removeUpdate(decide);
+      const p = game.__player, st = game.state || {};
+      dress(!!((p && (p.type === 'kart' || p.type === 'boat')) || (Number.isFinite(st.laps) && st.laps > 0)));
+    };
+    game.lateUpdate(decide, -200);
+  }
   level.ground = ground;
   level.bounds = boundsOf(pts, 16);
 }
