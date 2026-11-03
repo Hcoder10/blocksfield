@@ -279,5 +279,11 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "operator_interventions": [
+  "sky.jpg re-made by hand mid-build: an operator ran the pipeline's fixed panorama code on the same generated sky image (the first version showed painted land below the horizon)",
+  "operator re-ran version selection and the repair rounds (--redo eval_v0) after fixing a judge-selection bug in the pipeline",
+  "operator re-ran the asset stage for the 4 sound effects and 2 props that had failed (--backfill-assets) after the sfx-length fix",
+  "thumb.jpg replaced by hand with a later playtest frame of the same build"
+ ]
 }

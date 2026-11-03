@@ -35,6 +35,7 @@ FAKE_PLAN = {
                        {"event": "jump", "prompt": "soft cartoon boing jump", "seconds": 1}],
                "props": [{"name": "mushroom", "prompt": "a red spotted toadstool mushroom", "count": 8}]},
     "features": ["confetti burst on win"],
+    "mapping_notes": "a fox hero maps to the platformer character; star blooms map to the star collectible",
 }
 
 

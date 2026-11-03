@@ -25,6 +25,7 @@ DEFAULT_ENUMS = {
     "collectible": ["coin", "star", "gem", "seed", "orb"],
     "ui_style": ["arcade", "cozy", "sleek", "fantasy", "scifi"],
 }
+TRACK_KINDS = ("race_track", "lagoon")        # Level.md: kinds with level.track (laps, AI racers)
 CAMERA_FOR = {"platformer": "follow", "kart": "chase", "boat": "chase", "topdown": "topdown", "fps": "firstPerson"}
 
 INDEX_HTML = """<!doctype html><html><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>{title}</title>
@@ -218,7 +219,8 @@ def plan_schema(en: dict[str, list[str]]) -> dict:
         "required": ["title", "tagline", "genre", "core_loop", "controls", "win_condition", "look", "ui_style",
                      "level_kind",
                      "level_size", "player_type", "camera", "player_colors", "collectible", "goal", "timer_seconds",
-                     "lives", "enemies", "race", "art_direction", "concept_shots", "assets", "features"],
+                     "lives", "enemies", "race", "art_direction", "concept_shots", "assets", "features",
+                     "mapping_notes"],
         "properties": {
             "title": {**s, "maxLength": 40}, "tagline": {**s, "maxLength": 90}, "genre": s,
             "core_loop": {**s, "description": "one or two sentences: what the player does again and again"},
@@ -263,6 +265,9 @@ def plan_schema(en: dict[str, list[str]]) -> dict:
                                          "prompt": {**s, "description": "ONE solid object, its shape and colours"},
                                          "count": {"type": "integer", "minimum": 1, "maximum": 30}}}},
             }},
+            "mapping_notes": {**s, "description": "how the pitch's ideas map onto the kit choices: for each "
+                                                 "idea the kits do not have literally (a penguin, a hover-bike, "
+                                                 "snow), which kind/look/player/feature stands in for it and why"},
             "features": {"type": "array", "items": s, "maxItems": 6,
                          "description": "extra touches the builder adds with kit calls (hazards, movers, enemies, "
                                         "FX moments, HUD extras), each achievable with the catalog"},
@@ -287,7 +292,7 @@ def plan_brief(pitch: str, title: str | None, en: dict, catalog_txt: str, docs: 
             "for topdown, firstPerson for fps)\n"
             "- a collectible (count placed along the level, target needed to win), goal, timer, lives, enemies, and "
             "race laps/opponents (laps 0 unless it is a race: a race level with a kart or boat)\n"
-            "  (karts and boats only drive well on race_track or town; platformer / topdown / fps fit every level)\n"
+            "  (karts drive well on race_track or town, boats on lagoon; platformer / topdown / fps fit every level)\n"
             "- player colours, the art direction, 2-3 concept shots (the visual target the game is judged against)\n"
             "- generated assets: a sky panorama, 2-4 HUD icons, a music loop, 4-6 sound effects (one per gameplay "
             "event), 0-2 props (single solid objects like a mushroom, crate, lantern, statue; they become voxel "
@@ -309,7 +314,8 @@ def normalize_plan(plan: dict, en: dict) -> tuple[dict, list[str]]:
         c["target"] = max(1, int(c.get("count", 10) * 0.75))
         notes.append(f"collectible target lowered to {c['target']} (more than were placed)")
     # measured (scaffold sweep, Nov 2): karts and boats fall off sky islands and stall on the meadow course's hurdles
-    vehicle_ok = [k for k in ("race_track", "town") if k in en.get("level_kind", [])]
+    drivable = ("lagoon",) if p.get("player_type") == "boat" else ("race_track", "town")
+    vehicle_ok = [k for k in drivable if k in en.get("level_kind", [])]
     if p.get("player_type") in ("kart", "boat") and vehicle_ok and p.get("level_kind") not in vehicle_ok:
         notes.append(f"level {p.get('level_kind')} -> {vehicle_ok[0]}: a {p['player_type']} needs a drivable level")
         p["level_kind"] = vehicle_ok[0]
@@ -336,7 +342,7 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
                  and (e.get("for") in (tag, "coins", "coin", "collect") or tag in n)), tag)
     timer = int(plan.get("timer_seconds") or 0)
     race = plan.get("race") or {}
-    racing = bool(int(race.get("laps") or 0)) and "race" in str(plan.get("level_kind"))
+    racing = bool(int(race.get("laps") or 0)) and plan.get("level_kind") in TRACK_KINDS
     lines = [
         "import * as K from 'kit';",
         "",
@@ -368,6 +374,21 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
             "  if (y == null || Math.abs(y - a.y) > 2) continue;",
             "  K.Assets.prop(game, PROPS[k % PROPS.length], { position: [x, y, z], rotationY: k * 1.3, "
             "height: 2.2 + (k % 3) * 0.6, fallback: 'mushroom' });",
+            "}",
+        ]
+    splats = [n for n, e in assets.items() if e.get("kind") == "splat"][:3] if has("Assets", "splat") else []
+    if splats:
+        lines += [
+            "// generated Gaussian-splat landmarks (Idol) at mid distance from the route",
+            f"const SPLATS = {j(splats)};",
+            "for (let i = 2, k = 0; i < level.route.length - 1 && k < 6; i += 4) {",
+            "  const a = level.route[i], b = level.route[i + 1];",
+            "  const side = new K.THREE.Vector3(b.z - a.z, 0, a.x - b.x).normalize().multiplyScalar(k % 2 ? 7 : -7);",
+            "  const x = a.x + side.x, z = a.z + side.z, y = K.World.heightAt(game, x, z);",
+            "  if (y == null || Math.abs(y - a.y) > 3) continue;",
+            "  K.Assets.splat(game, SPLATS[k % SPLATS.length], { position: [x, y, z], height: 3.5 + (k % 3), "
+            "rotationY: k * 2.1, fallback: 'tree' });",
+            "  k++;",
             "}",
         ]
     rules = {"level": None, "player": None, "collect": {"tag": tag, "target": target}, "goal": bool(plan.get("goal")),

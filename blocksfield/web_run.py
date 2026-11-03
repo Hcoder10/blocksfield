@@ -123,6 +123,15 @@ class WebBuild:
             from blocksfield import web_assets
             res = await web_assets.Assets(self.game_dir, self.run_dir, self.log).run_all(
                 self.plan, self.plan.get("art_direction", ""))
+            art = self.stages.get("art") or {"report": {}}
+            art.setdefault("report", {}).update({k: v for k, v in res["report"].items() if v.get("seconds", 0) > 0.5})
+            art["assets"] = res["manifest"]
+            self.stages.put("art", art)                     # the making-of page reads what was (not) made from here
+            about = self.game_dir / "about.json"
+            if about.exists():
+                d = json.loads(about.read_text(encoding="utf-8"))
+                d.setdefault("stages", {}).setdefault("art", {})["report"] = art["report"]
+                about.write_text(json.dumps(d, indent=1, default=str), encoding="utf-8")
             return {k: v for k, v in res["report"].items() if v.get("seconds", 0) > 0.5}
         await self.stage("art", self.art_stage)
         await self.stage("scaffold", self.scaffold_stage)
@@ -380,6 +389,14 @@ class WebBuild:
             "score": {"best": b["tag"], "score": b["score"], "play": b["play_score"], "vision": b["vision_score"],
                       "versions": best["evals"]},
             "plan": plan_out, "timings_s": {**self.stages.all_timings()},
+            "operator_interventions": [x["what"] for x in json.loads((self.run_dir / "interventions.json").read_text(
+                encoding="utf-8"))] if (self.run_dir / "interventions.json").exists() else [],
+            "mapping": {"pitch": self.a.pitch, "notes": self.plan.get("mapping_notes"),
+                        "chosen": {k: self.plan.get(k) for k in ("level_kind", "look", "player_type", "camera",
+                                                                 "ui_style", "character")
+                                   if self.plan.get(k) is not None}
+                        | {"collectible": (self.plan.get("collectible") or {}).get("tag"),
+                           "collectible_label": (self.plan.get("collectible") or {}).get("label")}},
             "model_calls": self.counts, "agents": self.wf.stats, "stages": stage_out,
             "models": {"llm": "Qwen3.8-27B (vLLM, local)", "image": "Qwen-Image-2.1 + BiRefNet",
                        "music": "ACE-Step", "sfx": "Stable Audio", "props": "Idol image->splat -> voxels"},
@@ -469,6 +486,9 @@ def main() -> int:
     ap.add_argument("--video-seconds", type=float, default=16.0, help="0 = no gameplay video")
     ap.add_argument("--good-enough", type=float, default=8.5, help="stop repairing at this score")
     ap.add_argument("--no-assets", action="store_true", help="skip the art stage (kits' procedural fallbacks)")
+    ap.add_argument("--intervention", action="append", default=[],
+                    help="record a hand edit a person made to this game (about.json operator_interventions); "
+                         "repeatable; recorded even with no other work")
     ap.add_argument("--backfill-assets", action="store_true",
                     help="only (re)try the plan's assets that are missing from the manifest, then stop (the game "
                          "picks them up on its next load; nothing is rebuilt)")
@@ -476,8 +496,13 @@ def main() -> int:
     harness_path()
     if a.check:
         return check()
+    if not a.pitch and a.id:                                # resume / backfill / finalize by id alone
+        idea_file = ROOT / "runs" / f"web_{a.id}" / "idea.json"
+        if idea_file.exists():
+            idea = json.loads(idea_file.read_text(encoding="utf-8"))
+            a.pitch, a.title = idea["pitch"], a.title or idea.get("title")
     if not a.pitch:
-        ap.error("give a pitch")
+        ap.error("give a pitch (or the --id of an existing run)")
     a.id = re.sub(r"[^a-z0-9_]+", "_", (a.id or "_".join(re.findall(r"[a-z0-9]+", a.pitch.lower())[:3])).lower())
     a.id = a.id.strip("_") or "game"
     run_dir = ROOT / "runs" / f"web_{a.id}"
@@ -486,6 +511,16 @@ def main() -> int:
                                        encoding="utf-8")
     if a.redo:
         Stages(run_dir).drop_from(a.redo)
+    if a.intervention:
+        f = run_dir / "interventions.json"
+        log = json.loads(f.read_text(encoding="utf-8")) if f.exists() else []
+        log += [{"at": time.strftime("%Y-%m-%d %H:%M"), "what": t} for t in a.intervention]
+        f.write_text(json.dumps(log, indent=1), encoding="utf-8")
+        about = GAMES / a.id / "about.json"
+        if about.exists():                                  # keep the shipped about.json honest right away
+            d = json.loads(about.read_text(encoding="utf-8"))
+            d["operator_interventions"] = [x["what"] for x in log]
+            about.write_text(json.dumps(d, indent=1, default=str), encoding="utf-8")
     from harness.workflow import Workflow
     counts: dict = {}
     if a.dry_run:

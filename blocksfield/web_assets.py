@@ -14,6 +14,7 @@ procedural defaults. A file already on disk is kept (a resumed run does not pay 
 from __future__ import annotations
 
 import asyncio
+import io
 import json
 import logging
 import re
@@ -157,9 +158,9 @@ class Assets:
             self.report[name] = {"ok": True, "seconds": round(time.time() - t, 1)}
             self.log(f"asset {name}: ok ({time.time() - t:.0f}s)")
         except Exception as e:  # noqa: BLE001  -- every asset is optional
-            self.report[name] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:300],
+            self.report[name] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:1500], "reason": reason(e),
                                  "seconds": round(time.time() - t, 1)}
-            self.log(f"asset {name}: FAILED ({type(e).__name__}: {str(e)[:160]})")
+            self.log(f"asset {name}: FAILED ({reason(e)})")
 
     # -- one asset each ---------------------------------------------------------------------------
     async def sky(self, prompt: str, style: str) -> None:
@@ -195,21 +196,46 @@ class Assets:
         self.add(name, name + _audio_ext(clip), clip, kind="sfx", event=event, prompt=prompt[:300])
 
     async def prop(self, name: str, prompt: str, style: str, detail: int = 22) -> None:
+        """Idol image -> 3D Gaussian splat (no TRELLIS fallback: it is not on the box). Ships both forms: the raw splat
+        as splat_<name>.spz (Assets.splat, rendered with Spark) and voxel boxes as prop_<name>.json (Assets.prop, and
+        Assets.splat's fallback)."""
         from blocksfield import recipe, splat_to_parts
-        name = f"prop_{safe(name).removeprefix('prop_')}"
-        if self.have(name):
+        base = safe(name).removeprefix("prop_").removeprefix("splat_")
+        name, sname = f"prop_{base}", f"splat_{base}"
+        if self.have(name) and self.have(sname):
             return
         full = f"{prompt.strip().rstrip('.')}. Art direction: {style[:200]}" if style else prompt
-        got = await asset_tools.make_prop(recipe.plan(full, "prop")["prompt"], self.work / "props", name)
-        res = await asyncio.to_thread(splat_to_parts.convert, got["src"], name, "voxel", int(detail),
-                                      camera=got["camera"])
-        try:
-            splat_to_parts.preview(res, got["ref"]).save(self.work / "props" / f"{name}_preview.png")
-        except Exception as e:  # noqa: BLE001  -- the preview is for people, the prop still ships
-            log.warning("prop preview failed: %s", e)
-        data = json.dumps(prop_json(name, res), separators=(",", ":")).encode()
-        self.add(name, f"{name}.json", data, kind="prop", prompt=prompt[:300], via=got["via"],
-                 parts=len(res["parts"]))
+        files = await asset_tools.run_job("prop_splat", {"prompt": recipe.plan(full, "prop")["prompt"], "seed": -1})
+        ply = next((f for f in files if f["filename"].lower().endswith(".ply")), None)
+        if ply is None:
+            raise RuntimeError("Idol (prop_splat) produced no .ply")
+        pdir = self.work / "props"
+        pdir.mkdir(parents=True, exist_ok=True)
+        src = pdir / f"{sname}.ply"
+        src.write_bytes(ply["data"])
+        cam = next((json.loads(f["data"]) for f in files if f["filename"].endswith("_camera.json")), None)
+        refb = next((f["data"] for f in files if f["filename"].lower().endswith(".png") and "_input" not in f["filename"]),
+                    None)
+        if refb:
+            (pdir / f"{base}_source.png").write_bytes(refb)
+        if not self.have(name):
+            res = await asyncio.to_thread(splat_to_parts.convert, src, name, "voxel", int(detail), camera=cam)
+            try:
+                ref = Image.open(io.BytesIO(refb)).copy() if refb else None
+                splat_to_parts.preview(res, ref).save(pdir / f"{name}_preview.png")
+            except Exception as e:  # noqa: BLE001  -- the preview is for people, the prop still ships
+                log.warning("prop preview failed: %s", e)
+            data = json.dumps(prop_json(name, res), separators=(",", ":")).encode()
+            self.add(name, f"{name}.json", data, kind="prop", prompt=prompt[:300], via="idol",
+                     parts=len(res["parts"]))
+        if not self.have(sname):
+            await asyncio.to_thread(to_spz, src, self.dir)
+            if (self.dir / f"{sname}.spz").exists():
+                self.manifest[sname] = {"file": f"{sname}.spz", "kind": "splat", "up": "idol", "prompt": prompt[:300],
+                                        **({"camera": {"yaw": cam["yaw"]}} if cam and "yaw" in cam else {})}
+                self.save()
+            else:
+                raise RuntimeError("the voxel prop shipped, but the splat could not be converted to .spz")
 
     # -- all of them -------------------------------------------------------------------------------
     def jobs(self, plan: dict, style: str) -> list:
@@ -265,6 +291,24 @@ async def concept_board(plan: dict, out_dir: Path, n: int = 3, log_fn=None) -> l
         return p
     got = await asyncio.gather(*(one(i, s) for i, s in enumerate(shots)))
     return [p for p in got if p]
+
+
+def reason(e: BaseException) -> str:
+    """The useful part of a failed job's error: ComfyUI's exception message or node error, not the JSON wrapper."""
+    text = str(e).replace('\\"', '"').replace("\n", " ")
+    for key in ('"exception_message": "', '"details": "', '"message": "'):
+        if key in text:
+            return text.split(key, 1)[1].split('", "', 1)[0][:300]
+    return f"{type(e).__name__}: {text}"[:300]
+
+
+def to_spz(ply: Path, out_dir: Path) -> None:
+    """web/tools/ply_to_spz.py (Spark's transcoder in headless Chrome): <out_dir>/<ply stem>.spz."""
+    import subprocess
+    import sys
+    tool = Path(__file__).resolve().parent.parent / "web" / "tools" / "ply_to_spz.py"
+    subprocess.run([sys.executable, str(tool), str(ply), "--out-dir", str(out_dir)], capture_output=True, text=True,
+                   timeout=300)
 
 
 def _jpeg(img: Image.Image, q: int) -> bytes:
