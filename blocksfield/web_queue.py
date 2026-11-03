@@ -73,7 +73,7 @@ def main() -> int:
     done = json.loads(done_f.read_text(encoding="utf-8")) if done_f.exists() else []
     while True:
         try:
-            jobs = json.loads(qf.read_text(encoding="utf-8"))
+            jobs = json.loads(qf.read_text(encoding="utf-8-sig"))   # PowerShell writes a BOM
         except (OSError, ValueError) as e:
             print(f"[{time.strftime('%H:%M')}] queue unreadable: {e}", flush=True)
             time.sleep(a.every)
