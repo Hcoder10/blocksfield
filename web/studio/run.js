@@ -46,7 +46,7 @@ function renderHead(s, at) {
   if (s.title) $('#title').textContent = s.title;
   $('#tagline').textContent = s.tagline || (s.plan ? '' : 'Planning the game…');
   $('#genre').textContent = (s.plan && s.plan.genre) || 'pitch';
-  if (changed('pitch', s.pitch)) $('#pitch').innerHTML = `<b>PITCH</b>${esc(s.pitch || '')}`;
+  if (changed('pitch', s.pitch)) $('#pitch').innerHTML = `<span><b>PITCH</b>${esc(s.pitch || '')}</span>`;
   const end = s.ended && s.ended <= at ? s.ended : at;
   $('#clock').textContent = fmtDur(end - s.started);
   $('#clock-lbl').textContent = s.status === 'done' ? 'Built in' : 'Build time';
@@ -100,8 +100,8 @@ function renderAssets(s) {
   const audio = s.assets.filter(a => a.kind === 'music' || a.kind === 'sfx');
   let html = '';
   if (sky) html += `<div class="sky${popCls(sky.url)}"><img src="${sky.url}" alt=""><span class="chip sun" style="position:absolute;left:10px;bottom:10px">sky panorama</span></div>`;
-  if (icons.length) html += `<div class="icons">${icons.map(a => `<div class="ic${popCls(a.url)}" title="${esc(a.prompt)}"><img src="${a.url}" alt=""><span class="lbl">${esc(a.name.replace(/^icon_/, ''))}</span></div>`).join('')}</div>`;
-  if (props.length) html += `<div class="props">${props.map(a => `<div class="prop${popCls(a.url)}"><img src="${a.url}" alt=""><span class="lbl">${esc(a.name.replace(/^prop_/, ''))}</span></div>`).join('')}</div>`;
+  if (icons.length) html += `<div class="icons">${icons.map(a => `<div class="ic${popCls(a.url)}" title="${esc(a.prompt)}"><img src="${a.url}" alt="" onerror="this.parentNode.remove()"><span class="lbl">${esc(a.name.replace(/^icon_/, ''))}</span></div>`).join('')}</div>`;
+  if (props.length) html += `<div class="props">${props.map(a => `<div class="prop${popCls(a.url)}"><img src="${a.url}" alt="" onerror="this.parentNode.remove()"><span class="lbl">${esc(a.name.replace(/^prop_/, ''))}</span></div>`).join('')}</div>`;
   html += audio.map((a, i) => {
     const bars = Array.from({ length: 34 }, (_, k) => `<i style="height:${18 + Math.round(70 * Math.abs(Math.sin((k + 1) * (i + 2) * 0.77) * Math.sin(k * 0.31 + i)))}%"></i>`).join('');
     return `<div class="audio${popCls(a.url)}" data-src="${a.url}" style="--c:${a.kind === 'music' ? 'var(--llm)' : 'var(--bubble)'}"><span class="pb"></span>
@@ -126,7 +126,7 @@ function renderPlays(s) {
     const k = order.find(k => p.shots[k]) || Object.keys(p.shots)[0];
     items.push(`<div class="shot${popCls('p' + p.round + p.n)}"><img src="${p.shots[k]}" alt=""><span class="lbl">${esc(p.round.replace('_', ' '))} · play ${p.n}</span>${p.target ? `<span class="lbl r">★ ${p.collected ?? 0}/${p.target}</span>` : ''}</div>`);
   }
-  pl.innerHTML = `<div class="strip">${items.reverse().join('')}</div>`;
+  pl.innerHTML = `<div class="strip${s.phase === 'build' ? ' big' : ''}">${items.reverse().join('')}</div>`;
 }
 
 function renderVersions(s) {
@@ -146,7 +146,7 @@ function renderVersions(s) {
 
 const TOOL_CLS = (t) => /play/.test(t) ? 'play' : /edit|write|patch/.test(t) ? 'edit' : /doc|read|search|list/.test(t) ? 'doc' : '';
 function renderAgents(s, at) {
-  const key = [s.agents.map(a => a.label), s.working && s.working.label];
+  const key = [s.agents.map(a => a.label), s.working && s.working.label, s.plays.length];
   const ag = $('#agents .agents');
   if (changed('agents', key)) {
     const cards = s.agents.slice().reverse().map(a => `<div class="agent${popCls('a' + a.label)}"><div class="ah"><span class="chip ${a.role === 'lead' ? 'sun' : 'llm'}">${esc(a.role)}</span><b>${esc(a.label.replace('_', ' '))}</b><span class="sp"></span>
@@ -154,7 +154,7 @@ function renderAgents(s, at) {
       ${a.steps.length ? `<div class="steps">${a.steps.slice(-26).map(x => `<span class="${TOOL_CLS(x.tool)}">${esc(x.tool)}${x.arg ? ' ' + esc(x.arg) : ''}</span>`).join('')}</div>` : ''}
       ${a.summary ? `<p class="sum">${esc(a.summary)}</p>` : ''}</div>`);
     if (s.working) cards.unshift(`<div class="agent working${popCls('w' + s.working.label)}"><div class="ah"><span class="chip llm">${esc(s.working.role)}</span><b>${esc(s.working.label.replace('_', ' '))}</b><span class="sp"></span><span class="m" id="work-t"></span></div>
-      <p class="sum">${s.working.role === 'builder' ? 'Reading the kit docs, writing game.js and playing it in Chrome…' : 'Designing the game as schema-checked JSON…'}</p></div>`);
+      <p class="sum">${s.working.role === 'builder' ? `Reading the kit docs, writing game.js and playing it in Chrome… <b style="color:var(--text)">${s.plays.filter(p => p.round === s.working.label).length} playtest(s) so far</b>` : 'Designing the game as schema-checked JSON…'}</p></div>`);
     ag.innerHTML = cards.join('') || `<div class="empty"><div><div class="spin"></div>Starting…</div></div>`;
   }
   const wt = $('#work-t'); if (wt && s.working) wt.textContent = fmtDur(at - s.working.since) + ' …';
@@ -208,6 +208,8 @@ async function refresh() {
   if (!at && (replaySpeed || atFrac != null)) return refresh();   // first fetch only learned the replay window
   const t = snap.at;
   document.title = `${snap.title || rid} · Blocksfield Studio`;
+  $('#col2').dataset.phase = snap.status === 'done' && snap.final ? 'done' : (snap.phase === 'finalize' ? 'judge' : snap.phase || '');
+  if (replaySpeed || atFrac != null) { const gi = runGpuInfo(snap, t), pill = document.getElementById('gpu-pill'); if (pill) { pill.className = 'gpu-pill ' + (gi.kind === 'snd' ? 'art' : gi.kind || ''); $('#gpu-pill-t').textContent = gi.kind === 'art' ? 'ComfyUI rendering' : gi.kind ? 'LLM thinking' : 'idle'; } }
   renderHead(snap, t); renderStepper(snap, t); renderPlan(snap); renderConcepts(snap); renderAssets(snap);
   renderPlays(snap); renderVersions(snap); renderAgents(snap, t); renderLog(snap); renderFinal(snap);
   seen.done();

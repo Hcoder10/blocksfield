@@ -317,7 +317,8 @@ def run_snapshot(rid: str, at: float | None = None) -> dict:
 
     snap["log"] = [{"t": e["t"], "text": e["text"][:220], "kind": _log_kind(e["text"])}
                    for e in log if not e["text"].startswith("play_game #")][-18:]
-    snap["gpu"] = _gpu_from_log(log)
+    snap["gpu"] = [{**g, "end": None if g["end"] is None or g["end"] > at else g["end"]}
+                   for g in _gpu_from_log(log_all) if g["start"] <= at]
     if finished:
         snap["final"] = {"game": f"/games/{rid}/index.html" if (gd / "index.html").is_file() else None,
                          "thumb": f"/games/{rid}/thumb.jpg" if (gd / "thumb.jpg").is_file() else None,
@@ -326,6 +327,17 @@ def run_snapshot(rid: str, at: float | None = None) -> dict:
                          "title": about.get("title")}
         snap["title"] = snap.get("title") or about.get("title")
     return snap
+
+
+def _friendly(line: str) -> str:
+    m = re.match(r"done in (\d+)s: (\{.*?\})", line)
+    if m:
+        try:
+            d = json.loads(m[2])
+            return f"built in {int(m[1]) // 60} min · kept {d.get('best')} · score {d.get('score')}"
+        except ValueError:
+            return f"built in {int(m[1]) // 60} min"
+    return line
 
 
 def list_runs() -> list[dict]:
@@ -355,7 +367,7 @@ def list_runs() -> list[dict]:
                     next((_rel(p) for p in sorted((rd / "concept").glob("concept_*.png"))), None),
                     "video": f"/games/{rid}/gameplay.mp4" if (gd / "gameplay.mp4").is_file() else None,
                     "status": "done" if done else ("running" if time.time() - upd < 1800 else "stopped"),
-                    "last": tail[:140], "updated": upd, "has_run": rd.is_dir()})
+                    "last": _friendly(tail)[:140], "updated": upd, "has_run": rd.is_dir()})
     out.sort(key=lambda r: (r["status"] != "running", -r["updated"]))
     return out
 

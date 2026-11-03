@@ -66,9 +66,10 @@ export class GpuStrip {
       <div class="who"><div class="k">Holding the RTX 5090</div><div class="now"><i></i><span>—</span></div><div class="what2"></div>
         <div class="nums"></div></div>
       <div class="tl"><div class="src"></div><div class="legend"><span><i style="background:var(--llm)"></i>Qwen3.8-27B</span><span><i style="background:var(--judge)"></i>judge</span><span><i style="background:var(--art)"></i>Qwen-Image / Idol</span><span><i style="background:var(--snd)"></i>ACE-Step / Stable Audio</span><span><i style="background:var(--swap)"></i>swap</span></div>
-        <div class="ticks"></div><div class="lane l-llm"><span class="lane-name">LLM</span></div><div class="lane l-art"><span class="lane-name">ComfyUI</span></div><div class="nowline"></div></div>`);
+        <span class="lane-name n-llm">LLM</span><span class="lane-name n-art">ComfyUI</span>
+        <div class="inner"><div class="ticks"></div><div class="lane l-llm"></div><div class="lane l-art"></div><div class="nowline"></div></div></div>`);
     parent.append(this.el);
-    this.tl = this.el.querySelector('.tl');
+    this.tl = this.el.querySelector('.inner');
     this.lanes = { llm: this.el.querySelector('.l-llm'), art: this.el.querySelector('.l-art') };
     this.segEls = new Map();
     this.thumbEls = new Map();
@@ -127,7 +128,7 @@ export class GpuStrip {
 // one poller of /api/gpu shared by the page; calls back with {online, segs, now, info}
 export function pollGpu(cb, every = 1500) {
   let since = Date.now() / 1000 - 3 * 3600;
-  const pill = document.getElementById('gpu-pill');
+  const pill = params.get('replay') || params.get('at') ? null : document.getElementById('gpu-pill');
   const tick = async () => {
     try {
       const d = await getJSON(`/api/gpu?since=${since}`);
