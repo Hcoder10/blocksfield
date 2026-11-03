@@ -1,0 +1,95 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "High-desert late afternoon: amber-to-burnt-orange gradient, low golden sun, long haze bands, distant mesa and butte silhouettes, a few wispy cirrus clouds",
+  "wrap_seam": 0.8
+ },
+ "icon_relic_icon": {
+  "file": "icon_relic_icon.png",
+  "kind": "icon",
+  "prompt": "Glossy ancient gold relic medallion with a carved sun symbol, warm amber metal, cream outline, game UI icon on transparent background",
+  "for": "relics"
+ },
+ "icon_heart_icon": {
+  "file": "icon_heart_icon.png",
+  "kind": "icon",
+  "prompt": "Chibi game UI heart icon, warm rust-red with cream outline, soft toon shading, transparent background",
+  "for": "lives"
+ },
+ "icon_gate_icon": {
+  "file": "icon_gate_icon.png",
+  "kind": "icon",
+  "prompt": "Glowing golden sun-gate arch icon, radiant rays, warm gold and orange, game UI icon on transparent background",
+  "for": "goal"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Dune-funk desert adventure loop: warm, adventurous, faintly mysterious; plucked oud, frame drum, soft synth pad, mid-tempo 108 BPM groove"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "Bright gold chime with a shimmering two-note arpeggio, relic pickup"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "Short gritty blaster hit with a metallic robot wince, crunchy and punchy"
+ },
+ "sfx_death": {
+  "file": "sfx_death.mp3",
+  "kind": "sfx",
+  "event": "death",
+  "prompt": "Robot power-down: descending whir with a clatter of falling parts"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "Triumphant dune-drum fanfare with a shimmering sun-gate chord"
+ },
+ "sfx_lose": {
+  "file": "sfx_lose.mp3",
+  "kind": "sfx",
+  "event": "lose",
+  "prompt": "Low desolate drone with a gust of wind sweeping across sand"
+ },
+ "prop_sun_urn": {
+  "file": "prop_sun_urn.json",
+  "kind": "prop",
+  "prompt": "Small ancient clay urn with a gold sun emblem, terracotta body with brass bands, weathered",
+  "via": "idol",
+  "parts": 836
+ },
+ "prop_scorpion_totem": {
+  "file": "prop_scorpion_totem.json",
+  "kind": "prop",
+  "prompt": "Carved sandstone scorpion totem statue, weathered red rock with bone-white chisel marks",
+  "via": "idol",
+  "parts": 383
+ },
+ "splat_sun_urn": {
+  "file": "splat_sun_urn.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "Small ancient clay urn with a gold sun emblem, terracotta body with brass bands, weathered",
+  "camera": {
+   "yaw": 1.6135058028381675
+  }
+ },
+ "splat_scorpion_totem": {
+  "file": "splat_scorpion_totem.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "Carved sandstone scorpion totem statue, weathered red rock with bone-white chisel marks",
+  "camera": {
+   "yaw": 0.7875871865206883
+  }
+ }
+}
