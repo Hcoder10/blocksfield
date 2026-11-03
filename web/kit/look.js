@@ -151,12 +151,12 @@ const LOOKS = {
     sky: { top: '#3f7fd8', horizon: '#cfe0f0', bottom: '#e6eef6', sunGlow: 0.6 },
     sun: { color: '#fff4e4', intensity: 3.4, elevation: 40 },
     hemi: { sky: '#cfe0ff', ground: '#6a6048', intensity: 0.9 },
-    env: 1.0, toneMapping: 'aces', exposure: 0.95,
+    env: 0.8, toneMapping: 'aces', exposure: 0.82,
     edges: { strength: 0 },
     grade: { saturation: 1.0, contrast: 1.02, vignette: 0.22 },
     rim: { strength: 0.08 },
     kind: 'standard',
-    bloom: { strength: 0.3, radius: 0.4, threshold: 1.0 },
+    bloom: { strength: 0.3, radius: 0.4, threshold: 2.2 },
   },
 };
 export const looks = Object.keys(LOOKS);

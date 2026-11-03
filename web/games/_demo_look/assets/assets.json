@@ -1,0 +1,3 @@
+{"prop_mushroom": {"kind": "prop", "file": "prop_mushroom.json"},
+ "icon_coin": {"kind": "icon", "file": "missing_icon.png", "for": "coin"},
+ "prop_missing": {"kind": "prop", "file": "nope.json"}}

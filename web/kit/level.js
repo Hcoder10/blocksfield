@@ -381,7 +381,7 @@ function meadowCourse(ctx) {
       for (let k = 0; k < 3; k++) {
         const q = on(t - 3 * dt + k * 4.2 * dt); const hgt = 1.6 * (k + 1);
         q.y = base + hgt;
-        World.prop(game, 'platform_box', { ...P(ctx), position: q, size: [3.6, hgt + 2, 3.6], color: k % 2 ? 'stone' : 'wood' });
+        World.prop(game, 'platform_box', { ...P(ctx), position: q, size: [3.6, hgt + 2, 3.6] });
         route.push(q.clone()); jumps.push({ from: prevP, to: q.clone(), h: 1.5 }); prevP = q.clone();
       }
       const b = on(t + 13 * dt); route.push(b); tPrev = t + 13 * dt;

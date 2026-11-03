@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>assets test</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}#i{position:fixed;left:10px;top:10px;display:flex;gap:6px}#i img{width:48px}</style>
+<script type="importmap">{"imports":{"three":"../../vendor/three/three.module.js","three/addons/":"../../vendor/three/addons/"}}</script>
+</head><body><div id="i"></div><script type="module">
+import * as THREE from 'three';
+import { createGame } from '../../kit/core.js';
+import * as Look from '../../kit/look.js';
+import * as World from '../../kit/world.js';
+import * as Assets from '../../kit/assets.js';
+const game = await createGame({ assets: './assets/assets.json' });
+Look.apply(game, new URLSearchParams(location.search).get('look') || 'toon_bright');
+World.ground(game, { size: 80, hills: 4 });
+const a = Assets.prop(game, 'prop_mushroom', { position: [-3, 0, 0], scale: 3 });
+const b = Assets.prop(game, 'prop_missing', { position: [3, 0, 0], fallback: 'chest' });
+const c = Assets.prop(game, 'nothing_here', { position: [0, 0, -4] });
+const sky = await Assets.sky(game, 'sky');
+for (const n of Assets.ICONS) { const im = document.createElement('img'); im.src = Assets.icon(n, game); document.getElementById('i').appendChild(im); }
+game.cameraOverride = { position: new THREE.Vector3(0, 4, 10), target: new THREE.Vector3(0, 1, 0) };
+game.start();
+const r = await Promise.all([a.userData.ready, b.userData.ready, c.userData.ready]);
+window.__kit = { ready: true, state: () => ({ ready: r, sky, tex: !!Assets.texture('x', { game }), music: Assets.music('music_main', game) }) };
+</script></body></html>

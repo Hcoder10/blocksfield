@@ -66,9 +66,9 @@ export const ICONS = ['coin', 'gem', 'star', 'heart', 'key', 'clock', 'flag', 't
  * Assets.icon(name, game?) -> image url (string). Manifest icon if present, otherwise a drawn icon for common names:
  * coin gem star heart key clock flag trophy bolt skull shield leaf fish mushroom crown lap speed (anything else -> a coloured badge).
  */
-export function icon(name, game) {
+export function icon(name, game, opts = {}) {
   game = gameOf(game);
-  const e = entry(game, name, 'icon');
+  const e = opts.fallback ? null : entry(game, name, 'icon');
   if (e) return e.url;
   const pal = Look.palette(game);
   const key = name + ':' + (game && game.look ? game.look.name : '');
@@ -255,4 +255,21 @@ export function buildVoxels(game, group, data, opts = {}) {
     World.colliderBox(game, cen, half, group.rotation.y, { what: 'asset' });
   }
   return im;
+}
+
+/**
+ * Assets.verify(game) -> Promise<string[]>: checks every manifest file exists and drops missing entries, so later
+ * calls use the procedural fallbacks. Optional; call once after createGame. Returns the names it removed.
+ */
+export async function verify(game) {
+  const m = game && game.assets && game.assets.manifest;
+  if (!m) return [];
+  const gone = [];
+  await Promise.all(Object.entries(m).map(async ([k, e]) => {
+    if (!e || !e.file) return;
+    try { const r = await fetch(game.assets.base + e.file, { method: 'HEAD' }); if (!r.ok) { delete m[k]; gone.push(k); } }
+    catch { delete m[k]; gone.push(k); }
+  }));
+  if (gone.length) console.warn('[kit] Assets.verify: missing files, using fallbacks for', gone.join(', '));
+  return gone;
 }

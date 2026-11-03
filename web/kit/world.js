@@ -638,7 +638,7 @@ export function water(game, opts = {}) {
 // each kind -> parts [{geom (with colour), mat (Look.material opts)}], plus collider + placement hints
 const FOLIAGE = {
   grass:        { density: 1.1, max: 26000, cluster: 0, scale: [0.7, 1.2], wind: 0.22, shadow: false, spacing: 0 },
-  grass_dry:    { density: 0.5, scale: [0.8, 1.4], wind: 0.2, shadow: false, spacing: 0 },
+  grass_dry:    { density: 0.28, scale: [0.8, 1.4], wind: 0.2, shadow: false, spacing: 0 },
   grass_snow:   { density: 0.2, scale: [0.6, 1.0], wind: 0.15, shadow: false, spacing: 0 },
   flowers:      { density: 0.12, max: 6000, scale: [0.8, 1.3], wind: 0.25, shadow: false, spacing: 0 },
   flowers_glow: { density: 0.1, max: 5000, scale: [0.8, 1.3], wind: 0.25, shadow: false, spacing: 0 },
@@ -693,7 +693,7 @@ function foliageParts(game, kind) {
   const upNormals = (g) => { const n = g.attributes.normal; for (let i = 0; i < n.count; i++) n.setXYZ(i, 0, 1, 0); return g; };
   switch (kind) {
     case 'grass': parts = [{ geom: bladeClump(6, 0.28, 0.6, col('grass').multiplyScalar(0.55), col('grass2').multiplyScalar(1.1)), mat: { ...vc, side: 'double', rim: 0 } }]; break;
-    case 'grass_dry': parts = [{ geom: bladeClump(7, 0.35, 0.75, col('ground2'), col('sand').multiplyScalar(1.1), 0.07), mat: { ...vc, side: 'double', rim: 0 } }]; break;
+    case 'grass_dry': parts = [{ geom: bladeClump(5, 0.25, 0.55, col('ground2'), col('sand').multiplyScalar(1.1), 0.07), mat: { ...vc, side: 'double', rim: 0 } }]; break;
     case 'grass_snow': parts = [{ geom: bladeClump(5, 0.3, 0.6, col('foliage'), col('snow'), 0.08), mat: { ...vc, side: 'double', rim: 0 } }]; break;
     case 'flowers': case 'flowers_glow': {
       const stems = bladeClump(3, 0.35, 0.55, col('foliage').multiplyScalar(0.6), col('grass2'), 0.05);
@@ -1232,8 +1232,19 @@ export function prop(game, kind, opts = {}) {
     }
     case 'platform_box': {
       const sz = opts.size ? v3(opts.size) : new THREE.Vector3(4, 1, 4);
-      L.push({ g: box(sz.x, sz.y, sz.z, 0, -sz.y / 2, 0), c: main || 'stone', m: { flat: true } });
-      L.push({ g: box(sz.x + 0.2, 0.2, sz.z + 0.2, 0, -0.1, 0), c: main ? main : 'primary' });
+      // grass-capped rock block: overhanging top slab, dirt band, two-tone strata with chipped corners
+      const capH = Math.min(0.45, sz.y * 0.3);
+      L.push({ g: box(sz.x + 0.3, capH, sz.z + 0.3, 0, -capH / 2, 0), c: main || 'grass' });
+      L.push({ g: box(sz.x + 0.1, 0.22, sz.z + 0.1, 0, -capH - 0.11, 0), c: 'ground' });
+      const bodyH = Math.max(0.1, sz.y - capH - 0.22), bands = Math.max(1, Math.round(bodyH / 1.1));
+      for (let i = 0; i < bands; i++) {
+        const h = bodyH / bands, y = -capH - 0.22 - h * (i + 0.5), inset = 0.06 * ((i % 2) + 1);
+        L.push({ g: box(sz.x - inset, h, sz.z - inset, 0, y, 0), c: i % 2 ? 'cliff2' : 'cliff', m: { flat: true } });
+      }
+      for (const [x, z] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        const g = flatRock(0.35, N, 0.3, x + z * 3, 1); tr(g, x * sz.x / 2, -capH - 0.3 - rnd() * bodyH * 0.6, z * sz.z / 2);
+        L.push({ g, c: 'cliff2', m: { flat: true } });
+      }
       cols.push({ c: [0, -sz.y / 2, 0], h: [sz.x / 2, sz.y / 2, sz.z / 2] }); top = 0;
       break;
     }

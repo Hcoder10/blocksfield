@@ -5,11 +5,12 @@ for everything: nothing here throws when the manifest or a file is missing. A ga
 
 ```js
 await Assets.sky(game, 'sky')            -> true if the panorama loaded (else the Look sky stays)
-Assets.icon('coin', game)                -> image url (manifest icon, or a drawn icon)
+Assets.icon('coin', game, { fallback }) -> image url (manifest icon, or a drawn icon; fallback:true forces the drawn one)
 Assets.texture('bricks', { game, repeat: [4, 4], fallback: 'noise'|'checker'|'grid'|'stripes' }) -> THREE.Texture
 Assets.prop(game, 'prop_mushroom', { position, rotationY = 0, scale = 1, height, collider = true, fallback = 'crate' }) -> Group
 Assets.music('music_main', game), Assets.sfx('collect', game) -> url | null
 Assets.has(game, name) -> boolean
+await Assets.verify(game) -> [removed names]   // drop manifest entries whose file is missing (optional, once at start)
 Assets.ICONS  // drawn fallback icons: coin gem star heart key clock flag trophy bolt skull shield leaf fish mushroom crown lap speed
 ```
 
