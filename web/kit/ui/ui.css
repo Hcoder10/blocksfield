@@ -404,3 +404,48 @@
 
 .tk-shake { animation: tk-shake .4s ease-out; }
 @keyframes tk-shake { 20% { transform: translateX(-.3em) rotate(-2deg); } 40% { transform: translateX(.3em) rotate(2deg); } 60% { transform: translateX(-.2em); } 80% { transform: translateX(.15em); } }
+
+/* ---------------- touch controls (phones / tablets) ---------------- */
+.tk-touchpad { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.tk-stick { position: absolute; left: 0; bottom: 0; width: 42%; height: 62%; pointer-events: auto; touch-action: none; }
+.tk-stick-base { position: absolute; left: calc(env(safe-area-inset-left, 0px) + 13vmin + 2vw); top: calc(100% - 13vmin - 5vh); width: clamp(104px, 26vmin, 170px); aspect-ratio: 1;
+  transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, .08) 0 55%, rgba(255, 255, 255, .16) 56% 100%);
+  border: 3px solid rgba(255, 255, 255, .45); box-shadow: 0 0 0 3px rgba(0, 0, 0, .25), inset 0 0 18px rgba(0, 0, 0, .25); opacity: .55; transition: opacity .2s; }
+.tk-stick.tk-on .tk-stick-base { opacity: .95; }
+.tk-stick-base i { position: absolute; width: 0; height: 0; border: 7px solid transparent; opacity: .55; }
+.tk-stick-base i:nth-child(1) { left: 50%; top: 6%; margin-left: -7px; border-bottom-color: #fff; border-top: 0; }
+.tk-stick-base i:nth-child(2) { left: 50%; bottom: 6%; margin-left: -7px; border-top-color: #fff; border-bottom: 0; }
+.tk-stick-base i:nth-child(3) { top: 50%; left: 6%; margin-top: -7px; border-right-color: #fff; border-left: 0; }
+.tk-stick-base i:nth-child(4) { top: 50%; right: 6%; margin-top: -7px; border-left-color: #fff; border-right: 0; }
+.tk-stick-knob { position: absolute; left: 50%; top: 50%; width: 44%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 40% 35%, #fff, var(--tk-p) 60%, var(--tk-p2)); border: 3px solid var(--tk-ink); box-shadow: 0 4px 0 var(--tk-ink), 0 6px 14px rgba(0, 0, 0, .35); }
+.tk-tbtns { position: absolute; right: calc(env(safe-area-inset-right, 0px) + 3vw); bottom: 6vh; display: grid; grid-template-columns: auto auto; align-items: end; gap: 2.2vmin; pointer-events: none; }
+.tk-tbtn { pointer-events: auto; touch-action: none; display: grid; place-items: center; width: clamp(62px, 16vmin, 104px); aspect-ratio: 1; border-radius: 50%;
+  font: 400 clamp(13px, 3.4vmin, 20px)/1 var(--tk-display); text-transform: var(--tk-caps); letter-spacing: .03em; color: #fff;
+  background: linear-gradient(180deg, var(--tk-panel-a), var(--tk-panel-b)); border: 3px solid var(--tk-ink); box-shadow: 0 5px 0 var(--tk-ink), 0 8px 16px rgba(0, 0, 0, .3);
+  opacity: .78; text-shadow: 0 2px 0 var(--tk-ink); user-select: none; -webkit-user-select: none; transition: transform .08s, opacity .15s; order: 1; margin-bottom: 4vmin; }
+.tk-tbtn.tk-big { width: clamp(84px, 23vmin, 142px); font-size: clamp(16px, 4.4vmin, 26px); color: var(--tk-ink); text-shadow: 0 1px 0 rgba(255, 255, 255, .6);
+  background: radial-gradient(circle at 40% 30%, #fff 0, var(--tk-p) 45%, var(--tk-p2) 100%); order: 2; margin-bottom: 0; }
+.tk-tbtn.tk-on { transform: translateY(4px) scale(.94); box-shadow: 0 1px 0 var(--tk-ink); opacity: 1; filter: brightness(1.15); }
+.tk-cozy .tk-tbtn { border-color: #6b4630; box-shadow: 0 5px 0 #6b4630; color: #5a3826; text-shadow: none; }
+.tk-sleek .tk-tbtn { border: 1.5px solid rgba(255, 255, 255, .4); box-shadow: none; backdrop-filter: blur(8px); }
+.tk-sleek .tk-tbtn.tk-big { background: rgba(255, 255, 255, .85); color: #0b0f15; }
+.tk-scifi .tk-tbtn { border: 1.5px solid #36e6ff; box-shadow: 0 0 14px rgba(54, 230, 255, .45); }
+.tk-scifi .tk-stick-knob { border-color: #36e6ff; box-shadow: 0 0 16px rgba(54, 230, 255, .6); }
+.tk-fantasy .tk-tbtn { border-color: var(--tk-edge); box-shadow: 0 0 0 2px var(--tk-ink), 0 5px 0 2px var(--tk-ink); }
+/* HUD corners make room: the minimap hides on short screens, the speedometer moves to the bottom centre */
+.tk-touch .tk-br { right: 50%; transform: translateX(50%); }
+.tk-touch .tk-speedo { width: 8.5em; height: 8.5em; }
+@media (max-height: 560px) { .tk-touch .tk-bl { display: none; } .tk-touch .tk-speedo { width: 7em; height: 7em; } }
+.tk-touch .tk-title .tk-start { font-size: 2.3em; }
+/* portrait: ask for landscape */
+.tk-rotate { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; pointer-events: auto;
+  background: rgba(10, 8, 26, .88); color: #fff; text-align: center; padding: 30px; z-index: 50; }
+.tk-rotate.tk-show { display: flex; }
+.tk-rotate b { font: 400 28px/1.1 var(--tk-display); }
+.tk-rotate span { font: 600 15px/1.4 var(--tk-body); opacity: .75; max-width: 24ch; }
+.tk-phone { width: 46px; height: 80px; border: 4px solid #fff; border-radius: 10px; position: relative; animation: tk-rot 2.2s ease-in-out infinite; }
+.tk-phone::after { content: ''; position: absolute; left: 50%; bottom: 5px; width: 10px; height: 3px; margin-left: -5px; border-radius: 2px; background: #fff; }
+@keyframes tk-rot { 0%, 25% { transform: rotate(0); } 55%, 85% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
+.tk-touchpad.tk-off .tk-stick, .tk-touchpad.tk-off .tk-tbtns { display: none; }
+.tk-tbtn small { display: block; margin-top: .35em; font: 700 .42em/1.1 var(--tk-body); letter-spacing: .04em; opacity: .75; text-transform: none; text-shadow: none; }

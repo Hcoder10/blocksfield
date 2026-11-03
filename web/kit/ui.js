@@ -6,6 +6,7 @@ import { reportError } from './core.js';
 import * as Look from './look.js';
 import * as Audio from './audio.js';
 import { frameBox, survey } from './debug.js';
+import * as Touch from './touch.js';
 
 export const STYLES = ['arcade', 'cozy', 'sleek', 'fantasy', 'scifi'];
 const LOOK_STYLE = { neon_night: 'scifi', cozy: 'cozy', dark_fantasy: 'fantasy', snow: 'sleek', desert: 'arcade', sunset: 'arcade', candy: 'cozy', toon_bright: 'arcade' };
@@ -187,6 +188,7 @@ export function setStyle(game, style = 'arcade') {
   } catch (e) { reportError(e); }
   return style;
 }
+export function uiRoot(game) { return ui(game).root; }
 export function show(game, on = true) { const U = ui(game); U.root.classList.toggle('tk-hidden', !on); return on; }
 function setPhase(game, ph) { const st = game.state || (game.state = {}); if (st.phase !== 'won' && st.phase !== 'lost' && !st.won && !st.lost) st.phase = ph; }
 const emitUi = (game, type, extra) => { try { game.emit('ui', { type, ...extra }); } catch {} };
@@ -233,6 +235,7 @@ export function hud(game, opts = {}) {
   const vign = h('div', 'tk-vignette'); el.prepend(vign);
   U.root.prepend(el);
   if (U.title) el.style.visibility = 'hidden';   // title screen is up: HUD slides in when it closes
+  try { Touch.install(game, { player: opts.player }); } catch (e) { reportError(e); }
   const H = U.hud = { el, opts, C, counters: [], ownTime: 0, running: false, autoPause: opts.pauseMenu !== false, offs: [], vign, last: {} };
 
   if (opts.title && opts.showTitle) C.tl.append(h('div', 'tk-gametitle tk-ol', [opts.title]));
@@ -647,13 +650,14 @@ export function titleScreen(game, opts = {}) {
   }
   el.append(logoEl);
   if (subtitle) el.append(h('div', 'tk-subtitle', [wrap(panel([h('span', '', [subtitle])]))]));
-  const keyName = /space/i.test(start) ? 'Space' : /enter/i.test(start) ? 'Enter' : null;
+  const touch = Touch.isTouch();
+  const keyName = touch ? null : /space/i.test(start) ? 'Space' : /enter/i.test(start) ? 'Enter' : null;
   const startEl = h('div', 'tk-start tk-ol');
   if (keyName) { const parts = String(start).split(new RegExp(keyName, 'i')); startEl.append(parts[0] || '', h('span', 'tk-key', [keyName === 'Space' ? 'SPACE' : 'ENTER']), parts[1] || ''); }
-  else startEl.append(start);
+  else startEl.append(touch ? 'Tap to start' : start);
   el.append(startEl);
-  if (opts.controls) el.append(h('div', 'tk-controls', [String(opts.controls)]));
-  if (credit) el.append(h('div', 'tk-credit', [credit]));
+  if (opts.controls && !touch) el.append(h('div', 'tk-controls', [String(opts.controls)]));
+  if (credit && !(touch && /wasd|arrows|space|shift|esc/i.test(credit))) el.append(h('div', 'tk-credit', [credit]));   // keyboard help is noise on a phone
   U.root.append(el);
   const wasPaused = game.paused;
   if (pause) game.paused = true;

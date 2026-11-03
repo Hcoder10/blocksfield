@@ -6,6 +6,7 @@ import { reportError } from './core.js';
 import * as Gameplay from './gameplay.js';
 import * as World from './world.js';
 import * as Physics from './physics.js';
+import * as Touch from './touch.js';
 
 // ---- errors: capture from the moment the kit is imported, not just after install ----
 if (!window.__kitErrorHooks) {
@@ -457,6 +458,7 @@ export function install(game, opts = {}) {
   });
   window.addEventListener('blur', () => kit.releaseAll());
 
+  try { Touch.install(game, { player }); } catch (e) { reportError(e); }   // phones: joystick + buttons, no game.js change
   window.__kit = kit;
   game.debug = kit;
   return kit;
