@@ -45,6 +45,36 @@ function glowSprite(color, size = 2) {
   s.scale.setScalar(size); s.userData.noCollide = true; return s;
 }
 
+// a soft colour halo with normal blending (additive glows vanish against a bright daytime sky)
+const haloTex = new Map(), sparkTex = new Map();
+function haloSprite(color, size) {
+  const key = new THREE.Color(color).getHexString();
+  if (!haloTex.has(key)) {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const x = c.getContext('2d'), col = new THREE.Color(color), w = new THREE.Color('#ffffff');
+    const lit = col.clone().lerp(w, 0.35), rgb = (k, a) => `rgba(${Math.round(k.r * 255)},${Math.round(k.g * 255)},${Math.round(k.b * 255)},${a})`;
+    const gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, rgb(w, 0.7)); gr.addColorStop(0.22, rgb(lit, 0.6)); gr.addColorStop(0.45, rgb(col, 0.32)); gr.addColorStop(0.7, rgb(col, 0.1)); gr.addColorStop(1, rgb(col, 0));
+    x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; haloTex.set(key, t);
+  }
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex.get(key), transparent: true, depthWrite: false, toneMapped: false, opacity: 0.9 }));
+  s.scale.setScalar(size); s.renderOrder = -1; s.userData.noCollide = true; return s;
+}
+// four-point twinkle star, white core with a coloured rim so it shows on sky and on grass
+function sparkleSprite(color) {
+  const key = new THREE.Color(color).getHexString();
+  if (!sparkTex.has(key)) {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const x = c.getContext('2d'), col = '#' + key;
+    const star = (r, w, fill) => { x.beginPath(); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, rr = i % 2 ? w : r; x.lineTo(32 + Math.cos(a) * rr, 32 + Math.sin(a) * rr); } x.closePath(); x.fillStyle = fill; x.fill(); };
+    star(31, 7, col); star(22, 4, '#ffffff');
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; sparkTex.set(key, t);
+  }
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: sparkTex.get(key), transparent: true, depthWrite: false, toneMapped: false }));
+  s.scale.setScalar(0.001); s.userData.noCollide = true; return s;
+}
+
 // ---- collectibles --------------------------------------------------------------------------------------------------
 
 export const COLLECTIBLE_DEFS = {
@@ -100,8 +130,14 @@ export function makeCollectible(game, tag = 'coin', opts = {}) {
   } else {
     spin.add(mesh(new THREE.IcosahedronGeometry(0.42, 1), mat(game, color, 'pickup', { glow: 0.7, flat: true })));
   }
-  const glow = glowSprite(color, tag === 'star' ? 3.2 : 2.2); glow.material.opacity = 0.55; g.add(glow);
-  g.userData.spin = spin; g.userData.glow = glow;
+  const big = tag === 'star' ? 1.4 : 1;
+  const glow = glowSprite(color, 2.2 * big); glow.material.opacity = 0.55; g.add(glow);          // additive core (feeds bloom)
+  const halo = haloSprite(color, 2.6 * big); g.add(halo);                                          // tinted halo: reads on bright skies
+  const twinkles = [];
+  for (let i = 0; i < 3; i++) {
+    const s = sparkleSprite(color); s.userData.ph = i / 3 + Math.random() * 0.2; s.userData.a = (i / 3) * Math.PI * 2; g.add(s); twinkles.push(s);
+  }
+  g.userData.spin = spin; g.userData.glow = glow; g.userData.halo = halo; g.userData.twinkles = twinkles; g.userData.big = big;
   return { group: g, def: { ...def, color } };
 }
 
@@ -588,6 +624,15 @@ export function rules(game, opts = {}) {
       o.userData.spin.rotation.y = t * (it.tag === 'coin' ? 3 : 1.6) + it.phase;
       o.position.y = it.home.y + Math.sin(t * 2.4 + it.phase) * 0.18;
       o.userData.glow.material.opacity = 0.4 + Math.sin(t * 3 + it.phase) * 0.12;
+      o.userData.halo.material.opacity = 0.75 + Math.sin(t * 3 + it.phase) * 0.15;
+      for (const s of o.userData.twinkles) {
+        const u = ((t * 0.7 + s.userData.ph + it.phase) % 1);               // each sparkle pops in and out once per cycle
+        const k = u < 0.35 ? Math.sin(u / 0.35 * Math.PI) : 0;
+        s.scale.setScalar(0.001 + k * 0.55 * o.userData.big);
+        if (u < 0.02) s.userData.a += 2.1;
+        s.position.set(Math.cos(s.userData.a) * 0.62 * o.userData.big, 0.35 * Math.sin(s.userData.a * 1.7) * o.userData.big, Math.sin(s.userData.a) * 0.2);
+        s.material.rotation = t * 1.5;
+      }
       if (!playing) continue;
       for (const pl of collectors()) {
         if (!pl.alive) continue;
