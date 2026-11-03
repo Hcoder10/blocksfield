@@ -1,0 +1,49 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>ThreeKit composed movers</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}</style>
+<script type="importmap">{"imports":{"three":"../../vendor/three/three.module.js",
+ "three/addons/":"../../vendor/three/addons/","kit":"../../kit/index.js"}}</script>
+</head><body><script type="module">
+// Autopilot tests on composed levels with movers: ?ex=river (raft ride over water) | spin (rotating beam) | lift (elevator) &bot=1
+import * as K from 'kit';
+const T = K.THREE, V = (x, y, z) => new T.Vector3(x, y, z);
+const q = new URLSearchParams(location.search), ex = q.get('ex') || 'river';
+const game = await K.createGame({ seed: 5 });
+K.Look.apply(game, q.get('look') || 'toon_bright');
+const specs = {
+  river: { pieces: [
+    { type: 'water', position: [0, 0, 30], size: 220 },
+    { type: 'cliff', position: [0, 2, 0], size: 7 },
+    { type: 'cliff', position: [0, 2, 62], size: 7 },
+  ], route: [[0, 2, 0], [0, 2, 3.2], [0, 2, 58.8], [0, 2, 62]], goal: true, collectibles: 4 },
+  spin: { pieces: [
+    { type: 'island', position: [0, 0, 0], size: 8 },
+    { type: 'pillar', position: [0, -6, 16], size: 1.2 },
+    { type: 'island', position: [0, 0, 32], size: 8 },
+  ], route: [[0, 0, 0], [0, 0, 6.5], [0, 0, 25.5], [0, 0, 32]], goal: true, collectibles: 4 },
+  lift: { pieces: [
+    { type: 'island', position: [0, 0, 0], size: 8 },
+    { type: 'cliff', position: [0, 12, 14], size: 6 },
+  ], route: [[0, 0, 0], [0, 0, 6], [0, 12, 11.5], [0, 12, 14]], goal: true, collectibles: 3 },
+};
+const level = K.Level.compose(game, { ...specs[ex], autofix: false });
+const mk = (w, h, d, color) => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), K.Look.material(game, { color })); m.castShadow = m.receiveShadow = true; game.scene.add(m); return m; };
+if (ex === 'river') {
+  level.water = { y: 0 };
+  const raft = mk(4.5, 0.5, 4.5, '#b07a45'); raft.position.set(0, 1.3, 7);
+  level.movers.push({ mesh: raft, path: [V(0, 1.3, 7), V(0, 1.3, 55)], period: 22, wait: 1.5, type: 'raft' });
+} else if (ex === 'spin') {
+  const beam = mk(18, 0.6, 3, '#ffcf5a'); beam.position.set(0, -0.3, 16); beam.rotation.y = 0;
+  level.movers.push({ mesh: beam, path: [V(0, -0.3, 16)], type: 'spin', speed: 0.7 });
+} else if (ex === 'lift') {
+  const lift = mk(4, 0.6, 4, '#7fd0ff'); lift.position.set(0, -0.3, 8.5);
+  level.movers.push({ mesh: lift, path: [V(0, -0.3, 8.5), V(0, 11.7, 8.5)], period: 9, wait: 1.2, type: 'platform' });
+}
+const player = K.Player.create(game, { type: 'platformer', spawn: level.spawn, yaw: level.spawnYaw, character: { species: q.get('species') || 'fox' } });
+K.Camera.follow(game, player);
+K.Gameplay.rules(game, { level, player, goal: true, lives: 3, timer: true });
+K.Debug.install(game, { level, player });
+window.__level = level; window.__p = player; window.K = K;
+if (q.get('bot')) K.Gameplay.autopilot(game, { level, player });
+game.start();
+</script></body></html>
