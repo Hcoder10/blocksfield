@@ -9,7 +9,7 @@
   "Space: jump (hold for higher hop)",
   "P / Esc: pause"
  ],
- "created": "2026-11-02T22:32:33-0800",
+ "created": "2026-11-02T23:23:55-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -21,10 +21,10 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "v2",
-  "score": 6.5,
+  "best": "s0",
+  "score": 7.0,
   "play": 8.0,
-  "vision": 5.0,
+  "vision": 6.0,
   "versions": [
    {
     "tag": "v0",
@@ -34,9 +34,9 @@
    },
    {
     "tag": "s0",
-    "score": 6.5,
+    "score": 7.0,
     "play_score": 8.0,
-    "vision_score": 5.0
+    "vision_score": 6.0
    },
    {
     "tag": "v1",
@@ -46,9 +46,9 @@
    },
    {
     "tag": "v2",
-    "score": 6.5,
+    "score": 7.0,
     "play_score": 8.0,
-    "vision_score": 5.0
+    "vision_score": 6.0
    }
   ]
  },
@@ -170,14 +170,14 @@
  },
  "timings_s": {
   "art": 262.9,
-  "build": 225.0,
-  "eval_s0": 55.2,
-  "eval_v0": 66.4,
-  "eval_v1": 67.8,
-  "eval_v2": 54.4,
+  "build": 656.1,
+  "eval_s0": 98.7,
+  "eval_v0": 65.8,
+  "eval_v1": 93.7,
+  "eval_v2": 107.3,
   "plan": 48.5,
-  "repair_1": 99.2,
-  "repair_2": 192.1,
+  "repair_1": 226.6,
+  "repair_2": 162.5,
   "scaffold": 2.6
  },
  "operator_interventions": [
@@ -203,16 +203,16 @@
  },
  "model_calls": {
   "builder": {
-   "calls": 30,
-   "prompt_tokens": 538416,
-   "completion_tokens": 7632,
-   "seconds": 175.0
+   "calls": 51,
+   "prompt_tokens": 1324849,
+   "completion_tokens": 8695,
+   "seconds": 615.7
   },
   "judge": {
-   "calls": 10,
-   "prompt_tokens": 51978,
-   "completion_tokens": 3428,
-   "seconds": 81.3
+   "calls": 4,
+   "prompt_tokens": 24744,
+   "completion_tokens": 3296,
+   "seconds": 117.0
   }
  },
  "agents": {
@@ -290,25 +290,26 @@
   },
   "build": {
    "result": {
-    "summary": "Starbloom Isles is a bright toon 3D platformer where a little fox with a teal scarf hops across floating sky islands, collects 24 star blooms (12 needed to unlock the beacon portal), stomps 4 patrol slimes, rides spring pads and moving platforms, and reaches the beacon portal on the final island. The game uses the generated sky panorama, star-bloom icon, heart icon, flag icon, ukulele music, and all 6 SFX (collect, jump, land, damage, win, lose). Voxel props (star shrooms, beacon lanterns) and Gaussian-splat landmarks are placed beside the route. Spring pads launch the fox up steep hops; spinner hazards sweep across flat gaps. The HUD shows star blooms collected (12/12 target), 3 hearts for lives, a minimap with route/checkpoints/goal, and the objective. The title screen sells the fantasy with the tagline and controls. Win triggers confetti, star burst, and a \"win\" emote; lose triggers a dark red vignette and \"sad\" emote. Autopilot verified: full run from spawn to goal, 21 stars collected, 2 enemies stomped, won=true, zero errors.",
+    "summary": "Starbloom Isles: a bright, juicy toon 3D platformer where a fox hops across floating sky islands collecting star blooms, stomping slimes, and reaching the beacon portal. Built on the scaffold with generated sky, props (star shrooms, beacon lanterns), and splats. The game features 24 star blooms (12 target to unlock the beacon), 2 spring pads with bounce hazards, 4 patrol slimes with stomp poof FX, checkpoint flags, a beacon portal goal, arcade HUD with minimap, title screen, and win/lose screens. All FX moments are wired: star bursts on collect, poof+ring on stomp, dust on bounce, confetti on win, smoke on death. The autopilot verified the game is playable \u2014 it moves along the route, collects stars, and unlocks the beacon.",
     "changes": [
-     "Switched player from default kid to fox species with teal scarf and plan colors (#ff8a3d body, #fff1d6 accent)",
-     "Added spring_pad props + bounce hazards at steep route hops (up to 3, auto-placed)",
-     "Added spinner hazards on flat mid-route gaps (up to 2, auto-placed)",
-     "Added onWin callback: confetti (220 particles, plan palette), star burst at goal, win emote",
-     "Added onLose callback: dark red vignette flash, sad emote",
-     "Added stomp event FX: green poof + 'STOMP!' floating text",
-     "Added goal event FX: golden ring shockwave at the portal",
-     "Added goalLocked toast: tells player how many more star blooms are needed",
-     "Tuned HUD objective text to 'Collect 12 Star Blooms, then reach the beacon'",
-     "Kept generated voxel props (star shrooms, beacon lanterns) and Gaussian-splat landmarks beside the route"
+     "Added 2 bonus star blooms above the goal island for a full-bloom finish",
+     "Placed 8 star shroom props (generated) on islands and 5 beacon lanterns (generated) at goal and along the route",
+     "Added 2 splat props (star shroom + beacon lantern) near spawn for close-up splat moments",
+     "Added 2 spring pads with bounce hazards on mid-route islands",
+     "Added collect milestone toast when the beacon unlocks at 12/12",
+     "Added stomp juice: poof + ring FX on every slime stomp",
+     "Added bounce juice: dust puff when a spring pad fires",
+     "Added win juice: confetti storm + ring at the beacon",
+     "Added death juice: smoke puff where the fox fell",
+     "Updated HUD to use the generated star-bloom icon and added win/lose screen options",
+     "Set the gameplay objective text to 'Collect 12 Star Blooms, then light the beacon!'",
+     "Added collect label 'Star Blooms' to the rules"
     ],
     "known_issues": [
-     "THREE.WebGLProgram signed/unsigned mismatch warning (harmless, from three.js shader compilation)",
-     "Autopilot took 2 hits from slimes during the run (hp went 3\u21921) but still won; this is expected gameplay"
+     "The autopilot does not complete the full level in 25s (the level is long), but it does collect 17/24 stars, unlock the beacon, and progress toward the goal \u2014 the win path is reachable by a human player"
     ]
    },
-   "plays": 3
+   "plays": 4
   }
  },
  "models": {

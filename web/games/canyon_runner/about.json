@@ -10,7 +10,7 @@
   "A / D or \u2190 / \u2192: steer",
   "Shift: handbrake drift"
  ],
- "created": "2026-11-02T22:16:17-0800",
+ "created": "2026-11-02T23:18:13-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -22,34 +22,34 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "v2",
-  "score": 7.67,
-  "play": 7.67,
-  "vision": null,
+  "best": "s0",
+  "score": 5.75,
+  "play": 7.5,
+  "vision": 4.0,
   "versions": [
    {
     "tag": "v0",
-    "score": 7.67,
+    "score": 5.83,
     "play_score": 7.67,
-    "vision_score": null
+    "vision_score": 4.0
    },
    {
     "tag": "s0",
-    "score": 7.5,
+    "score": 5.75,
     "play_score": 7.5,
-    "vision_score": null
+    "vision_score": 4.0
    },
    {
     "tag": "v1",
-    "score": 7.83,
-    "play_score": 7.83,
-    "vision_score": null
+    "score": 6.33,
+    "play_score": 7.67,
+    "vision_score": 5.0
    },
    {
     "tag": "v2",
-    "score": 7.67,
+    "score": 5.83,
     "play_score": 7.67,
-    "vision_score": null
+    "vision_score": 4.0
    }
   ]
  },
@@ -175,13 +175,13 @@
  "timings_s": {
   "art": 243.8,
   "build": 334.7,
-  "eval_s0": 93.9,
-  "eval_v0": 273.7,
-  "eval_v1": 91.2,
-  "eval_v2": 97.3,
+  "eval_s0": 53.3,
+  "eval_v0": 120.0,
+  "eval_v1": 75.7,
+  "eval_v2": 85.8,
   "plan": 72.2,
-  "repair_1": 46.3,
-  "repair_2": 46.1,
+  "repair_1": 572.2,
+  "repair_2": 254.3,
   "scaffold": 3.1
  },
  "operator_interventions": [
@@ -201,23 +201,23 @@
   }
  },
  "model_calls": {
-  "lead": {
-   "calls": 1,
-   "prompt_tokens": 5911,
-   "completion_tokens": 5493,
-   "seconds": 72.0
+  "judge": {
+   "calls": 10,
+   "prompt_tokens": 51998,
+   "completion_tokens": 3993,
+   "seconds": 121.3
   },
   "builder": {
-   "calls": 11,
-   "prompt_tokens": 227881,
-   "completion_tokens": 4417,
-   "seconds": 183.7
+   "calls": 40,
+   "prompt_tokens": 1092623,
+   "completion_tokens": 8697,
+   "seconds": 529.0
   }
  },
  "agents": {
   "live": 2,
   "cached": 0,
-  "failed": 2
+  "failed": 0
  },
  "stages": {
   "art": {
