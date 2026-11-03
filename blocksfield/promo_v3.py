@@ -107,6 +107,7 @@ def shot_len(section: str, label: str, base: float) -> float:
 
 # ---------------------------------------------------------------- data
 
+MECH_GAME = "turbo_treats"
 SKIP: set = set()            # ids to leave out (--skip); superseded games are already hidden by index.json
 MAX_GAMES, MIN_CLEAN = 5, 4   # at most 5 games; if fewer than 4 have zero operator interventions, fill by score
 
@@ -134,6 +135,7 @@ def games(only: list[str] | None = None, skip: set | None = None) -> list[dict]:
         g["dir"] = d
         js = (d / "game.js").read_text(encoding="utf-8") if (d / "game.js").exists() else ""
         g["composed"] = "Level.compose(" in js or g.get("level_kind") == "custom"
+        g["layout_changed"] = int(((g["about"].get("mapping") or {}).get("layout") or {}).get("pieces_changed_from_start") or 0)
         g["mechanics"] = mechanics_snippet(js)
         if g["play"]:
             pool.append(g)
@@ -143,9 +145,14 @@ def games(only: list[str] | None = None, skip: set | None = None) -> list[dict]:
     clean = [g for g in pool if g["interventions"] == 0]
     ranked = clean + ([g for g in pool if g["interventions"] > 0] if len(clean) < MIN_CLEAN else [])
     picked, kinds = [], set()
-    comp = next((g for g in pool if g["composed"]), None)   # a model-laid-out level is the best generalization proof
-    if comp:
-        picked.append(comp); kinds.add(comp.get("player_type"))
+    # a model-laid-out level is the best generalization proof; prefer one the model actually changed
+    comps = sorted([g for g in pool if g["composed"]], key=lambda g: (-(g["layout_changed"] > 0), -g["score_n"]))
+    if comps:
+        picked.append(comps[0]); kinds.add(comps[0].get("player_type"))
+    # a game whose own game.js adds mechanics (the mechanics beat needs one); turbo_treats preferred (custom mechanics)
+    mechs = sorted([g for g in pool if g["mechanics"] and g not in picked], key=lambda g: (g["id"] != MECH_GAME, -g["score_n"]))
+    if mechs:
+        picked.append(mechs[0]); kinds.add(mechs[0].get("player_type"))
     for g in ranked:                                   # pass 1: one game per player type (platformer, kart, boat, ...)
         k = g.get("player_type")
         if k not in kinds:
@@ -648,7 +655,8 @@ def game_segs(g: dict, dur: float) -> list[Seg]:
         x += chip(d, x, y0 + 14, genre if len(genre) <= 30 else genre[:29] + "…", a) + 12
         x += chip(d, x, y0 + 14, f"judge score {g['score_n']:.1f} / 10", a, fill=(30, 36, 48), fg=FG) + 12
         if g.get("composed"):
-            chip(d, x0, y0 - 56, "level laid out by the model (Level.compose)", ramp(gt, 0.6), fill=(255, 120, 90), fg=(20, 10, 8))
+            chip(d, x0, y0 - 56, "level laid out by the model (Level.compose)" if g.get("layout_changed", 0) > 0
+                 else "composed level (Level.compose)", ramp(gt, 0.6), fill=(255, 120, 90), fg=(20, 10, 8))
         shown = int(total_chars * min(1.0, max(0.0, (gt - 0.4) / 2.6)))
         pa = 1 - ramp(gt, 5.2, 0.6)
         y = y0 + 92
