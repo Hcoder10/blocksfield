@@ -265,7 +265,13 @@ def play_score(rep: dict) -> tuple[float, list[str]]:
                 notes.append(f"the autopilot barely moved ({ap.get('moved')} units in {ap.get('seconds')} s): the "
                              "player is stuck, frozen, or the controls never start")
             c0, c1, tgt = ap.get("collected_start"), ap.get("collected_end"), ap.get("target")
-            if isinstance(c1, (int, float)):
+            end = ap.get("end_state") or {}
+            # modes without pickups progress in other ways (Gameplay.md: waves, quests, laps / time-trial checkpoints)
+            other = [x for x in (("wave", (end.get("wave") or 0) > 1), ("quests", (end.get("questsDone") or 0) > 0),
+                                 ("lap", (end.get("lap") or 0) > 1 or (end.get("checkpoint") or 0) > 0)) if x[1]]
+            if other and not (isinstance(c1, (int, float)) and c1 - (c0 or 0) > 0):
+                score += 2
+            elif isinstance(c1, (int, float)):
                 got = c1 - (c0 or 0)
                 if got > 0:
                     score += 2 * min(1.0, got / max(1.0, float(tgt or 5)))

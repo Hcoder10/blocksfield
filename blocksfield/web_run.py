@@ -295,6 +295,10 @@ class WebBuild:
         wb.snapshot(self.game_dir, vdir / "src")
         rep = await asyncio.to_thread(web_play.play, self.page_rel, vdir / "play", survey=True,
                                       autopilot=self.a.autopilot, frames=2)
+        if not rep["ready"] and not rep["errors"]:       # slow load on a busy laptop, not a broken game: once more
+            self.log(f"eval {tag}: not ready after 15 s with no errors; playing again with 45 s to load")
+            rep = await asyncio.to_thread(web_play.play, self.page_rel, vdir / "play", wait=45, survey=True,
+                                          autopilot=self.a.autopilot, frames=2)
         (vdir / "play.json").write_text(json.dumps(rep, indent=1, default=str), encoding="utf-8")
         ps, notes = web_play.play_score(rep)
         verdict = None

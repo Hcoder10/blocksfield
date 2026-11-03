@@ -24,6 +24,10 @@ DEFAULT_ENUMS = {
     "camera": ["follow", "chase", "topdown", "orbit", "firstPerson"],
     "collectible": ["coin", "star", "gem", "seed", "orb"],
     "ui_style": ["arcade", "cozy", "sleek", "fantasy", "scifi"],
+    "species": ["kid", "fox", "cat", "bunny", "bear", "frog", "penguin", "robot", "knight", "ninja", "astronaut", "slime"],
+    "accessory": ["none", "scarf", "cape", "backpack", "hat", "crown"],
+    "mode": ["collect", "goal", "race", "timetrial", "waves", "quests"],
+    "quest_type": ["fetch", "deliver", "talk"],
 }
 TRACK_KINDS = ("race_track", "lagoon")        # Level.md: kinds with level.track (laps, AI racers)
 CAMERA_FOR = {"platformer": "follow", "kart": "chase", "boat": "chase", "topdown": "topdown", "fps": "firstPerson"}
@@ -118,6 +122,10 @@ def enums(catalog: dict | None) -> dict[str, list[str]]:
         out["collectible"] = [t for t in v if t != "heart"]
     if v := _pick(c, "UI", r"^STYLES$"):
         out["ui_style"] = v
+    for key, mod, pat in (("species", "Player", r"^SPECIES$"), ("accessory", "Player", r"^ACCESSORIES$"),
+                          ("mode", "Gameplay", r"^MODES$"), ("quest_type", "Gameplay", r"^QUEST_TYPES$")):
+        if v := _pick(c, mod, pat):
+            out[key] = v
     if cams := [f for f in ("follow", "chase", "topdown", "orbit", "firstPerson") if f in fn_names(c, "Camera")]:
         out["camera"] = cams
     return out
@@ -219,7 +227,7 @@ def plan_schema(en: dict[str, list[str]]) -> dict:
         "required": ["title", "tagline", "genre", "core_loop", "controls", "win_condition", "look", "ui_style",
                      "level_kind",
                      "level_size", "player_type", "camera", "player_colors", "collectible", "goal", "timer_seconds",
-                     "lives", "enemies", "race", "art_direction", "concept_shots", "assets", "features",
+                     "lives", "enemies", "race", "character", "mode", "art_direction", "concept_shots", "assets", "features",
                      "mapping_notes"],
         "properties": {
             "title": {**s, "maxLength": 40}, "tagline": {**s, "maxLength": 90}, "genre": s,
@@ -242,6 +250,25 @@ def plan_schema(en: dict[str, list[str]]) -> dict:
             "lives": {"type": "integer", "minimum": 0, "maximum": 9, "description": "0 = unlimited"},
             "enemies": {"type": "integer", "minimum": 0, "maximum": 12,
                         "description": "patrolling enemies to stomp or avoid (0 = none)"},
+            "character": {"type": "object", "required": ["species", "accessory"],
+                          "description": "the hero: the species closest to the pitch's protagonist",
+                          "properties": {"species": {"enum": en["species"]}, "accessory": {"enum": en["accessory"]}}},
+            "mode": {"enum": en["mode"], "description": "the core rule set: collect (pickups win or open the goal), "
+                     "goal (reach the goal), race (laps vs AI, track kinds + kart/boat), timetrial (laps vs the clock, "
+                     "medals), waves (arena survival, best with a topdown blaster), quests (villager NPCs give fetch / "
+                     "deliver / talk quests, best in town)"},
+            "waves": {"type": "object", "description": "mode waves only",
+                      "properties": {"count": {"type": "integer", "minimum": 2, "maximum": 8},
+                                     "size": {"type": "integer", "minimum": 2, "maximum": 8}}},
+            "npcs": {"type": "array", "maxItems": 4, "description": "mode quests only: the villagers",
+                     "items": {"type": "object", "required": ["name", "species"], "properties": {
+                         "name": {"type": "string", "maxLength": 16}, "species": {"enum": en["species"]},
+                         "lines": {"type": "array", "maxItems": 3, "items": {"type": "string", "maxLength": 90}}}}},
+            "quests": {"type": "array", "maxItems": 4, "description": "mode quests only; item is a collectible tag",
+                       "items": {"type": "object", "required": ["type"], "properties": {
+                           "type": {"enum": en["quest_type"]}, "npc": {"type": "string"},
+                           "item": {"enum": en["collectible"]}, "count": {"type": "integer", "minimum": 1, "maximum": 6},
+                           "from": {"type": "string"}, "to": {"type": "string"}}}},
             "race": {"type": "object", "required": ["laps", "opponents"], "description": "laps 0 = not a race",
                      "properties": {"laps": {"type": "integer", "minimum": 0, "maximum": 5},
                                     "opponents": {"type": "integer", "minimum": 0, "maximum": 5}}},
@@ -293,6 +320,9 @@ def plan_brief(pitch: str, title: str | None, en: dict, catalog_txt: str, docs: 
             "- a collectible (count placed along the level, target needed to win), goal, timer, lives, enemies, and "
             "race laps/opponents (laps 0 unless it is a race: a race level with a kart or boat)\n"
             "  (karts drive well on race_track or town, boats on lagoon; platformer / topdown / fps fit every level)\n"
+            f"- character: the species closest to the pitch's hero ({', '.join(en['species'])}) + accessory\n"
+            f"- mode: {', '.join(en['mode'])} (waves: arena survival with a topdown blaster; quests: villagers with "
+            "fetch/deliver/talk quests, give npcs + quests; timetrial: a kart/boat against the clock)\n"
             "- player colours, the art direction, 2-3 concept shots (the visual target the game is judged against)\n"
             "- generated assets: a sky panorama, 2-4 HUD icons, a music loop, 4-6 sound effects (one per gameplay "
             "event), 0-2 props (single solid objects like a mushroom, crate, lantern, statue; they become voxel "
@@ -359,23 +389,40 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
     ]
     if tag != "coin":
         lines.append(f"for (const c of level.collectibles) if (c.tag === 'coin') c.tag = {j(tag)};   // the plan's pickup")
+    ch = plan.get("character") or {}
+    char = (f", character: {j({k: v for k, v in ch.items() if k in ('species', 'accessory') and v})}"
+            if ch.get("species") else "")
     lines.append(f"const player = K.Player.create(game, {{ type: {j(plan.get('player_type'))}, spawn: level.spawn, "
-                 f"yaw: level.spawnYaw, colors: {j(plan.get('player_colors') or {})} }});")
+                 f"yaw: level.spawnYaw{char}, colors: {j(plan.get('player_colors') or {})} }});")
     cam = plan.get("camera") or CAMERA_FOR.get(plan.get("player_type"), "follow")
     lines.append(f"K.Camera.{cam}(game, player);" if cam != "orbit" else "K.Camera.orbit(game, { target: player });")
     if scenery_js(assets, catalog):
         lines.append("scenery(game, level);                     // generated props + splat landmarks (scenery.js)")
     rules = {"level": None, "player": None, "collect": {"tag": tag, "target": target}, "goal": bool(plan.get("goal")),
              "timer": timer or False, "lives": int(plan.get("lives") or 0) or False}
+    if c.get("label"):
+        rules["collect"]["label"] = c["label"]
     if int(plan.get("enemies") or 0):
         rules["enemies"] = int(plan["enemies"])
-    if racing:
+    mode = plan.get("mode")
+    if mode == "timetrial" and plan.get("level_kind") in TRACK_KINDS:
+        rules["mode"] = "timetrial"
+        rules["race"] = {"laps": int(race.get("laps") or 3)}
+        racing = True
+    elif racing:
         rules["race"] = {"laps": int(race["laps"]), "opponents": int(race.get("opponents") or 0)}
+    if mode == "waves":
+        w = plan.get("waves") or {}
+        rules.update(mode="waves", waves={"count": int(w.get("count") or 5), "size": int(w.get("size") or 3)})
+        rules.pop("collect", None) if not plan.get("goal") else None
+    if mode == "quests" and plan.get("quests") and plan.get("npcs"):
+        rules.update(mode="quests", npcs=[{k: v for k, v in n.items() if k in ("name", "species", "lines")}
+                                          for n in plan["npcs"]],
+                     quests=[{k: v for k, v in q.items() if v not in (None, "")} for q in plan["quests"]])
     rules_js = j(rules).replace('"level": null', "level").replace('"player": null', "player")
     lines.append(f"const rules = K.Gameplay.rules(game, {rules_js});")
     hud = {"counters": [{"id": "collected", "icon": icon, "label": c.get("label", "Coins")}],
-           "timer": bool(timer) or racing, "lives": bool(plan.get("lives")), "minimap": True,
-           "objective": str(plan.get("win_condition", ""))[:60]}
+           "timer": bool(timer) or racing, "lives": bool(plan.get("lives")), "minimap": True}
     if plan.get("ui_style"):
         hud["style"] = plan["ui_style"]
     if racing:
