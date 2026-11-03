@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>smoke</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}</style>
+<script type="importmap">{"imports":{"three":"../../vendor/three/three.module.js","three/addons/":"../../vendor/three/addons/","kit":"../../kit/index.js"}}</script>
+</head><body><script type="module">
+import * as K from 'kit';
+const game = await K.createGame({});
+const T = K.THREE;
+game.scene.background = new T.Color('#88c8ff');
+game.scene.add(new T.HemisphereLight('#ffffff', '#446644', 2));
+const m = new T.Mesh(new T.TorusKnotGeometry(6, 2, 200, 32), new T.MeshStandardMaterial({ color: '#ff7a59' }));
+game.scene.add(m); game.update(dt => m.rotation.y += dt);
+game.camera.position.set(0, 5, 25); game.camera.lookAt(0, 0, 0);
+game.start(); requestAnimationFrame(() => requestAnimationFrame(() => window.__kit = { ready: true, state: () => ({ frame: game.frame }) }));
+</script></body></html>
