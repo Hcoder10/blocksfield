@@ -456,13 +456,18 @@ export function rules(game, opts = {}) {
     for (let i = 0; i < N; i++) samples.push(track.getPointAt(i / N));
     race = { track, N, samples, laps: opts.race.laps || level.laps || 3, width: level.trackWidth || 12, started: false, countdown: opts.race.countdown ?? 3, cdT: 0, lastCd: null, finishOrder: [] };
     S.laps = race.laps; S.lap = 1;
-    // a boat race on a dry track (no water course in this level): boats hover over the road instead of beaching
-    if (player.type === 'boat') {
+    // a boat race on a dry track (no water course in this level): boats hover over the road instead of beaching.
+    // Decided on the first race frame: Rapier queries only see colliders after the first world step.
+    race.checkHover = () => {
+      race.checkHover = null;
+      if (player.type !== 'boat') return;
       let dry = 0;
       for (let i = 0; i < 12; i++) { const q = track.getPointAt(i / 12); const gy = Physics.groundAt(game, q.x, q.z, q.y + 10, 30); if (gy !== null && (player.waterLevel === null || gy > player.waterLevel + 0.15)) dry++; }
-      race.hover = dry > 6;
-      if (race.hover) { Object.assign(player.tuning, { landDrag: 0, grip: 6, driftGrip: 1.8 }); console.info('Gameplay.rules: boat race on a dry track -> hover boats'); }
-    }
+      if (dry > 6) {
+        for (const r of R.racers) Object.assign(r.player.tuning, { landDrag: 0, grip: 6, driftGrip: 1.8 });
+        console.info('Gameplay.rules: boat race on a dry track -> hover boats');
+      }
+    };
     const nearest = (p, hint) => {
       let best = hint, bd = Infinity;
       const scan = hint === null || hint === undefined ? N : 40;
@@ -490,7 +495,7 @@ export function rules(game, opts = {}) {
       if (gy !== null && player.type !== 'boat') at.y = gy + 0.05;
       const bot = Player.create(game, { type: player.type, spawn: at, yaw: player.yaw, name: 'racer' + (i + 1),
         colors: { body: palette[i % palette.length], kart: palette[i % palette.length], boat: palette[i % palette.length], accent: '#ffffff' }, waterLevel: player.waterLevel,
-        tuning: { maxSpeed: player.tuning.maxSpeed * (opts.race.aiSpeed ?? 0.94) * (0.97 + 0.03 * game.rand()), ...(race.hover ? { landDrag: 0, grip: 6, driftGrip: 1.8 } : {}) } });
+        tuning: { maxSpeed: player.tuning.maxSpeed * (opts.race.aiSpeed ?? 0.94) * (0.97 + 0.03 * game.rand()),  } });
       bot.ai = { skill: 0.85 + 0.15 * game.rand(), lane: (game.rand() - 0.5) * race.width * 0.5, drift: false };
       game.__player = player;
       const r = mk(bot, false); r.lane = bot.ai.lane; R.racers.push(r);
@@ -833,6 +838,7 @@ export function rules(game, opts = {}) {
   }
 
   function raceStep(dt, t) {
+    if (race.checkHover && game.frame > 2) race.checkHover();
     if (!race.started) {
       if (!player.controls.enabled && race.countdown <= 0) return;
       race.cdT += dt;

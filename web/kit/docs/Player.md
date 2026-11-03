@@ -84,5 +84,6 @@ const hero = K.Player.create(game, { type: 'platformer', spawn: level.spawn, tun
 - Player.create does NOT make a camera: call `Camera.follow(game, player)` (it picks the right rig for every type).
 - Do not move `player.object` or `player.position` directly; use `player.teleport(pos)`.
 - Unknown `type` throws; there is no 'car' or 'runner': use `'kart'` and `'platformer'`.
-- A boat needs water: a level with water (`level.water`) or `waterLevel`; otherwise it sits at height 0.
+- A boat floats on `level.water.y` (or `waterLevel`). In a race on a dry track (race_track) Gameplay.rules turns boats into
+  hover boats that skim the road; outside races a boat on land crawls.
 - Don't make jumps the player cannot reach: apex 4.5 u, gap <= ~11 u at full run.
