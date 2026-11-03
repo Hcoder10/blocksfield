@@ -37,3 +37,4 @@ def test_dry_run_builds_a_playable_game():
     best = json.loads((stages / f"eval_{about['score']['best']}.json").read_text(encoding="utf-8"))
     assert best["ready"] and best["errors"] == [], best["errors"]
     assert best["autopilot"]["moved"] > 5
+    shutil.rmtree(game_dir, ignore_errors=True)            # keep the gallery to real games
