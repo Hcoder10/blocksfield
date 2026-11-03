@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { reportError } from './core.js';
 import * as Look from './look.js';
 import * as Audio from './audio.js';
-import { frameBox } from './debug.js';
+import { frameBox, survey } from './debug.js';
 
 export const STYLES = ['arcade', 'cozy', 'sleek', 'fantasy', 'scifi'];
 const LOOK_STYLE = { neon_night: 'scifi', cozy: 'cozy', dark_fantasy: 'fantasy', snow: 'sleek', desert: 'arcade', sunset: 'arcade', candy: 'cozy', toon_bright: 'arcade' };
@@ -645,14 +645,16 @@ export function titleScreen(game, opts = {}) {
   if (orbit) {
     try {
       const level = opts.level || levelOf(game, U.hud);
-      const box = frameBox(game, level, null);
-      const c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
-      const r = Math.max(s.x, s.z) * 0.5 + 8, y = box.max.y + r * 0.22;
+      // orbit on the survey overview: same framing the harness uses, slowly circling the level
+      const ovs = survey(game, level, null).find(x => x.name === 'overview');
+      const tgt = new THREE.Vector3(...ovs.target), from = new THREE.Vector3(...ovs.position);
+      const c = tgt, r = Math.hypot(from.x - tgt.x, from.z - tgt.z) * 0.9, y = tgt.y + (from.y - tgt.y) * 0.75;
+      const a0 = Math.atan2(from.z - tgt.z, from.x - tgt.x);
       const t0 = performance.now();
-      ov = { position: new THREE.Vector3(), target: c.clone().setY(box.min.y + s.y * 0.25) };
+      ov = { position: new THREE.Vector3(), target: tgt.clone() };
       orbitFn = game.lateUpdate(() => {
         if (game.cameraOverride && game.cameraOverride !== ov) return;   // harness took the camera
-        const a = (performance.now() - t0) / 1000 * (opts.orbitSpeed ?? 0.06) + 0.8;
+        const a = (performance.now() - t0) / 1000 * (opts.orbitSpeed ?? 0.05) + a0;
         ov.position.set(c.x + Math.cos(a) * r, y, c.z + Math.sin(a) * r);
         game.cameraOverride = ov;
       }, 25);

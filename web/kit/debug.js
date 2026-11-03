@@ -135,7 +135,8 @@ function meshPoints(root, limit = 4000) {
 
 export function frameBox(game, level, player) {
   let pts = interestPoints(level, player);
-  if (pts.length < 6) {
+  const placed = pts.length >= 6;          // enough gameplay placements to frame what the player actually travels
+  if (!placed) {
     const root = (level && level.group) || game.scene;
     pts = pts.concat(meshPoints(root));
   }
@@ -144,6 +145,7 @@ export function frameBox(game, level, player) {
   if (finiteBox(lb)) {
     const ls = lb.getSize(new THREE.Vector3());
     if (!box) box = lb.clone();
+    else if (placed) { const c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3()); box.expandByVector(new THREE.Vector3(sz.x * 0.08 + 3, 2, sz.z * 0.08 + 3)); box.intersect(lb.clone().expandByScalar(4)); if (box.isEmpty()) box.setFromCenterAndSize(c, sz); }
     else if (Math.max(ls.x, ls.z) < 1500) box.union(lb).intersect(lb.clone().expandByScalar(1));   // trust sane bounds
     else box.intersect(lb);
   }
@@ -152,6 +154,43 @@ export function frameBox(game, level, player) {
   const m = Math.max(s.x, s.y, s.z, 4);                                      // never a degenerate box
   box.expandByVector(new THREE.Vector3(Math.max(0, (m * 0.25 - s.x) / 2) + s.x * 0.06, Math.max(0, (m * 0.08 - s.y) / 2), Math.max(0, (m * 0.25 - s.z) / 2) + s.z * 0.06));
   return box;
+}
+
+// place a camera looking along -dir at the box so all 8 corners land inside the frame (margin = NDC extent)
+const fitCam = new THREE.PerspectiveCamera();
+function fitShot(cam, box, dir, target, margin = 0.86, pts = null) {
+  fitCam.fov = cam.fov || 60; fitCam.aspect = cam.aspect || 16 / 9; fitCam.near = 0.1; fitCam.far = 1e6; fitCam.updateProjectionMatrix();
+  let corners = [];
+  if (pts && pts.length >= 6) { const step = Math.max(1, Math.floor(pts.length / 240)); for (let i = 0; i < pts.length; i += step) corners.push(pts[i]); }
+  else for (let i = 0; i < 8; i++) corners.push(new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z));
+  const t = target.clone(), v = new THREE.Vector3();
+  const extent = (d) => {
+    fitCam.position.copy(t).addScaledVector(dir, d); fitCam.lookAt(t); fitCam.updateMatrixWorld();
+    let mx = 0, cx = 0, cy = 0, minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+    for (const c of corners) {
+      v.copy(c).applyMatrix4(fitCam.matrixWorldInverse);
+      if (v.z > -0.1) return { mx: 1e9 };                       // corner behind the camera
+      v.applyMatrix4(fitCam.projectionMatrix);
+      minX = Math.min(minX, v.x); maxX = Math.max(maxX, v.x); minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y);
+    }
+    cx = (minX + maxX) / 2; cy = (minY + maxY) / 2;
+    mx = Math.max((maxX - minX) / 2, (maxY - minY) / 2);
+    return { mx, cx, cy };
+  };
+  const size = box.getSize(new THREE.Vector3()).length();
+  let d = size;
+  for (let it = 0; it < 3; it++) {
+    let lo = size * 0.05, hi = size * 20;
+    for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2; if (extent(m).mx > margin) lo = m; else hi = m; }
+    d = hi;
+    // recentre: move the target so the projected box sits in the middle of the frame
+    const e = extent(d);
+    if (!(e.mx < 1e8)) break;
+    const right = new THREE.Vector3().setFromMatrixColumn(fitCam.matrixWorld, 0), up = new THREE.Vector3().setFromMatrixColumn(fitCam.matrixWorld, 1);
+    const halfH = Math.tan(THREE.MathUtils.degToRad(fitCam.fov) / 2) * d, halfW = halfH * fitCam.aspect;
+    t.addScaledVector(right, e.cx * halfW).addScaledVector(up, e.cy * halfH);
+  }
+  return { position: t.clone().addScaledVector(dir, d), target: t };
 }
 
 export function survey(game, level, player) {
@@ -165,23 +204,33 @@ export function survey(game, level, player) {
   const horiz = Math.hypot(s.x, s.z);
   const longX = s.x >= s.z;
   const shots = [];
+  // principal axis of what the player travels (xz): the side shot looks across it, the overview obliquely
+  const ip = interestPoints(level, player).filter(p => box.containsPoint(p));
+  let axis = new THREE.Vector3(longX ? 1 : 0, 0, longX ? 0 : 1);
+  if (ip.length >= 6) {
+    let mx = 0, mz = 0; for (const p of ip) { mx += p.x; mz += p.z; } mx /= ip.length; mz /= ip.length;
+    let xx = 0, zz = 0, xz = 0; for (const p of ip) { const dx = p.x - mx, dz = p.z - mz; xx += dx * dx; zz += dz * dz; xz += dx * dz; }
+    const ang = 0.5 * Math.atan2(2 * xz, xx - zz);
+    axis.set(Math.cos(ang), 0, Math.sin(ang));
+  }
+  const across = new THREE.Vector3(-axis.z, 0, axis.x);
+  if (across.z < 0) across.negate();
+  // fit to the placements plus their ground level so islands/track bodies stay in frame
+  const fitPts = ip.length >= 6 ? ip.flatMap(p => [p, new THREE.Vector3(p.x, Math.max(box.min.y, p.y - 6), p.z), new THREE.Vector3(p.x, p.y + 3, p.z)]) : null;
   const push = (name, p, t) => shots.push({ name, position: arr(p, 2), target: arr(t, 2) });
 
   // overview: 3/4 view from high up, the whole footprint in frame
   {
-    const dir = new THREE.Vector3(0.62, 0.62, 0.48).normalize();
-    const d = fit(horiz * 0.92, horiz * 0.62 + s.y) * 1.0;
     const t = c.clone(); t.y = box.min.y + s.y * 0.3;
-    push('overview', t.clone().addScaledVector(dir, d), t);
+    const dir = across.clone().multiplyScalar(0.8).addScaledVector(axis, 0.45).setY(0.95).normalize();
+    const f = fitShot(cam, box, dir, t, 0.76, fitPts);
+    push('overview', f.position, f.target);
   }
   // side: low, looking across the short axis so the long axis fills the frame
   {
-    const dir = longX ? new THREE.Vector3(0, 0.28, 1) : new THREE.Vector3(1, 0.28, 0);
-    dir.normalize();
-    const w = longX ? s.x : s.z;
-    const d = fit(w * 1.02, s.y * 1.6 + w * 0.15) + (longX ? s.z : s.x) / 2;
     const t = c.clone(); t.y = box.min.y + s.y * 0.35;
-    push('side', t.clone().addScaledVector(dir, d), t);
+    const f = fitShot(cam, box, across.clone().setY(0.32).normalize(), t, 0.84, fitPts);
+    push('side', f.position, f.target);
   }
   // top: straight down (tiny z offset keeps lookAt stable)
   {
