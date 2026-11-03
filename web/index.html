@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blocksfield: type a pitch, get a game</title>
+<meta name="description" content="Type a one-paragraph pitch and get a playable game, made entirely by open-weight models on one RTX 5090: Qwen3.8-27B plans, codes, playtests and repairs it; ComfyUI makes the art, music, sound and props. $0 per generation. #OpenSourceHiggsfield">
+<meta property="og:title" content="Blocksfield: type a pitch, get a game">
+<meta property="og:description" content="Open-weight models on one RTX 5090 turn a pitch into a playable game, then play it, look at it and fix it. Play the games in your browser.">
+<meta property="og:image" content="site/media/roblox_thumb.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#3aa9f5">
+<link rel="icon" href="site/img/cube.svg" type="image/svg+xml">
+<link rel="preload" href="site/fonts/LilitaOne.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="site/fonts/Rubik.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="site/css/site.css">
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Blocksfield home"><img src="site/img/cube.svg" alt="" width="34" height="34"><b>BLOCKSFIELD</b></a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#games">Games</a><a href="#how">How it works</a><a href="#why">Why it's new</a><a href="#models">Models</a><a href="#roblox">Roblox</a>
+    </nav>
+    <a class="btn sm ghost gh" href="https://github.com/Hcoder10/blocksfield"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <i class="cloud" style="width:180px;height:44px;top:150px;left:4%;animation-duration:70s"></i>
+    <i class="cloud" style="width:120px;height:30px;top:96px;left:56%;animation-duration:90s;animation-direction:reverse"></i>
+    <i class="cloud" style="width:220px;height:52px;bottom:90px;left:30%;opacity:.75;animation-duration:110s"></i>
+    <i class="cloud" style="width:150px;height:36px;top:220px;right:3%;animation-duration:80s;animation-direction:reverse"></i>
+    <div class="wrap hero-grid">
+      <div>
+        <h1 class="display outlined">TYPE A PITCH.<span class="l2">GET A GAME.</span></h1>
+        <p class="lede">One paragraph in, a playable 3D game out. Open-weight models <b>plan it, code it, make its art,
+          music and sound in ComfyUI, play it, look at it and fix it</b>, all on one rented RTX&nbsp;5090.</p>
+        <div class="hero-cta">
+          <a class="btn big" id="play-now" href="#games"><i class="tri"></i>Play now</a>
+          <a class="btn big ghost" href="#how">How it works</a>
+        </div>
+        <div class="hero-facts">
+          <span class="chip sun">Every model open-weight</span>
+          <span class="chip">One RTX 5090</span>
+          <span class="chip grass">$0 per generation</span>
+        </div>
+      </div>
+      <div>
+        <div class="reel-wrap">
+          <div class="screen" id="reel">
+            <video muted playsinline preload="auto" aria-hidden="true"></video>
+            <video muted playsinline preload="auto" aria-hidden="true" style="opacity:0"></video>
+            <span class="chip ink tag" id="reel-tag">Loading</span>
+          </div>
+          <div class="pitchbox"><span class="who">Pitch</span><p id="reel-pitch"><span class="caret"></span></p></div>
+        </div>
+        <div class="reel-dots" id="reel-dots" role="tablist" aria-label="Gameplay reel"></div>
+      </div>
+    </div>
+    <div class="blocks-edge" aria-hidden="true"></div>
+  </section>
+
+  <section class="sec games-sec" id="games">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div>
+          <p class="kicker" style="--k:var(--sun)">The games</p>
+          <h2 class="display h2">Made from one paragraph</h2>
+          <p class="lede">Every game here came from the pitch on its card. Click Play: it runs in your browser, no install.
+            "How it was made" shows the plan, the concept art, every generated asset and the whole build log.</p>
+        </div>
+      </div>
+      <div class="grid" id="grid"><div class="empty">Loading games…</div></div>
+    </div>
+  </section>
+
+  <section class="sec night" id="how">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div>
+          <p class="kicker" style="--k:#8b93ff">How it works</p>
+          <h2 class="display h2">From pitch to playable</h2>
+          <p class="lede">A local 27B model is the designer, programmer and playtester. ComfyUI, self-hosted and driven over
+            its HTTP API, is the art department. Nobody touches the game in between.</p>
+        </div>
+      </div>
+      <div class="flow reveal">
+        <div class="step" style="--c:var(--sun)"><h4>Pitch</h4><p class="who">you</p><p>One paragraph describing the game you want.</p></div>
+        <div class="step" style="--c:#8b93ff"><h4>Plan</h4><p class="who">Qwen3.8-27B</p><p>Designs the game as schema-checked JSON whose options are the kits' own: look, level, player, rules, assets.</p></div>
+        <div class="step" style="--c:var(--sun)"><h4>Concept board</h4><p class="who">Qwen-Image-2.1 · ComfyUI</p><p>Concept art of the finished game. It is the target every build is judged against.</p></div>
+        <div class="step" style="--c:var(--bubble)"><h4>Assets</h4><p class="who">ComfyUI · one burst</p><p>Sky, UI icons, music (ACE-Step 1.5), sound effects (Stable Audio 3), props (Qwen-Image → Idol splat → voxels).</p></div>
+        <div class="step" style="--c:#8b93ff"><h4>Build</h4><p class="who">Qwen3.8-27B · ThreeKit</p><p>A builder agent composes our kit library into the game's code and plays it in real Chrome as it works.</p></div>
+        <div class="step loop" style="--c:var(--grass)"><h4>Playtest + judge</h4><p class="who">autopilot bot · vision</p><p>A bot plays the game. The model looks at the screenshots and scores them against the concept board.</p></div>
+        <div class="step loop" style="--c:var(--tomato)"><h4>Repair</h4><p class="who">Qwen3.8-27B</p><p>Fixes what the judge found. The best-scoring version is kept, so a repair never ships a regression.</p></div>
+        <div class="step" style="--c:var(--sun)"><h4>Game</h4><p class="who">three.js · static page</p><p>Plays from a link, with its thumbnail, gameplay video and a making-of record.</p></div>
+        <div class="loopnote" aria-hidden="true">
+          <svg viewBox="0 0 460 40" preserveAspectRatio="none"><path d="M345 4 C345 36, 115 36, 115 8" fill="none" stroke="#ffc93c" stroke-width="3.5" stroke-dasharray="7 7"/><path d="M106 16 L115 3 L124 16" fill="none" stroke="#ffc93c" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+      <p class="loopcap reveal">Play, judge, repair: round after round until it reads right.</p>
+
+      <div class="gpu">
+        <div class="reveal">
+          <p class="kicker" style="--k:var(--sun)">One GPU, taking turns</p>
+          <h3>Every model shares one RTX&nbsp;5090</h3>
+          <p>A small arbiter time-slices the card. The 27B LLM sleeps to host RAM (vLLM sleep mode, about 4 seconds) while
+            ComfyUI runs a burst of art jobs, then wakes up and carries on. A burst of requests shares one swap.</p>
+          <div class="slice" aria-label="Schematic of the GPU timeline">
+            <span class="llm" style="flex:5">LLM</span><span class="swap"></span><span class="art" style="flex:2.2">ComfyUI</span><span class="swap"></span><span class="llm" style="flex:4">LLM</span><span class="swap"></span><span class="snd" style="flex:1.4">audio</span><span class="swap"></span><span class="llm" style="flex:3">LLM</span>
+          </div>
+          <div class="slice-legend"><span><i style="background:#8b93ff"></i>Qwen3.8-27B (vLLM)</span><span><i style="background:var(--sun)"></i>Qwen-Image / Idol</span><span><i style="background:var(--bubble)"></i>ACE-Step / Stable Audio</span><span><i style="background:#4a4470"></i>swap</span></div>
+        </div>
+        <figure class="dash reveal" style="margin:0">
+          <video src="site/media/gpu_timelapse.mp4" poster="site/media/gpu_timelapse.jpg" muted loop playsinline preload="none" data-autoplay></video>
+          <figcaption>Real capture: the arbiter's live dashboard during a build, one frame every 30 seconds. Purple is the LLM, orange is ComfyUI.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="why">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div>
+          <p class="kicker" style="--k:var(--tomato)">Why it's new</p>
+          <h2 class="display h2">Not a trailer. The game.</h2>
+        </div>
+      </div>
+      <div class="why">
+        <article class="reveal" style="--c:var(--sun)">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1433" stroke-width="2.4" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="5"/><path d="M7 10v4M5 12h4"/><circle cx="16" cy="11" r="1.2" fill="#1a1433"/><circle cx="18" cy="13.4" r="1.2" fill="#1a1433"/></svg></span>
+          <h3>It makes the game itself</h3>
+          <p>Higgsfield sells AI covers and trailers for games you already built. Blocksfield makes the game: a page you can
+            play from a link, or a real Roblox place you can open, play and publish.</p>
+        </article>
+        <article class="reveal" style="--c:var(--grass)">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1433" stroke-width="2.4" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
+          <h3>It plays its game and looks at it</h3>
+          <p>Blind code generation stops at "it runs". Here a bot plays every build, a vision judge scores the screenshots
+            against the concept art, and the model repairs what it sees, keeping the best version.</p>
+        </article>
+        <article class="reveal" style="--c:var(--sky)">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1433" stroke-width="2.4" stroke-linejoin="round"><path d="M12 3 20 7.5 12 12 4 7.5z"/><path d="M4 12l8 4.5 8-4.5"/><path d="M4 16.5 12 21l8-4.5"/></svg></span>
+          <h3>A kit library makes a 27B look good</h3>
+          <p>A local model can't write a great character controller or HUD from scratch, but it composes well-made parts
+            reliably. So it builds from tested kits, and the game is its choices: design, layout, art direction, tuning.</p>
+        </article>
+        <article class="reveal" style="--c:var(--bubble)">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1433" stroke-width="2.4" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m3 16 5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.6"/></svg></span>
+          <h3>ComfyUI is the art department</h3>
+          <p>Concept board, skies, icons, music, sound effects and props, with a custom node that lifts an image to a
+            Gaussian splat and then to voxel props. It shares the same GPU as the LLM, taking turns.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec models-sec" id="models">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div>
+          <p class="kicker" style="--k:var(--grass)">Open weights only</p>
+          <h2 class="display h2">Every model is open-weight</h2>
+          <p class="lede">No partner nodes, no closed APIs. All of them run on one rented RTX 5090, so a game costs
+            $0 per generation.</p>
+        </div>
+      </div>
+      <table class="tbl reveal">
+        <thead><tr><th>Job</th><th>Model</th><th>Runs in</th></tr></thead>
+        <tbody>
+          <tr><td>Game design, code, playtest judge</td><td class="m">Qwen3.8-27B<small>RedHatAI/Qwen3.8-27B-NVFP4</small></td><td class="where">vLLM (sleep mode)</td></tr>
+          <tr><td>Concept board, sky, icons, UI art</td><td class="m">Qwen-Image-2.1<small>+ BiRefNet cut-outs</small></td><td class="where">ComfyUI</td></tr>
+          <tr><td>Props</td><td class="m">Idol<small>speridlabs/idol · image → Gaussian splat → voxels</small></td><td class="where">ComfyUI (our custom node)</td></tr>
+          <tr><td>Music</td><td class="m">ACE-Step 1.5</td><td class="where">ComfyUI</td></tr>
+          <tr><td>Sound effects</td><td class="m">Stable Audio 3<small>small-sfx</small></td><td class="where">ComfyUI</td></tr>
+          <tr><td>3D meshes (Roblox)</td><td class="m">TRELLIS.2<small>decimated under Roblox's triangle limit</small></td><td class="where">ComfyUI</td></tr>
+          <tr><td>Trailer clips (Roblox)</td><td class="m">LTX-2.5<small>image-to-video</small></td><td class="where">ComfyUI</td></tr>
+        </tbody>
+      </table>
+      <p class="footnote">Licences differ: Qwen-Image-2.1 is research-only (non-commercial); LTX-2.5 and Stable Audio 3 use
+        community licences; Qwen3.8, TRELLIS.2, ACE-Step and BiRefNet are permissive. Check each one before commercial use.</p>
+    </div>
+  </section>
+
+  <section class="sec roblox-sec" id="roblox">
+    <div class="wrap rbx">
+      <div class="reveal">
+        <div class="main"><video id="rbx-video" src="site/media/roblox_orbit.mp4" poster="site/media/roblox_orbit.jpg" muted loop playsinline preload="none" data-autoplay></video></div>
+        <div class="thumbs" id="rbx-thumbs">
+          <button class="on" data-src="site/media/roblox_orbit.mp4" aria-label="Orbit shot"><img src="site/media/roblox_orbit.jpg" alt="" loading="lazy"></button>
+          <button data-src="site/media/roblox_hero.mp4" aria-label="Hero shot"><img src="site/media/roblox_hero.jpg" alt="" loading="lazy"></button>
+          <button data-src="site/media/roblox_dolly.mp4" aria-label="Dolly shot"><img src="site/media/roblox_dolly.jpg" alt="" loading="lazy"></button>
+        </div>
+      </div>
+      <div class="reveal">
+        <p class="kicker" style="--k:var(--sky)">Also on Roblox</p>
+        <h3>Starbloom Peaks: a real Roblox place</h3>
+        <p style="margin:0;color:var(--ink-2)">The same idea, built inside Roblox Studio from one paragraph. Roblox has 100M+
+          daily players; a hosted demo does not.</p>
+        <ul>
+          <li>Built in Studio's edit mode as real instances saved in the place, not a script that builds it at runtime.</li>
+          <li>After each step the model plays the game and surveys it from four cameras; a judge scores it against the ComfyUI concept art.</li>
+          <li>Generated props become editable Roblox Parts; thumbnail and icon are Qwen-Image edits of real captures.</li>
+        </ul>
+        <div class="pair">
+          <figure><img src="site/media/roblox_concept_hub.jpg" alt="ComfyUI concept art for Starbloom Peaks" loading="lazy"><figcaption>Concept board (ComfyUI)</figcaption></figure>
+          <figure><img src="site/media/roblox_hud.jpg" alt="The built Roblox game with its HUD" loading="lazy"><figcaption>The built place, in Studio</figcaption></figure>
+        </div>
+        <div class="hero-cta" style="margin-top:28px">
+          <a class="btn" href="https://github.com/Hcoder10/blocksfield/raw/main/examples/starbloom_peaks.rbxlx">Download the .rbxlx</a>
+          <a class="btn ghost" href="https://github.com/Hcoder10/blocksfield#try-the-demo-game-no-gpu-needed">How to open it</a>
+        </div>
+        <p class="footnote">Open it in Roblox Studio and press Play. Where a build's own code crashed on a one-line bug, we
+          fixed that line by hand and logged it in the run's OPERATOR_NOTES.md.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="code">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div>
+          <p class="kicker" style="--k:var(--ink)">Open source, MIT</p>
+          <h2 class="display h2">Run it yourself</h2>
+          <p class="lede">One GPU box with a 32 GB card and these three repositories.</p>
+        </div>
+      </div>
+      <div class="repos">
+        <a class="repo reveal" href="https://github.com/Hcoder10/blocksfield"><span class="path">Hcoder10/blocksfield</span><h3>Blocksfield</h3>
+          <p>The pipeline: web and Roblox runners, the GPU arbiter, the ComfyUI workflows, the Idol node, ThreeKit and this site.</p><span class="go">github.com →</span></a>
+        <a class="repo reveal" href="https://github.com/Hcoder10/cybus-harness/tree/blocksfield"><span class="path">Hcoder10/cybus-harness</span><h3>Build harness</h3>
+          <p>Plan, style guide, build, capture, vision judge, repair: the agent loop behind the Roblox builds. Branch <code>blocksfield</code>.</p><span class="go">github.com →</span></a>
+        <a class="repo reveal" href="https://github.com/Hcoder10/roblox-studio-mcp"><span class="path">Hcoder10/roblox-studio-mcp</span><h3>Studio Bridge</h3>
+          <p>The Roblox Studio plugin and server the harness drives Studio through: build in edit mode, play, capture.</p><span class="go">github.com →</span></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <p class="tagline">#OpenSourceHiggsfield</p>
+      <p>Blocksfield is an entry for Comfy's <a href="https://comfy.org/open-source-higgsfield/">Open Source Higgsfield</a>
+        challenge. Code is MIT; each model keeps its own licence.</p>
+    </div>
+    <a class="brand" href="#top"><img src="site/img/cube.svg" alt="" width="34" height="34"><b style="color:#fff">BLOCKSFIELD</b></a>
+  </div>
+</footer>
+
+<script src="site/js/site.js" defer></script>
+</body>
+</html>
