@@ -95,6 +95,7 @@
     if (plan.goal) add("Goal", "Reach the goal");
     if (plan.features?.length) add("Extras", plan.features.map(esc).join(" · "), "wide");
     $("#g-plan").innerHTML = rows.join("");
+    $("#g-map").innerHTML = mappingBlock(a.mapping);
 
     // concept vs result
     const shots = plan.concept_shots || [];
@@ -122,14 +123,18 @@
       <div class="cap"><span class="chip sun">Icon${v.for ? ` · ${esc(v.for)}` : ""}</span><p>“${esc(v.prompt)}”</p>${secs(k)}</div></div>`);
     for (const [k, v] of by("prop")) tiles.push(`<div class="asset tile"><div class="pic checker"><img src="${esc(url(`about/${k}_preview.png`))}" alt="" loading="lazy" onerror="this.parentNode.classList.add('noimg')"><span class="pname">${esc(title(k.replace(/^prop_/, "")))}</span></div>
       <div class="cap"><span class="chip grass">Prop${v.via ? ` · ${esc(v.via)}` : ""}${v.parts ? ` · ${nf.format(v.parts)} voxels` : ""}</span><p>“${esc(v.prompt)}”</p>${secs(k)}</div></div>`);
-    if (tiles.length) html.push(`<div class="tiles">${tiles.join("")}</div>`);
+    for (const [k, v] of by("splat")) tiles.push(`<div class="asset tile"><div class="pic checker"><img src="${esc(url(`about/${k}_preview.png`))}" alt="" loading="lazy" onerror="this.parentNode.classList.add('noimg')"><span class="pname">${esc(title(k.replace(/^splat_/, "")))}</span></div>
+      <div class="cap"><span class="chip pink">Gaussian splat · Idol</span>${v.prompt ? `<p>“${esc(v.prompt)}”</p>` : ""}${secs(k)}</div></div>`);
+        if (tiles.length) html.push(`<div class="tiles">${tiles.join("")}</div>`);
     const sounds = [...by("music"), ...by("sfx")];
     if (sounds.length) html.push(`<div class="sounds">${sounds.map(([k, v]) => `<div class="sound">
       <button class="playbtn" data-src="${esc(url("assets/" + v.file))}" aria-label="Play ${esc(k)}"><i></i></button>
       <div class="cap"><span class="chip ${v.kind === "music" ? "pink" : "sky"}">${v.kind === "music" ? "Music · ACE-Step" : `Sound · ${esc(v.event || k)}`}</span>
       <p>“${esc(v.prompt)}”</p><div class="bar"><span></span></div>${secs(k)}</div></div>`).join("")}</div>`);
     // jobs the plan asked for that ComfyUI did not deliver: say so rather than imply every asset was made
-    const failed = Object.entries(art).filter(([, v]) => v && v.ok === false).map(([k]) => k);
+    const failedE = Object.entries(art).filter(([, v]) => v && v.ok === false);
+    const failed = failedE.map(([k]) => k);
+    const reasons = [...new Set(failedE.map(([, v]) => v.reason).filter(Boolean))];
     if (failed.length) {
       const groups = {};
       for (const k of failed) {
@@ -139,7 +144,8 @@
       const noun = { sfx: "sound effect", prop: "prop", icon: "icon", music: "music track", sky: "sky" };
       html.push(`<p class="failed"><b>Requested but not made:</b> ${Object.entries(groups).map(([kind, names]) =>
         `${names.length} ${esc(noun[kind] || kind)}${names.length > 1 ? "s" : ""} (${names.map(esc).join(", ")})`).join("; ")}.
-        These ComfyUI jobs failed, so they are not among this game's generated assets.</p>`);
+        These ComfyUI jobs failed, so they are not among this game's generated assets.
+        ${reasons.length ? `<span class="why">Reported reason${reasons.length > 1 ? "s" : ""}: ${reasons.map((r) => `<code>${esc(r)}</code>`).join(" ")}</span>` : ""}</p>`);
     }
     $("#g-assets").innerHTML = html.join("") || '<p class="empty">No generated assets recorded.</p>';
     wireAudio();
@@ -147,6 +153,24 @@
     // build log
     $("#g-log").innerHTML = [timeline(t), scores(a.score), callsTable(a.model_calls, a.agents),
       builderReport(a.stages?.build)].filter(Boolean).join("");
+  }
+
+  // about.json "mapping": how the pitch became kit choices (notes is null on games planned before 21:00)
+  function mappingBlock(m) {
+    const ch = m && m.chosen;
+    if (!ch) return "";
+    const L = { level_kind: "Level", look: "Look", player_type: "Player", camera: "Camera", ui_style: "HUD style",
+      collectible: "Pickup", collectible_label: "Pickup name", character: "Character" };
+    const show = (v) => (v && typeof v === "object"
+      ? Object.entries(v).map(([k, x]) => `${esc(k)}: ${esc(Array.isArray(x) ? x.join(", ") : x)}`).join(" · ") : esc(v));
+    const chips = Object.entries(ch).filter(([, v]) => v !== null && v !== undefined && v !== "")
+      .map(([k, v]) => `<div class="mchoice"><span>${esc(L[k] || title(k))}</span><code>${show(v)}</code></div>`).join("");
+    let notes = "";
+    const n = m.notes;
+    if (typeof n === "string" && n.trim()) notes = `<p class="mnotes">${esc(n)}</p>`;
+    else if (Array.isArray(n) && n.length) notes = `<ul class="mnotes">${n.map((x) => `<li>${esc(typeof x === "string" ? x : JSON.stringify(x))}</li>`).join("")}</ul>`;
+    else if (n && typeof n === "object") notes = `<ul class="mnotes">${Object.entries(n).map(([k, x]) => `<li><b>${esc(L[k] || title(k))}:</b> ${esc(x)}</li>`).join("")}</ul>`;
+    return `<div class="mapping"><h3>From pitch to kit choices</h3><div class="mchoices">${chips}</div>${notes}</div>`;
   }
 
   // stage order: plan, art, scaffold, build, then eval/repair rounds in the order they ran

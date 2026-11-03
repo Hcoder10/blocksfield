@@ -41,7 +41,10 @@ def game_entry(d: Path) -> dict | None:
     for k in ("look", "level_kind", "player_type", "camera", "ui_style"):
         e[k] = plan.get(k)
     player = plan.get("player") if isinstance(plan.get("player"), dict) else {}
-    e["species"] = plan.get("species") or player.get("species")
+    char = ((about.get("mapping") or {}).get("chosen") or {}).get("character")
+    if isinstance(char, dict):
+        char = char.get("species")
+    e["species"] = plan.get("species") or player.get("species") or (char if isinstance(char, str) else None)
     return e
 
 

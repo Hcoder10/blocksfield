@@ -23,6 +23,17 @@ kbd { display: inline-block; padding: 3px 8px; margin-right: 4px; font: 700 12px
 .mk-pitch::before { content: "\201C"; position: absolute; top: -30px; left: 26px; font: 400 96px/1 var(--display); color: var(--tomato);
   -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; }
 
+.mapping { margin-bottom: 26px; padding: 22px 24px; background: var(--ink); color: var(--white); border: 3px solid var(--ink);
+  border-radius: 18px; box-shadow: 0 5px 0 #000; }
+.mapping h3 { margin: 0 0 14px; font: 400 24px/1 var(--display); color: var(--sun); }
+.mchoices { display: flex; flex-wrap: wrap; gap: 10px; }
+.mchoice { display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; background: var(--night-2); border: 2px solid #000; border-radius: 12px; }
+.mchoice span { font: 700 11px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: #a9a2cf; }
+.mchoice code { font: 600 14.5px/1.2 var(--mono); color: var(--white); }
+.mnotes { margin: 16px 0 0; color: #d8d3f3; font-size: 15px; max-width: 90ch; }
+ul.mnotes { padding-left: 18px; display: grid; gap: 6px; }
+.failed .why { display: block; margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
+.failed code { font: 600 12.5px/1.4 var(--mono); }
 .spec { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 0; }
 .spec-item { padding: 16px 18px; background: var(--white); border: 3px solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink); }
 .spec-item.wide { grid-column: span 2; }

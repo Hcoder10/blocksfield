@@ -42,8 +42,16 @@ def main() -> None:
     (OUT / "index.html").write_text('<!doctype html><meta http-equiv="refresh" content="0;url=../_demo_look/index.html">',
                                     encoding="utf-8")
 
+    pool = sorted(SHOTS.glob("*.png"))  # whatever the kit demo currently has; names change as kits evolve
+    if not pool:
+        raise SystemExit(f"no kit demo screenshots in {SHOTS}")
+    pick = {}
+
+    def shot(name: str) -> Path:
+        return SHOTS / name if (SHOTS / name).exists() else pick.setdefault(name, pool[len(pick) % len(pool)])
+
     def jpg(src: str, dst: Path, size=(1280, 720)) -> None:
-        with Image.open(SHOTS / src) as im:
+        with Image.open(shot(src)) as im:
             im = im.convert("RGB")
             im.thumbnail(size)
             im.save(dst, "JPEG", quality=85)
@@ -70,7 +78,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as td:
         for i, s in enumerate(["sky_islands__toon_bright__hero.png", "sky_islands__candy__hero.png",
                                "sky_islands__sunset__hero.png", "sky_islands__toon_bright__overview.png"]):
-            shutil.copyfile(SHOTS / s, Path(td) / f"f{i}.png")
+            shutil.copyfile(shot(s), Path(td) / f"f{i}.png")
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", "0.75", "-i", str(Path(td) / "f%d.png"),
                         "-vf", "scale=1280:-2,fps=30", "-c:v", "libx264", "-crf", "30", "-pix_fmt", "yuv420p",
                         "-movflags", "+faststart", str(OUT / "gameplay.mp4")], check=True)
@@ -120,6 +128,13 @@ def main() -> None:
         "score": {"best": "v1", "score": 7.4, "play": 8.0, "vision": 7.0,
                   "versions": [{"tag": t, "score": s, "play_score": p, "vision_score": v} for t, s, p, v in vers]},
         "plan": plan,
+        "mapping": {"pitch": "a fox collects star blooms on floating isles",
+                    "notes": "Floating isles -> sky_islands; warm candy-pastel light -> toon_bright; a fox who jumps -> "
+                             "platformer with a follow camera.",
+                    "chosen": {"level_kind": "sky_islands", "look": "toon_bright", "player_type": "platformer",
+                               "camera": "follow", "ui_style": "toon", "collectible": "star",
+                               "collectible_label": "Blooms", "character": {"species": "fox", "accessories": ["scarf"]}}},
+        "operator_interventions": [],
         "timings_s": {"plan": 41.0, "art": 212.0, "scaffold": 3.0, "build": 640.0, "eval_s0": 70.0, "eval_v0": 66.0,
                       "repair_1": 300.0, "eval_v1": 64.0, "repair_2": 280.0, "eval_v2": 61.0},
         "model_calls": {"lead": {"calls": 2, "prompt_tokens": 9000, "completion_tokens": 2100, "seconds": 40.0},
