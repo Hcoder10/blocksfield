@@ -484,7 +484,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", ctype)
         self.send_header("Accept-Ranges", "bytes")
         self.send_header("Content-Length", str(end - start + 1))
-        self.send_header("Cache-Control", "no-cache")
+        # generated media never changes once written: let the browser keep it (replays and recordings stay smooth)
+        media = p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp", ".mp4", ".webm", ".mp3", ".wav", ".woff2", ".ttf")
+        self.send_header("Cache-Control", "max-age=900" if media else "no-cache")
         self.end_headers()
         with open(p, "rb") as f:
             f.seek(start)

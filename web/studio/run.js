@@ -89,7 +89,7 @@ function renderConcepts(s) {
   if (!changed('concepts', s.concepts)) return;
   const cb = $('#concepts .cb');
   if (!s.concepts.length) { cb.innerHTML = `<div class="empty" style="min-height:300px"><div><div class="spin"></div>${s.plan ? 'ComfyUI is painting the concept board…' : 'Waiting for the plan'}</div></div>`; return; }
-  cb.innerHTML = `<div class="concepts">${s.concepts.map((u, i) => `<div class="c${popCls('c' + u)}"><img src="${u}" alt=""><span class="chip sun lbl">concept ${i + 1}</span></div>`).join('')}</div>`;
+  cb.innerHTML = `<div class="concepts">${s.concepts.map((u, i) => `<div class="c${popCls('c' + u)}"><img src="${u}" alt="" onload="this.classList.add('ld')"><span class="chip sun lbl">concept ${i + 1}</span></div>`).join('')}</div>`;
 }
 
 function renderAssets(s) {
