@@ -184,7 +184,9 @@
   "repair_2": 46.1,
   "scaffold": 3.1
  },
- "operator_interventions": [],
+ "operator_interventions": [
+  "operator re-ran version selection and the repair rounds (--redo eval_v0) after an LLM outage had left them unjudged"
+ ],
  "mapping": {
   "pitch": "Canyon Runner: a desert canyon hover-bike time trial. Rip through red-rock canyons at sunset on a hover-bike, chaining boost pads and hitting every checkpoint before the clock runs out. Warm orange stone, long shadows, dust trails, speed lines.",
   "notes": "Hover-bike \u2192 the kit's closest vehicle is the kart player on a race_track with a chase camera; the hover fantasy is sold by the sleek teal/amber kart colours, chase-cam speed, dust trail and boost pads rather than a literal bike model. Desert canyon \u2192 the race_track level dressed with cactus, rock, ruins and the totem/sun-stone props, since no canyon level kind exists; the 'sunset' look is chosen over 'desert' because the pitch's mood is explicitly golden hour \u2014 warm light, long shadows, peach-to-violet sky \u2014 and the desert palette is carried by the level dressing and the generated sky panorama. Time trial \u2192 timer + goal gate + checkpoints with laps/opponents at 0 (no AI racers); the 150s clock is the pressure, lives 3 covers canyon falls, and 0 enemies keeps the loop a pure speed run. Speed lines and dust trails map directly onto FX.speedLines and FX.trail/dust.",

@@ -180,7 +180,9 @@
   "repair_2": 288.8,
   "scaffold": 1.1
  },
- "operator_interventions": [],
+ "operator_interventions": [
+  "operator re-ran the build stage (--redo build) after an LLM outage had failed the builder and both repairs"
+ ],
  "mapping": {
   "pitch": "Frostbeak: a little penguin waddles and belly-slides across a snowy mountain, hopping between icy ledges and frozen floating floes to collect glittering fish, dodging rolling snowballs, and reaching the summit igloo. Crisp blue-white snow, pink dawn sky, cosy and playful.",
   "notes": "The kit has no penguin, so the chibi platformer character stands in, tinted dark navy body with a pink scarf accent (Player.makeCharacter colors) to read as Frostbeak. The snowy mountain of floating floes maps to the 'sky_islands' level: the floating islands become frozen floes and the topmost island becomes the summit, where the goal portal stands in for the igloo doorway. The collectible catalog has no fish tag, so the glittering fish are placed as glowing 'orb' pickups labeled 'Fish', while the HUD counter uses the kit's real 'fish' icon so the score reads as fish. Rolling snowballs are 'patrol' enemies dressed as white rolling balls on the bridges. Belly-sliding is expressed through the platformer's fast run, squash & stretch and a slide-whoosh SFX, since the kit has no dedicated slide mechanic. The pink dawn sky comes from the generated sky panorama plus the snow look preset with fog tuned to the horizon.",

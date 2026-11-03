@@ -186,7 +186,10 @@
   "repair_2": 365.6,
   "scaffold": 6.1
  },
- "operator_interventions": [],
+ "operator_interventions": [
+  "operator re-ran the asset stage for the 2 splats that failed (--backfill-assets) after a .spz conversion fix",
+  "operator re-ran the build from the scaffold stage (--redo scaffold) so game.js places the splats"
+ ],
  "mapping": {
   "pitch": "Lagoon Rush: a sunny tropical jet-boat race. Skim across a turquoise lagoon past palm beaches, a striped lighthouse and buoy-lined lanes, hit boost pads and a big jump ramp, and beat three rival boats over three laps. Bright, splashy, summery, toon colours.",
   "notes": "The lagoon level kind is a direct match for the pitch's turquoise lagoon, palm beaches and buoy-lined lanes, and the boat player kit stands in for the jet boat with a chase camera per the kit's boat convention. The striped lighthouse and buoys aren't part of the pre-dressed lagoon, so they're added as two generated voxel props: one lighthouse as the course landmark and eight striped buoys scattered along the lane. Boost pads and the jump ramp come from the level's boost/ramp placements plus the 'boost' hazard. The three rival boats are the race's AI opponents, not enemies, so enemies is 0. The kit has no 'fish' collectible tag, so the starfish pickups use the 'star' tag with a Starfish label and a starfish HUD icon. No lives and no timer: losing simply means finishing behind a rival, keeping the loop a pure, readable race.",

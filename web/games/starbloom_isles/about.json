@@ -185,7 +185,8 @@
   "operator re-ran version selection and the repair rounds (--redo eval_v0) after fixing a judge-selection bug in the pipeline",
   "operator re-ran the asset stage for the 4 sound effects and 2 props that had failed (--backfill-assets) after the sfx-length fix",
   "thumb.jpg replaced by hand with a later playtest frame of the same build",
-  "operator re-ran the build from the scaffold stage (--redo scaffold) so game.js places the Gaussian-splat landmarks generated afterwards"
+  "operator re-ran the build from the scaffold stage (--redo scaffold) so game.js places the Gaussian-splat landmarks generated afterwards",
+  "operator re-ran the build stage (--redo build) with a builder brief that keeps the generated splats"
  ],
  "mapping": {
   "pitch": "Starbloom Isles: a bright, juicy toon 3D platformer. A little fox hops across floating sky islands, rope bridges and moving platforms collecting glowing star blooms, stomping grumpy slimes, and reaching the beacon portal on the last island. Cheerful, saturated, sunny.",

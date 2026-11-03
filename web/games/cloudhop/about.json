@@ -189,7 +189,8 @@
  },
  "operator_interventions": [
   "operator re-ran the asset stage for the sound effects and props that had failed (--backfill-assets) after the sfx-length and Idol-token fixes",
-  "operator re-ran the build from the scaffold stage (--redo scaffold) so game.js places the Gaussian-splat landmarks generated afterwards"
+  "operator re-ran the build from the scaffold stage (--redo scaffold) so game.js places the Gaussian-splat landmarks generated afterwards",
+  "operator re-ran the build stage (--redo build) with a builder brief that keeps the generated splats"
  ],
  "mapping": {
   "pitch": "Cloudhop Meadows: a bright, juicy 3D platformer across floating sky islands. Run, double-jump and dash between candy-coloured islands and wobbly mushroom platforms, collect glowing star seeds, dodge spinning thorn bars, and reach the giant blooming flower portal at the top. Cheerful music, a bouncy HUD with a seed counter and timer.",

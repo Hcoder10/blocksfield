@@ -530,7 +530,8 @@ def main() -> int:
     ap.add_argument("--no-assets", action="store_true", help="skip the art stage (kits' procedural fallbacks)")
     ap.add_argument("--intervention", action="append", default=[],
                     help="record a hand edit a person made to this game (about.json operator_interventions); "
-                         "repeatable; recorded even with no other work")
+                         "repeatable; on its own it only records (no build), with --redo / --backfill-assets "
+                         "it records and runs")
     ap.add_argument("--backfill-assets", action="store_true",
                     help="only (re)try the plan's assets that are missing from the manifest, then stop (the game "
                          "picks them up on its next load; nothing is rebuilt)")
@@ -563,6 +564,9 @@ def main() -> int:
             d = json.loads(about.read_text(encoding="utf-8"))
             d["operator_interventions"] = [x["what"] for x in log]
             about.write_text(json.dumps(d, indent=1, default=str), encoding="utf-8")
+        if not (a.redo or a.backfill_assets):
+            print(f"recorded {len(a.intervention)} intervention(s) for {a.id}; nothing else to do")
+            return 0
     from harness.workflow import Workflow
     counts: dict = {}
     if a.dry_run:
