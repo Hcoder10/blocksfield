@@ -1,0 +1,26 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>cast render template (not published)</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}</style>
+<script type="importmap">{"imports":{"three":"../vendor/three/three.module.js",
+ "three/addons/":"../vendor/three/addons/","kit":"../kit/index.js"}}</script>
+</head><body><script type="module">
+// Every Player.SPECIES in one row, rendered by ThreeKit itself (deploy/make_cast.py screenshots this for the landing page).
+import * as K from 'kit';
+const T = K.THREE;
+const game = await K.createGame({ seed: 3 });
+K.Look.apply(game, 'toon_bright');
+const ground = new T.Mesh(new T.CircleGeometry(60, 64), K.Look.material(game, { color: '#8fd16a' }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; game.scene.add(ground);
+const list = K.Player.SPECIES;
+const chars = list.map((sp, i) => {
+  const c = K.Player.makeCharacter(game, {}, { species: sp });
+  c.object.position.set((i - (list.length - 1) / 2) * 1.32, 0, (i % 2) * -0.35);
+  c.object.rotation.y = 0.18 * Math.sign((list.length - 1) / 2 - i);
+  game.scene.add(c.object);
+  return c;
+});
+game.update((dt) => { for (const c of chars) c.animate(dt, { speed: 0, vy: 0, grounded: true, mode: 'idle', vel: new T.Vector3() }); });
+game.camera.fov = 22; game.camera.updateProjectionMatrix();
+game.camera.position.set(0, 1.9, 11.2); game.camera.lookAt(0, 0.8, 0);
+game.start();
+setTimeout(() => { window.__kit = { ready: true, species: list, state: () => ({}) }; }, 1200);
+</script></body></html>

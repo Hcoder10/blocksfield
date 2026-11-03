@@ -34,7 +34,7 @@ sys.path.insert(0, str(ROOT / "deploy"))
 import build_index  # noqa: E402
 
 SKIP_SITE = shutil.ignore_patterns("*.py", "__pycache__", "*.pyc", ".DS_Store")
-SKIP_SITE_DIR = shutil.ignore_patterns("*.py", "__pycache__", "*.pyc", ".DS_Store", "og-card.html")
+SKIP_SITE_DIR = shutil.ignore_patterns("*.py", "__pycache__", "*.pyc", ".DS_Store", "og-card.html", "cast-card.html")
 SKIP_KIT = shutil.ignore_patterns("docs", "*.md", "__pycache__", "*.pyc", ".DS_Store")
 SKIP_GAME = shutil.ignore_patterns("*.webm", "__pycache__", "*.pyc", ".DS_Store")
 

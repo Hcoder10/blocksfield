@@ -181,6 +181,12 @@ section { position: relative; }
   background: var(--sun); border: 3px solid var(--ink); border-radius: 12px; box-shadow: 0 4px 0 var(--ink); }
 .gen-eq .x { color: var(--tomato); margin: 0 .12em; }
 .gen-eq .tail { color: var(--ink-2); }
+.cast { margin: 0 0 34px; background: var(--white); border: 3px solid var(--ink); border-radius: var(--r);
+  box-shadow: var(--shadow); overflow: hidden; }
+.cast img { width: 100%; height: auto; border-bottom: 3px solid var(--ink); }
+.cast figcaption { padding: 14px 20px; font-size: 14.5px; color: var(--ink-2); }
+.cast figcaption b { color: var(--ink); }
+@media (max-width: 560px) { .cast img { height: 150px; object-fit: cover; } }
 .gen-grid { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 34px; align-items: start; }
 .palette { display: grid; gap: 22px; padding: 26px; background: var(--white); border: 3px solid var(--ink);
   border-radius: var(--r); box-shadow: var(--shadow); }
