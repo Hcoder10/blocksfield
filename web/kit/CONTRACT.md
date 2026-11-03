@@ -75,6 +75,8 @@ game.start();
   `Level.build` creates the art and the colliders (through physics.js) but NOT the gameplay objects: it returns their
   placements; `Gameplay.rules` spawns collectibles/checkpoints/hazards/goal from them. A game can add its own
   placements before calling rules (e.g. `level.collectibles.push(...)`).
+- Custom levels: `Level.compose(game, spec)` (level.js) builds a level from `spec.pieces` (Level.PIECES) and returns the
+  same `level` object (kind 'custom') plus `level.issues` / `level.issueText`; see docs/Level.md "Compose your own level".
 - Level placement semantics (level.js, binding): `spawnYaw` 0 faces +Z (`yaw = atan2(dx, dz)`). `route` points sit ON
   the walking surface; every route jump is <= 5 u gap and <= 2.5 u rise (jump apex 4.5, run 12 u/s). Collectible
   tags: `coin` (on/over the route), `gem` (bonus, off-route). Hazard types emitted: `void {y}` (all kinds; same as

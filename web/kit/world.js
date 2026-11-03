@@ -143,6 +143,12 @@ export function colliderBall(game, center, r, info = {}) {
 
 // registry of walkable surfaces (islands, ground) so foliage/props/water can find heights
 function surfaces(game) { return (game._kitSurfaces = game._kitSurfaces || []); }
+/** World.addSurface(game, {heightAt(x, z) -> y | null}) registers a walkable surface (heightAt, foliage, water use it) */
+export function addSurface(game, s) {
+  if (!s || typeof s.heightAt !== 'function') throw new Error('World.addSurface(game, surface): surface needs heightAt(x, z)');
+  surfaces(game).push(s);
+  return s;
+}
 /** World.heightAt(game, x, z) -> highest kit surface height at (x, z), or null */
 export function heightAt(game, x, z) {
   let best = null;
@@ -229,7 +235,7 @@ export function island(game, opts = {}) {
   const SR = style === 'floating' ? 9 : 5;
   for (let k = 0; k <= SR; k++) {
     let t = k / SR, scale, y;
-    if (k === 0) { scale = 0.985; y = -0.25; }
+    if (k === 0) { scale = style === 'ground' ? 1.0 : 0.985; y = -0.25; }
     else if (k === 1) { scale = 0.97; y = -0.9; }
     else if (style === 'floating') {
       const u = (k - 1) / (SR - 1);
@@ -270,6 +276,7 @@ export function island(game, opts = {}) {
     return cc;
   };
   const pushTri = (a, b, c) => {
+    if (style === 'ground') { const t = b; b = c; c = t; }      // widening sides: keep the faces pointing outward
     sv.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
     const col = sideColor((a.y + b.y + c.y) / 3, (a.x + b.x + c.x) / 3, (a.z + b.z + c.z) / 3);
     for (let i = 0; i < 3; i++) sc.push(col.r, col.g, col.b);

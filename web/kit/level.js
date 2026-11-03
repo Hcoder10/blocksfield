@@ -1358,3 +1358,348 @@ export function validate(level) {
   }
   return issues;
 }
+
+// ------------------------------------------------------------------------------------------------ compose (custom levels)
+export const PIECES = ['island', 'platform', 'cliff', 'pillar', 'ramp', 'stairs', 'bridge', 'wall', 'arch', 'tower', 'mover', 'water'];
+const ON_ROUTE = new Set(['island', 'platform', 'cliff', 'pillar', 'ramp', 'stairs', 'bridge']);
+const HAZARD_TYPES = ['void', 'spikes', 'spinner', 'saw', 'lava', 'killzone', 'bounce', 'boost', 'crumble', 'enemy', 'wind'];
+
+function vecOf(v, what) {
+  if (v == null) return null;
+  if (v.isVector3) return v.clone();
+  if (Array.isArray(v) && v.length === 3 && v.every(n => typeof n === 'number' && isFinite(n))) return V(v[0], v[1], v[2]);
+  if (typeof v === 'object' && isFinite(v.x) && isFinite(v.y) && isFinite(v.z)) return V(v.x, v.y, v.z);
+  throw new Error(`Level.compose: ${what} must be [x, y, z] (numbers), got ${JSON.stringify(v)}`);
+}
+const circleSurf = (c, r) => ({ heightAt: (x, z) => Math.hypot(x - c.x, z - c.z) <= r ? c.y : null });
+function stripSurf(a, b, halfW) {         // a straight walkway from a to b (ramp, stairs, bridge deck)
+  const d = V(b.x - a.x, 0, b.z - a.z), L = d.length() || 1e-6; d.divideScalar(L);
+  return { heightAt(x, z) {
+    const px = x - a.x, pz = z - a.z, t = px * d.x + pz * d.z, s = Math.abs(-px * d.z + pz * d.x);
+    if (t < -0.3 || t > L + 0.3 || s > halfW) return null;
+    return a.y + (b.y - a.y) * THREE.MathUtils.clamp(t / L, 0, 1);
+  } };
+}
+function boxSurf(c, hw, hd, yaw) {
+  const cs = Math.cos(yaw), sn = Math.sin(yaw);
+  return { heightAt(x, z) {
+    const px = x - c.x, pz = z - c.z, lx = px * cs - pz * sn, lz = px * sn + pz * cs;
+    return Math.abs(lx) <= hw && Math.abs(lz) <= hd ? c.y : null;
+  } };
+}
+
+/** walk a route segment over the real surfaces: the longest unsupported run (a jump) and how far up the jump goes */
+function probeSegment(game, a, b) {
+  const L = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(2, Math.ceil(L / 0.4));
+  const lo = Math.min(a.y, b.y), hi = Math.max(a.y, b.y);
+  let gap = 0, run = 0, worst = { gap: 0, rise: 0, from: a.clone(), to: b.clone() }, lastSup = a.clone(), runStart = null;
+  let ledge = 0;
+  let prevH = a.y;
+  for (let k = 1; k <= n; k++) {
+    const t = k / n, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
+    const h = World.heightAt(game, x, z);
+    const sup = h != null && h >= lo - 1.2 && h <= hi + 1.2;
+    if (!sup) {
+      if (run === 0) runStart = lastSup.clone();
+      run += L / n;
+    } else {
+      const here = V(x, h, z);
+      if (run > 0) {
+        if (run > worst.gap) worst = { gap: run, rise: h - runStart.y, from: runStart, to: here.clone() };
+        run = 0;
+      } else if (h - prevH > ledge) ledge = h - prevH;
+      lastSup = here; prevH = h;
+    }
+  }
+  if (run > worst.gap) worst = { gap: run, rise: b.y - (runStart ? runStart.y : a.y), from: runStart || a.clone(), to: b.clone() };
+  worst.ledge = ledge;
+  return worst;
+}
+
+/**
+ * Level.compose(game, spec) -> level (same object as Level.build, plus level.issues)
+ * spec: { ground: {style, size, y, hills} | null (null/absent = floating level over a cloud sea),
+ *   pieces: [{type, position, size, rotationY, from, to, style, color, route}], route: [[x,y,z], ...] (optional),
+ *   spawn: [x,y,z], goal: [x,y,z] | true (= last route point) | false, collectibles: 'along_route' | number | [[x,y,z],...],
+ *   hazards: [{type, position, ...}], dressing: 'auto' | 'none', autofix: true, seed }
+ * See docs/Level.md "Compose your own level" for every piece type.
+ */
+export function compose(game, spec = {}) {
+  if (!game || !game.scene) throw new Error('Level.compose(game, spec): first argument must be the game from createGame()');
+  if (!spec || !Array.isArray(spec.pieces) || !spec.pieces.length)
+    throw new Error('Level.compose: spec.pieces must be a non-empty array, e.g. [{ type: "island", position: [0, 0, 0], size: 10 }]');
+  if (!game.look) Look.apply(game, 'toon_bright');
+  World.reset(game);
+  const seed = spec.seed ?? 1, rnd = rng32(seed * 7919 + 3);
+  const group = new THREE.Group(); group.name = 'kit:level:custom';
+  game.scene.add(group);
+  const level = {
+    kind: 'custom', size: 'custom', seed, spawn: V(0, 2, 0), spawnYaw: 0, bounds: new THREE.Box3(), route: [], checkpoints: [],
+    collectibles: [], hazards: [], movers: [], goal: null, track: null, group, colliders: [], killY: -40, water: null, issues: [],
+    pieces: [],
+  };
+  const ctx = { group };
+  const issue = (severity, piece, message) => level.issues.push({ severity, piece, message });
+  const dressing = spec.dressing ?? 'auto';
+  const prev = World._collect(level.colliders);
+  try {
+    // ground
+    let ground = null, gy0 = null;
+    if (spec.ground) {
+      const g = spec.ground === true ? {} : spec.ground;
+      const STY = ['grass', 'sand', 'snow', 'dirt', 'cobble'];
+      if (g.style && !STY.includes(g.style)) throw new Error(`Level.compose: ground.style "${g.style}" is not a style; styles: ${STY.join(', ')}`);
+      gy0 = g.y ?? 0;
+      ground = World.ground(game, { ...P(ctx), size: g.size ?? 260, center: V(0, gy0, 0), style: g.style || 'grass', flat: (g.size ?? 260) * 0.36,
+        hills: g.hills ?? 14, bumps: 0.25, seed: seed + 3 });
+      level.ground = ground;
+    }
+    const floorAt = (x, z) => ground ? (ground.heightAt(x, z) ?? gy0) : null;
+    // pieces
+    const anchors = [];      // route anchors in piece order: {p, piece}
+    const waterPieces = [];
+    spec.pieces.forEach((pc, i) => {
+      if (!pc || typeof pc !== 'object') throw new Error(`Level.compose: pieces[${i}] must be an object like { type: "platform", position: [x, y, z] }`);
+      const type = pc.type;
+      if (!PIECES.includes(type)) throw new Error(`Level.compose: pieces[${i}].type "${type}" is not a piece type; types: ${PIECES.join(', ')}`);
+      const need = (k) => { const v = vecOf(pc[k], `pieces[${i}].${k} (${type})`); if (!v) throw new Error(`Level.compose: pieces[${i}] (${type}) needs ${k}: [x, y, z]`); return v; };
+      const yaw = pc.rotationY ?? pc.yaw ?? 0;
+      const rec = { i, type, top: null, surf: null };
+      const onRoute = pc.route ?? ON_ROUTE.has(type);
+      const add = (p) => { if (onRoute) anchors.push({ p, piece: i, type }); };
+      switch (type) {
+        case 'island': case 'cliff': {
+          const p = need('position'), r = Math.max(2.5, typeof pc.size === 'number' ? pc.size : (type === 'cliff' ? 8 : 9));
+          const fl = floorAt(p.x, p.z);
+          const depth = type === 'cliff' || fl != null ? Math.max(2, p.y - (fl ?? p.y - r) + 1.5) : (pc.depth ?? r * 0.9);
+          const isl = World.island(game, { ...P(ctx), position: p, radius: r, depth, style: type === 'cliff' || fl != null ? 'ground' : 'floating',
+            waterfall: !!pc.waterfall, seed: seed * 31 + i, irregular: type === 'cliff' ? 0.2 : 0.14 });
+          rec.island = isl; rec.top = isl.surfacePoint(p.x, p.z); rec.r = isl.minRadius;
+          add(rec.top);
+          break;
+        }
+        case 'platform': {
+          const p = need('position');
+          if (Array.isArray(pc.size) || pc.style === 'box') {
+            const sz = Array.isArray(pc.size) ? pc.size : [4, 1, 4];
+            World.prop(game, 'platform_box', { ...P(ctx), position: p, size: [sz[0], sz[1] ?? 1, sz[2] ?? sz[0]], yaw, color: pc.color });
+            World.addSurface(game, boxSurf(p, sz[0] / 2, (sz[2] ?? sz[0]) / 2, yaw)); rec.r = Math.min(sz[0], sz[2] ?? sz[0]) / 2;
+          } else {
+            const r = Math.max(1.2, pc.size ?? 2.2);
+            World.prop(game, 'platform_round', { ...P(ctx), position: p, radius: r, thick: 0.8, color: pc.color });
+            World.addSurface(game, circleSurf(p, r)); rec.r = r;
+          }
+          rec.top = p; add(p);
+          break;
+        }
+        case 'pillar': {
+          const p = need('position'), r = Math.max(1.2, pc.size ?? 1.8);
+          const base = floorAt(p.x, p.z) ?? (p.y - (pc.height ?? 7));
+          const h = Math.max(1, p.y - base - 0.4);
+          World.prop(game, 'pillar', { ...P(ctx), position: V(p.x, base, p.z), height: h, scale: 1, color: pc.color });
+          World.prop(game, 'platform_round', { ...P(ctx), position: p, radius: r, thick: 0.5, color: pc.color || 'stone' });
+          World.addSurface(game, circleSurf(p, r)); rec.top = p; rec.r = r; add(p);
+          break;
+        }
+        case 'ramp': case 'stairs': case 'bridge': {
+          let a = need('from'), b = need('to');
+          const w = pc.width ?? (type === 'bridge' ? 2.8 : 3.6);
+          const Lh = Math.hypot(b.x - a.x, b.z - a.z);
+          if (Lh < 1) throw new Error(`Level.compose: pieces[${i}] (${type}) from and to are only ${Lh.toFixed(1)} u apart; make them at least 2 u apart`);
+          if (type === 'bridge') {
+            World.prop(game, 'bridge', { ...P(ctx), from: a, to: b, width: w, sag: pc.sag ?? Math.min(0.6, Lh * 0.03) });
+          } else {
+            const lowA = a.y <= b.y, lo = lowA ? a : b, hiP = lowA ? b : a, h = hiP.y - lo.y;
+            if (h / Lh > 1.1) issue('warning', i, `piece ${i} (${type}) is very steep (${h.toFixed(1)} up over ${Lh.toFixed(1)} across); make it longer`);
+            const mid = lo.clone().lerp(hiP, 0.5).setY(lo.y);
+            if (h < 0.25) World.prop(game, 'platform_box', { ...P(ctx), position: mid.setY(lo.y), size: [w, 0.6, Lh], yaw: Math.atan2(hiP.x - lo.x, hiP.z - lo.z), color: pc.color });
+            else if (type === 'ramp') World.prop(game, 'ramp', { ...P(ctx), position: mid, yaw: Math.atan2(-(hiP.z - lo.z), hiP.x - lo.x), length: Lh, width: w, height: h, color: pc.color });
+            else World.prop(game, 'stairs', { ...P(ctx), position: mid, yaw: Math.atan2(hiP.x - lo.x, hiP.z - lo.z), depth: Lh, width: w, height: h, steps: Math.max(3, Math.round(h / 0.5)), color: pc.color });
+          }
+          World.addSurface(game, stripSurf(a, b, w / 2));
+          rec.from = a; rec.to = b; rec.top = a.clone().lerp(b, 0.5); rec.r = w / 2;
+          if (onRoute) anchors.push({ p: a, piece: i, type, pair: b });
+          break;
+        }
+        case 'wall': {
+          const p = need('position');
+          World.prop(game, 'wall', { ...P(ctx), position: p, yaw, length: pc.length ?? (typeof pc.size === 'number' ? pc.size : 8), height: pc.height ?? 2.4, color: pc.color });
+          rec.top = p; break;
+        }
+        case 'arch': { const p = need('position'); World.prop(game, 'arch', { ...P(ctx), position: p, yaw, width: pc.width ?? 6, height: pc.height ?? 5, color: pc.color }); rec.top = p; break; }
+        case 'tower': { const p = need('position'); World.prop(game, 'tower', { ...P(ctx), position: p, height: pc.height ?? (typeof pc.size === 'number' ? pc.size : 12), radius: pc.radius ?? 2.6, color: pc.color }); rec.top = p; break; }
+        case 'mover': {
+          const p = need('position'), to = need('to'), r = Math.max(1.4, pc.size ?? 2.2);
+          const mesh = World.prop(game, 'platform_round', { ...P(ctx), position: p, radius: r, thick: 0.7, collider: false, color: pc.color });
+          level.movers.push({ mesh, path: [p.clone(), to.clone()], period: pc.period ?? 5, type: 'platform', size: [2 * r, 0.7, 2 * r] });
+          rec.top = p;
+          if (onRoute) issue('warning', i, `piece ${i} (mover) is on the route: the autopilot cannot time movers; add a static path too`);
+          break;
+        }
+        case 'water': {
+          const p = need('position');
+          waterPieces.push({ p, size: typeof pc.size === 'number' ? pc.size : 200 });
+          rec.top = p; break;
+        }
+      }
+      level.pieces.push(rec);
+    });
+
+    // route: explicit points, or the anchors in piece order (ramps/stairs/bridges walked from the end nearest the previous point)
+    let route = [];
+    const routePiece = [];
+    if (Array.isArray(spec.route) && spec.route.length >= 2) {
+      spec.route.forEach((q, k) => {
+        const p = vecOf(q, `route[${k}]`);
+        const h = World.heightAt(game, p.x, p.z);
+        if (h != null && Math.abs(h - p.y) < 1.5) p.y = h;
+        route.push(p); routePiece.push(null);
+      });
+    } else {
+      for (const an of anchors) {
+        if (an.pair) {
+          const last = route[route.length - 1];
+          const [s, e] = !last || last.distanceTo(an.p) <= last.distanceTo(an.pair) ? [an.p, an.pair] : [an.pair, an.p];
+          route.push(s.clone(), e.clone()); routePiece.push(an.piece, an.piece);
+        } else { route.push(an.p.clone()); routePiece.push(an.piece); }
+      }
+    }
+    if (route.length < 2) throw new Error('Level.compose: the route needs at least 2 points: add 2+ standable pieces (island, platform, cliff, pillar, ramp, stairs, bridge) or give spec.route');
+    if (spec.spawn) { route.unshift(vecOf(spec.spawn, 'spawn')); routePiece.unshift(null); }
+    let goalP = null;
+    if (spec.goal !== false) {
+      goalP = spec.goal && spec.goal !== true ? vecOf(spec.goal, 'goal') : route[route.length - 1].clone();
+      if (route[route.length - 1].distanceTo(goalP) > 0.5) { route.push(goalP.clone()); routePiece.push(null); }
+    }
+    // validate every leg on the real geometry; auto-fix with stepping platforms; add take-off / landing points
+    const label = (k) => routePiece[k] == null ? `route point ${k}` : `piece ${routePiece[k]} (${spec.pieces[routePiece[k]].type})`;
+    const out = [route[0].clone()];
+    const jumps = [];
+    const autofix = spec.autofix !== false;
+    for (let k = 1; k < route.length; k++) {
+      const a = out[out.length - 1], b = route[k];
+      let pr = probeSegment(game, a, b);
+      const bad = () => pr.gap > MAX_GAP || (pr.gap > 0.3 && pr.rise > MAX_RISE) || pr.ledge > MAX_RISE;
+      if (bad()) {
+        const what = pr.gap > 0.3 ? `${pr.gap.toFixed(1)} u across${pr.rise > 0.3 ? ` and ${pr.rise.toFixed(1)} u up` : ''}` : `a ${pr.ledge.toFixed(1)} u ledge`;
+        const msg = `${label(k)} is ${what} from ${label(k - 1)}: the max jump is ${MAX_GAP} u across and ${MAX_RISE} u up; move it closer, lower it, or add a 'bridge', 'ramp' or 'stairs' piece between them`;
+        const from = pr.gap > 0.3 ? pr.from : a, to = pr.gap > 0.3 ? pr.to : b;
+        const dx = Math.hypot(to.x - from.x, to.z - from.z), dy = to.y - from.y;
+        let n = 1;
+        const pr2 = 1.8;
+        while (n <= 8 && ((dx - n * 2 * pr2) / (n + 1) > MAX_GAP - 1.0 || dy / (n + 1) > MAX_RISE - 0.4)) n++;
+        if (autofix && n <= 8) {
+          let prevP = from.clone();
+          const dir = V(to.x - from.x, 0, to.z - from.z).normalize(), side = V(dir.z, 0, -dir.x);
+          for (let s = 1; s <= n; s++) {
+            const t = s / (n + 1);
+            const q = from.clone().lerp(to, t);
+            q.y = from.y + dy * t;
+            if (dx < 2 * pr2 * n + 2) q.addScaledVector(side, (s % 2 ? 1 : -1) * 2.6);     // tall climb, little room: zig-zag
+            World.prop(game, 'platform_round', { ...P(ctx), position: q, radius: pr2, thick: 0.6 });
+            World.addSurface(game, circleSurf(q, pr2));
+            out.push(q.clone()); jumps.push({ from: prevP, to: q.clone() }); prevP = q.clone();
+          }
+          jumps.push({ from: prevP, to: to.clone() });
+          issue('fixed', routePiece[k], msg.replace(/; move it closer.*/, `; added ${n} stepping platform${n > 1 ? 's' : ''} between them`));
+          out.push(b.clone());
+          continue;
+        }
+        issue('error', routePiece[k], msg);
+      } else if (pr.gap > 0.3) {
+        // a real jump: route through the take-off and landing edges so the autopilot jumps at the right place
+        const dir = V(pr.to.x - pr.from.x, 0, pr.to.z - pr.from.z).normalize();
+        const t0 = pr.from.clone().addScaledVector(dir, -0.6), t1 = pr.to.clone().addScaledVector(dir, 0.8);
+        const h0 = World.heightAt(game, t0.x, t0.z), h1 = World.heightAt(game, t1.x, t1.z);
+        if (h0 != null) t0.y = h0; if (h1 != null) t1.y = h1;
+        if (t0.distanceTo(a) > 0.8) out.push(t0);
+        out.push(t1); jumps.push({ from: t0, to: t1 });
+      }
+      if (out[out.length - 1].distanceTo(b) > 0.5) out.push(b.clone());
+    }
+    level.route = out;
+    level.spawn = (spec.spawn ? vecOf(spec.spawn, 'spawn') : out[0].clone()).add(V(0, 1, 0));
+    level.spawnYaw = yawTo(out[0], out[Math.min(2, out.length - 1)]);
+    if (goalP) level.goal = { position: goalP.clone().add(V(0, 0.5, 0)), radius: 3 };
+    // checkpoints: every ~40 u of route
+    { let acc = 0; for (let k = 1; k < out.length - 1; k++) { acc += out[k].distanceTo(out[k - 1]); if (acc > 40) { level.checkpoints.push({ position: out[k].clone().add(V(0, 0.1, 0)), radius: 3 }); acc = 0; } } }
+    // collectibles
+    const cs = spec.collectibles ?? 'along_route';
+    if (Array.isArray(cs)) cs.forEach((c, k) => level.collectibles.push(c && c.position ? { position: vecOf(c.position, `collectibles[${k}].position`), tag: c.tag || 'coin' } : { position: vecOf(c, `collectibles[${k}]`), tag: 'coin' }));
+    else {
+      const n = typeof cs === 'number' ? cs : (spec.collectibleCount ?? 30);
+      const arcs = [];
+      for (const j of jumps) for (let s = 1; s <= 2; s++) { const t = s / 3, q = j.from.clone().lerp(j.to, t); q.y += 1.3 + Math.sin(t * Math.PI) * 2.2; arcs.push(q); }
+      const trail = alongRoute(out, Math.max(0, n - arcs.length)).map(q => q.add(V(0, 1.2, 0)));
+      for (const q of [...arcs, ...trail].slice(0, n)) level.collectibles.push({ position: q, tag: 'coin' });
+    }
+    // hazards
+    for (const [k, h] of (spec.hazards || []).entries()) {
+      if (!h || !HAZARD_TYPES.includes(h.type)) { issue('warning', null, `hazards[${k}].type "${h && h.type}" is not a hazard type (dropped); types: ${HAZARD_TYPES.join(', ')}`); continue; }
+      const hp = { ...h, position: vecOf(h.position ?? [0, 0, 0], `hazards[${k}].position`) };
+      if (h.type !== 'void' && out.some(r => Math.hypot(r.x - hp.position.x, r.z - hp.position.z) < 1.2 && Math.abs(r.y - hp.position.y) < 2))
+        issue('warning', null, `hazards[${k}] (${h.type}) sits right on the route; the player must jump it (fine for spikes/saw, move it 3 u aside otherwise)`);
+      level.hazards.push(hp);
+    }
+    // water after the geometry (its foam reads the surfaces)
+    for (const w of waterPieces) { World.water(game, { ...P(ctx), level: w.p.y, size: w.size, center: V(w.p.x, 0, w.p.z) }); level.water = { y: w.p.y }; }
+    // bounds, fall plane
+    const pts = [...out, ...level.pieces.map(p => p.top).filter(Boolean)];
+    level.bounds = boundsOf(pts, 10);
+    level.killY = ground ? gy0 - 15 : Math.min(...level.pieces.map(p => p.top ? p.top.y : 0)) - 25;
+    level.hazards.push({ type: 'void', y: level.killY, position: V(0, level.killY, 0) });
+
+    // dressing in the look's style
+    if (dressing !== 'none') {
+      const dense = densify(out, 1.5);
+      World.noPlant(game, dense, 1.9);
+      if (goalP) {
+        World.noPlant(game, [goalP], 4);
+        const back = yawTo(out[Math.max(0, out.length - 3)], goalP);
+        const ah = World.heightAt(game, goalP.x, goalP.z) ?? goalP.y;
+        World.prop(game, 'arch', { ...P(ctx), position: V(goalP.x + Math.sin(back) * 3, ah - 0.1, goalP.z + Math.cos(back) * 3), yaw: back, width: 6, height: 4.5 });
+        const fp = V(goalP.x - Math.cos(back) * 2.8, 0, goalP.z + Math.sin(back) * 2.8); fp.y = (World.heightAt(game, fp.x, fp.z) ?? goalP.y) - 0.1;
+        World.prop(game, 'flag', { ...P(ctx), position: fp, height: 5.5 });
+      }
+      for (const pc of level.pieces) {
+        if (pc.island) {
+          World.foliage(game, { ...P(ctx), area: pc.island, kinds: pc.type === 'cliff' ? { grass: 0.6, bush: 1, rock: 1.2, tree_pine: 0.6 } : { grass: 1, flowers: 1, bush: 1, tree_round: 0.8, tree_pine: 0.4, mushroom: 0.5, rock: 0.4 }, seed: seed + pc.i * 13 });
+          if (pc.r > 7 && rnd() < 0.6) {
+            const a = rnd() * Math.PI * 2, q = pc.island.edgePoint(a, 2.4);
+            if (out.every(r => r.distanceTo(q) > 3)) World.prop(game, ['crate', 'barrel', 'rock', 'chest'][Math.floor(rnd() * 4)], { ...P(ctx), position: q.add(V(0, -0.05, 0)), yaw: a });
+          }
+        }
+        if (pc.type === 'bridge') for (const e of [pc.from, pc.to]) {
+          const d = V(pc.to.x - pc.from.x, 0, pc.to.z - pc.from.z).normalize(), sd = V(d.z, 0, -d.x).multiplyScalar(pc.r + 0.6);
+          for (const sg of [-1, 1]) { const q = e.clone().addScaledVector(sd, sg); const h = World.heightAt(game, q.x, q.z); if (h != null) World.prop(game, 'lamp', { ...P(ctx), position: q.setY(h), height: 2.6 }); }
+        }
+      }
+      const ctr = level.bounds.getCenter(V(0, 0, 0)), span = level.bounds.getSize(V(0, 0, 0)).length() / 2;
+      if (ground) {
+        World.foliage(game, { ...P(ctx), area: { center: ctr, radius: span + 70 }, kinds: { grass: 1, flowers: 1, bush: 1, tree_round: 1.2, tree_pine: 0.8, rock: 0.6 }, density: 0.8,
+          minY: (level.water ? level.water.y : -1e9) + 0.3, seed: seed + 9, focus: out, focusRadius: 35 });
+        World.clouds(game, { ...P(ctx), count: 16, height: 55, center: ctr, radius: span + 140, seed });
+      } else {
+        let minY = Infinity; for (const p of level.pieces) if (p.top) minY = Math.min(minY, p.top.y);
+        World.clouds(game, { ...P(ctx), count: 60, height: minY - 30 - ctr.y, center: ctr, radius: span + 150, below: true, speed: 1.0, seed: seed + 5 });
+        World.clouds(game, { ...P(ctx), count: 14, height: 30, center: ctr, radius: span + 160, speed: 1.6, seed: seed + 6 });
+        for (let k = 0; k < 6; k++) {
+          const a = k / 6 * Math.PI * 2 + rnd(), d = span + 70 + rnd() * 100;
+          const isl = World.island(game, { ...P(ctx), position: V(ctr.x + Math.cos(a) * d, ctr.y - 6 + rnd() * 26, ctr.z + Math.sin(a) * d), radius: 8 + rnd() * 12, seed: 700 + k + seed, collider: false, waterfall: k % 3 === 0 });
+          World.foliage(game, { ...P(ctx), area: isl, kinds: { tree_round: 1.5, tree_pine: 1, bush: 1, grass: 0.25 }, seed: 1900 + k });
+        }
+      }
+    }
+  } finally { World._collect(prev); }
+  group.updateMatrixWorld(true);
+  if (spec.bake !== false) {
+    try { level.batching = World.bake(game, group, { keep: level.movers.map(m => m.mesh) }); }
+    catch (e) { console.warn('[kit] Level.compose: batching failed, keeping separate meshes', e); }
+  }
+  Look.fit(game, level.bounds);
+  game.level = level;
+  level.issueText = level.issues.map(x => `${x.severity}: ${x.message}`);
+  for (const x of level.issues) (x.severity === 'error' ? console.warn : console.info)(`[kit] Level.compose ${x.severity}: ${x.message}`);
+  if (spec.strict && level.issues.some(x => x.severity === 'error')) throw new Error('Level.compose: ' + level.issues.filter(x => x.severity === 'error').map(x => x.message).join(' | '));
+  return level;
+}

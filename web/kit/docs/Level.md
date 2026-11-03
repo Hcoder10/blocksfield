@@ -8,6 +8,8 @@ objects itself: pass the level to `Gameplay.rules` and it spawns coins, checkpoi
 Level.build(game, kind, { size = 'medium', seed = 1, collectibles = 30 }) -> level
 Level.KINDS        // ['sky_islands', 'meadow_course', 'arena', 'town', 'race_track', 'lagoon', 'canyon']
 Level.validate(level) -> []   // list of route problems; [] means every route jump is reachable
+Level.compose(game, spec) -> level   // your OWN layout from pieces (see "Compose your own level" below)
+Level.PIECES       // ['island','platform','cliff','pillar','ramp','stairs','bridge','wall','arch','tower','mover','water']
 ```
 
 | kind | what you get | good for |
@@ -80,3 +82,103 @@ Add your own props on top with `World.prop` (see World.md), e.g. a chest at the 
 - Moving `level.group` after build: colliders stay where they were built.
 - Expecting coins to appear by themselves: `Level.build` only returns placements; `Gameplay.rules` spawns them.
 - Kind names are exact: `sky_islands`, not `skyislands` or `floating_islands`.
+
+## Compose your own level
+
+When no kind fits the pitch (a tower climb, a river canyon, a castle in the sky), lay the level out yourself from
+pieces. `Level.compose` builds them, walks the route over the real geometry, fixes small jump problems with stepping
+platforms, dresses everything in the look's style (foliage, rocks, props, cloud sea or hills) and returns the same
+`level` object as `Level.build`, so Player, Gameplay, Camera, Debug and the autopilot work unchanged.
+
+```js
+Level.compose(game, {
+  ground: { style: 'grass'|'sand'|'snow'|'dirt'|'cobble', y: 0, size: 260, hills: 14 },   // omit = floating level
+  pieces: [ { type, position: [x, y, z], size, rotationY, from, to, route, color }, ... ],
+  route: [[x, y, z], ...],        // optional; default: the standable pieces in the order you list them
+  spawn: [x, y, z],               // optional; default: the first route point
+  goal: true | [x, y, z] | false, // true = the last route point (gets an arch + flag)
+  collectibles: 'along_route' | 30 | [[x, y, z], ...],
+  hazards: [{ type: 'spikes', position: [x, y, z] }, ...],
+  dressing: 'auto' | 'none', autofix: true, strict: false, seed: 1,
+}) -> level            // + level.issues [{severity: 'fixed'|'warning'|'error', piece, message}], level.issueText
+```
+
+**Positions are where you stand**: `position` is the centre of the top surface for island, cliff, platform and
+pillar. Ramp, stairs and bridge use `from` / `to` (the two walkway ends, on the surfaces they join). Wall, arch and
+tower use `position` = their base on the floor.
+
+| type | options | notes |
+|---|---|---|
+| `island` | `size` = radius (9), `waterfall` | floating rock island with grass (with ground: a mesa down to the ground) |
+| `cliff` | `size` = radius (8) | a mesa whose sides reach the ground (or 8 u down) |
+| `platform` | `size` = radius (2.2), or `size: [w, h, d]` for a box, `rotationY` | small stepping platform |
+| `pillar` | `size` = cap radius (1.8) | stone column with a round cap; base on the ground or 7 u down |
+| `ramp` / `stairs` | `from`, `to`, `width` (3.6) | slope or steps between two heights; keep them under 45 degrees |
+| `bridge` | `from`, `to`, `width` (2.8) | rope bridge with lamps; any length |
+| `wall` | `position`, `length` (8), `height` (2.4), `rotationY` | obstacle / castle wall (not on the route) |
+| `arch`, `tower` | `position`, `width`/`height` | landmarks (not on the route) |
+| `mover` | `position`, `to`, `period` (5), `size` | moving platform (not on the route: the autopilot cannot time it) |
+| `water` | `position` = [x, waterLevel, z], `size` (200) | water plane with shore foam; put the ground below it for a river |
+
+Any piece takes `route: false` to keep it out of the route (scenery). **Movement limits**: every route jump must be
+at most **5 u across and 2.5 u up** (jump apex 4.5, run 12 u/s). Gaps up to about 30 u are bridged automatically with
+stepping platforms and reported as `fixed` issues; bigger problems are `error` issues whose message says what to change,
+e.g. `piece 7 (platform) is 9.2 u across from piece 6 (island): the max jump is 5 u across and 2.5 u up; move it closer,
+lower it, or add a 'bridge', 'ramp' or 'stairs' piece between them`. Use `strict: true` to throw instead.
+
+### Example: spiral tower climb
+
+```js
+const pieces = [{ type: 'island', position: [0, 0, 0], size: 10 },
+  { type: 'island', position: [0, -2, 26], size: 6, route: false }, { type: 'tower', position: [0, -2, 26], height: 30 }];
+for (let k = 0; k < 11; k++) {
+  const a = -Math.PI / 2 + k * 0.62;
+  pieces.push({ type: 'pillar', position: [Math.cos(a) * 10, 1.5 + k * 2, 26 + Math.sin(a) * 10], size: k === 10 ? 3.5 : 1.8 });
+}
+const level = K.Level.compose(game, { pieces, goal: true });
+```
+
+### Example: canyon river run
+
+```js
+const level = K.Level.compose(game, {
+  ground: { style: 'sand', y: -3, size: 300, hills: 22 },            // the canyon floor, flooded below
+  pieces: [
+    { type: 'water', position: [30, -1.6, 38], size: 320 },         // the river
+    { type: 'cliff', position: [0, 2, 0], size: 8 },                // start mesa
+    { type: 'platform', position: [0, 1, 12.5], size: 2 }, { type: 'platform', position: [4, 1.5, 17.5], size: 2 },
+    { type: 'platform', position: [9, 2, 22], size: 2 },
+    { type: 'cliff', position: [16, 4, 30], size: 7 },
+    { type: 'bridge', from: [20.8, 4, 32.7], to: [29.2, 4.5, 37.3] },
+    { type: 'cliff', position: [34, 4.5, 40], size: 7 },
+    { type: 'stairs', from: [34, 4.5, 45.5], to: [34, 1, 53] },
+    { type: 'platform', position: [34, 1, 56], size: [6, 4, 6] },
+    { type: 'pillar', position: [34, 2.5, 63] }, { type: 'pillar', position: [30, 4.5, 68] },
+    { type: 'cliff', position: [22, 6, 76], size: 8 },              // goal mesa
+    { type: 'cliff', position: [-22, 11, 6], size: 9, route: false }, // canyon walls either side...
+    { type: 'cliff', position: [38, 13, 24], size: 9, route: false },
+  ],
+  goal: true,
+});
+```
+
+### Example: floating castle
+
+```js
+const level = K.Level.compose(game, { pieces: [
+  { type: 'island', position: [0, 0, 0], size: 9 },                         // gate island
+  { type: 'stairs', from: [0, 0, 6.5], to: [0, 5, 14] },
+  { type: 'island', position: [0, 5, 24], size: 12 },                       // the keep
+  { type: 'arch', position: [0, 5, 15] }, { type: 'wall', position: [0, 5, 33], length: 16 },
+  { type: 'tower', position: [-8, 5, 32], height: 11 }, { type: 'tower', position: [8, 5, 32], height: 11 },
+  { type: 'bridge', from: [9.5, 5, 27.2], to: [24.3, 7, 32.1] },
+  { type: 'island', position: [30, 7, 34], size: 7 },
+  { type: 'pillar', position: [31, 9, 45] }, { type: 'pillar', position: [34, 11, 50.5] },
+  { type: 'island', position: [34, 13, 58], size: 6 },                      // the spire (goal)
+  { type: 'mover', position: [-12, 5, 24], to: [-26, 7, 30] }, { type: 'island', position: [-31, 7, 32], size: 5, route: false },
+], goal: true });
+```
+
+Tips: list the route pieces in the order the player visits them. Keep consecutive standable pieces within about
+5 u edge to edge (or join them with bridge / ramp / stairs). Walls must not cross the route. Read `level.issueText`
+after composing: `fixed` lines are fine, `error` lines need a change.
