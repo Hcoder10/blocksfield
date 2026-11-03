@@ -59,6 +59,10 @@
     if (g.model_calls) meta.push(`${g.model_calls} model calls`);
     if (g.minutes) meta.push(`${g.minutes} min build`);
     const making = `site/game.html?id=${encodeURIComponent(g.id)}`;
+    const badges = [];
+    if (g.custom_level) badges.push('<span class="chip sun">Level laid out by the model</span>');
+    if ((g.mechanics || []).length) badges.push('<span class="chip pink">Custom mechanics</span>');
+    if (g.cutscenes) badges.push(`<span class="chip">${g.cutscenes} cutscene${g.cutscenes > 1 ? "s" : ""}</span>`);
     return `<article class="card reveal${g.dev ? " dev" : ""}">
       ${g.dev ? '<span class="chip ink devlabel">DEV PLACEHOLDER</span>' : ""}
       <a class="media" href="${esc(gameUrl(g, g.play))}" tabindex="-1" aria-hidden="true">${thumb}${video}</a>
@@ -69,6 +73,7 @@
         ${g.pitch ? `<p class="pitch"><span>“${esc(g.pitch)}”</span></p>` : ""}
         ${meta.length ? `<p class="meta">${meta.map((m) => `<span>${m}</span>`).join("")}</p>` : ""}
         ${ops ? `<p class="opsrow">${ops}</p>` : ""}
+        ${badges.length ? `<p class="badges">${badges.join("")}</p>` : ""}
         <div class="actions">
           <a class="btn sm" href="${esc(gameUrl(g, g.play))}"><i class="tri"></i>Play</a>
           ${g.dev && !g.model_calls ? "" : `<a class="btn sm ghost" href="${esc(making)}">How it was made</a>`}
@@ -138,6 +143,29 @@
     show(0);
   }
 
+  // ---- "beyond the kits": up to two real examples (a model-laid level, a custom mechanic); hidden until one exists ----
+  function renderBeyond(games) {
+    const ex = [];
+    const lvl = games.find((g) => g.custom_level);
+    if (lvl) {
+      const lay = lvl.layout && typeof lvl.layout === "object" ? lvl.layout : {};
+      const facts = Object.entries(lay).slice(0, 3).map(([k, v]) => `<li><code>${esc(k)}</code> ${esc(typeof v === "object" ? JSON.stringify(v) : v)}</li>`).join("");
+      ex.push({ g: lvl, badge: '<span class="chip sun">Level laid out by the model</span>',
+        body: `<p>The model placed this level's pieces itself instead of calling a kit preset.</p>${facts ? `<ul>${facts}</ul>` : ""}` });
+    }
+    const mg = games.find((g) => (g.mechanics || []).some((m) => m.how === "custom")) || games.find((g) => (g.mechanics || []).length);
+    if (mg && mg !== lvl) {
+      ex.push({ g: mg, badge: '<span class="chip pink">Custom mechanics</span>',
+        body: `<ul>${mg.mechanics.slice(0, 3).map((m) => `<li><b>${esc(m.name || "mechanic")}</b>${m.how ? ` <span class="how how-${esc(m.how)}">${esc(m.how)}</span>` : ""}</li>`).join("")}</ul>` });
+    }
+    if (!ex.length) return;
+    $("#beyond-grid").innerHTML = ex.slice(0, 2).map(({ g, badge, body }) => `<a class="beyond-ex reveal" href="site/game.html?id=${encodeURIComponent(g.id)}#beyond">
+      ${g.thumbnail ? `<img src="${esc(gameUrl(g, g.thumbnail))}" alt="" loading="lazy">` : ""}
+      <div class="bx"><p class="badges">${badge}</p><h3>${esc(g.title || g.id)}</h3>${body}<span class="go">How it was made →</span></div></a>`).join("");
+    $("#beyond").hidden = false;
+    watchReveals();
+  }
+
   // ---- generalization strip: the planner's option lists, with what the listed games picked ----
   function renderRange(space, games) {
     const dims = [["level_kind", "level kinds", "Level"], ["look", "looks", "Look"], ["player_type", "player types", "Player"],
@@ -151,9 +179,11 @@
     $("#gen-palette").innerHTML = shown.map(([k, label]) => {
       const n = {};
       games.forEach((g) => { if (g[k]) n[g[k]] = (n[g[k]] || 0) + 1; });
-      const used = Object.keys(n).length;
-      return `<div><h4>${esc(label)} <span>· ${used} of ${space[k].length} used so far</span></h4><div class="opts">${space[k].map((o) =>
-        `<span class="opt${n[o] ? " used" : ""}">${esc(o)}${n[o] ? `<i>${n[o]}</i>` : ""}</span>`).join("")}</div></div>`;
+      const extra = Object.keys(n).filter((o) => !space[k].includes(o));  // e.g. "custom": a level the model laid out
+      const inList = Object.keys(n).length - extra.length;
+      return `<div><h4>${esc(label)} <span>· ${inList} of ${space[k].length} used so far${extra.length ? ` + ${extra.map(esc).join(", ")}` : ""}</span></h4><div class="opts">${space[k].map((o) =>
+        `<span class="opt${n[o] ? " used" : ""}">${esc(o)}${n[o] ? `<i>${n[o]}</i>` : ""}</span>`).join("")}${extra.map((o) =>
+        `<span class="opt used extra">${esc(o)}<i>${n[o]}</i></span>`).join("")}</div></div>`;
     }).join("");
     $("#gen-table").innerHTML = `<thead><tr><th>Game</th>${shown.map(([, , h]) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${games.map((g) =>
       `<tr><td>${esc(g.title || g.id)}${g.genre ? `<small>${esc(g.genre)}</small>` : ""}</td>${shown.map(([k]) => `<td><code>${esc(g[k] || "–")}</code></td>`).join("")}</tr>`).join("")}</tbody>`;
@@ -175,6 +205,7 @@
       watchReveals();
       const real = games.filter((g) => !g.dev);
       renderRange(idx.space || {}, real.length ? real : games);
+      renderBeyond(real.length ? real : games);
       const pool = (real.length ? real : games).filter((g) => g.video);
       const first = real[0] || games[0];
       if (first) $("#play-now").href = gameUrl(first, first.play);

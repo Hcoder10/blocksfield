@@ -81,6 +81,21 @@ def game_entry(d: Path) -> dict | None:
     plan = about.get("plan") or {}
     for k in ("look", "level_kind", "player_type", "camera", "ui_style"):
         e[k] = plan.get(k)
+    # tonight's features, each only when recorded: a model-laid level, custom mechanics, generated cutscenes
+    mp = about.get("mapping") or {}
+    chosen = mp.get("chosen") or {}
+    if chosen.get("level_kind"):
+        e["level_kind"] = chosen["level_kind"]  # what the shipped game uses, when recorded
+    e["custom_level"] = e.get("level_kind") == "custom"
+    e["layout"] = mp.get("layout") if e["custom_level"] else None
+    mech = about.get("mechanics")
+    e["mechanics"] = [{"name": m.get("name"), "how": m.get("how") or m.get("implementation") or m.get("kind")}
+                      if isinstance(m, dict) else {"name": str(m), "how": None} for m in mech] if isinstance(mech, list) else []
+    try:
+        assets = json.loads((d / "assets" / "assets.json").read_text(encoding="utf-8"))
+        e["cutscenes"] = sum(1 for v in assets.values() if isinstance(v, dict) and v.get("kind") == "cutscene")
+    except (OSError, ValueError, AttributeError):
+        e["cutscenes"] = 0
     player = plan.get("player") if isinstance(plan.get("player"), dict) else {}
     char = ((about.get("mapping") or {}).get("chosen") or {}).get("character") or plan.get("character")
     if isinstance(char, dict):

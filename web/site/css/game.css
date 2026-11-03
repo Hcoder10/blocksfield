@@ -93,6 +93,26 @@ ul.mnotes { padding-left: 18px; display: grid; gap: 6px; }
 .sound .bar span { display: block; height: 100%; width: 0; background: var(--tomato); }
 
 .failed { margin: 26px 0 0; padding: 14px 18px; border: 2px dashed var(--ink-soft); border-radius: 14px; font-size: 14.5px; color: var(--ink-2); }
+.asset-h { margin: 34px 0 14px; font: 400 26px/1 var(--display); }
+.cuts { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 22px; }
+.cut { margin: 0; }
+.cut video { width: 100%; aspect-ratio: 16 / 9; background: var(--ink); border-bottom: 3px solid var(--ink); display: block; }
+.post-line { margin: 22px 0 0; font-weight: 600; color: var(--ink-2); }
+.beyond-card { margin-bottom: 26px; padding: 24px 26px; background: var(--white); border: 3px solid var(--ink); border-radius: 18px; box-shadow: var(--shadow); }
+.beyond-card h3 { margin: 0 0 10px; }
+.beyond-card h3 .chip { font-size: 14px; }
+.beyond-card > p { margin: 0 0 14px; color: var(--ink-2); }
+.layout-tbl { border-collapse: collapse; font-size: 14.5px; }
+.layout-tbl th { text-align: left; padding: 6px 18px 6px 0; font: 600 13px/1.3 var(--mono); color: var(--ink-soft); vertical-align: top; }
+.layout-tbl td { padding: 6px 0; font: 500 14px/1.4 var(--mono); }
+.mechs { display: grid; gap: 16px; }
+.mech-head { display: flex; align-items: center; gap: 10px; }
+.mech-head b { font-size: 17px; }
+.how { font: 700 11px/1 var(--body); letter-spacing: .1em; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; border: 2px solid var(--ink); background: var(--paper-2); }
+.how-custom { background: var(--tomato); color: var(--white); }
+.how-rule { background: var(--sun); }
+.mech p { margin: 6px 0 0; color: var(--ink-2); font-size: 15px; }
+.snip { margin: 10px 0 0; max-height: 360px; overflow: auto; padding: 14px 16px; background: var(--night); color: #e8e4ff; border: 3px solid #000; border-radius: 12px; font: 500 13px/1.5 var(--mono); }
 .log { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; align-items: start; }
 .panel { padding: 24px 26px; background: var(--night-2); border: 3px solid #000; border-radius: 20px; box-shadow: 0 6px 0 #000; }
 .panel.wide { grid-column: 1 / -1; }

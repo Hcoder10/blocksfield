@@ -95,6 +95,16 @@ def main() -> None:
         "prop_mushroom": {"file": "prop_mushroom.json", "kind": "prop", "prompt": "a red spotted toadstool mushroom",
                           "via": "idol", "parts": 257},
     }
+    for when in ("intro", "win"):
+        shutil.copyfile(OUT / "gameplay.mp4", OUT / "assets" / f"cutscene_{when}.mp4")
+        assets[f"cutscene_{when}"] = {"file": f"cutscene_{when}.mp4", "kind": "cutscene", "when": when,
+                                      "prompt": f"fixture {when} cutscene: the fox looks up at the beacon"}
+    (OUT / "game.js").write_text("// fixture game.js (dev only)\nimport * as K from 'kit';\n"
+                                 "const game = await K.createGame();\nK.Look.apply(game, 'toon_bright');\n\n"
+                                 "// mechanic: bloom chain\nlet chain = 0, chainT = 0;\n"
+                                 "game.on('collect', () => { chain = chainT > 0 ? chain + 1 : 1; chainT = 4;\n"
+                                 "  if (chain >= 3) { player.boost({ jump: 1.4, seconds: 3 }); chain = 0; } });\n"
+                                 "game.update((dt) => { chainT = Math.max(0, chainT - dt); });\n", encoding="utf-8")
     (OUT / "assets" / "assets.json").write_text(json.dumps(assets, indent=1), encoding="utf-8")
     plan = {
         "title": "Fixture Peaks", "tagline": "Hop the floating isles, gather the star blooms",
@@ -131,9 +141,18 @@ def main() -> None:
         "mapping": {"pitch": "a fox collects star blooms on floating isles",
                     "notes": "Floating isles -> sky_islands; warm candy-pastel light -> toon_bright; a fox who jumps -> "
                              "platformer with a follow camera.",
-                    "chosen": {"level_kind": "sky_islands", "look": "toon_bright", "player_type": "platformer",
+                    "chosen": {"level_kind": "custom", "look": "toon_bright", "player_type": "platformer",
                                "camera": "follow", "ui_style": "toon", "collectible": "star",
-                               "collectible_label": "Blooms", "character": {"species": "fox", "accessories": ["scarf"]}}},
+                               "collectible_label": "Blooms", "character": {"species": "fox", "accessories": ["scarf"]}},
+                    "layout": {"pieces_start": 14, "pieces_final": 19, "changed": "added a 5-piece spiral climb to the beacon"},
+                    "builder_overrides": {"level_kind": "sky_islands -> custom: a spiral climb read better than the preset arc"}},
+        "mechanics": [
+            {"name": "bloom chain", "how": "custom", "description": "collecting 3 blooms within 4 s gives a jump boost",
+             "anchor": "// mechanic: bloom chain"},
+            {"name": "beacon lock", "how": "rule", "description": "the beacon opens at 20 blooms", "lines": [1, 4]},
+            {"name": "double jump", "how": "builtin", "snippet": "K.Player.create(game, { type: 'platformer', doubleJump: true })"},
+        ],
+        "post_stages": {"cutscenes": {"model": "LTX-2.5", "clips": 2}},
         "operator_interventions": [],
         "timings_s": {"plan": 41.0, "art": 212.0, "scaffold": 3.0, "build": 640.0, "eval_s0": 70.0, "eval_v0": 66.0,
                       "repair_1": 300.0, "eval_v1": 64.0, "repair_2": 280.0, "eval_v2": 61.0},
