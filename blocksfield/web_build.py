@@ -274,6 +274,11 @@ def repair_brief(plan: dict, catalog_txt: str, findings: str, rnd: int) -> str:
             "severe first, without breaking what works (the strengths). Errors come first: a game with errors is "
             "worth nothing.\n\n"
             f"FINDINGS:\n{findings}\n\n"
+            "Some visual findings are about the kits' own art (the character model, the grass, the HUD frames) and "
+            "cannot be changed from game.js: skip those. Act on what game.js controls: the look preset and its "
+            "overrides (palette, sun, fog, bloom, grade), the UI style, level kind options (size, seed), camera "
+            "options, player colours / character options, placements (props, splats, World props, collectibles, "
+            "hazards, enemies), FX moments on events, banners and dialog.\n\n"
             f"THE GAME PLAN (for intent):\n{json.dumps(plan, indent=1)[:4000]}\n\n"
             f"THE KIT CATALOG:\n{catalog_txt}\n\n"
             "Read game.js first (read_file), make the fixes with edit_file, run play_game to confirm, then `submit`.")
