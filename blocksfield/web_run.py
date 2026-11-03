@@ -399,6 +399,7 @@ class WebBuild:
         from blocksfield import web_play
         b = best["best"]
         about_dir = self.game_dir / "about"
+        shutil.rmtree(about_dir, ignore_errors=True)            # no stale concept frames or prop previews
         about_dir.mkdir(exist_ok=True)
         shots = b.get("shots") or {}
         thumb_src = next((shots[k] for k in sorted(shots, reverse=True) if k.startswith("autopilot_")),
@@ -566,6 +567,16 @@ def main() -> int:
                                        encoding="utf-8")
     if a.redo:
         Stages(run_dir).drop_from(a.redo)
+        if a.redo in ("plan", "art"):
+            # a new plan / new art: nothing generated for the old one may survive (Assets keeps files already on disk)
+            stamp = time.strftime("%m%d_%H%M")
+            for d in (GAMES / a.id / "assets", run_dir / "concept", run_dir / "assets"):
+                if d.exists():
+                    d.rename(d.with_name(f"{d.name}.old_{stamp}")) if d.parent == run_dir else shutil.rmtree(d)
+        if a.redo == "plan":
+            for f in ("journal.jsonl", "interventions.json"):   # the plan call runs again; old hand edits are gone
+                if (run_dir / f).exists():
+                    (run_dir / f).replace(run_dir / f"{f}.old_{time.strftime('%m%d_%H%M')}")
     if a.intervention:
         f = run_dir / "interventions.json"
         log = json.loads(f.read_text(encoding="utf-8")) if f.exists() else []
