@@ -1610,7 +1610,15 @@ export function autopilot(game, opts = {}) {
         const lx = w.dot(V3(Math.sin(player.lookYaw - Math.PI / 2) * -1, 0, Math.cos(player.lookYaw - Math.PI / 2) * -1));
         player._bot.x = w.x; player._bot.y = w.z; player._bot.world = true; void lx;
         player._bot.action = Math.abs(err) < 0.12;
-      } else player._bot.action = false;
+      } else {
+        player._bot.action = false;
+        // waves: nobody in sight -> go find the nearest enemy (route / coins otherwise)
+        if (R && S.waves) {
+          let ne = null, nd = 1e9;
+          for (const e of R.enemies) if (e.alive) { const d = e.position.distanceTo(p); if (d < nd) { nd = d; ne = e; } }
+          if (ne) { const to = ne.position.clone().sub(p).setY(0).normalize(); player._bot.x = to.x; player._bot.y = to.z; player._bot.world = true; }
+        }
+      }
     }
     if (player.type === 'topdown' && R && player.weapon === 'blaster') {
       // shooter: hold fire while anything is in range (the blaster auto-aims), back away from close enemies

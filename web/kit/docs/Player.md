@@ -81,7 +81,8 @@ double jump ~17 u. Dash 24 u/s for 0.18 s (once per air time). Long jump 21 u/s 
 50 degrees and steps up to 0.55 u. Stands on moving platforms (it is carried along and turned with them).
 Kart: top speed ~29 u/s (32 max), boosts to 1.4x. Drift tiers at 0.6 / 1.3 / 2.2 s of drifting give 0.55 / 1.0 / 1.6 s
 boosts (blue / orange / purple sparks). Boat: same with a looser slide; floats and bobs at `waterLevel`, crawls on land.
-FPS: 9 u/s, sprint 14, jump 1.8 u. Topdown: 10 u/s, dash 30 u/s; blaster 7 shots/s, bolts 38 u/s, range 20,
+FPS: 9 u/s, sprint 14, jump 2.3 u; hold E / J / F / mouse (pointer-locked) to fire glowing bolts (6/s, range 60) that fly
+from the blaster to the crosshair; walk over pickups to collect them. Topdown: 10 u/s, dash 30 u/s; blaster 7 shots/s, bolts 38 u/s, range 20,
 1 damage (patrol / chase enemies take 2 hits, turrets 3); tune with `tuning: { fireRate, range, boltSpeed, damage }`.
 
 ## The player object
