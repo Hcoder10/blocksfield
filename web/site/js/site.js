@@ -134,6 +134,26 @@
     show(0);
   }
 
+  // ---- generalization strip: the planner's option lists, with what the listed games picked ----
+  function renderRange(space, games) {
+    const dims = [["level_kind", "level kinds", "Level"], ["look", "looks", "Look"], ["player_type", "player types", "Player"]]
+      .filter(([k]) => (space[k] || []).length);
+    if (!dims.length || !games.length) return;
+    $("#gen-eq").innerHTML = dims.map(([k, label]) => `<b>${space[k].length}</b> ${label}`).join('<span class="x">×</span>') +
+      '<span class="tail">, composed by the model</span>';
+    $("#gen-palette").innerHTML = dims.map(([k, label]) => {
+      const n = {};
+      games.forEach((g) => { if (g[k]) n[g[k]] = (n[g[k]] || 0) + 1; });
+      const used = Object.keys(n).length;
+      return `<div><h4>${esc(label)} <span>· ${used} of ${space[k].length} used so far</span></h4><div class="opts">${space[k].map((o) =>
+        `<span class="opt${n[o] ? " used" : ""}">${esc(o)}${n[o] ? `<i>${n[o]}</i>` : ""}</span>`).join("")}</div></div>`;
+    }).join("");
+    $("#gen-table").innerHTML = `<thead><tr><th>Game</th>${dims.map(([, , h]) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${games.map((g) =>
+      `<tr><td>${esc(g.title || g.id)}${g.genre ? `<small>${esc(g.genre)}</small>` : ""}</td>${dims.map(([k]) => `<td><code>${esc(g[k] || "–")}</code></td>`).join("")}</tr>`).join("")}</tbody>`;
+    $("#range").hidden = false;
+    watchReveals();
+  }
+
   fetch("games/index.json", { cache: "no-cache" })
     .then((r) => (r.ok ? r.json() : { games: [] }))
     .catch(() => ({ games: [] }))
@@ -146,6 +166,7 @@
       grid.querySelectorAll(".card").forEach(wireHover);
       watchReveals();
       const real = games.filter((g) => !g.dev);
+      renderRange(idx.space || {}, real.length ? real : games);
       const pool = (real.length ? real : games).filter((g) => g.video);
       const first = real[0] || games[0];
       if (first) $("#play-now").href = gameUrl(first, first.play);

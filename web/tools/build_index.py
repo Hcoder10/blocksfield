@@ -37,6 +37,9 @@ def game_entry(d: Path) -> dict | None:
     e["model_calls"] = sum(int(v.get("calls", 0)) for v in (about.get("model_calls") or {}).values())
     e["minutes"] = round(sum((about.get("timings_s") or {}).values()) / 60, 1)
     e["dry_run"] = bool(about.get("dry_run"))
+    plan = about.get("plan") or {}
+    for k in ("look", "level_kind", "player_type", "camera", "ui_style"):
+        e[k] = plan.get(k)
     return e
 
 
@@ -58,6 +61,28 @@ def demo_entries(d: Path, limit: int = 5) -> list[dict]:
     return out[:limit]
 
 
+def design_space() -> dict:
+    """The option lists the planner chooses from: the kit catalog of the newest web run (runs/web_*/catalog.json, read
+    the same way blocksfield.web_plan does), else web_plan's defaults. The landing page prints these counts."""
+    import sys
+    root = WEB.parent
+    sys.path.insert(0, str(root))
+    try:
+        from blocksfield import web_plan
+    except Exception:  # noqa: BLE001  -- the site still builds without the pipeline importable
+        return {}
+    cats = sorted(root.glob("runs/web_*/catalog.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    cat = None
+    for c in cats:
+        try:
+            cat = json.loads(c.read_text(encoding="utf-8"))
+            break
+        except (OSError, ValueError):
+            continue
+    en = web_plan.enums(cat)
+    return {k: list(en[k]) for k in ("level_kind", "look", "player_type") if k in en}
+
+
 def build(games: Path, dev: bool = False) -> dict:
     out = []
     for d in sorted(p for p in games.iterdir() if p.is_dir()):
@@ -77,10 +102,11 @@ def build(games: Path, dev: bool = False) -> dict:
                 out.append({**e, "dev": True})
             continue
         out.append(e)
-    # Real games first, newest first; dev cards last.
-    out.sort(key=lambda e: (bool(e.get("dev")), -(time.mktime(time.strptime(e["created"][:19], "%Y-%m-%dT%H:%M:%S"))
-                                                 if e.get("created") else 0)))
-    return {"generated": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "dev": dev, "games": out}
+    # Real games first, best judge score first (the hero reel takes the top of this list), then newest; dev last.
+    def created(e):
+        return time.mktime(time.strptime(e["created"][:19], "%Y-%m-%dT%H:%M:%S")) if e.get("created") else 0
+    out.sort(key=lambda e: (bool(e.get("dev")), -(e.get("score") or 0), -created(e)))
+    return {"generated": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "dev": dev, "space": design_space(), "games": out}
 
 
 def main() -> None:
