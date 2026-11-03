@@ -430,6 +430,24 @@ class WebBuild:
                 self.log(f"finalize: video failed: {type(e).__name__}: {str(e)[:300]}")
             self.log(f"finalize: video {'ok' if video else 'FAILED'} in {time.time() - t:.0f}s")
         plan_out = {k: v for k, v in self.plan.items() if k != "pitch"}
+        planned = {k: self.plan.get(k) for k in ("level_kind", "look", "player_type", "camera", "ui_style", "mode")
+                   if self.plan.get(k) is not None}
+        if (self.plan.get("character") or {}).get("species"):
+            planned["species"] = self.plan["character"]["species"]
+        shipped = self.wp.shipped_choices(self.game_dir)
+        overrides = [f"the builder changed {k} from {planned[k]} to {v}" for k, v in shipped.items()
+                     if k in planned and planned[k] != v]
+        chosen = {**planned, **shipped}
+        if chosen.get("species"):
+            chosen["character"] = {"species": chosen["species"],
+                                   "accessory": (self.plan.get("character") or {}).get("accessory")}
+        chosen.update(collectible=(self.plan.get("collectible") or {}).get("tag"),
+                      collectible_label=(self.plan.get("collectible") or {}).get("label"))
+        notes = self.plan.get("mapping_notes")
+        if overrides and isinstance(notes, str):
+            notes += " Builder overrides: " + "; ".join(overrides) + "."
+        mapping = {"pitch": self.a.pitch, "notes": notes, "chosen": chosen, "planned": planned,
+                   "builder_overrides": overrides}
         stage_out = {}
         for name in ("art", "scaffold", "build"):
             v = self.stages.get(name) or {}
@@ -446,12 +464,7 @@ class WebBuild:
             "plan": plan_out, "timings_s": {**self.stages.all_timings()},
             "operator_interventions": [x["what"] for x in json.loads((self.run_dir / "interventions.json").read_text(
                 encoding="utf-8"))] if (self.run_dir / "interventions.json").exists() else [],
-            "mapping": {"pitch": self.a.pitch, "notes": self.plan.get("mapping_notes"),
-                        "chosen": {k: self.plan.get(k) for k in ("level_kind", "look", "player_type", "camera",
-                                                                 "ui_style", "character")
-                                   if self.plan.get(k) is not None}
-                        | {"collectible": (self.plan.get("collectible") or {}).get("tag"),
-                           "collectible_label": (self.plan.get("collectible") or {}).get("label")}},
+            "mapping": mapping,
             "model_calls": self.counts, "agents": self.wf.stats, "stages": stage_out,
             "models": {"llm": "Qwen3.8-27B (vLLM, local)", "image": "Qwen-Image-2.1 + BiRefNet",
                        "music": "ACE-Step", "sfx": "Stable Audio", "props": "Idol image->splat -> voxels"},
@@ -559,6 +572,15 @@ def main() -> int:
             a.pitch, a.title = idea["pitch"], a.title or idea.get("title")
     if not a.pitch:
         ap.error("give a pitch (or the --id of an existing run)")
+    stored = ROOT / "runs" / f"web_{re.sub(r'[^a-z0-9_]+', '_', (a.id or '').lower()).strip('_')}" / "idea.json"
+    if len(a.pitch.strip()) < 30:
+        # live: a backfill given the placeholder pitch "x" overwrote idea.json and shipped "pitch": "x"
+        old_pitch = json.loads(stored.read_text(encoding="utf-8")).get("pitch", "") if stored.exists() else ""
+        if len(old_pitch) >= 30:
+            print(f"pitch {a.pitch!r} is under 30 characters: using the stored pitch")
+            a.pitch = old_pitch
+        else:
+            ap.error("the pitch must be at least 30 characters (a real one-paragraph pitch)")
     a.id = re.sub(r"[^a-z0-9_]+", "_", (a.id or "_".join(re.findall(r"[a-z0-9]+", a.pitch.lower())[:3])).lower())
     a.id = a.id.strip("_") or "game"
     run_dir = ROOT / "runs" / f"web_{a.id}"

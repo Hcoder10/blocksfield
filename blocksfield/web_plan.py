@@ -29,7 +29,7 @@ DEFAULT_ENUMS = {
     "mode": ["collect", "goal", "race", "timetrial", "waves", "quests"],
     "quest_type": ["fetch", "deliver", "talk"],
 }
-TRACK_KINDS = ("race_track", "lagoon")        # Level.md: kinds with level.track (laps, AI racers)
+TRACK_KINDS = ("race_track", "lagoon", "canyon")   # Level.md: kinds with level.track (laps, AI racers)
 CAMERA_FOR = {"platformer": "follow", "kart": "chase", "boat": "chase", "topdown": "topdown", "fps": "firstPerson"}
 
 INDEX_HTML = """<!doctype html><html><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>{title}</title>
@@ -147,6 +147,38 @@ def catalog_text(catalog: dict | None, limit: int = 9000) -> str:
 
 
 # --------------------------------------------------------------------------------------------- docs
+def kind_descriptions() -> dict[str, str]:
+    """Level.md's kinds table -> {kind: "what you get (good for: ...)"}: what the planner reads to match the pitch's
+    setting (live: a "desert canyon" pitch got race_track while the catalog had a canyon kind)."""
+    path = DOCS / "Level.md"
+    if not path.exists():
+        return {}
+    out = {}
+    for m in re.finditer(r"^\|\s*`([a-z_]+)`\s*\|([^|]+)\|([^|]+)\|", path.read_text(encoding="utf-8"), re.M):
+        what = " ".join(m.group(2).split())
+        out[m.group(1)] = f"{what[:220]} (good for: {' '.join(m.group(3).split())[:120]})"
+    return out
+
+
+SHIPPED = {"level_kind": r"Level\.build\(\s*game\s*,\s*['\"]([a-z_]+)['\"]",
+           "look": r"Look\.apply\(\s*game\s*,\s*['\"]([a-z_]+)['\"]",
+           "player_type": r"Player\.create\([^)]*?type\s*:\s*['\"]([a-z_]+)['\"]",
+           "species": r"(?:character\s*:\s*\{[^}]*?species['\"]?\s*:\s*|character['\"]?\s*:\s*)['\"]([a-z_]+)['\"]",
+           "mode": r"['\"]?mode['\"]?\s*:\s*['\"]([a-z_]+)['\"]"}
+
+
+def shipped_choices(game_dir: Path) -> dict:
+    """The kit choices the shipped code actually makes (builders change the plan's: canyon_runner2's builder switched
+    race_track to canyon)."""
+    src = "\n".join(p.read_text(encoding="utf-8") for p in sorted(Path(game_dir).glob("*.js")))
+    out = {}
+    for k, pat in SHIPPED.items():
+        m = re.search(pat, src, re.S)
+        if m:
+            out[k] = m.group(1)
+    return out
+
+
 def doc_names() -> list[str]:
     return sorted(p.stem for p in DOCS.glob("*.md")) if DOCS.is_dir() else []
 
@@ -313,13 +345,17 @@ def plan_brief(pitch: str, title: str | None, en: dict, catalog_txt: str, docs: 
     return (f"PITCH:\n{pitch}\n\n" + (f"WORKING TITLE: {title}\n\n" if title else "")
             + "Design this as a ThreeKit browser game. Choose:\n"
             f"- look (the art preset): one of {', '.join(en['look'])}\n"
-            f"- level_kind (a whole dressed level built in one call): one of {', '.join(en['level_kind'])}\n"
-            f"- player_type (the controller): one of {', '.join(en['player_type'])}\n"
+            "- level_kind (a whole dressed level built in one call). Choose the kind whose SETTING matches the "
+            "pitch first, then the player type: karts and boats race on every kind with a track, platformers run "
+            "every kind. The kinds:\n"
+            + "".join(f"    {k}: {kind_descriptions().get(k, '')}\n" for k in en["level_kind"])
+            + f"- player_type (the controller): one of {', '.join(en['player_type'])}\n"
             f"- camera: one of {', '.join(en['camera'])} (follow for platformers, chase for karts/boats, topdown "
             "for topdown, firstPerson for fps)\n"
             "- a collectible (count placed along the level, target needed to win), goal, timer, lives, enemies, and "
             "race laps/opponents (laps 0 unless it is a race: a race level with a kart or boat)\n"
-            "  (karts drive well on race_track or town, boats on lagoon; platformer / topdown / fps fit every level)\n"
+            "  (karts drive on race_track, canyon or town, boats on lagoon; platformer / topdown / fps fit every "
+            "level)\n"
             f"- character: the species closest to the pitch's hero ({', '.join(en['species'])}) + accessory\n"
             f"- mode: {', '.join(en['mode'])} (waves: arena survival with a topdown blaster; quests: villagers with "
             "fetch/deliver/talk quests, give npcs + quests; timetrial: a kart/boat against the clock)\n"
@@ -344,7 +380,7 @@ def normalize_plan(plan: dict, en: dict) -> tuple[dict, list[str]]:
         c["target"] = max(1, int(c.get("count", 10) * 0.75))
         notes.append(f"collectible target lowered to {c['target']} (more than were placed)")
     # measured (scaffold sweep, Nov 2): karts and boats fall off sky islands and stall on the meadow course's hurdles
-    drivable = ("lagoon",) if p.get("player_type") == "boat" else ("race_track", "town")
+    drivable = ("lagoon",) if p.get("player_type") == "boat" else ("race_track", "canyon", "town")
     vehicle_ok = [k for k in drivable if k in en.get("level_kind", [])]
     if p.get("player_type") in ("kart", "boat") and vehicle_ok and p.get("level_kind") not in vehicle_ok:
         notes.append(f"level {p.get('level_kind')} -> {vehicle_ok[0]}: a {p['player_type']} needs a drivable level")
