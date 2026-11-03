@@ -77,7 +77,7 @@ const LOOKS = {
     sky: { top: '#05031a', horizon: '#5a1a78', bottom: '#1a0830', sunSize: 7, sunGlow: 0.9, stars: 1, aurora: 0, exponent: 0.42 },
     sun: { color: '#ff6ad8', intensity: 1.3, elevation: 9, azimuth: -20 },
     hemi: { sky: '#7a6aff', ground: '#3a0a40', intensity: 1.5 },
-    env: 0.35, exposure: 1.1,
+    env: 0.35, exposure: 1.2,
     fog: { color: '#3a1458' },
     bloom: { strength: 0.8, radius: 0.5, threshold: 0.95 },
     edges: { color: '#05020f', strength: 0.9 },
@@ -161,6 +161,7 @@ const LOOKS = {
   },
 };
 export const looks = Object.keys(LOOKS);
+export const QUALITY = ['high', 'low', 'potato'];
 export const NAMES = looks;   // CONTRACT: introspectable choice list
 
 function deepMerge(a, b) {
@@ -439,7 +440,7 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
   const quality = overrides.quality || (game.look && game.look.quality) || 'high';
   // guard rails: overrides may restyle a look but not wreck it (generated games kept setting bloom thresholds < 1,
   // which blooms every lit surface into a milky haze)
-  p.bloom.threshold = Math.max(p.bloom.threshold, p.night ? 0.85 : 1.1);
+  p.bloom.threshold = Math.max(p.bloom.threshold, p.night ? 1.0 : 1.1);
   p.bloom.strength = Math.min(p.bloom.strength, p.night ? 1.0 : 0.6);
   p.fog.near = Math.max(p.fog.near, 0.2); p.fog.far = Math.max(p.fog.far, p.fog.near + 0.4);
   p.exposure = THREE.MathUtils.clamp(p.exposure, 0.7, 1.25);
@@ -451,7 +452,6 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
   renderer.toneMappingExposure = p.exposure;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
-  if (quality === 'low') renderer.setPixelRatio(1);
 
   U.uRimColor.value.set(p.rim.color);
   U.uRimStrength.value = p.rim.strength;
@@ -465,8 +465,7 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
   const hemi = new THREE.HemisphereLight(p.hemi.sky, p.hemi.ground, p.hemi.intensity);
   const sun = new THREE.DirectionalLight(p.sun.color, p.sun.intensity);
   sun.castShadow = true;
-  const sm = quality === 'low' ? 1024 : 4096;
-  sun.shadow.mapSize.set(sm, sm);
+  sun.shadow.mapSize.set(4096, 4096);
   sun.shadow.bias = -0.0004;
   sun.shadow.normalBias = 0.045;
   sun.shadow.radius = 3;
@@ -516,20 +515,19 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
   lu.lift.value.set(p.grade.lift || '#000000'); lu.gain.value.set(p.grade.gain || '#ffffff');
   lu.vignette.value = p.grade.vignette;
   composer.addPass(lookPass);
-  const bloomScale = quality === 'low' ? 0.5 : 1;
-  const bloom = new UnrealBloomPass(new THREE.Vector2(size.x * bloomScale, size.y * bloomScale), p.bloom.strength,
-    p.bloom.radius, p.bloom.threshold);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), p.bloom.strength, p.bloom.radius, p.bloom.threshold);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
-  const aa = quality === 'low' ? new FXAAPass() : new SMAAPass();
-  composer.addPass(aa);
+  // both AA passes exist; the quality tier enables one (SMAA on high, FXAA on low, none on potato)
+  const smaa = new SMAAPass(), fxaa = new FXAAPass();
+  composer.addPass(smaa); composer.addPass(fxaa); fxaa.enabled = false;
   game.composer = composer;
 
   // per frame: time uniform, sky follows camera, shadow frustum follows the focus point
   const focus = new THREE.Vector3(), fwd = new THREE.Vector3(), tmp = new THREE.Vector3();
   let shadowRange = 60;
   const look = {
-    name, preset: p, palette: { ...p.palette }, quality, sun, hemi, sky, composer, bloom, lookPass, root,
+    name, preset: p, palette: { ...p.palette }, quality: 'high', sun, hemi, sky, composer, bloom, lookPass, root,
     sunDir: sunDir.clone(), fogRange: 700, fogMul: 1,
     focus: null,               // set to a live Vector3 (e.g. player.position) to centre shadows on it
     /** fit fog + shadow range to a level (Box3 or radius) */
@@ -552,20 +550,32 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
       sky.material.uniforms.panoMix.value = tex ? intensity : 0;
       sky.visible = true;
     },
-    setQuality(q) {
-      if (q === look.quality) return;
+    /** quality tiers (QUALITY): 'high' (4096 shadows, bloom, SMAA, full foliage), 'low' (no shadows, no bloom, FXAA,
+     *  pixel ratio 1, 40% grass/flowers), 'potato' (pixel ratio 0.75, no post at all, no shadows, no env map,
+     *  25% grass/flowers). The auto probe picks low under 50 fps and potato under 20. */
+    setQuality(q, force = false) {
+      if (!QUALITY.includes(q)) throw new Error(`Look.setQuality: unknown quality "${q}"; qualities: ${QUALITY.join(', ')}`);
+      if (q === look.quality && !force) return;
       look.quality = q;
-      const low = q === 'low';
-      const pr2 = low ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+      const high = q === 'high', potato = q === 'potato';
+      const pr2 = high ? Math.min(window.devicePixelRatio || 1, 2) : potato ? 0.75 : 1;
       renderer.setPixelRatio(pr2); composer.setPixelRatio(pr2);
       const sz = renderer.getSize(new THREE.Vector2()); composer.setSize(sz.x, sz.y);
-      const msz = low ? 1024 : 4096;
-      sun.shadow.mapSize.set(msz, msz);
-      if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+      // shadows: the shadow pass re-submits every caster, the biggest single CPU cost on weak laptops
+      if (renderer.shadowMap.enabled !== high || force) {
+        renderer.shadowMap.enabled = high; sun.castShadow = high;
+        if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+        scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; });
+      }
+      sun.shadow.mapSize.set(4096, 4096);
+      bloom.enabled = high; smaa.enabled = high; fxaa.enabled = q === 'low';
+      game.composer = potato ? null : composer;           // potato renders straight to the canvas
+      scene.environment = potato ? null : (envRT ? envRT.texture : null);
+      const keep = high ? 1 : potato ? 0.25 : 0.4;
       scene.traverse(o => {
         if (!o.isInstancedMesh || !/^kit:foliage:(grass|flowers)/.test(o.name)) return;
         if (o.userData.fullCount == null) o.userData.fullCount = o.count;
-        o.count = low ? Math.floor(o.userData.fullCount * 0.4) : o.userData.fullCount;
+        o.count = Math.floor(o.userData.fullCount * keep);
       });
       game.emit('quality', q);
     },
@@ -611,19 +621,26 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
     lu.resolution.value.set(rt.width, rt.height);
   }
   game.lateUpdate(tick, 25);
-  // automatic quality: if the first ~2 s of play average under 50 fps, drop to the low tier (judges' laptops)
+  if (quality !== 'high') look.setQuality(quality, true);
+  // automatic quality, by wall clock so it also fires at 2 fps: skip the first 1.5 s (shader compiles, loading), then
+  // count frames over 1 s. Under 50 fps -> 'low'; under 20 -> 'potato'. After a drop to 'low' it measures once more
+  // (1.5 s settle + 1 s) and goes to 'potato' if still under 20.
   if (overrides.autoQuality !== false && quality === 'high') {
-    let frames = 0, t0 = 0;
+    let start = 0, w0 = 0, frames = 0, round = 0;
     const probe = () => {
-      frames++;
+      if (look.locked) { game.removeUpdate(probe); return; }   // a forced tier (?quality=...) wins
       const now = performance.now();
-      if (frames === 20) t0 = now;
-      if (frames > 20 && now - t0 > 2000) {
-        const fps = (frames - 20) / ((now - t0) / 1000);
-        look.measuredFps = fps;
-        if (fps < 50) { console.warn(`[kit] Look: ${fps.toFixed(0)} fps, switching to quality 'low'`); look.setQuality('low'); }
-        game.removeUpdate(probe);
-      }
+      if (!start) start = now;
+      if (now - start < 1500) return;
+      if (!w0) { w0 = now; frames = 0; return; }
+      frames++;
+      if (now - w0 < 1000) return;
+      const fps = frames / ((now - w0) / 1000);
+      look.measuredFps = fps;
+      const next = fps < 20 ? 'potato' : fps < 50 && look.quality === 'high' ? 'low' : null;
+      if (next && next !== look.quality) { console.warn(`[kit] Look: ${fps.toFixed(0)} fps, switching to quality '${next}'`); look.setQuality(next); }
+      if (look.quality === 'low' && round === 0) { round = 1; start = now; w0 = 0; return; }   // re-check the low tier once
+      game.removeUpdate(probe);
     };
     game.lateUpdate(probe, 99);
   }

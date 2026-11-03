@@ -488,7 +488,10 @@ export function plaza(game, opts = {}) {
   needGame(game, 'plaza');
   const c = v3(opts.center), R = opts.radius ?? 20, rw = opts.ring ?? 2.4, tw = opts.tile ?? 2.6;
   const rnd = rng32(seedOf(game, opts));
-  const base = C(game, opts.color || 'stone'), trim = C(game, opts.trim || 'primary'), emb = C(game, opts.emblem || 'accent');
+  // glow: neon grid floor (dark tiles, emissive grout lines). Default on in neon_night.
+  const glow = opts.glow ?? (game.look && game.look.name === 'neon_night');
+  const base = glow ? new THREE.Color('#1a1438') : C(game, opts.color || 'stone'), trim = C(game, opts.trim || 'primary'), emb = C(game, opts.emblem || 'accent');
+  const lineV = [];   // glow lines (quads) for the neon floor
   const grout = base.clone().multiplyScalar(0.55);
   const v = [], col = [];
   const quad = (a, b, cc, d, k) => { for (const p of [a, b, cc, a, cc, d]) { v.push(p[0], p[1], p[2]); col.push(k.r, k.g, k.b); } };
@@ -513,6 +516,10 @@ export function plaza(game, opts = {}) {
       const am = (a0 + a1) / 2;
       quad(P(r0, a0 + g0), P(r1, a0 + g1), P(r1, am), P(r0, am), k2);
       quad(P(r0, am), P(r1, am), P(r1, a1 - g1), P(r0, a1 - g0), k2);
+      if (glow && k > 0) {    // radial glow line on this tile's leading edge
+        const pa = P(r0, a0, y + 0.02), pb = P(r1, a0, y + 0.02), dx = -Math.sin(a0) * 0.07, dz = Math.cos(a0) * 0.07;
+        lineV.push([pa[0] - dx, pa[1], pa[2] - dz], [pb[0] - dx, pb[1], pb[2] - dz], [pb[0] + dx, pb[1], pb[2] + dz], [pa[0] + dx, pa[1], pa[2] + dz]);
+      }
     }
   }
   // kerb ring
@@ -538,6 +545,24 @@ export function plaza(game, opts = {}) {
   const mesh = new THREE.Mesh(g, Look.material(game, { color: '#ffffff', vertexColors: true, rim: 0, side: 'double' }));
   mesh.position.copy(c); mesh.receiveShadow = true; mesh.name = 'kit:plaza';
   (opts.parent || game.scene).add(mesh);
+  if (glow) {
+    // ring glow lines at every tile ring + the outer edge, radial lines from the tiles above
+    const rings = Math.ceil(R / rw);
+    for (let k = 1; k <= rings; k++) {
+      const rr = Math.min(R, k * rw), w = k === rings ? 0.16 : 0.07, SEGR = 96;
+      for (let i = 0; i < SEGR; i++) {
+        const a0 = i / SEGR * Math.PI * 2, a1 = (i + 1) / SEGR * Math.PI * 2;
+        lineV.push(P(rr - w, a0, y + 0.02), P(rr + w, a0, y + 0.02), P(rr + w, a1, y + 0.02), P(rr - w, a1, y + 0.02));
+      }
+    }
+    const v = [];
+    for (let i = 0; i < lineV.length; i += 4) { const [a, b, cc, d] = lineV.slice(i, i + 4); v.push(...a, ...cc, ...b, ...a, ...d, ...cc); }
+    const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); lg.computeVertexNormals();
+    const pal = Look.palette(game);
+    const lines = new THREE.Mesh(lg, Look.material(game, { kind: 'emissive', color: pal.secondary, emissive: pal.secondary, emissiveIntensity: 1.6, side: 'double', rim: 0 }));
+    lines.position.copy(c); lines.name = 'kit:plaza-glow';
+    (opts.parent || game.scene).add(lines);
+  }
   if (opts.collider !== false) colliderCylinder(game, new THREE.Vector3(c.x, c.y + 0.1 - 0.3, c.z), 0.3, R + 1.1, { what: 'plaza' });
   const pz = { kind: 'plaza', mesh, y: c.y + y, heightAt(x, z) { return Math.hypot(x - c.x, z - c.z) <= R + 1.1 ? c.y + y : null; } };
   surfaces(game).push(pz);

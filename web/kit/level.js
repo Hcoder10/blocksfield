@@ -514,7 +514,23 @@ function arena(ctx) {
   // spawn points for enemies / bots around the ring
   level.spawnPoints = [0, 1, 2, 3].map(q => { const a = q * Math.PI / 2; const p = V(Math.cos(a) * R * 0.75, 0, Math.sin(a) * R * 0.75); p.y = gy(p.x, p.z) + 1; return p; });
   World.noPlant(game, [V(0, 0, 0)], R + 3);
-  World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: R + 75, inner: R + 3 }, kinds: { grass: 1, flowers: 1, tree_round: 1.4, tree_pine: 1.4, bush: 1, rock: 1 }, seed: ctx.seed + 2, focus: [V(0, 0, 0)], focusRadius: R + 30 });
+  const night = Look.isNight(game);
+  World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: R + 75, inner: R + 3 },
+    // at night the outside stays calm: fewer, cleaner silhouettes, so the lit arena is the focus
+    kinds: night ? { tree_round: 0.7, tree_pine: 0.7, crystal: 0.25 } : { grass: 1, flowers: 1, tree_round: 1.4, tree_pine: 1.4, bush: 1, rock: 1 },
+    density: night ? 0.55 : 1, seed: ctx.seed + 2, focus: [V(0, 0, 0)], focusRadius: R + 30 });
+  if (game.look && game.look.name === 'neon_night') {
+    // neon: magenta and cyan key lights across the arena, a glowing rim on the wall
+    const pal = Look.palette(game);
+    for (const [c, a] of [[pal.secondary, 0.6], [pal.primary, 0.6 + Math.PI]]) {
+      const l = new THREE.PointLight(c, 380, R * 2.6, 1.6);
+      l.position.set(Math.cos(a) * R * 0.9, 14, Math.sin(a) * R * 0.9);
+      ctx.group.add(l);
+    }
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(R + 1, 0.12, 6, 160).rotateX(Math.PI / 2),
+      Look.material(game, { kind: 'emissive', color: pal.primary, emissive: pal.primary, emissiveIntensity: 2.2 }));
+    ring.position.y = 2.5; ctx.group.add(ring);
+  }
   World.clouds(game, { ...P(ctx), count: 16, height: 50, radius: R + 160, seed: ctx.seed });
   level.ground = ground;
   level.bounds = new THREE.Box3(V(-R - 3, -1, -R - 3), V(R + 3, 10, R + 3));
