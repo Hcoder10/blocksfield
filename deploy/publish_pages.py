@@ -30,9 +30,11 @@ WEB = ROOT / "web"
 MARK = ".blocksfield-pages"
 BRANCH = "gh-pages"
 sys.path.insert(0, str(WEB / "tools"))
+sys.path.insert(0, str(ROOT / "deploy"))
 import build_index  # noqa: E402
 
 SKIP_SITE = shutil.ignore_patterns("*.py", "__pycache__", "*.pyc", ".DS_Store")
+SKIP_SITE_DIR = shutil.ignore_patterns("*.py", "__pycache__", "*.pyc", ".DS_Store", "og-card.html")
 SKIP_KIT = shutil.ignore_patterns("docs", "*.md", "__pycache__", "*.pyc", ".DS_Store")
 SKIP_GAME = shutil.ignore_patterns("*.webm", "__pycache__", "*.pyc", ".DS_Store")
 
@@ -60,6 +62,20 @@ def slim_video(mp4: Path, over_mb: float = 4.0) -> None:
         tmp.unlink(missing_ok=True)
 
 
+def og_card(out: Path) -> None:
+    """Re-render the social card in the build so it shows the current best game (the template stays out of the site)."""
+    try:
+        import make_og_card
+        shutil.copyfile(WEB / "site" / "og-card.html", out / "site" / "og-card.html")
+        try:
+            make_og_card.render(out, out / "site" / "media" / "og.jpg")
+        finally:
+            (out / "site" / "og-card.html").unlink(missing_ok=True)
+        print("og card rendered for the shipped games")
+    except Exception as e:  # noqa: BLE001  -- the committed web/site/media/og.jpg ships instead
+        print(f"warning: og card not re-rendered ({type(e).__name__}: {str(e)[:160]}); shipping the committed og.jpg")
+
+
 def build(out: Path) -> dict:
     if out.exists():
         if not (out / MARK).exists():
@@ -67,7 +83,7 @@ def build(out: Path) -> dict:
         shutil.rmtree(out)
     out.mkdir(parents=True)
     shutil.copyfile(WEB / "index.html", out / "index.html")
-    shutil.copytree(WEB / "site", out / "site", ignore=SKIP_SITE)
+    shutil.copytree(WEB / "site", out / "site", ignore=SKIP_SITE_DIR)
     shutil.copytree(WEB / "kit", out / "kit", ignore=SKIP_KIT)
     shutil.copytree(WEB / "vendor", out / "vendor", ignore=SKIP_SITE)
     (out / "games").mkdir()
@@ -79,6 +95,7 @@ def build(out: Path) -> dict:
     idx.pop("generated", None)  # deterministic: an unchanged site makes an unchanged tree, so no empty publish
     (out / "games" / "index.json").write_text(json.dumps(idx, indent=1), encoding="utf-8")
     (out / ".nojekyll").write_text("", encoding="utf-8")
+    og_card(out)
     (out / MARK).write_text(time.strftime("%Y-%m-%dT%H:%M:%S%z"), encoding="utf-8")
     return {"games": [d.name for d in games]}
 

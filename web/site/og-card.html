@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>og card (render template, not published)</title>
+<link rel="stylesheet" href="css/site.css">
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+  .og { position: relative; width: 1200px; height: 630px; overflow: hidden; isolation: isolate;
+    background: linear-gradient(180deg, #3aa9f5 0%, #6cc6ff 50%, #b9e7ff 100%); }
+  .og .cloud { position: absolute; z-index: -1; background: #fff; border-radius: 999px; opacity: .92; animation: none; }
+  .og .cloud::before, .og .cloud::after { content: ""; position: absolute; background: #fff; border-radius: 50%; }
+  .og .cloud::before { width: 55%; height: 170%; left: 14%; bottom: 20%; }
+  .og .cloud::after { width: 38%; height: 130%; right: 12%; bottom: 25%; }
+  .brandrow { position: absolute; left: 64px; top: 52px; display: flex; align-items: center; gap: 12px; }
+  .brandrow img { width: 44px; height: 44px; }
+  .brandrow b { font: 400 34px/1 var(--display); letter-spacing: .02em; color: var(--ink); }
+  h1 { position: absolute; left: 64px; top: 128px; margin: 0; font-size: 84px; color: var(--white); white-space: nowrap; }
+  h1 .l2 { display: block; color: var(--sun); margin-top: .06em; }
+  .sub { position: absolute; left: 64px; top: 326px; width: 540px; margin: 0; font: 500 25px/1.38 var(--body); color: var(--ink); }
+  .sub b { font-weight: 700; }
+  .chips { position: absolute; left: 64px; top: 466px; display: flex; gap: 10px; }
+  .hash { position: absolute; right: 52px; top: 500px; }
+  .hash .chip { font-size: 19px; padding: 9px 16px; border-width: 3px; }
+  .chips .chip { font-size: 17px; padding: 8px 14px; border-width: 3px; }
+  .frame { position: absolute; left: 640px; top: 120px; width: 516px; transform: rotate(2deg); }
+  .frame .screen { transform: none; border-width: 5px; box-shadow: 12px 12px 0 var(--ink); }
+  .frame .bubble { position: relative; margin: -40px 14px 0; display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px;
+    background: var(--white); border: 3px solid var(--ink); border-radius: 16px; box-shadow: 0 5px 0 var(--ink); }
+  .frame .bubble .who { flex: none; font: 700 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase;
+    background: var(--tomato); color: var(--white); padding: 6px 8px; border-radius: 8px; border: 2px solid var(--ink); }
+  .frame .bubble p { margin: 0; font: 500 16px/1.38 var(--body); display: -webkit-box; -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical; overflow: hidden; }
+  .edge { position: absolute; left: 0; right: 0; bottom: -2px; height: 46px;
+    background: url("img/edge.svg") repeat-x left bottom / 276px 46px; }
+  .tag { position: absolute; right: 44px; bottom: 58px; z-index: 2; font: 400 28px/1 var(--display); color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="og">
+  <i class="cloud" style="width:170px;height:40px;top:40px;left:560px"></i>
+  <i class="cloud" style="width:130px;height:32px;top:70px;right:40px"></i>
+  <i class="cloud" style="width:200px;height:46px;top:548px;left:520px;opacity:.7"></i>
+  <div class="brandrow"><img src="img/cube.svg" alt=""><b>BLOCKSFIELD</b></div>
+  <h1 class="display outlined">TYPE A PITCH.<span class="l2">GET A GAME.</span></h1>
+  <p class="sub">One paragraph in, a playable 3D game out. Made by <b>open-weight models</b> and ComfyUI on <b>one RTX 5090</b>.</p>
+  <div class="chips"><span class="chip sun">Every model open-weight</span><span class="chip grass">$0 per generation</span><span class="chip">Play in the browser</span></div>
+  <div class="hash"><span class="chip ink">#OpenSourceHiggsfield</span></div>
+  <div class="frame">
+    <div class="screen"><img id="shot" alt=""></div>
+    <div class="bubble"><span class="who">Pitch</span><p id="pitch"></p></div>
+  </div>
+  <div class="edge"></div>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const img = document.getElementById("shot");
+  img.src = q.get("img") || "media/roblox_thumb.jpg";
+  document.getElementById("pitch").textContent = q.get("pitch") || "";
+  if (!q.get("pitch")) document.querySelector(".bubble").remove();
+  img.decode().catch(() => {}).then(() => document.fonts.ready).then(() => { window.__ogReady = true; });
+</script>
+</body>
+</html>
