@@ -1,0 +1,98 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Bright midday tropical sky: saturated azure fading to pale aqua at the horizon, big fluffy white cumulus puffs, warm sun glow, faint distant island silhouettes",
+  "wrap_seam": 0.59
+ },
+ "icon_starfish": {
+  "file": "icon_starfish.png",
+  "kind": "icon",
+  "prompt": "Small toon starfish icon, five rounded plump arms, coral orange with a sunny yellow center and thick white outline, glossy, centered on transparent background",
+  "for": "star"
+ },
+ "icon_lap_flag": {
+  "file": "icon_lap_flag.png",
+  "kind": "icon",
+  "prompt": "Toon checkered race flag icon, red-and-white checker pattern on a rounded pennant with a coral pole, thick white outline, transparent background",
+  "for": "lap"
+ },
+ "icon_boost_bolt": {
+  "file": "icon_boost_bolt.png",
+  "kind": "icon",
+  "prompt": "Chunky toon lightning bolt icon, sunny yellow with orange rim and thick white outline, slight 3D bevel, transparent background",
+  "for": "boost"
+ },
+ "icon_timer_clock": {
+  "file": "icon_timer_clock.png",
+  "kind": "icon",
+  "prompt": "Toon stopwatch icon, turquoise face with white hands, coral body and yellow top button, thick white outline, transparent background",
+  "for": "timer"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Upbeat tropical island pop: steel drums, ukulele strums, bright marimba and bongo percussion, 118 BPM, sunny and bouncy, seamless loop"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "Bright pling with a watery sparkle, short and sweet"
+ },
+ "sfx_boost": {
+  "file": "sfx_boost.mp3",
+  "kind": "sfx",
+  "event": "boost",
+  "prompt": "Rising jet-whoosh with a zingy top note"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "Springy splash-launch, bubbly pop"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "Big soft cartoon water splash, low and thumpy"
+ },
+ "sfx_checkpoint": {
+  "file": "sfx_checkpoint.mp3",
+  "kind": "sfx",
+  "event": "checkpoint",
+  "prompt": "Cheery two-note lap ding, brass and marimba"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "Triumphant ukulele fanfare with a crowd cheer swell"
+ },
+ "prop_lighthouse": {
+  "file": "prop_lighthouse.json",
+  "kind": "prop",
+  "prompt": "A chunky striped lighthouse tower, alternating coral red and cream horizontal bands, rounded cap with a glowing yellow lamp room and a small balcony rail, thick rounded base",
+  "via": "idol",
+  "parts": 332
+ },
+ "prop_buoy": {
+  "file": "prop_buoy.json",
+  "kind": "prop",
+  "prompt": "A small round bobbing buoy, glossy red-and-white horizontal stripes, a tiny yellow horn on top, chunky rounded shape",
+  "via": "idol",
+  "parts": 226
+ },
+ "splat_lighthouse": {
+  "file": "splat_lighthouse.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "A chunky striped lighthouse tower, alternating coral red and cream horizontal bands, rounded cap with a glowing yellow lamp room and a small balcony rail, thick rounded base",
+  "camera": {
+   "yaw": 1.9075253542459458
+  }
+ }
+}

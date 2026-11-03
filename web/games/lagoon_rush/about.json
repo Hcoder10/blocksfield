@@ -1,0 +1,313 @@
+{
+ "id": "lagoon_rush",
+ "title": "Lagoon Rush",
+ "tagline": "Skim the turquoise, chain the boosts, and out-drive three rivals to the lighthouse.",
+ "pitch": "Lagoon Rush: a sunny tropical jet-boat race. Skim across a turquoise lagoon past palm beaches, a striped lighthouse and buoy-lined lanes, hit boost pads and a big jump ramp, and beat three rival boats over three laps. Bright, splashy, summery, toon colours.",
+ "genre": "arcade boat racing",
+ "controls": [
+  "WASD / arrows: steer & throttle",
+  "Shift: boost",
+  "Esc / P: pause"
+ ],
+ "created": "2026-11-02T21:37:40-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "v2",
+  "score": 6.0,
+  "play": 7.0,
+  "vision": 5.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 6.0,
+    "play_score": 7.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "s0",
+    "score": 6.0,
+    "play_score": 7.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "v1",
+    "score": 6.0,
+    "play_score": 7.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "v2",
+    "score": 6.0,
+    "play_score": 7.0,
+    "vision_score": 5.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Lagoon Rush",
+  "tagline": "Skim the turquoise, chain the boosts, and out-drive three rivals to the lighthouse.",
+  "genre": "arcade boat racing",
+  "core_loop": "Steer a jet boat around the buoy-lined lagoon course, chain boost pads and the big jump ramp to build speed, grab starfish along the line, and out-drive three AI rivals over three laps.",
+  "controls": [
+   "WASD / arrows: steer & throttle",
+   "Shift: boost",
+   "Esc / P: pause"
+  ],
+  "win_condition": "Finish 3 laps in 1st place ahead of the three rival boats",
+  "lose_condition": "Cross the finish line in 2nd\u20134th place",
+  "look": "toon_bright",
+  "ui_style": "arcade",
+  "level_kind": "lagoon",
+  "level_size": "medium",
+  "player_type": "boat",
+  "camera": "chase",
+  "player_colors": {
+   "body": "#ff5c4d",
+   "accent": "#ffd23f"
+  },
+  "collectible": {
+   "tag": "star",
+   "label": "Starfish",
+   "count": 24,
+   "target": 12
+  },
+  "goal": true,
+  "timer_seconds": 0,
+  "lives": 0,
+  "enemies": 0,
+  "race": {
+   "laps": 3,
+   "opponents": 3
+  },
+  "art_direction": "Saturated noon-tropical palette: turquoise lagoon, sand-beige shores, coral red and sunny yellow accents, palm greens. Smooth toon shading with soft ink outlines, glossy water with white foam wakes, chunky rounded props. Bright postcard-summer mood \u2014 high contrast, hard noon sun, playful and splashy; references: cartoon island postcards and Mario Kart water stages.",
+  "concept_shots": [
+   "The coral jet boat carves a white spray arc around a palm-fringed sandbar, three rival boats chasing in its wake, striped buoys bobbing along the lane and the striped lighthouse standing sentinel in the distance.",
+   "The boat rockets off the big ramp and hangs mid-air over the turquoise lagoon, spray trailing behind, a glowing arc of starfish pickups waiting along the jump's path, speed lines flaring at the screen edges.",
+   "Final lap: the player hits a glowing boost pad and surges past a rival at the lighthouse turn, splash particles bursting off the bow, a big FINAL LAP banner overhead and the checkered finish gate ahead."
+  ],
+  "assets": {
+   "sky": "Bright midday tropical sky: saturated azure fading to pale aqua at the horizon, big fluffy white cumulus puffs, warm sun glow, faint distant island silhouettes",
+   "icons": [
+    {
+     "name": "starfish",
+     "prompt": "Small toon starfish icon, five rounded plump arms, coral orange with a sunny yellow center and thick white outline, glossy, centered on transparent background",
+     "for": "star"
+    },
+    {
+     "name": "lap_flag",
+     "prompt": "Toon checkered race flag icon, red-and-white checker pattern on a rounded pennant with a coral pole, thick white outline, transparent background",
+     "for": "lap"
+    },
+    {
+     "name": "boost_bolt",
+     "prompt": "Chunky toon lightning bolt icon, sunny yellow with orange rim and thick white outline, slight 3D bevel, transparent background",
+     "for": "boost"
+    },
+    {
+     "name": "timer_clock",
+     "prompt": "Toon stopwatch icon, turquoise face with white hands, coral body and yellow top button, thick white outline, transparent background",
+     "for": "timer"
+    }
+   ],
+   "music": "Upbeat tropical island pop: steel drums, ukulele strums, bright marimba and bongo percussion, 118 BPM, sunny and bouncy, seamless loop",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "Bright pling with a watery sparkle, short and sweet",
+     "seconds": 1
+    },
+    {
+     "event": "boost",
+     "prompt": "Rising jet-whoosh with a zingy top note",
+     "seconds": 1
+    },
+    {
+     "event": "jump",
+     "prompt": "Springy splash-launch, bubbly pop",
+     "seconds": 1
+    },
+    {
+     "event": "land",
+     "prompt": "Big soft cartoon water splash, low and thumpy",
+     "seconds": 1
+    },
+    {
+     "event": "checkpoint",
+     "prompt": "Cheery two-note lap ding, brass and marimba",
+     "seconds": 1
+    },
+    {
+     "event": "win",
+     "prompt": "Triumphant ukulele fanfare with a crowd cheer swell",
+     "seconds": 6
+    }
+   ],
+   "props": [
+    {
+     "name": "lighthouse",
+     "prompt": "A chunky striped lighthouse tower, alternating coral red and cream horizontal bands, rounded cap with a glowing yellow lamp room and a small balcony rail, thick rounded base",
+     "count": 1
+    },
+    {
+     "name": "buoy",
+     "prompt": "A small round bobbing buoy, glossy red-and-white horizontal stripes, a tiny yellow horn on top, chunky rounded shape",
+     "count": 8
+    }
+   ]
+  },
+  "features": [
+   "Boost pads along the lane trigger a speed burst: the level's boost placements + 'boost' hazard, with speed lines flaring and a jet-boost sfx",
+   "Big jump ramp mid-course: airtime over the lagoon with a splash burst on landing and a starfish arc placed along the jump path",
+   "Three AI rival boats in distinct hull colours (lime, violet, sand) with rubber-banding so the pack stays tight through all three laps",
+   "3-2-1-GO countdown with a horn, a FINAL LAP banner on the last lap, and a lap ding on every checkpoint (UI.countdown, UI.banner, checkpoint sfx)",
+   "Continuous white foam wake trail behind the boat plus splash particles on hard landings and buoy grazes (FX.trail, FX.splash)",
+   "Win screen with confetti, trophy and finish position; lose screen if you finish behind a rival (UI.winScreen, FX.confetti)"
+  ],
+  "mapping_notes": "The lagoon level kind is a direct match for the pitch's turquoise lagoon, palm beaches and buoy-lined lanes, and the boat player kit stands in for the jet boat with a chase camera per the kit's boat convention. The striped lighthouse and buoys aren't part of the pre-dressed lagoon, so they're added as two generated voxel props: one lighthouse as the course landmark and eight striped buoys scattered along the lane. Boost pads and the jump ramp come from the level's boost/ramp placements plus the 'boost' hazard. The three rival boats are the race's AI opponents, not enemies, so enemies is 0. The kit has no 'fish' collectible tag, so the starfish pickups use the 'star' tag with a Starfish label and a starfish HUD icon. No lives and no timer: losing simply means finishing behind a rival, keeping the loop a pure, readable race."
+ },
+ "timings_s": {
+  "art": 214.3,
+  "build": 330.0,
+  "eval_s0": 67.7,
+  "eval_v0": 87.2,
+  "eval_v1": 72.2,
+  "eval_v2": 83.2,
+  "plan": 70.4,
+  "repair_1": 358.0,
+  "repair_2": 65.9,
+  "scaffold": 3.8
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Lagoon Rush: a sunny tropical jet-boat race. Skim across a turquoise lagoon past palm beaches, a striped lighthouse and buoy-lined lanes, hit boost pads and a big jump ramp, and beat three rival boats over three laps. Bright, splashy, summery, toon colours.",
+  "notes": "The lagoon level kind is a direct match for the pitch's turquoise lagoon, palm beaches and buoy-lined lanes, and the boat player kit stands in for the jet boat with a chase camera per the kit's boat convention. The striped lighthouse and buoys aren't part of the pre-dressed lagoon, so they're added as two generated voxel props: one lighthouse as the course landmark and eight striped buoys scattered along the lane. Boost pads and the jump ramp come from the level's boost/ramp placements plus the 'boost' hazard. The three rival boats are the race's AI opponents, not enemies, so enemies is 0. The kit has no 'fish' collectible tag, so the starfish pickups use the 'star' tag with a Starfish label and a starfish HUD icon. No lives and no timer: losing simply means finishing behind a rival, keeping the loop a pure, readable race.",
+  "chosen": {
+   "level_kind": "lagoon",
+   "look": "toon_bright",
+   "player_type": "boat",
+   "camera": "chase",
+   "ui_style": "arcade",
+   "collectible": "star",
+   "collectible_label": "Starfish"
+  }
+ },
+ "model_calls": {
+  "builder": {
+   "calls": 48,
+   "prompt_tokens": 1093956,
+   "completion_tokens": 7448,
+   "seconds": 576.2
+  },
+  "judge": {
+   "calls": 10,
+   "prompt_tokens": 51936,
+   "completion_tokens": 4032,
+   "seconds": 125.7
+  }
+ },
+ "agents": {
+  "live": 3,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 0.3
+    },
+    "icon_starfish": {
+     "ok": true,
+     "seconds": 0.3
+    },
+    "icon_lap_flag": {
+     "ok": true,
+     "seconds": 71.2
+    },
+    "icon_boost_bolt": {
+     "ok": true,
+     "seconds": 81.5
+    },
+    "icon_timer_clock": {
+     "ok": true,
+     "seconds": 92.7
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 96.9
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 97.1
+    },
+    "sfx_boost": {
+     "ok": true,
+     "seconds": 98.1
+    },
+    "sfx_jump": {
+     "ok": true,
+     "seconds": 99.1
+    },
+    "sfx_land": {
+     "ok": true,
+     "seconds": 100.8
+    },
+    "sfx_checkpoint": {
+     "ok": true,
+     "seconds": 101.9
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 103.0
+    },
+    "prop_lighthouse": {
+     "ok": true,
+     "seconds": 170.0
+    },
+    "prop_buoy": {
+     "ok": false,
+     "error": "RuntimeError: the voxel prop shipped, but the splat could not be converted to .spz",
+     "reason": "RuntimeError: the voxel prop shipped, but the splat could not be converted to .spz",
+     "seconds": 214.3
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Lagoon Rush: a sunny tropical jet-boat race on the lagoon level. Coral-red player boat with a white foam wake trails behind, three AI rivals in distinct hull colours chase, and the goal is to finish 3 laps in 1st place. Starfish pickups (12 of 24) line the course; boost pads and a jump ramp come from the level's own placements. Custom FX layers on top of FX.auto: speed lines + splash + shake on boost, splash bursts on jump/land, star bursts on starfish, checkpoint rings, FINAL LAP banner, confetti + star burst on win, dark red flash on lose. Arcade HUD with starfish counter, timer, lap, position, speedometer, and minimap. Title screen with tagline and 3-2-1-GO countdown.",
+    "changes": [
+     "Added FX.trail white foam wake behind the player boat",
+     "Custom FX handlers: boost (speedLines + splash + shake), jump/land (splash bursts, shake on hard landing), collect (starBurst for starfish), checkpoint (ring), lap (FINAL LAP / LAP N banners + shake), win (confetti + starBurst), lose (dark red flash)",
+     "Tuned HUD: starfish counter with generated icon, timer, lap, position, speedometer (km/h), minimap, arcade style, custom win/lose screen titles",
+     "Title screen tagline: 'Skim the turquoise \u00b7 chain the boosts \u00b7 beat 3 rivals'",
+     "Player boat colour: coral red body with sunny yellow accent",
+     "Race config: 3 laps, 3 opponents, aiSpeed 0.94, 3s countdown"
+    ],
+    "known_issues": [
+     "Autopilot doesn't finish the full 3-lap race in the 25s test window (expected \u2014 a full race takes longer); the core loop (move, collect, race) is verified working"
+    ]
+   },
+   "plays": 2
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ }
+}

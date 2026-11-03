@@ -1,0 +1,107 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Midnight synthwave panorama: deep indigo-to-black gradient, scattered stars, a faint pink aurora haze on the horizon and a distant neon city skyline silhouette with glowing pink and cyan window strips.",
+  "wrap_seam": 0.7
+ },
+ "icon_gem": {
+  "file": "icon_gem.png",
+  "kind": "icon",
+  "prompt": "A faceted energy-core gem icon, glowing cyan with hot pink inner light, sharp angular cut, dark background",
+  "for": "cores"
+ },
+ "icon_clock": {
+  "file": "icon_clock.png",
+  "kind": "icon",
+  "prompt": "A slim digital countdown clock icon with neon cyan digits and a pink ring, dark background",
+  "for": "timer"
+ },
+ "icon_heart": {
+  "file": "icon_heart.png",
+  "kind": "icon",
+  "prompt": "A hexagonal energy-heart icon in hot neon pink with a cyan outline glow, dark background",
+  "for": "lives"
+ },
+ "icon_skull": {
+  "file": "icon_skull.png",
+  "kind": "icon",
+  "prompt": "A spiky orb skull icon \u2014 a round spiked ball with glowing cyan eye sockets, dark background",
+  "for": "waves"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Synthwave / retrowave loop: driving 8th-note arpeggio bass, gated snare, punchy kick, shimmering neon pads, 118 BPM, high-energy nocturnal drive."
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "Bright rising arpeggio blip with a glassy synth chime, like banking a charged core"
+ },
+ "sfx_boost": {
+  "file": "sfx_boost.mp3",
+  "kind": "sfx",
+  "event": "boost",
+  "prompt": "Electric whoosh with a fast rising pitch, synth dash burst"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "Gritty distorted thud with a short metallic ring, punchy hit"
+ },
+ "sfx_death": {
+  "file": "sfx_death.mp3",
+  "kind": "sfx",
+  "event": "death",
+  "prompt": "Power-down sweep: descending synth glide with crackling static tail"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "Triumphant synthwave riser landing on a bright chord stab"
+ },
+ "sfx_lose": {
+  "file": "sfx_lose.mp3",
+  "kind": "sfx",
+  "event": "lose",
+  "prompt": "Low detuned drone with a sad synthwave hit, fading to static"
+ },
+ "prop_neon_pillar": {
+  "file": "prop_neon_pillar.json",
+  "kind": "prop",
+  "prompt": "One tall hexagonal colosseum pillar, dark charcoal stone with two emissive neon bands \u2014 one hot pink, one cyan \u2014 and a glowing ring at the top",
+  "via": "idol",
+  "parts": 267
+ },
+ "splat_neon_pillar": {
+  "file": "splat_neon_pillar.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "One tall hexagonal colosseum pillar, dark charcoal stone with two emissive neon bands \u2014 one hot pink, one cyan \u2014 and a glowing ring at the top",
+  "camera": {
+   "yaw": 1.4776741404840776
+  }
+ },
+ "prop_holo_obelisk": {
+  "file": "prop_holo_obelisk.json",
+  "kind": "prop",
+  "prompt": "One slim obelisk monolith, black glass with a faceted cyan crystal tip and a thin magenta seam of light running up its face",
+  "via": "idol",
+  "parts": 187
+ },
+ "splat_holo_obelisk": {
+  "file": "splat_holo_obelisk.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "One slim obelisk monolith, black glass with a faceted cyan crystal tip and a thin magenta seam of light running up its face",
+  "camera": {
+   "yaw": 0.7045985662251004
+  }
+ }
+}
