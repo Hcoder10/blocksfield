@@ -28,7 +28,30 @@ DEFAULT_ENUMS = {
     "accessory": ["none", "scarf", "cape", "backpack", "hat", "crown"],
     "mode": ["collect", "goal", "race", "timetrial", "waves", "quests"],
     "quest_type": ["fetch", "deliver", "talk"],
+    "powerup": ["speed", "highjump", "magnet", "shield", "giant", "tiny", "glide", "doublepoints", "slowmo", "invincible"],
+    "trigger": ["collect", "enter", "timer", "defeat", "count", "state", "interact", "start"],
+    "key_color": ["red", "blue", "green", "yellow", "purple", "orange"],
+    "piece": ["island", "platform", "cliff", "pillar", "ramp", "stairs", "bridge", "wall", "arch", "tower", "mover",
+              "water"],
 }
+MECH_HOW = ["tune", "powerup", "keys_doors", "switch_gate", "rule", "custom"]
+
+# the kit's real bindings per player type (Player.md "Controls"): the title screen and about.json say these, never
+# model prose (live: frostbeak2 said "A / D: waddle" for a camera-relative 3D platformer)
+CONTROLS = {
+    "platformer": ["WASD / arrows: run", "Space: jump (again in the air: double jump)", "Shift: dash / long jump",
+                   "C: ground pound"],
+    "topdown": ["WASD / arrows: run", "Space / J / click: fire", "Shift / E: dash"],
+    "kart": ["W / up: throttle, S / down: brake", "A D / left right: steer", "Space (hold while steering): drift, "
+             "release = boost"],
+    "boat": ["W / up: throttle, S / down: brake", "A D / left right: steer", "Space (hold while steering): drift, "
+             "release = boost"],
+    "fps": ["WASD: move", "mouse (click to lock) / arrows: look", "E / click: shoot", "Space: jump, Shift: sprint"],
+}
+
+
+def controls_for(player_type: str | None) -> list[str]:
+    return list(CONTROLS.get(player_type or "platformer", CONTROLS["platformer"])) + ["P / Esc: pause"]
 TRACK_KINDS = ("race_track", "lagoon", "canyon")   # Level.md: kinds with level.track (laps, AI racers)
 CAMERA_FOR = {"platformer": "follow", "kart": "chase", "boat": "chase", "topdown": "topdown", "fps": "firstPerson"}
 
@@ -126,9 +149,14 @@ def enums(catalog: dict | None) -> dict[str, list[str]]:
                           ("mode", "Gameplay", r"^MODES$"), ("quest_type", "Gameplay", r"^QUEST_TYPES$")):
         if v := _pick(c, mod, pat):
             out[key] = v
+    for key, pat in (("powerup", r"^POWERUPS$"), ("trigger", r"^TRIGGERS$"), ("key_color", r"^KEY_COLORS$")):
+        if v := _pick(c, "Mechanics", pat):
+            out[key] = v
+    if v := _pick(c, "Level", r"^PIECES$"):
+        out["piece"] = v
     if "compose" in fn_names(c, "Level"):
         out["level_kind"] = list(out["level_kind"]) + ["custom"]
-        out["custom_layout"] = list(COMPOSE_TEMPLATES)
+        out["custom_layout"] = ["freeform"] + list(COMPOSE_TEMPLATES)
     if cams := [f for f in ("follow", "chase", "topdown", "orbit", "firstPerson") if f in fn_names(c, "Camera")]:
         out["camera"] = cams
     return out
@@ -311,7 +339,7 @@ def plan_schema(en: dict[str, list[str]]) -> dict:
         "required": ["title", "tagline", "genre", "core_loop", "controls", "win_condition", "look", "ui_style",
                      "level_kind",
                      "level_size", "player_type", "camera", "player_colors", "collectible", "goal", "timer_seconds",
-                     "lives", "enemies", "race", "character", "mode", "art_direction", "concept_shots", "assets", "features",
+                     "lives", "enemies", "race", "character", "mode", "mechanics", "art_direction", "concept_shots", "assets", "features",
                      "mapping_notes"],
         "properties": {
             "title": {**s, "maxLength": 40}, "tagline": {**s, "maxLength": 90}, "genre": s,
@@ -334,8 +362,49 @@ def plan_schema(en: dict[str, list[str]]) -> dict:
             "lives": {"type": "integer", "minimum": 0, "maximum": 9, "description": "0 = unlimited"},
             "enemies": {"type": "integer", "minimum": 0, "maximum": 12,
                         "description": "patrolling enemies to stomp or avoid (0 = none)"},
-            "custom_layout": {"enum": en.get("custom_layout") or list(COMPOSE_TEMPLATES),
-                              "description": "level_kind custom only: the starting layout the builder reshapes"},
+            "custom_layout": {"enum": en.get("custom_layout") or ["freeform"] + list(COMPOSE_TEMPLATES),
+                              "description": "level_kind custom only: 'freeform' = you lay the level out yourself in "
+                                             "layout_pieces (preferred); or an example layout the builder reshapes"},
+            "layout_pieces": {"type": "array", "maxItems": 40,
+                              "description": "custom + freeform only: the level's pieces in the order the player "
+                                             "visits them, each one a place from the pitch (label it). Positions "
+                                             "[x, y, z] are where you stand (top surface); bridge / stairs / ramp "
+                                             "take from + to; every jump between route pieces at most 5 u across "
+                                             "and 2.5 u up (use bridge / stairs / mover for more); y grows upward",
+                              "items": {"type": "object", "required": ["type"], "properties": {
+                                  "type": {"enum": en.get("piece") or DEFAULT_ENUMS["piece"]},
+                                  "label": {"type": "string", "maxLength": 40},
+                                  "position": {"type": "array", "items": {"type": "number"}, "minItems": 3,
+                                               "maxItems": 3},
+                                  "from": {"type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                                  "to": {"type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                                  "size": {"type": "number"}, "height": {"type": "number"},
+                                  "motion": {"enum": ["pingpong", "loop", "rotate", "raft"]},
+                                  "route": {"type": "boolean"}}}},
+            "ground": {"enum": ["none", "grass", "sand", "snow", "dirt", "cobble"],
+                       "description": "custom only: a ground plane under the level, or none for a floating level"},
+            "mechanics": {"type": "array", "minItems": 1, "maxItems": 3,
+                          "description": "1-3 signature mechanics from the pitch (K.Mechanics): tune = change how the "
+                                         "hero moves; powerup = pickups; keys_doors = coloured keys open matching "
+                                         "doors along the route; switch_gate = a switch opens a gate; rule = a "
+                                         "trigger -> effects rule you invent (when + do); custom = something no "
+                                         "rule can express (the builder codes it)",
+                          "items": {"type": "object", "required": ["name", "how", "text"], "properties": {
+                              "name": {"type": "string", "maxLength": 30},
+                              "how": {"enum": MECH_HOW},
+                              "text": {"type": "string", "maxLength": 140, "description": "what the player sees"},
+                              "powerup": {"enum": en.get("powerup") or DEFAULT_ENUMS["powerup"]},
+                              "count": {"type": "integer", "minimum": 1, "maximum": 8},
+                              "tune": {"type": "object", "description": "speed, jump, gravity, airJumps, dash, glide, "
+                                                                        "wallJump, size, friction"},
+                              "colors": {"type": "array", "maxItems": 3,
+                                         "items": {"enum": en.get("key_color") or DEFAULT_ENUMS["key_color"]}},
+                              "rule": {"type": "object", "description": "rule only: {when: one of "
+                                       + ", ".join(en.get("trigger") or DEFAULT_ENUMS["trigger"])
+                                       + ", trigger options (tag, every, after, kind, all, var, gte, key), do: "
+                                         "[effects like {lava: 3}, {spawn: 'speed', at: 'player'}, {banner: 'text'}, "
+                                         "{give: 'shield', duration: 5}, {tune: {speed: 1.5}, seconds: 4}, "
+                                         "{score: 5}]}"}}}},
             "character": {"type": "object", "required": ["species", "accessory"],
                           "description": "the hero: the species closest to the pitch's protagonist",
                           "properties": {"species": {"enum": en["species"]}, "accessory": {"enum": en["accessory"]}}},
@@ -405,7 +474,8 @@ def plan_brief(pitch: str, title: str | None, en: dict, catalog_txt: str, docs: 
             + "".join(f"    {k}: {kind_descriptions().get(k, '')}\n" for k in en["level_kind"] if k != "custom")
             + ("    custom: ONLY when no kind above fits the pitch's space (a tower climb, a river run, a castle in the "
                "sky): the level is composed from pieces (islands, cliffs, pillars, bridges, stairs, movers, water) "
-               "starting from custom_layout = "
+               "laid out by you: custom_layout 'freeform' + layout_pieces (each piece a place from the pitch, in "
+               "visiting order), or an example to rework: "
                + "; ".join(f"{k} ({d})" for k, (_, d) in COMPOSE_TEMPLATES.items())
                + ". Say in mapping_notes why no preset kind fits.\n" if "custom" in en["level_kind"] else "")
             + f"- player_type (the controller): one of {', '.join(en['player_type'])}\n"
@@ -418,6 +488,8 @@ def plan_brief(pitch: str, title: str | None, en: dict, catalog_txt: str, docs: 
             f"- character: the species closest to the pitch's hero ({', '.join(en['species'])}) + accessory\n"
             f"- mode: {', '.join(en['mode'])} (waves: arena survival with a topdown blaster; quests: villagers with "
             "fetch/deliver/talk quests, give npcs + quests; timetrial: a kart/boat against the clock)\n"
+            "- mechanics: 1-3 signature mechanics that make THIS pitch play differently (K.Mechanics: tune the hero, "
+            "power-ups, keys and doors, switches and gates, trigger -> effect rules you invent, custom code)\n"
             "- player colours, the art direction, 2-3 concept shots (the visual target the game is judged against)\n"
             "- generated assets: a sky panorama, 2-4 HUD icons, a music loop, 4-6 sound effects (one per gameplay "
             "event), 0-2 props (single solid objects like a mushroom, crate, lantern, statue; they become voxel "
@@ -486,6 +558,8 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
     icon = next((n for n, e in assets.items() if e.get("kind") == "icon"
                  and (e.get("for") in (tag, "coins", "coin", "collect") or tag in n)), tag)
     timer = int(plan.get("timer_seconds") or 0)
+    import zlib
+    seed = zlib.crc32(str(plan.get("title") or "game").encode()) % 997 + 3   # one layout per game, not seed 7 for all
     race = plan.get("race") or {}
     racing = bool(int(race.get("laps") or 0)) and plan.get("level_kind") in TRACK_KINDS
     lines = [
@@ -493,13 +567,13 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
         *(["import { scenery } from './scenery.js';"] if scenery_js(assets, catalog) else []),
         "",
         f"// {plan.get('title', 'Game')}: {plan.get('tagline', '')}",
-        f"const game = await K.createGame({{ assets: './assets/assets.json', seed: 7, title: {j(plan.get('title'))} }});",
+        f"const game = await K.createGame({{ assets: './assets/assets.json', seed: {seed}, title: {j(plan.get('title'))} }});",
         f"K.Look.apply(game, {j(plan.get('look', 'toon_bright'))});",
     ]
     if "sky" in assets and has("Assets", "sky"):
         lines.append("K.Assets.sky(game, 'sky');                 // generated panorama; pops in when loaded")
     if plan.get("level_kind") == "custom":
-        spec, _ = COMPOSE_TEMPLATES.get(plan.get("custom_layout"), COMPOSE_TEMPLATES["spiral_climb"])
+        spec = start_layout(plan)
         lines += [
             "// The level, composed from pieces (Level.md \"Compose your own level\"): reshape it to the pitch. Route "
             "pieces in visiting order;",
@@ -511,7 +585,7 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
     else:
         lines += [
             f"const level = K.Level.build(game, {j(plan.get('level_kind'))}, {{ size: "
-            f"{j(plan.get('level_size', 'medium'))}, collectibles: {int(c.get('count', 30))} }});",
+            f"{j(plan.get('level_size', 'medium'))}, seed: {seed}, collectibles: {int(c.get('count', 30))} }});",
         ]
     if tag != "coin":
         lines.append(f"for (const c of level.collectibles) if (c.tag === 'coin') c.tag = {j(tag)};   // the plan's pickup")
@@ -554,10 +628,11 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
     if racing:
         hud.update(lap=True, position=True, speedometer=True)
     lines.append(f"K.UI.hud(game, {j(hud)});")
-    controls = " · ".join(plan.get("controls") or [])[:120]
+    controls = " · ".join(controls_for(plan.get("player_type"))[:3])
     title = {"title": plan.get("title"), "subtitle": plan.get("tagline", ""), "start": "Press Space",
              "credit": controls, "countdown": racing}
     lines.append(f"K.UI.titleScreen(game, {j(title)});   // not awaited: it pauses the game until a key")
+    lines += mechanics_js(plan, catalog)
     if has("FX", "auto"):
         lines.append("K.FX.auto(game);")
     if has("Audio", "auto"):
@@ -566,6 +641,99 @@ def scaffold_js(plan: dict, catalog: dict | None = None, assets: dict | None = N
         lines.append("if (game.asset('music_main')) K.Audio.music(game, game.asset('music_main'));")
     lines += ["K.Debug.install(game, { level, player });", "game.start();", ""]
     return "\n".join(lines)
+
+
+def start_layout(plan: dict) -> dict:
+    """The compose spec the scaffold starts from: the plan's own pieces (freeform) or an example layout."""
+    pieces = [dict(p) for p in plan.get("layout_pieces") or [] if isinstance(p, dict) and p.get("type")]
+    if plan.get("custom_layout") == "freeform" and len(pieces) >= 3:
+        for p in pieces:
+            p.pop("label", None) if False else None          # labels stay: they name the pitch's places
+        spec = {"pieces": pieces, "goal": True}
+        if plan.get("ground") and plan["ground"] != "none":
+            spec["ground"] = {"style": plan["ground"], "y": -3, "size": 260, "hills": 14}
+        return spec
+    spec, _ = COMPOSE_TEMPLATES.get(plan.get("custom_layout"), COMPOSE_TEMPLATES["spiral_climb"])
+    return json.loads(json.dumps(spec))
+
+
+def layout_pieces_of(src: str) -> list[str]:
+    """The piece objects of game.js's LAYOUT, normalised (quotes/whitespace), for diffing against the start."""
+    m = re.search(r"const\s+LAYOUT\s*=\s*(.*?);\s*\n\s*const\s+level", src, re.S)
+    if not m:
+        return []
+    return [re.sub(r"[\s'\"]", "", x) for x in re.findall(r"\{[^{}]*type[^{}]*\}", m.group(1))]
+
+
+def layout_stats(start_src: str, src: str, start: str) -> dict | None:
+    a, b = layout_pieces_of(start_src), layout_pieces_of(src)
+    if not b:
+        return None
+    return {"start": start, "pieces_start": len(a), "pieces_final": len(b),
+            "pieces_changed_from_start": len([x for x in b if x not in set(a)]) + max(0, len(a) - len(b))}
+
+
+def mechanics_js(plan: dict, catalog: dict | None = None) -> list[str]:
+    """K.Mechanics calls for the plan's mechanics (Mechanics.md), placed along level.route."""
+    mechs = [m for m in plan.get("mechanics") or [] if isinstance(m, dict)]
+    if not mechs or (catalog and not fn_names(catalog, "Mechanics")):
+        return []
+    j = json.dumps
+    out = ["// signature mechanics (K.Mechanics, after Gameplay.rules)",
+           "const ALONG = (f) => { const r = level.route, i = Math.min(r.length - 2, Math.max(0, Math.floor(f * "
+           "(r.length - 1)))), a = r[i], b = r[i + 1]; return { p: [a.x, a.y, a.z], yaw: Math.atan2(b.x - a.x, "
+           "b.z - a.z) }; };"]
+    for k, m in enumerate(mechs[:3]):
+        how, name, text = m.get("how"), str(m.get("name", f"mechanic {k + 1}"))[:30], str(m.get("text", ""))[:140]
+        out.append(f"// mechanic: {name} ({how}): {text}")
+        if how == "tune" and isinstance(m.get("tune"), dict):
+            out.append(f"K.Mechanics.tune(player, {j(m['tune'])});")
+        elif how == "powerup":
+            out.append(f"K.Mechanics.powerup(game, {{ type: {j(m.get('powerup') or 'speed')}, count: "
+                       f"{int(m.get('count') or 3)} }});")
+        elif how == "keys_doors":
+            colors = [c for c in m.get("colors") or ["red", "blue"]][:3] or ["red"]
+            for i, c in enumerate(colors):
+                kf, df = 0.12 + 0.25 * i, 0.25 + 0.25 * i
+                out.append(f"{{ const k = ALONG({kf:.2f}), d = ALONG({df:.2f}); K.Mechanics.add(game, {{ type: 'key', "
+                           f"color: {j(c)}, position: k.p }}); K.Mechanics.add(game, {{ type: 'door', id: "
+                           f"{j(f'door_{c}')}, color: {j(c)}, position: d.p, yaw: d.yaw, width: 6 }}); }}")
+        elif how == "switch_gate":
+            out.append(f"{{ const s = ALONG(0.35), g = ALONG(0.55); K.Mechanics.add(game, {{ type: 'door', id: "
+                       f"'gate_{k}', position: g.p, yaw: g.yaw, width: 6 }}); K.Mechanics.add(game, {{ type: 'switch', "
+                       f"id: 'switch_{k}', position: s.p, targets: ['gate_{k}'] }}); }}")
+        elif how == "rule" and isinstance(m.get("rule"), dict) and m["rule"].get("when"):
+            out.append(f"K.Mechanics.rule(game, {j({'name': name, 'text': text, **m['rule']})});")
+        else:            # custom (or an incomplete one): the builder must code it with K.Mechanics.custom
+            out.append(f"// TODO builder: implement '{name}' with K.Mechanics.custom(game, {{ name, text, update(dt, "
+                       f"ctx) {{ ... }} }}) (read_doc('Mechanics'))")
+    return out
+
+
+SHIPPED_MECH = re.compile(r"K\.Mechanics\.(tune|powerup|add|rule|custom|give)\s*\(")
+
+
+def shipped_mechanics(game_dir: Path) -> list[dict]:
+    """Every K.Mechanics call in the shipped code: {name, how, api, file, line_start, line_end, snippet}."""
+    out = []
+    for f in sorted(Path(game_dir).glob("*.js")):
+        lines = f.read_text(encoding="utf-8").splitlines()
+        for i, l in enumerate(lines):
+            for m in SHIPPED_MECH.finditer(l):
+                depth, end = 0, i
+                for jx in range(i, min(len(lines), i + 60)):
+                    seg = lines[jx][m.start():] if jx == i else lines[jx]
+                    depth += seg.count("(") - seg.count(")")
+                    end = jx
+                    if depth <= 0:
+                        break
+                body = "\n".join(lines[i:end + 1])
+                nm = re.search(r"name\s*:\s*['\"]([^'\"]+)", body) or re.search(r"type\s*:\s*['\"]([^'\"]+)", body)
+                api = m.group(1)
+                out.append({"name": nm.group(1) if nm else api, "how": {"rule": "rule", "custom": "custom"}.get(api,
+                            "builtin"), "api": f"Mechanics.{api}", "file": f.name, "line_start": i + 1,
+                            "line_end": end + 1, "snippet": body[:1200]})
+    return out
 
 
 SCENERY_CALL = "scenery(game, level);"

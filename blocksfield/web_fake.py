@@ -26,6 +26,8 @@ FAKE_PLAN = {
     "collectible": {"tag": "coin", "label": "Blooms", "count": 30, "target": 20},
     "goal": True, "timer_seconds": 0, "lives": 3, "enemies": 2, "race": {"laps": 0, "opponents": 0},
     "character": {"species": "fox", "accessory": "scarf"}, "mode": "collect",
+    "mechanics": [{"name": "Lava floor", "how": "rule", "text": "Every 5 blooms the floor turns to lava",
+                   "rule": {"when": "collect", "every": 5, "do": [{"lava": 3}]}}],
     "art_direction": "Saturated candy pastels, chunky rounded islands, soft cel shading, warm late-afternoon light.",
     "concept_shots": ["the hero leaping between two grassy floating islands with glowing star pickups",
                       "a wide view of the island chain with the beacon at the far end"],

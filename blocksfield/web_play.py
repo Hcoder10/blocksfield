@@ -211,6 +211,9 @@ def _pos(state: dict | None):
 
 def _autopilot(page, ev, snap, seconds: float, frames: int) -> dict:
     get = "JSON.parse(JSON.stringify(window.__kit.state()))"
+    ev(page, "(() => { const g = window.__game; if (!g || window.__mechEv) return; window.__mechEv = {}; "
+             "for (const n of ['powerup','key','keyUsed','door','switch','rule','mechanic','teleport','crate','prompt']) "
+             "g.on(n, (...a) => { if (n === 'prompt' && !a[0]) return; window.__mechEv[n] = (window.__mechEv[n] || 0) + 1; }); })()")
     start = ev(page, get, {}) or {}
     ok = ev(page, "window.__kit.autopilot ? (window.__kit.autopilot(true), true) : false", False)
     samples, path = [], []
@@ -233,7 +236,9 @@ def _autopilot(page, ev, snap, seconds: float, frames: int) -> dict:
     dist = sum(math.dist(a, b) for a, b in zip(path, path[1:])) if len(path) > 1 else 0.0
     alive = [((s.get("player") or {}).get("alive")) for s in samples]
     deaths = sum(1 for a, b in zip(alive, alive[1:]) if a and b is False)
+    mech = ev(page, "window.__mechEv || {}", {}) or {}
     return {"available": bool(ok), "seconds": round(time.time() - t0, 1), "moved": round(dist, 1),
+            "mechanic_events": mech,
             "collected_start": _num(start, "collected", "score", "coins"),
             "collected_end": _num(end, "collected", "score", "coins"),
             "target": _num(end, "target", "collectTarget"),

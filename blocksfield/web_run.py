@@ -254,7 +254,9 @@ class WebBuild:
     def tools(self, tag: str):
         from blocksfield.web_build import GameTools
         gt = GameTools(self.game_dir, self.catalog, self.run_dir / "plays" / tag, self.page_rel, self.log,
-                       autopilot=8.0, hero=(self.plan.get("character") or {}).get("species"))
+                       autopilot=8.0, hero=(self.plan.get("character") or {}).get("species"),
+                       start_src=(self.run_dir / "scaffold_src" / "game.js").read_text(encoding="utf-8")
+                       if (self.run_dir / "scaffold_src" / "game.js").exists() else None)
         return gt, gt.tools()
 
     async def build_stage(self) -> dict:
@@ -300,7 +302,12 @@ class WebBuild:
             rep = await asyncio.to_thread(web_play.play, self.page_rel, vdir / "play", wait=45, survey=True,
                                           autopilot=self.a.autopilot, frames=2)
         (vdir / "play.json").write_text(json.dumps(rep, indent=1, default=str), encoding="utf-8")
+        rep["uses_mechanics"] = any("K.Mechanics." in x.read_text(encoding="utf-8")
+                                    for x in (vdir / "src").rglob("*.js"))
         ps, notes = web_play.play_score(rep)
+        if rep["uses_mechanics"] and rep.get("autopilot") and not any(
+                (rep["autopilot"].get("mechanic_events") or {}).values()):
+            notes.append("no mechanic event fired during the autopilot run")
         verdict = None
         if rep["ready"] and "judge" in self.roles:
             await self.llm_up(f"judging {tag}")
@@ -327,6 +334,9 @@ class WebBuild:
         """The version to keep. Clear gaps (errors, playtest, >= 1 point) decide by score; within the vision judge's
         noise a pairwise A/B judge decides, and a tie keeps the more-built version (`new` unless it is the scaffold)."""
         from blocksfield import web_build as wb
+        lost = lambda e: bool((e.get("autopilot") or {}).get("lost"))   # noqa: E731
+        if lost(new) != lost(old):             # live (QA): frostbeak2's autopilot hit Game Over yet it shipped
+            return old if lost(new) else new
         if len(new["errors"]) != len(old["errors"]):
             return new if len(new["errors"]) < len(old["errors"]) else old
         # Absolute vision scores of two versions are not comparable (live: the same scaffold scored 6 and 7, the
@@ -448,13 +458,20 @@ class WebBuild:
             notes += " Builder overrides: " + "; ".join(overrides) + "."
         mapping = {"pitch": self.a.pitch, "notes": notes, "chosen": chosen, "planned": planned,
                    "builder_overrides": overrides}
+        start_src = self.run_dir / "scaffold_src" / "game.js"
+        if chosen.get("level_kind") == "custom" and start_src.exists() and (self.game_dir / "game.js").exists():
+            mapping["layout"] = self.wp.layout_stats(start_src.read_text(encoding="utf-8"),
+                                                     (self.game_dir / "game.js").read_text(encoding="utf-8"),
+                                                     self.plan.get("custom_layout") or "example")
+        mechanics = self.wp.shipped_mechanics(self.game_dir)
         stage_out = {}
         for name in ("art", "scaffold", "build"):
             v = self.stages.get(name) or {}
             stage_out[name] = {k: v[k] for k in ("report", "problems", "result", "plays") if k in v}
         about = {
             "id": self.id, "title": self.plan.get("title"), "tagline": self.plan.get("tagline"),
-            "pitch": self.a.pitch, "genre": self.plan.get("genre"), "controls": self.plan.get("controls"),
+            "pitch": self.a.pitch, "genre": self.plan.get("genre"),
+            "controls": self.wp.controls_for(chosen.get("player_type")), "mechanics": mechanics,
             "created": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "dry_run": bool(self.a.dry_run),
             "play": "index.html", "thumbnail": "thumb.jpg" if (self.game_dir / "thumb.jpg").exists() else None,
             "video": "gameplay.mp4" if video else None, "concepts": concepts,

@@ -48,7 +48,8 @@ class GameTools:
     """The agent's view of one game: web/games/<id>/ (write: *.js; read: the game and the kit sources)."""
 
     def __init__(self, game_dir: Path, catalog: dict | None, plays_dir: Path, page_rel: str, log=print,
-                 autopilot: float = 8.0, hero: str | None = None) -> None:
+                 autopilot: float = 8.0, hero: str | None = None, start_src: str | None = None) -> None:
+        self.start_src = start_src        # the scaffold's game.js: a composed LAYOUT must be tailored, not shipped as-is
         self.hero = hero                  # the plan's species for the pitch's protagonist: builders must keep it
         self.dir = Path(game_dir)
         self.catalog = catalog
@@ -81,6 +82,12 @@ class GameTools:
                 # live: riverbend_canyon's builder turned the pitch's frog into the default kid
                 probs.append(f"the hero must stay the pitch's protagonist: character species '{self.hero}', not "
                              f"'{shipped}'")
+            if self.start_src and "Level.compose(" in self.start_src:
+                st = web_plan.layout_stats(self.start_src, src, "")
+                if st and st["pieces_changed_from_start"] < 3:
+                    probs.append(f"the level LAYOUT is still the starting layout ({st['pieces_changed_from_start']} "
+                                 "pieces changed): tailor it to the pitch's places (add, move, resize pieces; at "
+                                 "least 3 changed)")
             probs += unused_assets(self.dir, "\n".join(x.read_text(encoding="utf-8") for x in self.dir.rglob("*.js")
                                                        if "assets" not in x.relative_to(self.dir).parts))
         return probs
@@ -288,9 +295,15 @@ def build_brief(plan: dict, catalog_txt: str, assets: dict, scaffold: str) -> st
             + "game.js ALREADY EXISTS and runs: the pipeline wrote this scaffold from the plan:\n"
             f"```js\n{scaffold}\n```\n\n"
             + ("THIS LEVEL IS COMPOSED FROM PIECES (LAYOUT in game.js, read_doc('Level', 'Compose your own level')): "
-               "reshape LAYOUT into the pitch's space (add, move, resize pieces; movers, water, towers, arches), keep "
+               "you MUST tailor LAYOUT to the pitch's places (at least 3 pieces added / moved / changed: movers, water, "
+               "towers, arches; the pitch's landmarks as pieces), keep "
                "route pieces in visiting order with every jump at most 5 u across and 2.5 u up, and fix every "
                "'[level] ... error' line play_game reports.\n\n" if "Level.compose(" in scaffold else "")
+            + ("MECHANICS: the plan's signature mechanics are wired in the scaffold (K.Mechanics.*; read_doc"
+               "('Mechanics')). Make them shine, finish any TODO mechanic with K.Mechanics.custom, and INVENT AT "
+               "LEAST ONE TWIST MECHANIC OF YOUR OWN with K.Mechanics.rule (when -> do), or K.Mechanics.custom when a "
+               "rule cannot express it. play_game reports which mechanic events fired: every mechanic must fire.\n\n"
+               if "K.Mechanics." in scaffold or plan.get("mechanics") else "")
             + "YOUR JOB: turn it into the game in the plan. Build ON the scaffold: keep everything it already does "
             "(the generated sky, props and splats, the HUD, title, rules) and change it with edit_file; rewriting "
             "game.js from scratch loses work.\n"
@@ -375,6 +388,10 @@ def findings_text(rep: dict, play_notes: list[str], verdict, catalog: dict | Non
         ref = web_plan.docs_for_error("\n".join(rep["errors"][:10]), catalog)
         if ref:
             lines.append("REFERENCE for the APIs in those errors:\n" + ref[:5000])
+    mev = (rep.get("autopilot") or {}).get("mechanic_events")
+    if mev is not None and rep.get("uses_mechanics") and not any(mev.values()):
+        lines.append("MECHANICS: the game uses K.Mechanics but no mechanic event fired during the autopilot run "
+                     "(no power-up, key, door, switch, rule): put them on the route / make the rules reachable")
     level_issues = [w for w in rep.get("warnings", []) if "[level]" in w]
     if level_issues:
         lines.append("LEVEL LAYOUT ISSUES (Level.compose; 'error' lines must be fixed in LAYOUT):")
