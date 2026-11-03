@@ -693,6 +693,11 @@ export function rules(game, opts = {}) {
       if (countdown !== null) { S.timeLeft = Math.max(0, countdown - S.time); if (S.timeLeft <= 0) lose('time'); }
     }
     S.goalOpen = !goalLocked();
+    // characters can't swim: going under deep water (level.water) is a fall -> respawn at the last checkpoint
+    if (level.water && !vehicle && player.alive && !S.won && !S.lost && opts.drown !== false) {
+      const wy = level.water.y ?? level.water;
+      if (pc.y < wy - 0.35) { R.underT = (R.underT || 0) + dt; if (R.underT > 0.35) { R.underT = 0; player.die('water'); } } else R.underT = 0;
+    }
     S.health = S.hp; S.maxHealth = maxHp;
     const phase = S.won ? 'won' : S.lost ? 'lost' : race && !race.started ? 'countdown' : !player.controls.enabled ? 'title' : 'playing';
     if (phase !== S.phase) { S.phase = phase; changed(); }
@@ -1502,6 +1507,11 @@ export function autopilot(game, opts = {}) {
     if (dist < 0.4) { mx = 0; mz = 0; }
     // slow down near a target on a small platform
     if (dist < 2 && !st.item) { mx *= dist / 2; mz *= dist / 2; }
+    // landed on a small stone with momentum: brake hard (reverse input) instead of sliding off the far side
+    if (player.grounded && dist < 1.6 && !st.item) {
+      const hs = Math.hypot(player.velocity.x, player.velocity.z);
+      if (hs > 4) { mx = -player.velocity.x / hs; mz = -player.velocity.z / hs; }
+    }
     const tgtSupported = !!supported(tgt);
     const sp = Math.hypot(player.velocity.x, player.velocity.z);
     if (player.grounded) {
@@ -1520,7 +1530,8 @@ export function autopilot(game, opts = {}) {
         else { const c = gObj.getWorldPosition(V3()); const tc = V3(c.x - p.x, 0, c.z - p.z); const l = tc.length(); mx = l > 0.4 ? tc.x / l * Math.min(1, l) * 0.6 : 0; mz = l > 0.4 ? tc.z / l * Math.min(1, l) * 0.6 : 0; st.stuckClock = 0; }
       } else if (edge && dist > 1.5) {
         // gap or drop: walk off if the target is below and there is ground under the drop, else jump if an arc lands
-        const dropOk = g1 && dy < -0.8;
+        const wY = level.water ? (level.water.y ?? level.water) : -Infinity;
+        const dropOk = g1 && dy < -0.8 && g1.point.y > tgt.y - 1.5 && g1.point.y > wY;   // only drop onto ground near the target, never into water
         if (!dropOk) {
           const ok = (l) => l && l.y > p.y - 6 && (!l.kinematic || (Math.hypot(l.x - p.x, l.z - p.z) < 4.5 && moverBoardable(l))) && spinnerSafe(l, l.t);
           const land = arcLands(p, hv, jumpV, false);
@@ -1593,7 +1604,12 @@ export function autopilot(game, opts = {}) {
         // steer onto the planned landing; once we have flown past it (too high), keep going forward, never turn back
         const pd = V3(st.plan.x - p.x, 0, st.plan.z - p.z);
         if (st.jumpDir && pd.dot(st.jumpDir) < 0) st.plan = null;
-        else if (pd.length() > 0.5) { pd.normalize(); mx = pd.x; mz = pd.z; }
+        else if (pd.length() > 0.5) {
+          // ease off only once solid ground is under us (easing over the gap is how you fall short)
+          const l = pd.length(); pd.normalize();
+          const over = player.velocity.y < 0 && l < 2.5 && Physics.raycast(game, p.clone().add(V3(0, 0.5, 0)), V3(0, -1, 0), 3, { excludeCollider: player.collider });
+          const k = over ? Math.max(0.25, l / 2.5) : 1; mx = pd.x * k; mz = pd.z * k;
+        }
       }
       else if (st.lastGround && !Physics.raycast(game, p.clone().add(V3(0, 0.5, 0)), V3(0, -1, 0), 10, { excludeCollider: player.collider }) && !supported(tgt)) {
         // nothing under us and the target hangs in the air: head back to where we last stood
