@@ -1,0 +1,332 @@
+{
+ "id": "cloudhop2",
+ "title": "Cloudhop Meadows",
+ "tagline": "Hop, dash and bloom your way to the flower portal at the top of the sky!",
+ "pitch": "Cloudhop Meadows: a bright, juicy 3D platformer across floating sky islands. Run, double-jump and dash between candy-coloured islands and wobbly mushroom platforms, collect glowing star seeds, dodge spinning thorn bars, and reach the giant blooming flower portal at the top. Cheerful music, a bouncy HUD with a seed counter and timer.",
+ "genre": "Juicy 3D platformer / collect-and-climb",
+ "controls": [
+  "WASD / arrows: run",
+  "Space: jump (tap again mid-air: double jump)",
+  "Shift: dash",
+  "P / Esc: pause"
+ ],
+ "created": "2026-11-03T03:38:59-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "v2",
+  "score": 6.0,
+  "play": 8.0,
+  "vision": 4.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 5.83,
+    "play_score": 7.67,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "s0",
+    "score": 6.25,
+    "play_score": 7.5,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "v1",
+    "score": 3.92,
+    "play_score": 7.83,
+    "vision_score": 0.0
+   },
+   {
+    "tag": "v2",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Cloudhop Meadows",
+  "tagline": "Hop, dash and bloom your way to the flower portal at the top of the sky!",
+  "genre": "Juicy 3D platformer / collect-and-climb",
+  "core_loop": "Run, double-jump and dash between candy-coloured floating islands, grab glowing star seeds, dodge spinning thorn bars, and climb island by island to the giant blooming flower portal at the top.",
+  "controls": [
+   "WASD / arrows: run",
+   "Space: jump (tap again mid-air: double jump)",
+   "Shift: dash",
+   "P / Esc: pause"
+  ],
+  "win_condition": "Collect at least 12 Star Seeds and reach the giant blooming flower portal on the top island before the 3-minute timer runs out.",
+  "lose_condition": "Fall into the cloud void or get clipped by a spinning thorn bar to lose a life (respawn at the last island checkpoint); 0 lives or time running out ends the run.",
+  "look": "candy",
+  "ui_style": "arcade",
+  "level_kind": "sky_islands",
+  "level_size": "medium",
+  "player_type": "platformer",
+  "camera": "follow",
+  "player_colors": {
+   "body": "#ff8fc7",
+   "accent": "#6ee7b7"
+  },
+  "collectible": {
+   "tag": "seed",
+   "label": "Star Seeds",
+   "count": 30,
+   "target": 12
+  },
+  "goal": true,
+  "timer_seconds": 180,
+  "lives": 3,
+  "enemies": 0,
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  },
+  "character": {
+   "species": "bunny",
+   "accessory": "scarf"
+  },
+  "mode": "collect",
+  "art_direction": "Candy-sculpted sky world: strawberry-pink, mint, butter-yellow and sky-blue islands with soft toon shading, thin ink outlines and glossy highlights, floating above a sea of fluffy cumulus. Warm afternoon sun, gentle bloom on the glowing star seeds, everything rounded like gumdrops. Mood: a cheerful candy kingdom in the clouds \u2014 Candy Land meets a puffy cloud garden.",
+  "concept_shots": [
+   "The bunny hero mid-dash between two candy-coloured islands, mint scarf streaming behind, a sparkling arc of star seeds overhead and a sea of clouds far below.",
+   "A wobbly mushroom platform carrying the hero across a wide gap while a spinning thorn bar whirls just below the jump line, sparkle trail behind the dash.",
+   "The goal island: the giant blooming flower portal with layered pink petals opening around a glowing gold centre, confetti bursting as the bouncy arcade HUD shows the seed counter maxed out."
+  ],
+  "assets": {
+   "sky": "High-noon candy sky panorama: gradient from sky blue at the top to soft peach at the horizon, big fluffy white cumulus clouds, a warm sun disc, and a few tiny distant floating islands.",
+   "icons": [
+    {
+     "name": "seed",
+     "prompt": "Chubby glowing star-shaped seed, pink and gold with a glossy candy shine and a soft halo, chunky cartoon icon",
+     "for": "seeds"
+    },
+    {
+     "name": "clock",
+     "prompt": "Bouncy candy clock icon, mint face, pink hands, thick rounded outline, cartoon style",
+     "for": "timer"
+    },
+    {
+     "name": "heart",
+     "prompt": "Glossy pink candy heart with a white shine spot, thick cartoon outline",
+     "for": "lives"
+    }
+   ],
+   "music": "Cheerful chiptune-pop: ukulele, xylophone, hand claps and bouncy bass, major key, ~120 BPM, light and bouncy",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "Bright ascending two-note chime with a tiny sparkle shimmer, like picking up a glowing seed",
+     "seconds": 1
+    },
+    {
+     "event": "jump",
+     "prompt": "Short bouncy boing whoosh, cartoon springy",
+     "seconds": 1
+    },
+    {
+     "event": "land",
+     "prompt": "Soft squishy thump with a little puff, like landing on a candy platform",
+     "seconds": 1
+    },
+    {
+     "event": "damage",
+     "prompt": "Comical bonk with a wobble, not scary, cartoon hit",
+     "seconds": 1
+    },
+    {
+     "event": "boost",
+     "prompt": "Snappy dash whoosh with a rising zip",
+     "seconds": 1
+    },
+    {
+     "event": "win",
+     "prompt": "Bright fanfare arpeggio with confetti pop and a warm chime finale",
+     "seconds": 3
+    }
+   ],
+   "props": [
+    {
+     "name": "mushroom",
+     "prompt": "Plump candy mushroom with a glossy pink cap, white spots and a mint stem, rounded and chunky",
+     "count": 12
+    },
+    {
+     "name": "flower_portal",
+     "prompt": "Giant blooming flower with layered glossy pink petals, a glowing golden centre and a soft halo, candy sculpture style",
+     "count": 1
+    }
+   ]
+  },
+  "features": [
+   "Double jump + air dash: platformer tuning (Player.TUNING.platformer) with a dash burst, speedLines and a sparkle trail on dash",
+   "Wobbly mushroom platforms: mover platforms (Level MOTIONS pingpong) dressed with the candy mushroom prop between island hops",
+   "Spinning thorn bars: spinner hazards (Gameplay.HAZARDS spinner) placed in the gaps between islands to dodge mid-jump",
+   "Star seed pickup juice: sparkle burst, floating +1 text and a chime on every collect (FX.auto + FX.sparkle)",
+   "Giant blooming flower portal: goal portal on the goal island dressed with the flower_portal prop, confetti + starBurst on win",
+   "Bouncy arcade HUD: seed counter, 3-minute timer and heart lives with generated candy icons (UI.hud, arcade style)"
+  ],
+  "mapping_notes": "The pitch maps almost 1:1 onto the kit. Floating sky islands -> level_kind sky_islands (islands joined by hops, goal island with arch, bonus island via moving platform). Candy-coloured -> look 'candy'. Glowing star seeds -> collectible tag 'seed' in mode 'collect' (target 12 of 30 opens the goal). Spinning thorn bars -> 'spinner' hazards, since the pitch has no enemies to stomp, enemies=0 and the spinners carry all the danger. Wobbly mushroom platforms: the kit has no literal wobble, so pingpong mover platforms dressed with a generated candy-mushroom prop stand in for the bouncy mushroom hops. Giant blooming flower portal -> the sky_islands goal portal on the goal island, dressed with a flower_portal prop plus confetti/starBurst FX. The hero is unspecified, so a bunny with a streaming scarf is the closest species to 'Cloudhop' (hopping). Bouncy HUD with seed counter and timer -> arcade UI style with generated seed/clock/heart icons and a 180s timer. Double-jump and dash come from the platformer tuning with speedLines juice."
+ },
+ "timings_s": {
+  "art": 291.5,
+  "build": 756.3,
+  "eval_s0": 64.4,
+  "eval_v0": 73.2,
+  "eval_v1": 223.0,
+  "eval_v2": 50.5,
+  "plan": 61.6,
+  "repair_1": 293.7,
+  "repair_2": 414.8,
+  "scaffold": 3.1
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Cloudhop Meadows: a bright, juicy 3D platformer across floating sky islands. Run, double-jump and dash between candy-coloured islands and wobbly mushroom platforms, collect glowing star seeds, dodge spinning thorn bars, and reach the giant blooming flower portal at the top. Cheerful music, a bouncy HUD with a seed counter and timer.",
+  "notes": "The pitch maps almost 1:1 onto the kit. Floating sky islands -> level_kind sky_islands (islands joined by hops, goal island with arch, bonus island via moving platform). Candy-coloured -> look 'candy'. Glowing star seeds -> collectible tag 'seed' in mode 'collect' (target 12 of 30 opens the goal). Spinning thorn bars -> 'spinner' hazards, since the pitch has no enemies to stomp, enemies=0 and the spinners carry all the danger. Wobbly mushroom platforms: the kit has no literal wobble, so pingpong mover platforms dressed with a generated candy-mushroom prop stand in for the bouncy mushroom hops. Giant blooming flower portal -> the sky_islands goal portal on the goal island, dressed with a flower_portal prop plus confetti/starBurst FX. The hero is unspecified, so a bunny with a streaming scarf is the closest species to 'Cloudhop' (hopping). Bouncy HUD with seed counter and timer -> arcade UI style with generated seed/clock/heart icons and a 180s timer. Double-jump and dash come from the platformer tuning with speedLines juice.",
+  "chosen": {
+   "level_kind": "sky_islands",
+   "look": "candy",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "mode": "collect",
+   "species": "bunny",
+   "character": {
+    "species": "bunny",
+    "accessory": "scarf"
+   },
+   "collectible": "seed",
+   "collectible_label": "Star Seeds"
+  },
+  "planned": {
+   "level_kind": "sky_islands",
+   "look": "candy",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "mode": "collect",
+   "species": "bunny"
+  },
+  "builder_overrides": []
+ },
+ "model_calls": {
+  "lead": {
+   "calls": 1,
+   "prompt_tokens": 7650,
+   "completion_tokens": 4744,
+   "seconds": 60.4
+  },
+  "builder": {
+   "calls": 40,
+   "prompt_tokens": 1003212,
+   "completion_tokens": 6679,
+   "seconds": 918.0
+  },
+  "judge": {
+   "calls": 10,
+   "prompt_tokens": 51968,
+   "completion_tokens": 4075,
+   "seconds": 231.5
+  }
+ },
+ "agents": {
+  "live": 4,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 96.3
+    },
+    "icon_seed": {
+     "ok": true,
+     "seconds": 104.9
+    },
+    "icon_clock": {
+     "ok": true,
+     "seconds": 118.2
+    },
+    "icon_heart": {
+     "ok": true,
+     "seconds": 128.4
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 147.6
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 151.8
+    },
+    "sfx_jump": {
+     "ok": true,
+     "seconds": 152.7
+    },
+    "sfx_land": {
+     "ok": true,
+     "seconds": 153.7
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 154.9
+    },
+    "sfx_boost": {
+     "ok": true,
+     "seconds": 155.8
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 157.8
+    },
+    "prop_mushroom": {
+     "ok": true,
+     "seconds": 248.5
+    },
+    "prop_flower_portal": {
+     "ok": true,
+     "seconds": 291.3
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Cloudhop Meadows: a candy-styled 3D sky-island platformer built on the scaffold. The bunny hero (pink body, mint scarf) runs, double-jumps and dashes across candy-coloured floating islands, collects 12 of 30 glowing Star Seeds to unlock the flower portal at the top, all under a 3-minute timer with 3 lives. Spinning thorn bars (spinner hazards) guard the hops between islands, candy-mushroom props and splat landmarks dress the route, and the arcade HUD shows the seed counter (with target 12), countdown timer, heart lives, objective line and minimap. FX juice: dash speed-lines + spark bursts, star-burst + floating \"+2\" on every seed pickup, and confetti + star burst at the goal on win. Generated sky, music and SFX all play via Assets/Audio.auto. Verified with two play_game runs: zero console errors, autopilot moves along the route and collects seeds (one legitimate spinner death confirmed hazards work).",
+    "changes": [
+     "Added spinner (thorn bar) hazards in the gaps between islands, oriented along the route with length scaled to the gap",
+     "Tuned the platformer player: mint scarf colour, kept bunny species + double jump/dash feel",
+     "Upgraded HUD: seed counter with target 12, objective line, arcade style, minimap, timer, lives",
+     "Shortened the title subtitle and control credit to fit the UI",
+     "Added dash juice (speed lines + spark burst), seed-pickup juice (star burst + floating +2 text), and win celebration (candy-coloured confetti + star burst at the portal) via game.on event handlers",
+     "Kept scaffold's generated sky, scenery props/splats, title screen, FX.auto, Audio.auto, Debug.install and game.start()"
+    ],
+    "known_issues": [
+     "Autopilot collected 10/12 seeds in the short test windows and hasn't reached the win yet, but it is progressing correctly along the route; a full run should complete the 12-seed target and reach the portal",
+     "A harmless THREE.WebGLProgram info-log warning appears (signed/unsigned mismatch) \u2014 not an error, from three.js shader compilation"
+    ]
+   },
+   "plays": 2
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ }
+}

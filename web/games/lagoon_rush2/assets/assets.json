@@ -1,0 +1,91 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Sunny midday tropical panorama: pale aqua at the horizon deepening to warm blue overhead, puffy cotton-candy cumulus, a high golden sun, a faint hint of distant islands.",
+  "wrap_seam": 0.66
+ },
+ "icon_starfish": {
+  "file": "icon_starfish.png",
+  "kind": "icon",
+  "prompt": "cute toon orange starfish with a smile, thick ink outline, flat sticker style on transparent",
+  "for": "collect"
+ },
+ "icon_lap_flag": {
+  "file": "icon_lap_flag.png",
+  "kind": "icon",
+  "prompt": "checkered race flag on a short pole, toon sticker style, thick ink outline",
+  "for": "laps"
+ },
+ "icon_boost_bolt": {
+  "file": "icon_boost_bolt.png",
+  "kind": "icon",
+  "prompt": "bright yellow lightning bolt with a speed swoosh, toon sticker, thick ink outline",
+  "for": "boost"
+ },
+ "icon_boat_trophy": {
+  "file": "icon_boat_trophy.png",
+  "kind": "icon",
+  "prompt": "little golden trophy cup with a tiny jet-boat on top, toon sticker, thick ink outline",
+  "for": "position"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "upbeat tropical house, 115 BPM, steel drums, ukulele, bright plucked synths, splashy percussion, bouncy and summery, seamless loop"
+ },
+ "sfx_boost": {
+  "file": "sfx_boost.mp3",
+  "kind": "sfx",
+  "event": "boost",
+  "prompt": "water-rocket whoosh with a rising pitch, wet and snappy"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "bright bubbly blip, like a starfish popping off the water"
+ },
+ "sfx_checkpoint": {
+  "file": "sfx_checkpoint.mp3",
+  "kind": "sfx",
+  "event": "checkpoint",
+  "prompt": "cheerful two-note lap chime with a little splash tail"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "splashy whoosh as the boat launches off the ramp"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "big wet splash thump with a droplet scatter"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "victory fanfare, brass stabs plus a final splash cymbal"
+ },
+ "prop_buoy": {
+  "file": "prop_buoy.json",
+  "kind": "prop",
+  "prompt": "one round red-and-white striped harbor buoy with a tiny light on top, glossy toon plastic, bobbing in the water",
+  "via": "idol",
+  "parts": 515
+ },
+ "splat_buoy": {
+  "file": "splat_buoy.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "one round red-and-white striped harbor buoy with a tiny light on top, glossy toon plastic, bobbing in the water",
+  "camera": {
+   "yaw": 0.787579695608944
+  }
+ }
+}
