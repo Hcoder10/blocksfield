@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-03T05:47:56-0800",
+ "generated": "2026-11-03T06:07:51-0800",
  "dev": false,
  "space": {
   "level_kind": [
@@ -122,6 +122,44 @@
    "species": "bunny"
   },
   {
+   "id": "frostbeak2",
+   "title": "Frostbeak",
+   "tagline": "Waddle, hop and belly-slide up a pink-dawn mountain to the summit igloo.",
+   "pitch": "Frostbeak: a little penguin waddles and belly-slides across a snowy mountain, hopping between icy ledges and frozen floating floes to collect glittering fish, dodging rolling snowballs, and reaching the summit igloo. Crisp blue-white snow, pink dawn sky, cosy and playful.",
+   "genre": "cozy platformer",
+   "controls": [
+    "WASD / arrows: run",
+    "Space: jump (again in the air: double jump)",
+    "Shift: dash / long jump",
+    "C: ground pound",
+    "P / Esc: pause"
+   ],
+   "created": "2026-11-03T05:50:37-0800",
+   "thumbnail": "thumb.jpg",
+   "video": "gameplay.mp4",
+   "play": "index.html",
+   "card_thumb": null,
+   "score": 6.5,
+   "repairs": 2,
+   "model_calls": 1,
+   "minutes": 26.9,
+   "dry_run": false,
+   "superseded_by": null,
+   "interventions": 0,
+   "look": "snow",
+   "level_kind": "sky_islands",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "cozy",
+   "custom_level": false,
+   "layout": null,
+   "start_layout": null,
+   "laid_out": false,
+   "mechanics": [],
+   "cutscenes": 0,
+   "species": "penguin"
+  },
+  {
    "id": "turbo_treats",
    "title": "Turbo Treats",
    "tagline": "Sugar-rush coins, spin-out oil slicks, and a trail of gumdrops behind the leader.",
@@ -170,44 +208,6 @@
    ],
    "cutscenes": 0,
    "species": "bunny"
-  },
-  {
-   "id": "frostbeak2",
-   "title": "Frostbeak",
-   "tagline": "Waddle, hop and belly-slide up a pink-dawn mountain to the summit igloo.",
-   "pitch": "Frostbeak: a little penguin waddles and belly-slides across a snowy mountain, hopping between icy ledges and frozen floating floes to collect glittering fish, dodging rolling snowballs, and reaching the summit igloo. Crisp blue-white snow, pink dawn sky, cosy and playful.",
-   "genre": "cozy platformer",
-   "controls": [
-    "WASD / arrows: run",
-    "Space: jump (again in the air: double jump)",
-    "Shift: dash / long jump",
-    "C: ground pound",
-    "P / Esc: pause"
-   ],
-   "created": "2026-11-03T05:31:46-0800",
-   "thumbnail": "thumb.jpg",
-   "video": "gameplay.mp4",
-   "play": "index.html",
-   "card_thumb": null,
-   "score": 6.5,
-   "repairs": 2,
-   "model_calls": 1,
-   "minutes": 25.6,
-   "dry_run": false,
-   "superseded_by": null,
-   "interventions": 0,
-   "look": "snow",
-   "level_kind": "sky_islands",
-   "player_type": "platformer",
-   "camera": "follow",
-   "ui_style": "cozy",
-   "custom_level": false,
-   "layout": null,
-   "start_layout": null,
-   "laid_out": false,
-   "mechanics": [],
-   "cutscenes": 0,
-   "species": "penguin"
   },
   {
    "id": "crystal_hollow",
@@ -714,7 +714,7 @@
    "start_layout": null,
    "laid_out": false,
    "mechanics": [],
-   "cutscenes": 0,
+   "cutscenes": 1,
    "species": "kid"
   }
  ]
