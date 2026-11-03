@@ -32,6 +32,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 GAMES = ROOT / "web" / "games"
 STAGE_ORDER = ["plan", "art", "scaffold", "build"]
+LLM_WAIT = int(os.environ.get("BLOCKSFIELD_LLM_WAIT", "1800"))
 
 
 class CountingLLM:
@@ -110,6 +111,35 @@ class WebBuild:
     def log(self, msg: str) -> None:
         self.wf.log(msg)
 
+    async def llm_up(self, why: str) -> None:
+        """Wait for the box's LLM before a model call (re-opening the ssh tunnel if it dropped). Live: the tunnel went
+        away for ~10 min and two builds ran their judges and repairs into ConnectErrors, shipping unjudged versions.
+        After LLM_WAIT seconds the run stops instead; relaunching it (or the queue) resumes here."""
+        if self.a.dry_run:
+            return
+        import httpx
+        from blocksfield import run
+        t0, warned = time.time(), False
+        while True:
+            try:
+                await asyncio.to_thread(run.ensure_tunnel)
+                async with httpx.AsyncClient(timeout=10) as http:
+                    r = await http.get(f"http://127.0.0.1:{run.PORT}/v1/models")
+                if r.status_code == 200:
+                    if warned:
+                        self.log(f"LLM back after {time.time() - t0:.0f}s ({why})")
+                    return
+            except (Exception, SystemExit) as e:  # noqa: BLE001  -- SystemExit: the tunnel did not open
+                err = f"{type(e).__name__}: {str(e)[:120]}"
+            else:
+                err = f"http {r.status_code}"
+            if not warned:
+                self.log(f"LLM unreachable before {why} ({err}); waiting up to {LLM_WAIT // 60} min")
+                warned = True
+            if time.time() - t0 > LLM_WAIT:
+                raise SystemExit(f"LLM unreachable for {LLM_WAIT // 60} min before {why}: stopping (relaunch to resume)")
+            await asyncio.sleep(20)
+
     async def run(self) -> dict:
         from blocksfield import web_plan
         t = time.time()
@@ -161,6 +191,7 @@ class WebBuild:
         brief = wp.plan_brief(self.a.pitch, self.a.title, en, wp.catalog_text(self.catalog), wp.doc_names())
         plan = None
         for attempt in range(2):
+            await self.llm_up("plan")
             plan = await self.wf.agent(brief, role="lead", system=wp.LEAD_SYSTEM, schema=schema,
                                        label=f"plan{'' if not attempt else '-retry'}", max_steps=6)
             if isinstance(plan, dict):
@@ -227,9 +258,11 @@ class WebBuild:
         gt, tools = self.tools("build")
         scaffold = (self.game_dir / "game.js").read_text(encoding="utf-8")
         brief = wb.build_brief(self.plan, self.wp.catalog_text(self.catalog), self.manifest(), scaffold)
+        await self.llm_up("build")
         res = await self.wf.agent(brief, role="builder", system=wb.BUILDER_SYSTEM, tools=tools,
                                   schema=wb.BUILD_SUBMIT, label="build", max_steps=self.a.build_steps)
         if res is None:
+            await self.llm_up("build (after a failed builder)")   # an outage stops the run here: build is redone
             self.log("build: the builder did not submit; continuing with what is on disk")
         return {"result": res, "plays": gt.plays}
 
@@ -260,6 +293,7 @@ class WebBuild:
         ps, notes = web_play.play_score(rep)
         verdict = None
         if rep["ready"] and "judge" in self.roles:
+            await self.llm_up(f"judging {tag}")
             try:
                 verdict = await wb.judge(self.roles["judge"], wb.capture_images(rep), self.plan, self.targets())
             except Exception as e:  # noqa: BLE001  -- a judge failure must not stop the build
@@ -288,6 +322,7 @@ class WebBuild:
         key = f"pair_{new['tag']}_{old['tag']}"
         got = self.stages.get(key)
         if got is None:
+            await self.llm_up(f"pairwise {new['tag']} vs {old['tag']}")
             try:
                 pick = await wb.pairwise(self.roles["judge"], wb.capture_images(new)[:3], wb.capture_images(old)[:3],
                                          self.plan)
@@ -323,6 +358,7 @@ class WebBuild:
                 self.wf.phase(name)
                 t = time.time()
                 gt, tools = self.tools(name)
+                await self.llm_up(name)
                 res = await self.wf.agent(wb.repair_brief(self.plan, self.wp.catalog_text(self.catalog),
                                                           best["findings"], rnd),
                                           role="builder", system=wb.BUILDER_SYSTEM, tools=tools,
