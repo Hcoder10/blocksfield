@@ -1,0 +1,315 @@
+{
+ "id": "neon_arena2",
+ "title": "Neon Arena",
+ "tagline": "Blast the swarm. Bank the cores. Outlast the clock.",
+ "pitch": "Neon Arena: a fast top-down twin-stick-style arena shooter at night in a synthwave colosseum. A tiny hover-robot dashes around a glowing tiled arena, blasting waves of chasing spiky orbs and patrolling slimes, grabbing energy cores dropped across the floor, and surviving the timer. Neon pink and cyan light, dark night sky, punchy hits, screen shake, scifi HUD.",
+ "genre": "Top-down synthwave arena shooter / wave survival",
+ "controls": [
+  "WASD / arrows: dash around the arena",
+  "Mouse: aim",
+  "Left click (hold): fire blaster",
+  "Shift: boost dash",
+  "P / Esc: pause"
+ ],
+ "created": "2026-11-03T01:58:22-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "v2",
+  "score": 6.14,
+  "play": 6.29,
+  "vision": 6.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 6.07,
+    "play_score": 6.14,
+    "vision_score": 6.0
+   },
+   {
+    "tag": "s0",
+    "score": 5.5,
+    "play_score": 6.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "v1",
+    "score": 5.07,
+    "play_score": 6.14,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "v2",
+    "score": 6.14,
+    "play_score": 6.29,
+    "vision_score": 6.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Neon Arena",
+  "tagline": "Blast the swarm. Bank the cores. Outlast the clock.",
+  "genre": "Top-down synthwave arena shooter / wave survival",
+  "core_loop": "Dash around the glowing arena, aim with the mouse and blast waves of spiky orbs and patrolling slimes, grab the energy cores they drop, and keep your shield alive until the last wave falls.",
+  "controls": [
+   "WASD / arrows: dash around the arena",
+   "Mouse: aim",
+   "Left click (hold): fire blaster",
+   "Shift: boost dash",
+   "P / Esc: pause"
+  ],
+  "win_condition": "Clear all 5 enemy waves and bank 14 energy cores before the 150-second timer hits zero.",
+  "lose_condition": "The timer runs out before the final wave is cleared, or all 3 shield charges are destroyed.",
+  "look": "neon_night",
+  "level_kind": "arena",
+  "ui_style": "scifi",
+  "level_size": "medium",
+  "player_type": "topdown",
+  "camera": "topdown",
+  "player_colors": {
+   "body": "#19e6ff",
+   "accent": "#ff2d78"
+  },
+  "collectible": {
+   "tag": "orb",
+   "label": "Energy Cores",
+   "count": 28,
+   "target": 14
+  },
+  "goal": false,
+  "timer_seconds": 150,
+  "lives": 3,
+  "enemies": 4,
+  "character": {
+   "species": "robot",
+   "accessory": "none"
+  },
+  "mode": "waves",
+  "waves": {
+   "count": 5,
+   "size": 5
+  },
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  },
+  "art_direction": "Synthwave at night: a deep indigo-black sky over a colosseum floor of glowing magenta and cyan grid tiles, everything edged in bloom-heavy neon. Dark gunmetal and obsidian surfaces lit only by hot pink and electric cyan light strips \u2014 Tron meets OutRun. Enemies, cores, bullets and the HUD all glow, so the arena reads as one pulsing circuit board.",
+  "concept_shots": [
+   "The hover-robot mid-dash across the glowing tile grid with a cyan bullet trail behind it, a ring of spiky pink orbs closing in from the arena rim.",
+   "A patrolling slime detonates into a starburst of pink sparks and drops a pulsing energy core on the floor, a shockwave ring and screen shake rippling outward.",
+   "Final wave: the scifi HUD flashes WAVE 5 as the timer ticks under 0:30, the robot fires into the swarm while speed lines streak past the topdown camera."
+  ],
+  "assets": {
+   "sky": "Dark indigo night panorama with a band of stars, a low magenta horizon glow, and a distant neon city skyline streaked in cyan and pink \u2014 a synthwave colosseum at midnight.",
+   "icons": [
+    {
+     "name": "core_bolt",
+     "prompt": "glowing cyan hexagonal energy core with an electric pink inner spark, neon rim light on a dark background, game HUD icon",
+     "for": "cores"
+    },
+    {
+     "name": "shield_hex",
+     "prompt": "neon pink hexagonal shield emblem with a cyan inner ring, glowing edges on a dark background, game HUD icon",
+     "for": "lives"
+    },
+    {
+     "name": "clock_ring",
+     "prompt": "retro-futuristic timer ring, cyan glowing circle with pink hands on a dark background, game HUD icon",
+     "for": "timer"
+    }
+   ],
+   "music": "Synthwave / darkwave loop: driving analog bass, arpeggiated saw lead, pulsing pads, gated snare, 112 BPM \u2014 nocturnal, tense, with a hook.",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "bright electric chime, quick rising two-note arpeggio with a soft shimmer tail"
+    },
+    {
+     "event": "damage",
+     "prompt": "harsh distorted zap with a pitch drop and a shield-crack crunch"
+    },
+    {
+     "event": "death",
+     "prompt": "low synth explosion with a long reverb tail and a sub drop"
+    },
+    {
+     "event": "boost",
+     "prompt": "rising whoosh with a filter sweep, like a hover drive flaring"
+    },
+    {
+     "event": "win",
+     "prompt": "triumphant synth stab with a major arpeggio burst and shimmer"
+    },
+    {
+     "event": "lose",
+     "prompt": "descending minor arpeggio power-down ending on a low thud"
+    }
+   ],
+   "props": [
+    {
+     "name": "neon_pillar",
+     "prompt": "tall hexagonal column of dark gunmetal with glowing cyan edge strips and a magenta light bar on top",
+     "count": 8
+    },
+    {
+     "name": "holo_pedestal",
+     "prompt": "short square obsidian pedestal with cyan trim and a floating glowing pink orb hovering above it",
+     "count": 6
+    }
+   ]
+  },
+  "mapping_notes": "The hover-robot maps to the robot species on the topdown controller \u2014 the kit's closest match to twin-stick (WASD dash + mouse aim with the blaster weapon). The synthwave colosseum is the arena level under the neon_night look, its dressed glowing floor standing in for the tiled grid. Spiky chasing orbs are the 'chase' enemies, patrolling slimes are the 'patrol' enemies: wave spawning drives the swarm and 4 patrol slimes are pre-placed in the arena. Energy cores are 'orb' collectibles scattered on the floor and dropped by enemies. 'Surviving the timer' becomes a 150-second fail timer layered over 5 waves in waves mode, the kit's arena-survival rule set. Punchy hits, screen shake, slow-mo and speed lines come straight from the FX kit, and the scifi HUD style covers the sci-fi UI. The kit has no literal hover physics, but the topdown controller's dash and boost carry the zip.",
+  "features": [
+   "Screen shake on every hit and a bigger shake on enemy explosions (FX.shake)",
+   "Cyan bullet trails and pink muzzle sparks from the blaster (FX.trail, FX.burst)",
+   "Enemy deaths: shockwave ring plus starburst, with a slow-mo beat on the last enemy of each wave (FX.ring, FX.starBurst, FX.slowmo)",
+   "Neon hit flash on the robot's shield whenever it takes damage (FX.hitFlash)",
+   "Speed lines while boost-dashing (FX.speedLines)",
+   "Floating '+1' score text over every collected energy core (FX.text)"
+  ]
+ },
+ "timings_s": {
+  "art": 255.1,
+  "build": 831.7,
+  "eval_s0": 73.5,
+  "eval_v0": 68.3,
+  "eval_v1": 76.8,
+  "eval_v2": 68.2,
+  "finalize": 62.7,
+  "plan": 77.7,
+  "repair_1": 191.6,
+  "repair_2": 161.5,
+  "scaffold": 1.5
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Neon Arena: a fast top-down twin-stick-style arena shooter at night in a synthwave colosseum. A tiny hover-robot dashes around a glowing tiled arena, blasting waves of chasing spiky orbs and patrolling slimes, grabbing energy cores dropped across the floor, and surviving the timer. Neon pink and cyan light, dark night sky, punchy hits, screen shake, scifi HUD.",
+  "notes": "The hover-robot maps to the robot species on the topdown controller \u2014 the kit's closest match to twin-stick (WASD dash + mouse aim with the blaster weapon). The synthwave colosseum is the arena level under the neon_night look, its dressed glowing floor standing in for the tiled grid. Spiky chasing orbs are the 'chase' enemies, patrolling slimes are the 'patrol' enemies: wave spawning drives the swarm and 4 patrol slimes are pre-placed in the arena. Energy cores are 'orb' collectibles scattered on the floor and dropped by enemies. 'Surviving the timer' becomes a 150-second fail timer layered over 5 waves in waves mode, the kit's arena-survival rule set. Punchy hits, screen shake, slow-mo and speed lines come straight from the FX kit, and the scifi HUD style covers the sci-fi UI. The kit has no literal hover physics, but the topdown controller's dash and boost carry the zip.",
+  "chosen": {
+   "level_kind": "arena",
+   "look": "neon_night",
+   "player_type": "topdown",
+   "camera": "topdown",
+   "ui_style": "scifi",
+   "mode": "waves",
+   "species": "robot",
+   "character": {
+    "species": "robot",
+    "accessory": "none"
+   },
+   "collectible": "orb",
+   "collectible_label": "Energy Cores"
+  },
+  "planned": {
+   "level_kind": "arena",
+   "look": "neon_night",
+   "player_type": "topdown",
+   "camera": "topdown",
+   "ui_style": "scifi",
+   "mode": "waves",
+   "species": "robot"
+  },
+  "builder_overrides": []
+ },
+ "model_calls": {},
+ "agents": {
+  "live": 0,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 80.8
+    },
+    "icon_core_bolt": {
+     "ok": true,
+     "seconds": 89.3
+    },
+    "icon_shield_hex": {
+     "ok": true,
+     "seconds": 99.6
+    },
+    "icon_clock_ring": {
+     "ok": true,
+     "seconds": 109.4
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 126.8
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 131.2
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 132.2
+    },
+    "sfx_death": {
+     "ok": true,
+     "seconds": 133.1
+    },
+    "sfx_boost": {
+     "ok": true,
+     "seconds": 134.3
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 136.0
+    },
+    "sfx_lose": {
+     "ok": true,
+     "seconds": 136.9
+    },
+    "prop_neon_pillar": {
+     "ok": true,
+     "seconds": 214.3
+    },
+    "prop_holo_pedestal": {
+     "ok": true,
+     "seconds": 255.1
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Neon Arena: a top-down twin-stick synthwave arena shooter built on the scaffold. Cyan hover-robot (robot species, #19e6ff body / #ff2d78 accent) dashes with WASD, aims with the mouse, fires the blaster with click, boost-dashes with Shift. Gameplay.rules runs waves mode (5 waves of chase orbs + patrol slimes, 4 pre-placed arena enemies), a 150-second countdown fail timer, 3 lives, and collect: 14 of the 28 energy-core orbs. The scifi HUD shows the orb counter (target 14), timer, lives + hp, objective line and minimap. The generated synthwave sky, voxel props and splat landmarks, title screen and auto win/lose screens are all kept. Plan features wired on top of FX.auto: pink muzzle sparks on every shot, floating '+1' cyan text on core pickups, shield hit-flash + extra shake on damage, shockwave ring + starburst + shake on enemy deaths with a slow-mo beat on the last enemy of each wave, and speed lines on boost/dash. Music plays from the generated synthwave loop. Camera tuned to a high near-topdown view (height 40, pitch 1.58) that reads the whole glowing arena; Look quality set to 'low' for stable frame rates. Autopilot verified: player moves along the route, collects cores, and kills enemies through the waves with zero console errors.",
+    "changes": [
+     "Tuned Look to neon_night with quality 'low' and a full-stars night sky",
+     "Set rules: collect {orb, target 14, label Energy Cores}, objective text, waves {count 5, size 5, kinds chase+patrol}, hp 3, timer 150, lives 3, goal false",
+     "HUD: added hp bar and objective line to the scifi HUD (orb counter, timer, lives, minimap kept)",
+     "Camera.topdown tuned to height 40, pitch 1.58 for a readable near-topdown arena view",
+     "Added juice events: muzzle spark bursts on shoot, '+1' cyan text on collect, hitFlash + shake on player damage, ring + starBurst + shake on enemy death with slow-mo on last enemy of each wave, speedLines on boost/dash",
+     "Started the generated synthwave music loop (Audio.music 'music_main', scifi style)"
+    ],
+    "known_issues": [
+     "The generated panorama sky renders as a fairly flat purple backdrop rather than the planned indigo night with a neon skyline (asset is what it is; fog matches the horizon)",
+     "Some generated splat landmarks (holo pedestals) can read as flat quads from certain angles; scenery.js is pipeline-owned and could not be edited",
+     "The topdown camera at a readable height still shows a slight tilt, so the arena reads as a tilted disc rather than a perfectly flat grid"
+    ]
+   },
+   "plays": 9
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ }
+}

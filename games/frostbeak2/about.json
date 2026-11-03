@@ -1,0 +1,319 @@
+{
+ "id": "frostbeak2",
+ "title": "Frostbeak",
+ "tagline": "Waddle, hop and belly-slide up a pink-dawn mountain to the summit igloo.",
+ "pitch": "Frostbeak: a little penguin waddles and belly-slides across a snowy mountain, hopping between icy ledges and frozen floating floes to collect glittering fish, dodging rolling snowballs, and reaching the summit igloo. Crisp blue-white snow, pink dawn sky, cosy and playful.",
+ "genre": "cozy platformer",
+ "controls": [
+  "A / D or \u2190 / \u2192: waddle",
+  "Space or W / \u2191: hop",
+  "P: pause"
+ ],
+ "created": "2026-11-03T01:56:44-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "v2",
+  "score": 6.0,
+  "play": 8.0,
+  "vision": 4.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "s0",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "v1",
+    "score": 6.42,
+    "play_score": 7.83,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "v2",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Frostbeak",
+  "tagline": "Waddle, hop and belly-slide up a pink-dawn mountain to the summit igloo.",
+  "genre": "cozy platformer",
+  "core_loop": "Waddle and hop across floating ice floes, collect glittering fish, stomp or dodge rolling snowballs, and reach the summit igloo before your lives run out.",
+  "controls": [
+   "A / D or \u2190 / \u2192: waddle",
+   "Space or W / \u2191: hop",
+   "P: pause"
+  ],
+  "win_condition": "Collect 12 of the 24 glittering fish and reach the summit igloo.",
+  "lose_condition": "Lose all 3 lives to rolling snowballs or falling off the floes.",
+  "look": "snow",
+  "level_kind": "sky_islands",
+  "ui_style": "cozy",
+  "level_size": "medium",
+  "player_type": "platformer",
+  "camera": "follow",
+  "player_colors": {
+   "body": "#26324b",
+   "accent": "#ff9ec4"
+  },
+  "collectible": {
+   "tag": "star",
+   "label": "Fish",
+   "count": 24,
+   "target": 12
+  },
+  "goal": true,
+  "timer_seconds": 0,
+  "lives": 3,
+  "enemies": 6,
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  },
+  "character": {
+   "species": "penguin",
+   "accessory": "scarf"
+  },
+  "mode": "collect",
+  "art_direction": "Crisp blue-white powder snow with soft cyan ice, chunky rounded toon geometry with gentle ink outlines. Pink dawn sky with a peach horizon glow, a low warm sun rim-lighting the snow edges, long soft shadows, and lavender mist drifting between the floes. Cozy, playful, storybook \u2014 a winter diorama that feels warm even though everything is ice.",
+  "concept_shots": [
+   "Frostbeak, a small penguin in a pink scarf, belly-slides across a wide ice floe kicking up a powder-snow plume, a string of glittering fish arcing up the slope ahead.",
+   "The penguin hops a gap between two floating ice floes as a rolling snowball thunders down the ledge behind, dust trailing, pink dawn clouds drifting in the distance.",
+   "The summit: a small ice-block igloo glows warm amber at the top of the mountain; Frostbeak lands on the final ledge in a burst of ice crystals, confetti swirling in the pink light."
+  ],
+  "assets": {
+   "sky": "pink dawn panorama: soft peach and rose glow at the horizon fading to pale powder blue above, a low golden-pink sun, wispy cotton clouds, distant snow-capped peaks in lavender haze",
+   "icons": [
+    {
+     "name": "fish",
+     "prompt": "chibi glittering fish, silver-blue with a pink belly, glossy toon sticker with a soft white shine and tiny sparkle stars",
+     "for": "fish"
+    },
+    {
+     "name": "heart",
+     "prompt": "plump toon heart, soft pink with a white highlight, rounded sticker style on a pale blue chip",
+     "for": "lives"
+    },
+    {
+     "name": "flag",
+     "prompt": "small toon flag on a snow-capped pole, pink pennant, rounded sticker style",
+     "for": "goal"
+    }
+   ],
+   "music": "cozy winter lo-fi: music-box and marimba melody, gentle brushed drums, warm pad swells, playful and warm, ~90 BPM",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "bright glittering chime, a tiny bell with a shimmer tail",
+     "seconds": 1
+    },
+    {
+     "event": "jump",
+     "prompt": "soft plucky pop with a light whoosh",
+     "seconds": 1
+    },
+    {
+     "event": "land",
+     "prompt": "muffled snow thud with a powdery puff",
+     "seconds": 1
+    },
+    {
+     "event": "damage",
+     "prompt": "comical boing-hit, a low thud with a wobble",
+     "seconds": 1
+    },
+    {
+     "event": "win",
+     "prompt": "cheerful music-box fanfare with a bell glissando",
+     "seconds": 4
+    },
+    {
+     "event": "lose",
+     "prompt": "sad little trombone slide with a soft snow thud",
+     "seconds": 3
+    }
+   ],
+   "props": [
+    {
+     "name": "igloo",
+     "prompt": "small round igloo of pale ice-blue blocks with a dark arched doorway and a tiny pink scarf draped over the roof",
+     "count": 3
+    },
+    {
+     "name": "ice_crystal",
+     "prompt": "chunky faceted ice crystal, pale cyan with white sparkle, rounded toon style",
+     "count": 8
+    }
+   ]
+  },
+  "features": [
+   "Rolling snowball enemies: patrol snowballs that roll along the ledges, stompable, with a dust trail (Gameplay.spawnEnemy 'patrol', FX.dust)",
+   "Drifting ice floes: moving platforms that carry Frostbeak across wide gaps (level movers)",
+   "Powder-snow landings: a dust burst and soft thud on every landing (FX.dust, Audio 'land')",
+   "Fish sparkle: sparkle burst and floating '+1' text on each pickup (FX.sparkle, FX.text)",
+   "Mid-mountain checkpoint flags with a 'Checkpoint!' banner (Gameplay checkpoints, UI.banner)",
+   "Summit win: ice-crystal confetti and a slow-mo landing at the igloo (FX.confetti, FX.slowmo)"
+  ],
+  "mapping_notes": "The penguin is a literal kit species (Player.SPECIES 'penguin') with a cosy 'scarf' accessory. The snowy mountain of floating icy ledges and frozen floes becomes Level.build 'sky_islands' \u2014 a floating platform course \u2014 dressed in the 'snow' look so the islands read as ice floes and snowy ledges; the pink dawn comes from the generated sky panorama, since the snow look's default sky is blue-white. 'Glittering fish' maps to the 'star' collectible tag (the closest glittering pickup; Gameplay has no fish tag), but the HUD icon is the generated 'fish' icon and the in-game label is 'Fish'. Rolling snowballs are 'patrol' enemies that roll along the ledges. The summit igloo is the goal portal at the top of the course, with igloo props scattered as dressing. The belly-slide feel is carried by the platformer's squash & stretch, landing dust and trails, since the kit has no custom slide system. Cosy and playful is covered by the cozy UI style and the cosy music loop."
+ },
+ "timings_s": {
+  "art": 249.7,
+  "build": 231.3,
+  "eval_s0": 77.5,
+  "eval_v0": 82.1,
+  "eval_v1": 74.5,
+  "eval_v2": 88.4,
+  "plan": 262.7,
+  "repair_1": 130.2,
+  "repair_2": 183.2,
+  "scaffold": 3.0
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Frostbeak: a little penguin waddles and belly-slides across a snowy mountain, hopping between icy ledges and frozen floating floes to collect glittering fish, dodging rolling snowballs, and reaching the summit igloo. Crisp blue-white snow, pink dawn sky, cosy and playful.",
+  "notes": "The penguin is a literal kit species (Player.SPECIES 'penguin') with a cosy 'scarf' accessory. The snowy mountain of floating icy ledges and frozen floes becomes Level.build 'sky_islands' \u2014 a floating platform course \u2014 dressed in the 'snow' look so the islands read as ice floes and snowy ledges; the pink dawn comes from the generated sky panorama, since the snow look's default sky is blue-white. 'Glittering fish' maps to the 'star' collectible tag (the closest glittering pickup; Gameplay has no fish tag), but the HUD icon is the generated 'fish' icon and the in-game label is 'Fish'. Rolling snowballs are 'patrol' enemies that roll along the ledges. The summit igloo is the goal portal at the top of the course, with igloo props scattered as dressing. The belly-slide feel is carried by the platformer's squash & stretch, landing dust and trails, since the kit has no custom slide system. Cosy and playful is covered by the cozy UI style and the cosy music loop.",
+  "chosen": {
+   "level_kind": "sky_islands",
+   "look": "snow",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "cozy",
+   "character": {
+    "species": "penguin",
+    "accessory": "scarf"
+   },
+   "collectible": "star",
+   "collectible_label": "Fish"
+  }
+ },
+ "model_calls": {
+  "lead": {
+   "calls": 2,
+   "prompt_tokens": 15392,
+   "completion_tokens": 8407,
+   "seconds": 261.4
+  },
+  "builder": {
+   "calls": 40,
+   "prompt_tokens": 967596,
+   "completion_tokens": 8047,
+   "seconds": 226.8
+  },
+  "judge": {
+   "calls": 10,
+   "prompt_tokens": 51888,
+   "completion_tokens": 3930,
+   "seconds": 81.6
+  }
+ },
+ "agents": {
+  "live": 4,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 64.2
+    },
+    "icon_fish": {
+     "ok": true,
+     "seconds": 72.3
+    },
+    "icon_heart": {
+     "ok": true,
+     "seconds": 82.6
+    },
+    "icon_flag": {
+     "ok": true,
+     "seconds": 92.9
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 111.0
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 115.8
+    },
+    "sfx_jump": {
+     "ok": true,
+     "seconds": 116.8
+    },
+    "sfx_land": {
+     "ok": true,
+     "seconds": 117.9
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 118.7
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 120.6
+    },
+    "sfx_lose": {
+     "ok": true,
+     "seconds": 121.4
+    },
+    "prop_igloo": {
+     "ok": true,
+     "seconds": 216.6
+    },
+    "prop_ice_crystal": {
+     "ok": true,
+     "seconds": 249.7
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Frostbeak is built on the scaffold and now plays as the plan: a penguin in a pink scarf waddles and hops across a pink-dawn mountain of floating ice floes, collecting glittering fish, dodging/stomping rolling snowball enemies, and reaching the summit igloo. Zero console errors; the autopilot moves along the route, collects well past the 12-fish target, and hits checkpoints.\n\nKey changes from the scaffold:\n- Look: kept the 'snow' look but overrode it for the pink-dawn art direction \u2014 low warm peach sun (elevation 8), a peach/rose horizon fading to powder-blue sky, lavender fog, and a pink/cyan accent palette with gentle bloom.\n- Level: sky_islands (medium) with all 24 collectibles retagged to 'star' (shown as Fish), plus a mid-mountain checkpoint flag added for respawn + banner.\n- Player: penguin species with scarf accessory, recoloured body #26324b / accent+scarf #ff9ec4.\n- Rules: collect 12 fish (label 'Fish') to unlock the goal, 3 lives, 6 enemies, custom objective text.\n- Summit dressing: an igloo prop at the goal portal flanked by two ice crystals.\n- HUD: cozy style, fish icon counter (0/12), lives hearts, minimap, objective line.\n- Custom FX on top of FX.auto: fish sparkle + floating \"+1\" on pickup, a bigger powder-snow dust burst on hard landings, a \"Checkpoint!\" banner, a poof+shake on enemy stomps, and an ice-crystal confetti + slow-mo + star-burst win moment, plus a soft snow-thud on lose.\n- Audio: wired the generated sfx (collect/jump/land/hit/win/lose) into Audio.auto's event map alongside the cozy music loop.",
+    "changes": [
+     "game.js: Look.apply 'snow' with pink-dawn palette/sun/sky/fog/bloom overrides",
+     "game.js: retagged level collectibles to 'star', added mid-mountain checkpoint",
+     "game.js: penguin player with pink scarf, recoloured",
+     "game.js: rules with collect target 12 (Fish), 3 lives, 6 enemies, objective",
+     "game.js: igloo + ice-crystal props at the summit goal",
+     "game.js: cozy HUD with fish counter, lives, minimap, objective",
+     "game.js: custom event FX (collect sparkle+text, landing dust, checkpoint banner, stomp poof, win confetti+slowmo, lose dust)",
+     "game.js: Audio.auto sfx map to generated sounds"
+    ],
+    "known_issues": [
+     "The autopilot test run did not reach the goal within the 25s window (it was still climbing the long medium course), but the win path is the kit's standard: goal portal opens at 12 fish and touching it wins. A full manual playthrough reaches it."
+    ]
+   },
+   "plays": 2
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ }
+}

@@ -1,0 +1,107 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Sunset panorama: low amber sun disc sinking between layered red-rock mesas, gradient from molten orange horizon to deep violet zenith, soft pink cirrus, faint dust haze on the horizon.",
+  "wrap_seam": 0.63
+ },
+ "icon_ember_star": {
+  "file": "icon_ember_star.png",
+  "kind": "icon",
+  "prompt": "Star-shaped ember pickup icon: glowing orange-gold star with a soft flame halo and tiny sparks, dark warm outline, sleek HUD style",
+  "for": "collect"
+ },
+ "icon_boost_bolt": {
+  "file": "icon_boost_bolt.png",
+  "kind": "icon",
+  "prompt": "Lightning bolt inside a ring of flame, hot orange to yellow gradient, sleek speed-gauge style",
+  "for": "laps"
+ },
+ "icon_check_flag": {
+  "file": "icon_check_flag.png",
+  "kind": "icon",
+  "prompt": "Checkpoint flag on a short pole, warm cream flag with an orange chevron, clean sleek icon",
+  "for": "laps"
+ },
+ "icon_timer_gauge": {
+  "file": "icon_timer_gauge.png",
+  "kind": "icon",
+  "prompt": "Speedometer-style clock face with a needle, amber glass, tick marks, sleek dark rim",
+  "for": "timer"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Warm synthwave desert drive: analog pads, pulsing bass, taiko-like percussion, 118 BPM, golden-hour energy, seamless loop."
+ },
+ "sfx_boost": {
+  "file": "sfx_boost.mp3",
+  "kind": "sfx",
+  "event": "boost",
+  "prompt": "Hover-bike boost: rising whoosh with a crackling spark tail"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "Ember pickup: bright pluck with a warm shimmer"
+ },
+ "sfx_checkpoint": {
+  "file": "sfx_checkpoint.mp3",
+  "kind": "sfx",
+  "event": "checkpoint",
+  "prompt": "Checkpoint flag: short fanfare blip with a whoosh"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "Wall scrape: gritty stone skid with a metallic clank"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "Finish: triumphant horn stab with a rising sweep"
+ },
+ "sfx_lose": {
+  "file": "sfx_lose.mp3",
+  "kind": "sfx",
+  "event": "lose",
+  "prompt": "Time up: descending sad synth over a clock tick"
+ },
+ "prop_stone_totem": {
+  "file": "prop_stone_totem.json",
+  "kind": "prop",
+  "prompt": "Weathered sandstone totem pole: stacked carved blocks in rust red and cream with a small friendly face, ~2m tall",
+  "via": "idol",
+  "parts": 572
+ },
+ "prop_saguaro_cactus": {
+  "file": "prop_saguaro_cactus.json",
+  "kind": "prop",
+  "prompt": "Stubby saguaro cactus: ribbed green body with two short arms, terracotta pot base, warm toon shading",
+  "via": "idol",
+  "parts": 352
+ },
+ "splat_stone_totem": {
+  "file": "splat_stone_totem.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "Weathered sandstone totem pole: stacked carved blocks in rust red and cream with a small friendly face, ~2m tall",
+  "camera": {
+   "yaw": 0.8010583084713104
+  }
+ },
+ "splat_saguaro_cactus": {
+  "file": "splat_saguaro_cactus.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "Stubby saguaro cactus: ribbed green body with two short arms, terracotta pot base, warm toon shading",
+  "camera": {
+   "yaw": 1.9816782486226754
+  }
+ }
+}

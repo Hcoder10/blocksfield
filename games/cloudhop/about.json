@@ -1,0 +1,326 @@
+{
+ "id": "cloudhop",
+ "title": "Cloudhop Meadows",
+ "tagline": "Hop, dash and bloom your way up the candy-coloured sky islands!",
+ "pitch": "Cloudhop Meadows: a bright, juicy 3D platformer across floating sky islands. Run, double-jump and dash between candy-coloured islands and wobbly mushroom platforms, collect glowing star seeds, dodge spinning thorn bars, and reach the giant blooming flower portal at the top. Cheerful music, a bouncy HUD with a seed counter and timer.",
+ "genre": "3D platformer",
+ "controls": [
+  "WASD / arrows: move",
+  "Space: jump, press again mid-air for double jump",
+  "Shift: dash",
+  "P / Esc: pause"
+ ],
+ "created": "2026-11-02T23:39:33-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "v2",
+  "score": 6.06,
+  "play": 7.12,
+  "vision": 5.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 5.12,
+    "play_score": 6.24,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "s0",
+    "score": 1.0,
+    "play_score": 1.0,
+    "vision_score": null
+   },
+   {
+    "tag": "v1",
+    "score": 6.06,
+    "play_score": 7.12,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "v2",
+    "score": 6.06,
+    "play_score": 7.12,
+    "vision_score": 5.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Cloudhop Meadows",
+  "tagline": "Hop, dash and bloom your way up the candy-coloured sky islands!",
+  "genre": "3D platformer",
+  "core_loop": "Run, double-jump and dash between floating sky islands, grabbing glowing star seeds and dodging spinning thorn bars, climbing tier by tier until you reach the giant blooming flower portal at the top.",
+  "controls": [
+   "WASD / arrows: move",
+   "Space: jump, press again mid-air for double jump",
+   "Shift: dash",
+   "P / Esc: pause"
+  ],
+  "win_condition": "Collect at least 25 of the 40 star seeds and reach the blooming flower portal at the top before the 180-second timer runs out.",
+  "lose_condition": "Lose all 3 lives (thorn-bar hits or falling into the void) or let the timer hit zero.",
+  "look": "toon_bright",
+  "ui_style": "arcade",
+  "level_kind": "sky_islands",
+  "level_size": "large",
+  "player_type": "platformer",
+  "camera": "follow",
+  "player_colors": {
+   "body": "#ff6f91",
+   "accent": "#ffd93d"
+  },
+  "collectible": {
+   "tag": "star",
+   "label": "Star Seeds",
+   "count": 40,
+   "target": 25
+  },
+  "goal": true,
+  "timer_seconds": 180,
+  "lives": 3,
+  "enemies": 4,
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  },
+  "art_direction": "Candy-box world in bright noon light: pastel mint grass, bubblegum-pink and butter-yellow floating islands, glossy toon shading with soft ink outlines, cotton-candy clouds drifting far below, and warm rim light on every rounded edge. Everything is round, bouncy and readable at a glance \u2014 Crash Bandicoot's floating isles meets a sugar shop, with cheerful saturation and zero gloom.",
+  "concept_shots": [
+   "The chibi player mid-double-jump between two pastel islands, a trail of glowing star seeds arcing overhead, fluffy clouds far below and sun glinting on the rim light.",
+   "The player dashing across a wobbly mushroom cap as a thorn bar spins overhead, dust puff and speed lines trailing behind, camera tilted with a light shake.",
+   "The summit: the giant flower portal's petals bloom open in a confetti burst as the player lands, the bouncy HUD showing 25/25 Star Seeds and the final time."
+  ],
+  "assets": {
+   "sky": "Bright midday sky panorama: soft cyan-to-warm-cream gradient, big cotton-candy cumulus clouds, a few distant floating islands with tiny waterfalls, soft sun glint in the upper left.",
+   "icons": [
+    {
+     "name": "star_seed",
+     "prompt": "Glossy five-pointed star with a soft outer glow, candy yellow with a white highlight, toon ink outline",
+     "for": "star"
+    },
+    {
+     "name": "clock",
+     "prompt": "Round candy clock face, mint green rim with a white face and cheerful hands, toon ink outline",
+     "for": "timer"
+    },
+    {
+     "name": "heart",
+     "prompt": "Plump glossy heart, bubblegum pink with a white shine spot, toon ink outline",
+     "for": "lives"
+    },
+    {
+     "name": "flag",
+     "prompt": "Little pennant flag on a wooden pole, sunny yellow cloth with a small flower emblem, toon ink outline",
+     "for": "goal"
+    }
+   ],
+   "music": "Cheerful chiptune-pop loop, 122 BPM, major key: bouncy ukulele strums, bright marimba lead, plucky synth stabs, handclaps and a playful whistle melody \u2014 light, upbeat and bouncy.",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "Bright ascending two-note chime with a tiny sparkle shimmer, like picking up a candy star",
+     "seconds": 0.6
+    },
+    {
+     "event": "jump",
+     "prompt": "Short bouncy boing with a rising pitch, soft and playful",
+     "seconds": 0.5
+    },
+    {
+     "event": "land",
+     "prompt": "Soft squishy thud with a tiny dust puff, low and round",
+     "seconds": 0.5
+    },
+    {
+     "event": "damage",
+     "prompt": "Comedic bonk: descending muffled thump with a wobble",
+     "seconds": 0.6
+    },
+    {
+     "event": "boost",
+     "prompt": "Quick airy whoosh with a rising zip for the dash",
+     "seconds": 0.5
+    },
+    {
+     "event": "win",
+     "prompt": "Triumphant little fanfare: rising arpeggio, sparkle cymbals and a happy chord hit",
+     "seconds": 2
+    }
+   ],
+   "props": [
+    {
+     "name": "candy_mushroom",
+     "prompt": "Big candy mushroom: cream stem, glossy bubblegum-pink cap with white spots, soft rounded edges",
+     "count": 8
+    },
+    {
+     "name": "glow_flower",
+     "prompt": "Solid garden flower: green stem, layered pink petals, glowing yellow center, rounded toon shape",
+     "count": 10
+    }
+   ]
+  },
+  "features": [
+   "Spinning thorn-bar hazards (spinner) on the main route to dodge or get bonked by",
+   "Wobbly swaying mushroom platforms as movers between island tiers",
+   "Spring bounce pads on mushroom caps that launch the player to the next tier",
+   "Dash with dust puff and speed lines, double-jump with a sparkle ring",
+   "Checkpoint flags at each island tier with a chime and ring FX",
+   "Void below the islands: falling respawns you at the last checkpoint with a poof"
+  ]
+ },
+ "timings_s": {
+  "art": 289.1,
+  "build": 345.5,
+  "eval_s0": 59.5,
+  "eval_v0": 67.4,
+  "eval_v1": 80.2,
+  "eval_v2": 78.9,
+  "plan": 69.2,
+  "repair_1": 332.4,
+  "repair_2": 116.4,
+  "scaffold": 2.2
+ },
+ "operator_interventions": [
+  "operator re-ran the asset stage for the sound effects and props that had failed (--backfill-assets) after the sfx-length and Idol-token fixes",
+  "operator re-ran the build from the scaffold stage (--redo scaffold) so game.js places the Gaussian-splat landmarks generated afterwards",
+  "operator re-ran the build stage (--redo build) with a builder brief that keeps the generated splats"
+ ],
+ "mapping": {
+  "pitch": "Cloudhop Meadows: a bright, juicy 3D platformer across floating sky islands. Run, double-jump and dash between candy-coloured islands and wobbly mushroom platforms, collect glowing star seeds, dodge spinning thorn bars, and reach the giant blooming flower portal at the top. Cheerful music, a bouncy HUD with a seed counter and timer.",
+  "notes": null,
+  "chosen": {
+   "level_kind": "sky_islands",
+   "look": "toon_bright",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "collectible": "star",
+   "collectible_label": "Star Seeds"
+  }
+ },
+ "model_calls": {
+  "builder": {
+   "calls": 45,
+   "prompt_tokens": 975491,
+   "completion_tokens": 10124,
+   "seconds": 331.6
+  },
+  "judge": {
+   "calls": 7,
+   "prompt_tokens": 36688,
+   "completion_tokens": 2972,
+   "seconds": 67.4
+  }
+ },
+ "agents": {
+  "live": 3,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 120.6
+    },
+    "icon_star_seed": {
+     "ok": true,
+     "seconds": 129.2
+    },
+    "icon_clock": {
+     "ok": true,
+     "seconds": 141.1
+    },
+    "icon_heart": {
+     "ok": true,
+     "seconds": 154.2
+    },
+    "icon_flag": {
+     "ok": true,
+     "seconds": 164.0
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 180.2,
+     "note": "made by --backfill-assets after the first attempt failed",
+     "first_error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha"
+    },
+    "sfx_jump": {
+     "ok": true,
+     "seconds": 180.2,
+     "note": "made by --backfill-assets after the first attempt failed",
+     "first_error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha"
+    },
+    "sfx_land": {
+     "ok": true,
+     "seconds": 180.2,
+     "note": "made by --backfill-assets after the first attempt failed",
+     "first_error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha"
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 180.2,
+     "note": "made by --backfill-assets after the first attempt failed",
+     "first_error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha"
+    },
+    "sfx_boost": {
+     "ok": true,
+     "seconds": 180.2,
+     "note": "made by --backfill-assets after the first attempt failed",
+     "first_error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha"
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 180.2
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 184.8
+    },
+    "prop_candy_mushroom": {
+     "ok": true,
+     "seconds": 74.1
+    },
+    "prop_glow_flower": {
+     "ok": true,
+     "seconds": 104.9
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Cloudhop Meadows: a bright candy-coloured 3D platformer across floating sky islands. Built on the scaffold and tuned to the plan: candy Look palette (mint grass, bubblegum-pink islands, butter-yellow earth, warm noon rim light), generated sky panorama, star-seed pickups (40, target 25), a 180s countdown, 3 lives, 4 enemies, and a locked goal portal that opens at 25 seeds. Added the plan's features: four spinning thorn bars along the route, spring bounce pads (one near the goal plus two mid-route), and candy dressing (8 candy mushrooms + 10 glow flowers as voxel props, plus splat versions on the goal island). Rich FX juice on top of FX.auto: star-burst/ring/sparkle on collect, sparkle ring on double jump, speed lines + dust on dash, mint ring + magic on checkpoint, and confetti + star burst on goal. Arcade-style HUD with star counter, timer, hearts, minimap and objective, plus custom win/lose screen titles and a title screen that sells the fantasy. Verified with play_game: zero console errors, autopilot moves along the route and collects 21-27 seeds, checkpoints and hazards work, goal unlocks at target.",
+    "changes": [
+     "Tuned Level.build to sky_islands/large with 40 collectibles retagged to 'star'",
+     "Added 4 spinning thorn-bar hazards and 3 spring bounce pads along the route",
+     "Placed generated candy_mushroom + glow_flower props (voxel) and splats on islands and the goal",
+     "Switched HUD to arcade style with star-seed icon, custom win/lose screen titles",
+     "Added FX for double-jump, dash, checkpoint and goal on top of FX.auto",
+     "Refined title screen subtitle/credit to match the plan controls"
+    ],
+    "known_issues": [
+     "Autopilot occasionally takes a thorn-bar hit (loses 1 hp / a life) but still collects and progresses; a human player can time the spinners"
+    ]
+   },
+   "plays": 3
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ }
+}

@@ -1,0 +1,101 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Sunny high-altitude panorama: butter-yellow to sky-blue gradient, big soft cotton clouds, warm sun glow, tiny distant floating islands on the horizon",
+  "wrap_seam": 0.69
+ },
+ "icon_star_bloom": {
+  "file": "icon_star_bloom.png",
+  "kind": "icon",
+  "prompt": "chibi toon icon of a glowing five-point star with a tiny flower centre, warm gold with soft halo, thick dark outline, flat background",
+  "for": "collectible"
+ },
+ "icon_heart": {
+  "file": "icon_heart.png",
+  "kind": "icon",
+  "prompt": "chibi toon heart icon, glossy coral red with a white shine, thick dark outline, flat background",
+  "for": "lives"
+ },
+ "icon_beacon": {
+  "file": "icon_beacon.png",
+  "kind": "icon",
+  "prompt": "chibi toon beacon portal icon: glowing ring of light on a small stone pedestal, cyan-gold glow, thick dark outline",
+  "for": "goal"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "bouncy cheerful chiptune-pop loop: ukulele, plucky synth, bouncy drums, 120 BPM, major key, sunny and playful"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "bright star chime: short sweet ting with a tiny rising sparkle arpeggio"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "soft bouncy boing with a light pitch rise"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "thuddy soft puff with a tiny dust whoosh"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "comedic womp: descending slide with a boing tail"
+ },
+ "sfx_checkpoint": {
+  "file": "sfx_checkpoint.mp3",
+  "kind": "sfx",
+  "event": "checkpoint",
+  "prompt": "warm chime arpeggio as the beacon ring lights up"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "triumphant fanfare with sparkle glissando, brass and bells"
+ },
+ "prop_starbloom": {
+  "file": "prop_starbloom.json",
+  "kind": "prop",
+  "prompt": "a single glowing star-shaped flower: five-point star bloom on a short green stem, soft cyan-gold glow, toon shading",
+  "via": "idol",
+  "parts": 234
+ },
+ "prop_sky_lantern": {
+  "file": "prop_sky_lantern.json",
+  "kind": "prop",
+  "prompt": "a single round paper lantern on a small wooden post, warm amber glow, toon shading",
+  "via": "idol",
+  "parts": 376
+ },
+ "splat_starbloom": {
+  "file": "splat_starbloom.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "a single glowing star-shaped flower: five-point star bloom on a short green stem, soft cyan-gold glow, toon shading",
+  "camera": {
+   "yaw": 1.294306315162679
+  }
+ },
+ "splat_sky_lantern": {
+  "file": "splat_sky_lantern.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "a single round paper lantern on a small wooden post, warm amber glow, toon shading",
+  "camera": {
+   "yaw": 2.1014204353815527
+  }
+ }
+}

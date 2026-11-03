@@ -1,0 +1,101 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "moonlit night panorama: deep indigo-to-violet gradient, a huge pale lavender moon low on the horizon, thin silver clouds, scattered stars, faint purple aurora",
+  "wrap_seam": 1.61
+ },
+ "icon_soul_orb": {
+  "file": "icon_soul_orb.png",
+  "kind": "icon",
+  "prompt": "glowing cyan soul crystal orb, faceted gem with inner light and a soft halo, dark fantasy icon style",
+  "for": "collect"
+ },
+ "icon_shadow_skull": {
+  "file": "icon_shadow_skull.png",
+  "kind": "icon",
+  "prompt": "hollow violet skull icon with glowing eyes, chunky dark fantasy style",
+  "for": "lives"
+ },
+ "icon_dawn_moon": {
+  "file": "icon_dawn_moon.png",
+  "kind": "icon",
+  "prompt": "crescent moon rising over a tiny shadow slime silhouette, dark fantasy icon",
+  "for": "wave"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "dark ambient, brooding and eerie; detuned strings, low taiko pulses, soft bell chimes, 70 bpm, moonlit dread"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "bright glassy chime arpeggio with an ethereal shimmer, like a soul crystal being caught"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "low muffled thud with a dark crackle, a shadowy impact"
+ },
+ "sfx_death": {
+  "file": "sfx_death.mp3",
+  "kind": "sfx",
+  "event": "death",
+  "prompt": "deep descending whoosh with glass shattering into mist"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "dawn fanfare: warm rising strings and soft bell chimes, hopeful"
+ },
+ "sfx_lose": {
+  "file": "sfx_lose.mp3",
+  "kind": "sfx",
+  "event": "lose",
+  "prompt": "minor-key dirge, low strings fading into silence"
+ },
+ "sfx_respawn": {
+  "file": "sfx_respawn.mp3",
+  "kind": "sfx",
+  "event": "respawn",
+  "prompt": "soft magical glissando chime as the soul returns"
+ },
+ "prop_rune_stone": {
+  "file": "prop_rune_stone.json",
+  "kind": "prop",
+  "prompt": "a chunky weathered basalt monolith with a single glowing violet rune carved into its face, dark grey stone with purple inlay",
+  "via": "idol",
+  "parts": 587
+ },
+ "prop_soul_lantern": {
+  "file": "prop_soul_lantern.json",
+  "kind": "prop",
+  "prompt": "a carved dark granite lantern post with a floating cyan flame, chunky low-poly",
+  "via": "idol",
+  "parts": 414
+ },
+ "splat_rune_stone": {
+  "file": "splat_rune_stone.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "a chunky weathered basalt monolith with a single glowing violet rune carved into its face, dark grey stone with purple inlay",
+  "camera": {
+   "yaw": 1.4299315046386893
+  }
+ },
+ "splat_soul_lantern": {
+  "file": "splat_soul_lantern.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "a carved dark granite lantern post with a floating cyan flame, chunky low-poly",
+  "camera": {
+   "yaw": 2.290859047936735
+  }
+ }
+}

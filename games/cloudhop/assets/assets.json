@@ -1,0 +1,107 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Bright midday sky panorama: soft cyan-to-warm-cream gradient, big cotton-candy cumulus clouds, a few distant floating islands with tiny waterfalls, soft sun glint in the upper left.",
+  "wrap_seam": 0.68
+ },
+ "icon_star_seed": {
+  "file": "icon_star_seed.png",
+  "kind": "icon",
+  "prompt": "Glossy five-pointed star with a soft outer glow, candy yellow with a white highlight, toon ink outline",
+  "for": "star"
+ },
+ "icon_clock": {
+  "file": "icon_clock.png",
+  "kind": "icon",
+  "prompt": "Round candy clock face, mint green rim with a white face and cheerful hands, toon ink outline",
+  "for": "timer"
+ },
+ "icon_heart": {
+  "file": "icon_heart.png",
+  "kind": "icon",
+  "prompt": "Plump glossy heart, bubblegum pink with a white shine spot, toon ink outline",
+  "for": "lives"
+ },
+ "icon_flag": {
+  "file": "icon_flag.png",
+  "kind": "icon",
+  "prompt": "Little pennant flag on a wooden pole, sunny yellow cloth with a small flower emblem, toon ink outline",
+  "for": "goal"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Cheerful chiptune-pop loop, 122 BPM, major key: bouncy ukulele strums, bright marimba lead, plucky synth stabs, handclaps and a playful whistle melody \u2014 light, upbeat and bouncy."
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "Triumphant little fanfare: rising arpeggio, sparkle cymbals and a happy chord hit"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "Bright ascending two-note chime with a tiny sparkle shimmer, like picking up a candy star"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "Short bouncy boing with a rising pitch, soft and playful"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "Soft squishy thud with a tiny dust puff, low and round"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "Comedic bonk: descending muffled thump with a wobble"
+ },
+ "sfx_boost": {
+  "file": "sfx_boost.mp3",
+  "kind": "sfx",
+  "event": "boost",
+  "prompt": "Quick airy whoosh with a rising zip for the dash"
+ },
+ "prop_candy_mushroom": {
+  "file": "prop_candy_mushroom.json",
+  "kind": "prop",
+  "prompt": "Big candy mushroom: cream stem, glossy bubblegum-pink cap with white spots, soft rounded edges",
+  "via": "idol",
+  "parts": 543
+ },
+ "prop_glow_flower": {
+  "file": "prop_glow_flower.json",
+  "kind": "prop",
+  "prompt": "Solid garden flower: green stem, layered pink petals, glowing yellow center, rounded toon shape",
+  "via": "idol",
+  "parts": 165
+ },
+ "splat_candy_mushroom": {
+  "file": "splat_candy_mushroom.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "Big candy mushroom: cream stem, glossy bubblegum-pink cap with white spots, soft rounded edges",
+  "camera": {
+   "yaw": 1.1523796482876292
+  }
+ },
+ "splat_glow_flower": {
+  "file": "splat_glow_flower.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "Solid garden flower: green stem, layered pink petals, glowing yellow center, rounded toon shape",
+  "camera": {
+   "yaw": 1.5547587751023995
+  }
+ }
+}

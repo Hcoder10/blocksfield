@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How it was made · Blocksfield</title>
+<meta name="description" content="The making of a Blocksfield game: the pitch, the plan, the ComfyUI concept board and assets, and the build log of the open-weight models that made it.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Blocksfield">
+<meta property="og:title" content="How it was made: a Blocksfield game">
+<meta property="og:description" content="The pitch, the plan, the ComfyUI concept art and assets, and the build log of open-weight models making a playable game.">
+<meta property="og:image" content="https://hcoder10.github.io/blocksfield/site/media/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://hcoder10.github.io/blocksfield/site/media/og.jpg">
+<meta name="theme-color" content="#3aa9f5">
+<link rel="icon" href="img/cube.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/LilitaOne.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/Rubik.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/game.css">
+</head>
+<body class="making">
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="../index.html" aria-label="Blocksfield home"><img src="img/cube.svg" alt="" width="34" height="34"><b>BLOCKSFIELD</b></a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#pitch">Pitch</a><a href="#plan">Plan</a><a href="#concept">Concept</a><a href="#assets">Assets</a><a href="#build">Build log</a>
+    </nav>
+    <a class="btn sm ghost gh" href="../index.html#games"><span>All games</span><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z"/></svg></a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero mk-hero">
+    <i class="cloud" style="width:170px;height:40px;top:130px;left:3%;animation-duration:70s"></i>
+    <i class="cloud" style="width:130px;height:32px;top:90px;left:58%;animation-duration:90s;animation-direction:reverse"></i>
+    <div class="wrap hero-grid">
+      <div>
+        <p class="kicker mk-kicker"><a href="../index.html#games">All games</a> <span aria-hidden="true">/</span> How it was made</p>
+        <h1 class="display outlined mk-title" id="g-title">Loading…</h1>
+        <p class="mk-tagline" id="g-tagline"></p>
+        <div class="hero-facts" id="g-facts"></div>
+        <div class="hero-cta">
+          <a class="btn big" id="g-play" href="#"><i class="tri"></i>Play it now</a>
+          <a class="btn big ghost" href="#build">Build log</a>
+        </div>
+        <p class="mk-controls" id="g-controls"></p>
+      </div>
+      <div class="reel-wrap">
+        <div class="screen" id="g-screen"></div>
+      </div>
+    </div>
+    <div class="blocks-edge" aria-hidden="true"></div>
+  </section>
+
+  <div id="g-body">
+    <section class="mk-howto-sec" id="howto">
+      <div class="wrap"><div class="howto" id="g-howto"></div></div>
+    </section>
+
+    <section class="sec mk-sec" id="pitch">
+      <div class="wrap mk-pitch-wrap">
+        <p class="kicker" style="--k:var(--tomato)">The pitch</p>
+        <blockquote class="mk-pitch" id="g-pitch"></blockquote>
+        <div class="mk-note mk-ops" id="g-ops"></div>
+      </div>
+    </section>
+
+    <section class="sec mk-sec" id="plan">
+      <div class="wrap">
+        <div class="sec-head"><div>
+          <p class="kicker" style="--k:#8b93ff">Step 2 · Qwen3.8-27B</p>
+          <h2 class="display h2">The plan</h2>
+          <p class="lede">The lead designer turns the pitch into a schema-checked game design whose options are the kits' own.</p>
+        </div></div>
+        <div id="g-map"></div>
+        <div class="spec" id="g-plan"></div>
+      </div>
+    </section>
+
+    <section class="sec mk-sec mk-tint" id="concept">
+      <div class="wrap">
+        <div class="sec-head"><div>
+          <p class="kicker" style="--k:var(--sun)">Step 3 · Qwen-Image-2.1 in ComfyUI</p>
+          <h2 class="display h2">Concept board vs. the result</h2>
+          <p class="lede">The concept art is drawn before any code exists. Every build is judged against it.</p>
+        </div></div>
+        <div class="vs" id="g-concept"></div>
+      </div>
+    </section>
+
+    <section class="sec mk-sec" id="assets">
+      <div class="wrap">
+        <div class="sec-head"><div>
+          <p class="kicker" style="--k:var(--bubble)">Step 4 · ComfyUI, one burst</p>
+          <h2 class="display h2">Generated assets</h2>
+          <p class="lede">Each one is a ComfyUI workflow run on the same GPU, from a prompt the model wrote.</p>
+        </div></div>
+        <div id="g-assets"></div>
+      </div>
+    </section>
+
+    <section class="sec night mk-sec" id="build">
+      <div class="wrap">
+        <div class="sec-head"><div>
+          <p class="kicker" style="--k:var(--grass)">Steps 5 to 7</p>
+          <h2 class="display h2">The build log</h2>
+          <p class="lede">Build, playtest, judge, repair. A bot plays each version and the model scores what it sees; the
+            best-scoring version is the one you play.</p>
+        </div></div>
+        <div class="log" id="g-log"></div>
+      </div>
+    </section>
+
+    <section class="sec mk-sec mk-final">
+      <div class="wrap">
+        <h2 class="display h2 outlined mk-final-title">Your turn.</h2>
+        <div class="hero-cta" style="justify-content:center">
+          <a class="btn big" id="g-play2" href="#"><i class="tri"></i>Play it now</a>
+          <a class="btn big ghost" href="../index.html#games">More games</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <p class="tagline">#OpenSourceHiggsfield</p>
+      <p>Made by <a href="https://github.com/Hcoder10/blocksfield">Blocksfield</a>: open-weight models on one RTX 5090.
+        An entry for Comfy's <a href="https://comfy.org/open-source-higgsfield/">Open Source Higgsfield</a> challenge.</p>
+    </div>
+    <a class="brand" href="../index.html"><img src="img/cube.svg" alt="" width="34" height="34"><b style="color:#fff">BLOCKSFIELD</b></a>
+  </div>
+</footer>
+
+<script src="js/game.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Golden-hour panorama: apricot and honey gradient sinking into dusk violet, a big low sun, soft puffy clouds lit from below, distant hills, and the first stars.",
+  "wrap_seam": 0.73
+ },
+ "icon_lantern": {
+  "file": "icon_lantern.png",
+  "kind": "icon",
+  "prompt": "Small glowing paper lantern, warm amber glass, rounded chibi icon style, soft cream outline",
+  "for": "lantern"
+ },
+ "icon_letter": {
+  "file": "icon_letter.png",
+  "kind": "icon",
+  "prompt": "Folded cream letter with a small wax seal, cozy rounded icon style, warm amber accents",
+  "for": "letter"
+ },
+ "icon_quest": {
+  "file": "icon_quest.png",
+  "kind": "icon",
+  "prompt": "Small wooden signpost with a heart, cozy rounded icon style, warm brown and cream",
+  "for": "quest"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "Warm round bell chime, like lantern glass tinkling, with a soft paper rustle"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "Soft bouncy boing with a tiny whoosh, cozy cartoon feel"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Soft acoustic folk: warm fingerpicked guitar, gentle ukulele, light brushed drums, music-box chimes; 80 BPM, cozy and unhurried, evening mood."
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "Muffled soft thump, like a paw landing on a rug"
+ },
+ "sfx_checkpoint": {
+  "file": "sfx_checkpoint.mp3",
+  "kind": "sfx",
+  "event": "checkpoint",
+  "prompt": "Gentle wooden glockenspiel arpeggio, three rising notes, quest-complete feel"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "Small acoustic fanfare: guitar strum, glass bells, and happy murmurs, warm and unhurried"
+ },
+ "prop_lantern": {
+  "file": "prop_lantern.json",
+  "kind": "prop",
+  "prompt": "Small round paper lantern with a warm amber glow, wooden top and bottom caps, and a cream tassel",
+  "via": "idol",
+  "parts": 322
+ },
+ "prop_lantern_tree": {
+  "file": "prop_lantern_tree.json",
+  "kind": "prop",
+  "prompt": "Small round tree with a wide canopy of unlit paper lanterns hanging from its branches, warm wooden trunk, cozy plaza centerpiece",
+  "via": "idol",
+  "parts": 612
+ },
+ "splat_lantern": {
+  "file": "splat_lantern.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "Small round paper lantern with a warm amber glow, wooden top and bottom caps, and a cream tassel",
+  "camera": {
+   "yaw": 1.1999133495668282
+  }
+ },
+ "splat_lantern_tree": {
+  "file": "splat_lantern_tree.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "Small round tree with a wide canopy of unlit paper lanterns hanging from its branches, warm wooden trunk, cozy plaza centerpiece",
+  "camera": {
+   "yaw": 1.513953054316382
+  }
+ }
+}

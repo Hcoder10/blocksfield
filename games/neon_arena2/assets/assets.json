@@ -1,0 +1,101 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Dark indigo night panorama with a band of stars, a low magenta horizon glow, and a distant neon city skyline streaked in cyan and pink \u2014 a synthwave colosseum at midnight.",
+  "wrap_seam": 0.78
+ },
+ "icon_core_bolt": {
+  "file": "icon_core_bolt.png",
+  "kind": "icon",
+  "prompt": "glowing cyan hexagonal energy core with an electric pink inner spark, neon rim light on a dark background, game HUD icon",
+  "for": "cores"
+ },
+ "icon_shield_hex": {
+  "file": "icon_shield_hex.png",
+  "kind": "icon",
+  "prompt": "neon pink hexagonal shield emblem with a cyan inner ring, glowing edges on a dark background, game HUD icon",
+  "for": "lives"
+ },
+ "icon_clock_ring": {
+  "file": "icon_clock_ring.png",
+  "kind": "icon",
+  "prompt": "retro-futuristic timer ring, cyan glowing circle with pink hands on a dark background, game HUD icon",
+  "for": "timer"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Synthwave / darkwave loop: driving analog bass, arpeggiated saw lead, pulsing pads, gated snare, 112 BPM \u2014 nocturnal, tense, with a hook."
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "bright electric chime, quick rising two-note arpeggio with a soft shimmer tail"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "harsh distorted zap with a pitch drop and a shield-crack crunch"
+ },
+ "sfx_death": {
+  "file": "sfx_death.mp3",
+  "kind": "sfx",
+  "event": "death",
+  "prompt": "low synth explosion with a long reverb tail and a sub drop"
+ },
+ "sfx_boost": {
+  "file": "sfx_boost.mp3",
+  "kind": "sfx",
+  "event": "boost",
+  "prompt": "rising whoosh with a filter sweep, like a hover drive flaring"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "triumphant synth stab with a major arpeggio burst and shimmer"
+ },
+ "sfx_lose": {
+  "file": "sfx_lose.mp3",
+  "kind": "sfx",
+  "event": "lose",
+  "prompt": "descending minor arpeggio power-down ending on a low thud"
+ },
+ "prop_neon_pillar": {
+  "file": "prop_neon_pillar.json",
+  "kind": "prop",
+  "prompt": "tall hexagonal column of dark gunmetal with glowing cyan edge strips and a magenta light bar on top",
+  "via": "idol",
+  "parts": 237
+ },
+ "prop_holo_pedestal": {
+  "file": "prop_holo_pedestal.json",
+  "kind": "prop",
+  "prompt": "short square obsidian pedestal with cyan trim and a floating glowing pink orb hovering above it",
+  "via": "idol",
+  "parts": 257
+ },
+ "splat_neon_pillar": {
+  "file": "splat_neon_pillar.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "tall hexagonal column of dark gunmetal with glowing cyan edge strips and a magenta light bar on top",
+  "camera": {
+   "yaw": 1.5019886303275103
+  }
+ },
+ "splat_holo_pedestal": {
+  "file": "splat_holo_pedestal.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "short square obsidian pedestal with cyan trim and a floating glowing pink orb hovering above it",
+  "camera": {
+   "yaw": 0.7415836590574046
+  }
+ }
+}
