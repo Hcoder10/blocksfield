@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>ThreeKit species</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}</style>
+<script type="importmap">{"imports":{"three":"../../vendor/three/three.module.js",
+ "three/addons/":"../../vendor/three/addons/","kit":"../../kit/index.js"}}</script>
+</head><body><script type="module">
+// Lineup of every Player.SPECIES (?acc=cape forces one accessory; ?run=1 animates running; ?only=fox shows one big)
+import * as K from 'kit';
+const T = K.THREE;
+const q = new URLSearchParams(location.search);
+const game = await K.createGame({ seed: 3 });
+K.Look.apply(game, q.get('look') || 'toon_bright');
+const ground = new T.Mesh(new T.CircleGeometry(40, 48), K.Look.material(game, { color: '#8fd16a' }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; game.scene.add(ground);
+const list = q.get('only') ? [q.get('only')] : K.Player.SPECIES;
+const chars = list.map((sp, i) => {
+  const c = K.Player.makeCharacter(game, {}, { species: sp, accessory: q.get('acc') || undefined });
+  const row = Math.floor(i / 6), col = i % 6;
+  if (list.length > 1) c.object.position.set((col - 2.5) * 1.7, 0, row * -2.2);
+  c.object.rotation.y = q.get('back') ? Math.PI : 0.25;
+  game.scene.add(c.object);
+  return c;
+});
+const run = !!q.get('run');
+game.update((dt) => { for (const c of chars) c.animate(dt, { speed: run ? 10 : 0, vy: 0, grounded: true, mode: run ? 'run' : 'idle', vel: new T.Vector3() }); });
+if (q.get('only')) { game.camera.position.set(1.6, 1.8, 3.6); game.camera.lookAt(0, 1, 0); }
+else { game.camera.position.set(0, 3.2, 8.5); game.camera.lookAt(0, 0.9, -1.1); }
+game.start();
+requestAnimationFrame(() => requestAnimationFrame(() => { window.__kit = { ready: true, state: () => ({}) }; }));
+</script></body></html>

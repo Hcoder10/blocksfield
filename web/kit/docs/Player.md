@@ -4,8 +4,10 @@ One call makes a controllable, animated player: a chibi character (or a kart / b
 a Rapier character controller, keyboard + gamepad input, and juicy feedback (squash & stretch, flips, sparks).
 
 ```js
-Player.create(game, { type = 'platformer', spawn, yaw = 0, colors, tuning, waterLevel, killY, model = true }) -> player
+Player.create(game, { type = 'platformer', spawn, yaw = 0, character: { species, accessory, colors }, colors, tuning, waterLevel, killY, model = true }) -> player
 Player.TYPES        // ['platformer', 'kart', 'boat', 'topdown', 'fps']
+Player.SPECIES      // ['kid', 'fox', 'cat', 'bunny', 'bear', 'frog', 'penguin', 'robot', 'knight', 'ninja', 'astronaut', 'slime']
+Player.ACCESSORIES  // ['none', 'scarf', 'cape', 'backpack', 'hat', 'crown']
 Player.TUNING       // default feel numbers per type (read-only reference; override with opts.tuning)
 Player.all(game)    // every player created (AI racers too); game.__player is the main one
 ```
@@ -15,11 +17,43 @@ Player.all(game)    // every player created (AI racers too); game.__player is th
 | `type` | `'platformer'` 3D jump-and-run, `'kart'` arcade kart, `'boat'` speedboat on water, `'topdown'` WASD + dash, `'fps'` first person | `'platformer'` |
 | `spawn` | `Vector3` where the FEET go (use `level.spawn`) | `(0,2,0)` |
 | `yaw` | radians, 0 faces +Z (use `level.spawnYaw`) | `0` |
-| `colors` | `{ body, skin, accent, eyes, belly, kart, boat }` CSS colours | orange body, cream skin, yellow accent |
+| `character` | `{ species, accessory, colors }` (or just a species string) - see the table below | `{ species: 'kid' }` |
+| `colors` | `{ body, skin, accent, eyes, belly, kart, boat, scarf, cape, hat }` CSS colours (override the species colours) | the species' colours |
 | `tuning` | any key of `Player.TUNING[type]`, e.g. `{ runSpeed: 14, jumpHeight: 5 }` | — |
 | `waterLevel` | boat only: water surface height (default `level.water.y` or 0) | — |
 | `killY` | falling below this height = death (Gameplay.rules sets it from the level) | spawn.y - 60 |
 | `model` | `false` hides the character | `true` |
+
+## Characters: species and accessories
+
+Every species is the same chibi rig (big head, round body, stubby limbs) with the same run / jump / flip / emote
+animation, plus its own parts built from primitives. Pick the one closest to the pitch's hero.
+
+| species | looks like | default colours (body / skin / accent) | default accessory |
+|---|---|---|---|
+| `kid` | child with a cap and a bouncy antenna sprout | orange / cream / yellow | backpack |
+| `fox` | pointy ears, long snout, bushy white-tipped tail (wags) | orange / cream / dark | scarf |
+| `cat` | small pointy ears, pink nose, whiskers, curly tail | grey-blue / cream / pink | none |
+| `bunny` | long floppy ears, pink nose, cotton tail | white / white / pink | none |
+| `bear` | round ears, big muzzle, stub tail | brown / tan / dark brown | none |
+| `frog` | big eyes on top, wide smile | green / pale green / yellow | none |
+| `penguin` | white face and belly, orange beak and feet, flippers | navy / white / orange | scarf |
+| `robot` | boxy head, glowing visor eyes, antenna, bolts | steel blue / pale / cyan glow | none |
+| `knight` | metal helmet with red plume, shoulder pads | blue / skin / silver | cape |
+| `ninja` | dark hood with eye slit, red headband tails, belt | navy / skin / red | none |
+| `astronaut` | glass bubble helmet, white suit, collar, life-support pack | white / skin / orange | backpack |
+| `slime` | wobbly translucent jelly blob, no limbs | mint / light mint / white | none |
+
+Aliases are accepted (rabbit -> bunny, kitten -> cat, dog / wolf -> fox, panda / teddy -> bear, toad -> frog,
+android / bot -> robot, spaceman -> astronaut, samurai -> ninja, blob -> slime, human / boy / girl -> kid); anything
+else throws with the list. Accessories: `none`, `scarf` (flutters), `cape` (billows when running), `backpack`,
+`hat` (top hat), `crown`. `colors.body` recolours the fur / suit; `colors.scarf`, `colors.cape`, `colors.hat` colour accessories.
+
+```js
+K.Player.create(game, { type: 'platformer', spawn: level.spawn, yaw: level.spawnYaw, character: { species: 'fox', accessory: 'scarf' } });
+K.Player.create(game, { type: 'kart', spawn: level.spawn, character: { species: 'penguin', colors: { scarf: '#3fa7ff' } } });  // drives the kart
+K.Player.create(game, { type: 'platformer', spawn: level.spawn, character: 'robot', colors: { body: '#ff6b6b' } });
+```
 
 ## Controls (all types)
 

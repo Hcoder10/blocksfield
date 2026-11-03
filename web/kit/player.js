@@ -122,9 +122,44 @@ function mesh(geo, mat, cast = true) { const m = new THREE.Mesh(geo, mat); m.cas
 
 const DEFAULT_COLORS = { body: '#ff7a59', skin: '#ffe0c2', accent: '#ffd23f', eyes: '#1d1b2e', limbs: null, belly: null };
 
-/** A charming procedural character. Returns { object, setColors(colors), setEmote(name), animate(dt, state) } */
-export function makeCharacter(game, colors = {}) {
-  const c = { ...DEFAULT_COLORS, ...colors };
+export const SPECIES = ['kid', 'fox', 'cat', 'bunny', 'bear', 'frog', 'penguin', 'robot', 'knight', 'ninja', 'astronaut', 'slime'];
+export const ACCESSORIES = ['none', 'scarf', 'cape', 'backpack', 'hat', 'crown'];
+// per species: default colours (body = fur / suit, skin = face / muzzle / paws, accent = feet / details) and accessory.
+// fur: the whole head is body-coloured (animals, masks, robots) instead of a skin-coloured face.
+const SPECIES_DEFS = {
+  kid: { colors: { body: '#ff7a59', skin: '#ffe0c2', accent: '#ffd23f' }, accessory: 'backpack' },
+  fox: { colors: { body: '#ff8a3d', skin: '#fff3e3', accent: '#3b2b2b', belly: '#fff3e3' }, accessory: 'scarf', fur: true },
+  cat: { colors: { body: '#9aa6bd', skin: '#fff6ee', accent: '#ff9db8', belly: '#fff6ee' }, accessory: 'none', fur: true },
+  bunny: { colors: { body: '#f6f0ea', skin: '#ffffff', accent: '#ff9db8', belly: '#ffffff' }, accessory: 'none', fur: true },
+  bear: { colors: { body: '#b0743f', skin: '#f2d4aa', accent: '#5b3a22', belly: '#f2d4aa' }, accessory: 'none', fur: true },
+  frog: { colors: { body: '#5fcf63', skin: '#dcf8ad', accent: '#ffd23f', belly: '#dcf8ad' }, accessory: 'none', fur: true },
+  penguin: { colors: { body: '#2c3148', skin: '#ffffff', accent: '#ff9a1f', belly: '#ffffff' }, accessory: 'scarf', fur: true },
+  robot: { colors: { body: '#93a7c4', skin: '#dfe7f2', accent: '#58e1ff', belly: '#c9d4e4' }, accessory: 'none', fur: true },
+  knight: { colors: { body: '#5b6fd6', skin: '#ffe0c2', accent: '#cfd5e2' }, accessory: 'cape' },
+  ninja: { colors: { body: '#2c3148', skin: '#ffe0c2', accent: '#ff4d5e', belly: '#3a405c' }, accessory: 'none', fur: true },
+  astronaut: { colors: { body: '#f2f4f8', skin: '#ffe0c2', accent: '#ff7a3c', belly: '#dfe4ee' }, accessory: 'backpack' },
+  slime: { colors: { body: '#6fe3a0', skin: '#a8f7cb', accent: '#ffffff' }, accessory: 'none' },
+};
+const SPECIES_ALIASES = { human: 'kid', child: 'kid', boy: 'kid', girl: 'kid', person: 'kid', hero: 'kid', kitten: 'cat', kitty: 'cat', rabbit: 'bunny',
+  hare: 'bunny', toad: 'frog', android: 'robot', mech: 'robot', bot: 'robot', spaceman: 'astronaut', cosmonaut: 'astronaut', blob: 'slime',
+  jelly: 'slime', samurai: 'ninja', paladin: 'knight', teddy: 'bear', panda: 'bear', bird: 'penguin', dog: 'fox', puppy: 'fox', wolf: 'fox' };
+export function resolveSpecies(name) {
+  const s = String(name || 'kid').toLowerCase().trim();
+  if (SPECIES.includes(s)) return s;
+  if (SPECIES_ALIASES[s]) return SPECIES_ALIASES[s];
+  throw new Error(`Player: unknown character species "${name}"; species: ${SPECIES.join(', ')}`);
+}
+
+/**
+ * A charming procedural character. opts: { species = 'kid', accessory (species default) }.
+ * Returns { object, species, setColors(colors), setEmote(name), animate(dt, state) }
+ */
+export function makeCharacter(game, colors = {}, opts = {}) {
+  const species = resolveSpecies(opts.species);
+  const SD = SPECIES_DEFS[species];
+  const accessory = opts.accessory || SD.accessory;
+  if (!ACCESSORIES.includes(accessory)) throw new Error(`Player: unknown accessory "${accessory}"; accessories: ${ACCESSORIES.join(', ')}`);
+  const c = { ...DEFAULT_COLORS, ...SD.colors, ...colors };
   const mats = {};
   const mk = (key, col, kind) => (mats[key] = material(game, col, kind, { own: true }));
   mk('body', c.body); mk('skin', c.skin); mk('accent', c.accent); mk('limbs', c.limbs || shade(c.body, 0.78));
@@ -139,9 +174,12 @@ export function makeCharacter(game, colors = {}) {
   const belly = mesh(sph(0.3), mats.belly, false); belly.scale.set(0.95, 0.85, 0.5); belly.position.set(0, 0.68, 0.22); body.add(belly);
   const head = new THREE.Group(); head.position.y = 1.32; body.add(head);
   // little backpack: colour and shape from behind, where the camera usually is
-  const pack = mesh(new RoundedBoxGeometry(0.46, 0.44, 0.24, 3, 0.09), mats.accent); pack.position.set(0, 0.78, -0.36); pack.rotation.x = 0.12; body.add(pack);
-  const flap = mesh(new RoundedBoxGeometry(0.42, 0.14, 0.06, 2, 0.03), mats.limbs); flap.position.set(0, 0.95, -0.5); flap.rotation.x = 0.12; body.add(flap);
-  const skull = mesh(sph(0.47, 28, 20), mats.skin); skull.scale.set(1.05, 0.95, 1); head.add(skull);
+  if (accessory === 'backpack') {
+    const packM = species === 'astronaut' ? mats.belly : mats.accent;
+    const pack = mesh(new RoundedBoxGeometry(0.46, 0.44, 0.24, 3, 0.09), packM); pack.position.set(0, 0.78, -0.36); pack.rotation.x = 0.12; body.add(pack);
+    const flap = mesh(new RoundedBoxGeometry(0.42, 0.14, 0.06, 2, 0.03), species === 'astronaut' ? mats.accent : mats.limbs); flap.position.set(0, 0.95, -0.5); flap.rotation.x = 0.12; body.add(flap);
+  }
+  const skull = mesh(sph(0.47, 28, 20), SD.fur ? mats.body : mats.skin); skull.scale.set(1.05, 0.95, 1); head.add(skull);
   // hair / cap in body colour with a little brim
   const cap = mesh(new THREE.SphereGeometry(0.5, 28, 14, 0, Math.PI * 2, 0, Math.PI * 0.46), mats.body);
   cap.position.set(0, 0.03, -0.02); cap.rotation.x = -0.42; cap.scale.set(1.06, 1, 1.05); head.add(cap);
@@ -153,7 +191,7 @@ export function makeCharacter(game, colors = {}) {
     const e = mesh(sph(0.075, 14, 10), mats.eye, false); e.scale.set(0.9, 1.35, 0.6); eg.add(e);
     const hl = mesh(sph(0.026, 8, 6), mats.white, false); hl.position.set(0.025, 0.04, 0.04); eg.add(hl);
     eyes.push(eg);
-    const ch = mesh(sph(0.07, 12, 8), mats.cheek, false); ch.scale.set(1.2, 0.7, 0.4); ch.position.set(0.28 * s, -0.12, 0.36); ch.rotation.y = 0.6 * s; head.add(ch);
+    const ch = mesh(sph(0.07, 12, 8), mats.cheek, false); ch.name = 'cheek'; ch.scale.set(1.2, 0.7, 0.4); ch.position.set(0.28 * s, -0.12, 0.36); ch.rotation.y = 0.6 * s; head.add(ch);
   }
   const mouth = mesh(new THREE.TorusGeometry(0.055, 0.016, 6, 14, Math.PI), mats.eye, false);
   mouth.position.set(0, -0.13, 0.445); mouth.rotation.z = Math.PI; head.add(mouth);
@@ -169,17 +207,18 @@ export function makeCharacter(game, colors = {}) {
   const arms = [], legs = [], hands = [], feet = [];
   for (const s of [-1, 1]) {
     const a = limb(0.085, 0.26, mats.body); a.position.set(0.38 * s, 0.93, 0); a.rotation.z = 0.35 * s; body.add(a); arms.push(a);
-    const h = mesh(sph(0.1, 12, 10), mats.skin); h.position.y = -0.4; a.add(h); hands.push(h);
+    const h = mesh(sph(0.1, 12, 10), species === 'robot' || species === 'knight' || species === 'astronaut' ? mats.accent : species === 'penguin' || species === 'ninja' ? mats.body : mats.skin); h.position.y = -0.4; a.add(h); hands.push(h);
     const l = limb(0.1, 0.16, mats.limbs); l.position.set(0.17 * s, 0.4, 0); body.add(l); legs.push(l);
-    const f = mesh(sph(0.14, 14, 10), mats.accent); f.scale.set(0.9, 0.6, 1.35); f.position.set(0, -0.32, 0.05); l.add(f); feet.push(f);
+    const f = mesh(sph(0.14, 14, 10), ['fox', 'cat', 'bunny', 'bear', 'robot', 'ninja'].includes(species) ? mats.limbs : mats.accent); f.scale.set(0.9, 0.6, 1.35); f.position.set(0, -0.32, 0.05); l.add(f); feet.push(f);
   }
+  const parts = decorate(game, species, accessory, c, mats, { head, body, skull, cap, brim, sprout, eyes, mouth, torso, belly, arms, legs }, mesh, sph);
   const shadowBlob = new THREE.Mesh(new THREE.CircleGeometry(0.45, 20), new THREE.MeshBasicMaterial({ color: '#000', transparent: true, opacity: 0.22, depthWrite: false }));
   shadowBlob.rotation.x = -Math.PI / 2; shadowBlob.position.y = 0.02; shadowBlob.renderOrder = 1; root.add(shadowBlob);
 
   const st = { phase: 0, blinkT: 2, blink: 0, emote: 'none', emoteT: 0, squash: new THREE.Vector3(1, 1, 1), squashV: new THREE.Vector3(),
     tipV: new THREE.Vector2(), tipA: new THREE.Vector2(), lastVel: new THREE.Vector3(), lean: 0, airPose: 0, flip: 0 };
   const ch = {
-    object: root, rig, body, head, arms, legs, eyes, sprout, mats, shadowBlob,
+    object: root, rig, body, head, arms, legs, eyes, sprout, mats, shadowBlob, species, accessory, parts,
     setColors(cols = {}) {
       const set = (k, v) => { if (v && mats[k] && mats[k].color) mats[k].color.set(v); };
       set('body', cols.body); set('skin', cols.skin); set('accent', cols.accent); set('eye', cols.eyes); set('belly', cols.belly);
@@ -262,6 +301,13 @@ export function makeCharacter(game, colors = {}) {
         sprout.rotation.x += st.tipV.x * dt;
         void ax;
       }
+      // secondary motion: tail wag, ear flop (rides the sprout spring), cape / scarf flutter, slime wobble
+      const wob = sprout.rotation.x;
+      if (parts.tail) { parts.tail.rotation.y = Math.sin(t * (5 + sp * 0.6)) * (0.25 + run * 0.35); parts.tail.rotation.x = parts.tailX - wob * 0.6; }
+      for (const e of parts.ears) e.rotation.x = e.userData.rx + wob * (e.userData.floppy ? 1.1 : 0.35);
+      if (parts.cape) parts.cape.rotation.x = 0.12 + run * 0.9 + Math.sin(t * (6 + sp)) * (0.05 + run * 0.08) + Math.max(0, -(s.vy || 0)) * 0.03;
+      if (parts.scarfTail) parts.scarfTail.rotation.x = 0.2 + run * 1.1 + Math.sin(t * (8 + sp)) * 0.12 * (0.3 + run);
+      if (parts.slime) { const k = s.grounded ? Math.sin(st.phase * 0.5 + t * 3) * 0.06 : 0; parts.slime.scale.set(1.25 + k, 1.08 - k, 1.2 + k); }
       // blob shadow shrinks with height above ground
       const h = s.heightAbove || 0;
       shadowBlob.position.y = 0.02 - h; shadowBlob.scale.setScalar(Math.max(0.3, 1 - h * 0.08));
@@ -269,6 +315,167 @@ export function makeCharacter(game, colors = {}) {
     },
   };
   return ch;
+}
+
+// species parts and accessories, in the same chibi primitives. Returns {tail, tailX, ears[], cape, scarfTail, slime}
+function decorate(game, species, accessory, c, mats, P, mesh, sph) {
+  const { head, body, skull, cap, brim, sprout, eyes, mouth, torso, belly, arms, legs } = P;
+  const out = { tail: null, tailX: 0, ears: [], cape: null, scarfTail: null, slime: null };
+  const own = (col) => material(game, col, 'toon', { own: true });
+  const dark = mats.eye;
+  if (species !== 'kid') { cap.visible = brim.visible = false; sprout.visible = species === 'robot'; }
+  const cheeks = head.children.filter(o => o.name === 'cheek');
+  const ear = (m, x, y, z, rz, rx = 0, floppy = false) => {
+    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.z = rz; g.rotation.x = rx; g.userData.rx = rx; g.userData.floppy = floppy;
+    g.add(m); head.add(g); out.ears.push(g); return g;
+  };
+  const muzzle = (w, h, d, z, noseZ, noseCol = '#2a2230') => {
+    const m = mesh(sph(0.2, 16, 12), mats.skin); m.scale.set(w, h, d); m.position.set(0, -0.13, z); head.add(m);
+    const n = mesh(sph(0.055, 10, 8), own(noseCol)); n.position.set(0, -0.08, noseZ); head.add(n);
+    mouth.position.set(0, -0.21, z + 0.1 * d);
+  };
+  const tailAt = (g, x = -0.62) => { g.position.set(0, 0.5, -0.32); g.rotation.x = x; body.add(g); out.tail = g; out.tailX = x; };
+  const swing = (g) => { g.userData.rx = 0; g.userData.floppy = true; out.ears.push(g); };
+  if (species === 'fox') {
+    for (const s of [-1, 1]) {
+      const g = new THREE.Group();
+      const o = mesh(new THREE.ConeGeometry(0.15, 0.36, 4), mats.body); o.position.y = 0.16; o.rotation.y = Math.PI / 4; g.add(o);
+      const i = mesh(new THREE.ConeGeometry(0.08, 0.2, 4), dark); i.position.set(0, 0.12, 0.05); i.rotation.y = Math.PI / 4; g.add(i);
+      ear(g, 0.25 * s, 0.32, -0.02, -0.38 * s);
+    }
+    muzzle(0.78, 0.6, 1.75, 0.4, 0.74);
+    const t = new THREE.Group();
+    const fluff = mesh(sph(0.2, 16, 12), mats.body); fluff.scale.set(0.9, 0.9, 2.0); fluff.position.z = -0.32; t.add(fluff);
+    const tip = mesh(sph(0.13, 12, 10), mats.skin); tip.scale.set(1, 1, 1.4); tip.position.z = -0.66; t.add(tip);
+    tailAt(t, -0.75);
+  } else if (species === 'cat') {
+    for (const s of [-1, 1]) {
+      const g = new THREE.Group();
+      const o = mesh(new THREE.ConeGeometry(0.14, 0.28, 4), mats.body); o.position.y = 0.12; o.rotation.y = Math.PI / 4; g.add(o);
+      const i = mesh(new THREE.ConeGeometry(0.075, 0.16, 4), own(c.accent)); i.position.set(0, 0.09, 0.05); i.rotation.y = Math.PI / 4; g.add(i);
+      ear(g, 0.26 * s, 0.33, 0.0, -0.3 * s);
+    }
+    muzzle(0.8, 0.55, 0.6, 0.38, 0.47, c.accent);
+    for (const s of [-1, 1]) for (const k of [-1, 1]) {
+      const w = mesh(new THREE.BoxGeometry(0.22, 0.012, 0.012), dark, false); w.position.set(0.24 * s, -0.12 + k * 0.03, 0.4); w.rotation.z = k * 0.12 * s; head.add(w);
+    }
+    const t = new THREE.Group(); let prev = t;
+    for (let i = 0; i < 4; i++) {
+      const seg = new THREE.Group(); seg.position.z = i ? -0.16 : 0; seg.rotation.x = i ? -0.35 : 0;
+      const m = mesh(new THREE.CapsuleGeometry(0.05, 0.12, 3, 8), mats.body); m.rotation.x = Math.PI / 2; m.position.z = -0.08; seg.add(m); prev.add(seg); prev = seg;
+    }
+    tailAt(t, -0.3);
+  } else if (species === 'bunny') {
+    for (const s of [-1, 1]) {
+      const g = new THREE.Group();
+      const o = mesh(new THREE.CapsuleGeometry(0.085, 0.42, 4, 10), mats.body); o.position.y = 0.28; g.add(o);
+      const i = mesh(new THREE.CapsuleGeometry(0.045, 0.32, 3, 8), own(c.accent)); i.position.set(0, 0.28, 0.05); g.add(i);
+      ear(g, 0.14 * s, 0.34, -0.06, -0.18 * s, -0.15, true);
+    }
+    muzzle(0.75, 0.5, 0.55, 0.38, 0.46, c.accent);
+    const t = new THREE.Group(); t.add(mesh(sph(0.13, 12, 10), mats.skin)); tailAt(t, 0); t.position.set(0, 0.42, -0.36);
+  } else if (species === 'bear') {
+    for (const s of [-1, 1]) {
+      const g = new THREE.Group(); g.add(mesh(sph(0.13, 14, 10), mats.body));
+      const i = mesh(sph(0.075, 10, 8), mats.skin); i.position.z = 0.06; i.scale.z = 0.5; g.add(i);
+      ear(g, 0.32 * s, 0.3, -0.02, 0);
+    }
+    muzzle(1.0, 0.7, 0.75, 0.37, 0.52);
+    const t = new THREE.Group(); t.add(mesh(sph(0.09, 10, 8), mats.body)); tailAt(t, 0); t.position.set(0, 0.42, -0.36);
+  } else if (species === 'frog') {
+    eyes.forEach((e, i) => {
+      const s = i === 0 ? -1 : 1;
+      const ball = mesh(sph(0.15, 16, 12), mats.body); ball.position.set(0.19 * s, 0.31, 0.12); head.add(ball);
+      const white = mesh(sph(0.115, 14, 10), new THREE.MeshBasicMaterial({ color: '#ffffff' }), false); white.position.set(0, 0.01, 0.07); ball.add(white);
+      e.position.set(0.19 * s, 0.33, 0.29); e.rotation.y = 0.15 * s;
+    });
+    head.scale.set(1.08, 0.88, 1); mouth.scale.set(2.4, 1, 1); mouth.position.set(0, -0.1, 0.45);
+  } else if (species === 'penguin') {
+    const face = mesh(sph(0.38, 20, 14), mats.skin, false); face.scale.set(1, 0.82, 0.62); face.position.set(0, -0.05, 0.26); head.add(face);
+    const beak = mesh(new THREE.ConeGeometry(0.08, 0.2, 10), own(c.accent)); beak.rotation.x = Math.PI / 2; beak.position.set(0, -0.1, 0.56); head.add(beak);
+    belly.scale.set(1.15, 1.05, 0.62); belly.position.set(0, 0.66, 0.2);
+    for (const a of arms) a.scale.set(1.3, 1.1, 0.6);
+    for (const e of eyes) e.position.z = 0.49;
+    mouth.visible = false;
+    const t = new THREE.Group(); const m = mesh(new THREE.ConeGeometry(0.12, 0.2, 8), mats.body); m.rotation.x = -Math.PI / 2; m.position.z = -0.08; t.add(m);
+    tailAt(t, 0.3); t.position.y = 0.38;
+  } else if (species === 'robot') {
+    skull.geometry = new RoundedBoxGeometry(0.88, 0.78, 0.8, 4, 0.16); skull.scale.set(1, 1, 1);
+    torso.geometry = new RoundedBoxGeometry(0.78, 0.74, 0.66, 4, 0.18); torso.scale.set(1, 1, 1);
+    const visor = mesh(new RoundedBoxGeometry(0.66, 0.34, 0.08, 3, 0.06), own('#1d2235')); visor.position.set(0, 0.0, 0.39); head.add(visor);
+    const glow = new THREE.MeshBasicMaterial({ color: c.accent, toneMapped: false });
+    for (const e of eyes) { e.position.z = 0.45; e.children[0].material = glow; e.children[1].visible = false; }
+    mouth.material = glow; mouth.position.set(0, -0.09, 0.44); mouth.scale.set(1.3, 0.8, 1);
+    sprout.children[0].material = mats.limbs; sprout.children[1].material = glow; sprout.position.y = 0.38;
+    for (const s of [-1, 1]) { const bolt = mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.1, 10), mats.limbs); bolt.rotation.z = Math.PI / 2; bolt.position.set(0.46 * s, 0, 0); head.add(bolt); }
+    belly.geometry = new RoundedBoxGeometry(0.4, 0.3, 0.1, 2, 0.04); belly.material = own('#2a3048'); belly.scale.set(1, 1, 1); belly.position.set(0, 0.74, 0.32);
+    const light = mesh(sph(0.05, 8, 6), glow, false); light.position.set(0.1, 0.78, 0.38); body.add(light);
+    for (const ch of cheeks) ch.visible = false;
+  } else if (species === 'knight') {
+    const metal = own(c.accent);
+    const helm = mesh(new THREE.SphereGeometry(0.52, 28, 16, 0, Math.PI * 2, 0, Math.PI * 0.62), metal); helm.rotation.x = -0.55; helm.position.set(0, 0.02, -0.03); head.add(helm);
+    const guard = mesh(new RoundedBoxGeometry(0.08, 0.2, 0.08, 2, 0.03), metal); guard.position.set(0, 0.16, 0.47); head.add(guard);
+    const plume = new THREE.Group(); plume.position.set(0, 0.5, -0.05); head.add(plume);
+    for (let i = 0; i < 4; i++) { const m = mesh(sph(0.11 - i * 0.012, 10, 8), own('#ff4d5e')); m.position.set(0, 0.04 + i * 0.03, -i * 0.11); plume.add(m); }
+    swing(plume);
+    for (const a of arms) { const pad = mesh(sph(0.13, 12, 8), metal); pad.scale.y = 0.7; pad.position.y = -0.02; a.add(pad); }
+  } else if (species === 'ninja') {
+    // body-coloured hood with a skin-coloured eye band
+    const band = mesh(new THREE.SphereGeometry(0.478, 28, 6, Math.PI * 0.08, Math.PI * 0.84, Math.PI * 0.4, Math.PI * 0.2), mats.skin, false);
+    band.scale.set(1.05, 0.95, 1); head.add(band);
+    const hb = mesh(new THREE.TorusGeometry(0.47, 0.035, 6, 32), own(c.accent)); hb.rotation.x = Math.PI / 2 - 0.15; hb.position.y = 0.18; head.add(hb);
+    const knot = new THREE.Group(); knot.position.set(0, 0.2, -0.45); head.add(knot);
+    for (const s of [-1, 1]) { const tl = mesh(new RoundedBoxGeometry(0.06, 0.3, 0.02, 1, 0.01), own(c.accent)); tl.position.set(0.05 * s, -0.12, -0.04); tl.rotation.z = 0.3 * s; knot.add(tl); }
+    swing(knot);
+    mouth.visible = false; for (const ch of cheeks) ch.visible = false;
+    const belt = mesh(new THREE.TorusGeometry(0.37, 0.04, 6, 24), own(c.accent)); belt.rotation.x = Math.PI / 2; belt.position.y = 0.52; body.add(belt);
+  } else if (species === 'astronaut') {
+    const glass = new THREE.MeshPhysicalMaterial({ color: '#cfefff', transparent: true, opacity: 0.28, roughness: 0.05, metalness: 0, depthWrite: false });
+    const bubble = mesh(sph(0.6, 28, 20), glass, false); bubble.position.y = 0.02; bubble.renderOrder = 2; head.add(bubble);
+    const shine = mesh(sph(0.1, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.7 }), false); shine.scale.set(1, 1.6, 0.3); shine.position.set(-0.28, 0.25, 0.47); head.add(shine);
+    const collar = mesh(new THREE.TorusGeometry(0.36, 0.08, 10, 28), mats.belly); collar.rotation.x = Math.PI / 2; collar.position.y = 1.02; body.add(collar);
+    const patch = mesh(new RoundedBoxGeometry(0.16, 0.12, 0.04, 2, 0.02), own(c.accent)); patch.position.set(0.15, 0.8, 0.34); body.add(patch);
+  } else if (species === 'slime') {
+    for (const o of [...arms, ...legs]) o.visible = false;
+    belly.visible = false; skull.visible = false;
+    const jelly = new THREE.MeshPhysicalMaterial({ color: c.body, transparent: true, opacity: 0.85, roughness: 0.15, clearcoat: 1, emissive: c.body, emissiveIntensity: 0.12 });
+    torso.material = jelly; torso.scale.set(1.25, 1.08, 1.2); torso.position.y = 0.48; out.slime = torso;
+    const core = mesh(sph(0.16, 12, 10), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.35 }), false); core.position.set(-0.18, 0.75, 0.25); body.add(core);
+    head.position.y = 0.58; head.scale.setScalar(0.95);
+    for (const e of eyes) e.position.z = 0.52;
+    mouth.position.z = 0.53; for (const ch of cheeks) ch.position.z += 0.12;
+  }
+  // accessories
+  if (accessory === 'scarf') {
+    const col = own(c.scarf || (species === 'fox' ? '#3fa7ff' : '#ff4d5e'));
+    const ring = mesh(new THREE.TorusGeometry(0.3, 0.075, 10, 28), col); ring.rotation.x = Math.PI / 2; ring.position.y = species === 'slime' ? 0.85 : 1.02; body.add(ring);
+    const g = new THREE.Group(); g.position.set(0.12, ring.position.y, -0.3); body.add(g);
+    const m = mesh(new RoundedBoxGeometry(0.14, 0.36, 0.05, 2, 0.02), col); m.position.y = -0.17; g.add(m);
+    out.scarfTail = g;
+  } else if (accessory === 'cape') {
+    const geo = new THREE.PlaneGeometry(0.72, 0.82, 4, 6); geo.translate(0, -0.41, 0);
+    const m = new THREE.Mesh(geo, own(c.cape || '#d6455b')); m.material.side = THREE.DoubleSide; m.castShadow = true; m.userData.noCollide = true;
+    const g = new THREE.Group(); g.position.set(0, 1.04, -0.3); g.add(m); body.add(g); out.cape = g;
+    const clasp = mesh(sph(0.06, 8, 6), own('#ffd23f')); clasp.position.set(0, 1.0, 0.3); body.add(clasp);
+  } else if (accessory === 'hat') {
+    const g = new THREE.Group(); g.position.set(0.04, 0.4, -0.02); g.rotation.z = -0.12; head.add(g);
+    const hm = own(c.hat || '#3a3150');
+    g.add(mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.04, 24), hm));
+    const top = mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.3, 20), hm); top.position.y = 0.17; g.add(top);
+    const band = mesh(new THREE.CylinderGeometry(0.245, 0.245, 0.06, 20), own(c.accent)); band.position.y = 0.06; g.add(band);
+    if (species === 'kid') cap.visible = brim.visible = false;
+  } else if (accessory === 'crown') {
+    const gold = new THREE.MeshStandardMaterial({ color: '#ffd23f', emissive: '#ffb300', emissiveIntensity: 0.35, metalness: 0.6, roughness: 0.3, side: THREE.DoubleSide });
+    const g = new THREE.Group(); g.position.set(0, 0.4, 0); head.add(g);
+    g.add(mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.1, 20, 1, true), gold));
+    for (let i = 0; i < 5; i++) {
+      const a = i / 5 * Math.PI * 2;
+      const s = mesh(new THREE.ConeGeometry(0.05, 0.13, 6), gold); s.position.set(Math.sin(a) * 0.21, 0.1, Math.cos(a) * 0.21); g.add(s);
+      const j = mesh(sph(0.03, 6, 4), new THREE.MeshBasicMaterial({ color: ['#ff4d6d', '#3ee0ff', '#7dff9a'][i % 3] }), false); j.position.set(Math.sin(a) * 0.225, 0, Math.cos(a) * 0.225); g.add(j);
+    }
+    if (species === 'kid') cap.visible = brim.visible = false;
+  }
+  return out;
 }
 
 // ---- vehicle models ----------------------------------------------------------------------------------------------
@@ -394,7 +601,9 @@ export function create(game, opts = {}) {
     : sp0 && typeof sp0.x === 'number' ? new THREE.Vector3(sp0.x, sp0.y || 0, sp0.z || 0)
     : game.level && game.level.spawn ? game.level.spawn.clone() : new THREE.Vector3(0, 2, 0);
   if (opts.yaw === undefined && opts.spawnYaw === undefined && !sp0 && game.level) opts = { ...opts, yaw: game.level.spawnYaw || 0 };
-  const colors = { ...DEFAULT_COLORS, ...(opts.colors || {}) };
+  const charOpt = typeof opts.character === 'string' ? { species: opts.character } : (opts.character || {});
+  const species = resolveSpecies(charOpt.species || opts.species || 'kid');
+  const colors = { ...SPECIES_DEFS[species].colors, ...(opts.colors || {}), ...(charOpt.colors || {}) };
 
   // collider: capsule for characters, ball for vehicles. pos = collider centre.
   const radius = vehicle ? tune.radius : 0.42, half = vehicle ? 0 : 0.48;
@@ -423,7 +632,7 @@ export function create(game, opts = {}) {
   // visuals
   const object = new THREE.Group(); object.name = 'player';
   game.scene.add(object);
-  const character = makeCharacter(game, colors);
+  const character = makeCharacter(game, colors, { species, accessory: charOpt.accessory || opts.accessory });
   let car = null;
   if (vehicle) {
     car = type === 'kart' ? makeKart(game, colors) : makeBoat(game, colors);

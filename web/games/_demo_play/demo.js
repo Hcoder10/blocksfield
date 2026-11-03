@@ -15,7 +15,7 @@ if (levelKind !== 'test' && K.Level.build) {
 } else {
   level = type === 'kart' ? TL.race(game, false) : type === 'boat' ? TL.race(game, true) : type === 'topdown' || type === 'fps' ? TL.arena(game) : TL.platformer(game);
 }
-const player = K.Player.create(game, { type, spawn: level.spawn, yaw: level.spawnYaw, colors: { body: q.get('color') || '#ff7a59' } });
+const player = K.Player.create(game, { type, spawn: level.spawn, yaw: level.spawnYaw, character: { species: q.get('species') || 'kid', accessory: q.get('acc') || undefined }, colors: q.get('color') ? { body: q.get('color') } : {} });
 if (type === 'topdown') K.Camera.topdown(game, player);
 else K.Camera.follow(game, player);
 const rules = K.Gameplay.rules(game, {
