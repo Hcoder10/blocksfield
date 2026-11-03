@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-03T03:43:28-0800",
+ "generated": "2026-11-03T03:54:45-0800",
  "dev": false,
  "space": {
   "level_kind": [
@@ -525,79 +525,6 @@
    "mechanics": [],
    "cutscenes": 0,
    "species": "kid"
-  },
-  {
-   "id": "cloudhop",
-   "title": "Cloudhop Meadows",
-   "tagline": "Hop, dash and bloom your way up the candy-coloured sky islands!",
-   "pitch": "Cloudhop Meadows: a bright, juicy 3D platformer across floating sky islands. Run, double-jump and dash between candy-coloured islands and wobbly mushroom platforms, collect glowing star seeds, dodge spinning thorn bars, and reach the giant blooming flower portal at the top. Cheerful music, a bouncy HUD with a seed counter and timer.",
-   "genre": "3D platformer",
-   "controls": [
-    "WASD / arrows: move",
-    "Space: jump, press again mid-air for double jump",
-    "Shift: dash",
-    "P / Esc: pause"
-   ],
-   "created": "2026-11-02T23:39:33-0800",
-   "thumbnail": "thumb.jpg",
-   "video": "gameplay.mp4",
-   "play": "index.html",
-   "card_thumb": null,
-   "score": 6.06,
-   "repairs": 2,
-   "model_calls": 52,
-   "minutes": 24.0,
-   "dry_run": false,
-   "superseded_by": null,
-   "interventions": 3,
-   "look": "toon_bright",
-   "level_kind": "sky_islands",
-   "player_type": "platformer",
-   "camera": "follow",
-   "ui_style": "arcade",
-   "custom_level": false,
-   "layout": null,
-   "start_layout": null,
-   "laid_out": false,
-   "mechanics": [],
-   "cutscenes": 0,
-   "species": null
-  },
-  {
-   "id": "lagoon_rush",
-   "title": "Lagoon Rush",
-   "tagline": "Skim the turquoise, chain the boosts, and out-drive three rivals to the lighthouse.",
-   "pitch": "Lagoon Rush: a sunny tropical jet-boat race. Skim across a turquoise lagoon past palm beaches, a striped lighthouse and buoy-lined lanes, hit boost pads and a big jump ramp, and beat three rival boats over three laps. Bright, splashy, summery, toon colours.",
-   "genre": "arcade boat racing",
-   "controls": [
-    "WASD / arrows: steer & throttle",
-    "Shift: boost",
-    "Esc / P: pause"
-   ],
-   "created": "2026-11-02T22:55:49-0800",
-   "thumbnail": "thumb.jpg",
-   "video": "gameplay.mp4",
-   "play": "index.html",
-   "card_thumb": null,
-   "score": 5.92,
-   "repairs": 2,
-   "model_calls": 58,
-   "minutes": 22.9,
-   "dry_run": false,
-   "superseded_by": null,
-   "interventions": 2,
-   "look": "toon_bright",
-   "level_kind": "lagoon",
-   "player_type": "boat",
-   "camera": "chase",
-   "ui_style": "arcade",
-   "custom_level": false,
-   "layout": null,
-   "start_layout": null,
-   "laid_out": false,
-   "mechanics": [],
-   "cutscenes": 0,
-   "species": null
   }
  ]
 }

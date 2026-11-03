@@ -302,7 +302,7 @@
     else if (Array.isArray(bo) && bo.length) over = bo.map((x) => esc(typeof x === "string" ? x : JSON.stringify(x))).join(" · ");
     else if (bo && typeof bo === "object" && Object.keys(bo).length) over = Object.entries(bo).map(([k, x]) =>
       `<b>${esc(L[k] || title(k))}:</b> ${esc(typeof x === "string" ? x : JSON.stringify(x))}`).join(" · ");
-    if (over) over = `<p class="moverride"><b>The builder changed the plan:</b> ${over}</p>`;
+    if (over) over = `<p class="moverride"><b>Builder changes:</b> ${over.replace(/^the /, "The ")}</p>`;
     return `<div class="mapping"><h3>From pitch to kit choices</h3><div class="mchoices">${chips}</div>${over}${notes}</div>`;
   }
 
