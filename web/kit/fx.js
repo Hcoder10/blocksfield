@@ -172,21 +172,31 @@ export function burst(game, pos, opts = {}) {
   const p = need(pos, 'burst');
   const { count = 24, speed = 6, size = 0.35, life = 0.7, gravity = 4, shape = 'glow', color = '#ffd34d', colorEnd = null, up = 0.4, spread = 1, drag = 2.2, blend = shape === 'star' ? 'alpha' : 'add' } = opts;
   const cs = palette(color), ce = colorEnd ? col(colorEnd) : null;
-  particles(game, blend === 'add' ? 'add' : 'alpha', p, count, () => {
+  // brightness budget: additive bursts landing within 0.5 s of each other get fainter and sparser, so a run of
+  // pickups on a bright daytime look never stacks into a bloom cloud
+  let fade = 1, n = count;
+  if (blend === 'add') {
+    const S = sys(game), now = performance.now();
+    S.addBursts = (S.addBursts || []).filter(t => now - t < 500);
+    const k = S.addBursts.length; S.addBursts.push(now);
+    fade = 1 / (1 + 0.55 * k); n = Math.max(1, Math.round(count / (1 + 0.35 * k)));
+    if (S.add.count > 900) { fade *= 0.5; n = Math.ceil(n / 2); }
+  }
+  particles(game, blend === 'add' ? 'add' : 'alpha', p, n, () => {
     sphere(tv, 1); tv.y = tv.y * spread + up; tv.normalize().multiplyScalar(speed * (0.45 + R() * 0.75));
     const c0 = cs[Math.floor(R() * cs.length)];
     return { x: 0, y: 0, z: 0, vx: tv.x, vy: tv.y, vz: tv.z, life: life * (0.6 + R() * 0.6), size: size * (0.6 + R() * 0.8), sizeEnd: size * 0.15,
-      c0, c1: ce || c0, gravity, drag, shape: SHAPES[shape] ?? 0, rot: R() * 6.28, spin: (R() - 0.5) * 6 };
+      c0, c1: ce || c0, alpha: (opts.alpha ?? 1) * fade, gravity, drag, shape: SHAPES[shape] ?? 0, rot: R() * 6.28, spin: (R() - 0.5) * 6 };
   });
 }
 export function sparkle(game, pos, opts = {}) {
   const p = need(pos, 'sparkle');
   const color = opts.color ?? '#ffd34d';
-  const k = opts.scale || 1;
-  burst(game, p, { count: 1, speed: 0, size: 2.4 * k, life: 0.16, gravity: 0, shape: 'glow', color });   // pop flash
-  burst(game, p, { count: 14, speed: 5, size: 0.9 * k, life: 0.6, gravity: 2, shape: 'star', color: [color, '#ffffff'], up: 0.6, ...opts });
-  burst(game, p, { count: 10, speed: 2.2, size: 0.22, life: 0.9, gravity: -1.5, shape: 'glow', color, up: 1.2, drag: 1.2, ...opts, count: opts.count ? Math.ceil(opts.count / 2) : 10 });
-  ring(game, p, { color, radius: 1.2 * (opts.scale || 1), life: 0.35, flat: false, width: 0.12 });
+  const k = Math.min(1.25, opts.scale || 1);
+  burst(game, p, { count: 1, speed: 0, size: 1.3 * k, life: 0.14, gravity: 0, shape: 'glow', color, alpha: 0.55 });   // pop flash
+  burst(game, p, { count: 12, speed: 5, size: 0.85 * k, life: 0.55, gravity: 2, shape: 'star', color: [color, '#ffffff'], up: 0.6, ...opts });
+  burst(game, p, { count: 6, speed: 2.2, size: 0.18, life: 0.8, gravity: -1.5, shape: 'glow', color, up: 1.2, drag: 1.2, alpha: 0.7, ...opts, count: opts.count ? Math.ceil(opts.count / 3) : 6 });
+  ring(game, p, { color, radius: 1.2 * k, life: 0.35, flat: false, width: 0.12, opacity: 0.6 });
 }
 export function starBurst(game, pos, opts = {}) {
   const p = need(pos, 'starBurst');
@@ -372,11 +382,21 @@ export function text(game, pos, str, opts = {}) {
  -webkit-text-stroke:.16em var(--o);paint-order:stroke fill;text-shadow:0 .1em 0 var(--o),0 .18em .25em rgba(0,0,0,.35);will-change:transform,opacity;letter-spacing:.02em}`;
     document.head.appendChild(st);
   }
+  // merge: consecutive texts with the same key (e.g. pickups) become one rising "+30" instead of a stack
+  if (opts.merge) {
+    const prev = s.texts.find(t => t.key === opts.merge && t.t < t.life * 0.75);
+    if (prev) {
+      prev.total += +opts.value || 0;
+      prev.el.textContent = `${opts.prefix ?? '+'}${prev.total}`;
+      prev.p.copy(p); prev.t = 0.12; prev.bump = 1;
+      return prev.el;
+    }
+  }
   const el = document.createElement('div');
   el.className = 'tk-ftext'; el.textContent = String(str);
   el.style.color = color; el.style.setProperty('--o', outline); el.style.setProperty('--s', size);
   document.body.appendChild(el);
-  s.texts.push({ el, p: p.clone(), t: 0, life, rise, dx: (R() - 0.5) * 0.6 });
+  s.texts.push({ el, p: p.clone(), t: 0, life, rise, dx: (R() - 0.5) * 0.6, key: opts.merge || null, total: +opts.value || 0, bump: 0 });
   return el;
 }
 
@@ -502,7 +522,8 @@ function step(game, s, dtGame) {
       if (k >= 1) { t.el.remove(); s.texts.splice(i, 1); continue; }
       v3.copy(t.p); v3.y += t.rise * (1 - Math.pow(1 - k, 2)); v3.x += t.dx * k; v3.project(cam);
       const vis = v3.z < 1;
-      const pop = k < 0.12 ? 0.4 + (k / 0.12) * 0.9 : k < 0.22 ? 1.3 - (k - 0.12) / 0.1 * 0.3 : 1;
+      let pop = k < 0.12 ? 0.4 + (k / 0.12) * 0.9 : k < 0.22 ? 1.3 - (k - 0.12) / 0.1 * 0.3 : 1;
+      if (t.bump > 0) { pop *= 1 + 0.35 * t.bump; t.bump = Math.max(0, t.bump - realDt * 5); }
       t.el.style.opacity = vis ? String(k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1) : '0';
       t.el.style.transform = `translate(${(v3.x * 0.5 + 0.5) * w}px, ${(-v3.y * 0.5 + 0.5) * hgt}px) translate(-50%,-50%) scale(${pop})`;
     }
@@ -565,7 +586,7 @@ export function auto(game, opts = {}) {
     const tag = item && (item.tag || item.kind || item.type);
     const c = (item && item.color) || TAG_COLORS[tag] || opts.collectColor || '#ffd23f';
     sparkle(game, p, { color: c, scale: item && item.value > 1 ? 1.4 : 1 });
-    if (textOn && item && (item.value > 1 || item.points)) text(game, p, `+${item.points || item.value}`, { color: c });
+    if (textOn && item && (item.value > 1 || item.points)) { const v = item.points || item.value; text(game, p, `+${v}`, { color: c, merge: 'collect', value: v }); }
   });
   on('checkpoint', (cp) => {
     const p = positionOf(cp); if (!p) return;

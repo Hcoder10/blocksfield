@@ -162,14 +162,26 @@ export function setStyle(game, style = 'arcade') {
   // palette accents from Look (only once a look is applied): highlight colour for display text + panel tint
   try {
     const p = game.look && typeof Look.palette === 'function' ? Look.palette(game) : null;
-    for (const k of ['--tk-p', '--tk-p2', '--tk-panel-a', '--tk-panel-b']) U.root.style.removeProperty(k);
+    for (const k of ['--tk-p', '--tk-p2', '--tk-panel-a', '--tk-panel-b', '--tk-ink', '--tk-dim']) U.root.style.removeProperty(k);
     if (p && typeof p === 'object' && style !== 'sleek' && style !== 'scifi') {
       const hi = hexOf(p.uiAccent || p.accent);
       if (hi && lum(hi) > 0.3) { U.root.style.setProperty('--tk-p', hi); U.root.style.setProperty('--tk-p2', hexOf(new THREE.Color(hi).offsetHSL(-0.05, 0.08, -0.2))); }
-      const panelC = hexOf(p.ui);
-      if (panelC && lum(panelC) < 0.2 && (style === 'arcade' || style === 'fantasy')) {
-        U.root.style.setProperty('--tk-panel-a', hexOf(new THREE.Color(panelC).offsetHSL(0, 0.05, 0.08)));
-        U.root.style.setProperty('--tk-panel-b', hexOf(new THREE.Color(panelC).offsetHSL(0, 0, -0.1)));
+      // arcade plates take the look's primary hue (deep and saturated so white numbers stay legible); ink follows
+      const prim = hexOf(p.primary);
+      if (prim && style === 'arcade') {
+        const hsl = new THREE.Color(prim).getHSL({});
+        const sat = Math.min(0.68, Math.max(0.35, hsl.s));
+        const C = (l, s2 = sat) => '#' + new THREE.Color().setHSL(hsl.h, s2, l).getHexString();
+        U.root.style.setProperty('--tk-panel-a', C(0.32));
+        U.root.style.setProperty('--tk-panel-b', C(0.19));
+        U.root.style.setProperty('--tk-ink', C(0.075, 0.55));
+        U.root.style.setProperty('--tk-dim', C(0.8, 0.45));
+      } else {
+        const panelC = hexOf(p.ui);
+        if (panelC && lum(panelC) < 0.2 && style === 'fantasy') {
+          U.root.style.setProperty('--tk-panel-a', hexOf(new THREE.Color(panelC).offsetHSL(0, 0.05, 0.08)));
+          U.root.style.setProperty('--tk-panel-b', hexOf(new THREE.Color(panelC).offsetHSL(0, 0, -0.1)));
+        }
       }
     }
   } catch (e) { reportError(e); }
