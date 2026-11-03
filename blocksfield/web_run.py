@@ -75,9 +75,9 @@ class Stages:
         """Forget `name` and every stage after it."""
         def key(s: str) -> tuple:
             n = int(re.sub(r"\D", "", s) or 0)
-            return (s == "finalize", n, 0 if s.startswith("repair") else 1)
+            return (s == "finalize", n, 0 if s.startswith("repair") else 2 if "s0" in s or s.startswith("pair") else 1)
         later = {p.stem for p in self.dir.glob("*.json")} - set(STAGE_ORDER)
-        order = STAGE_ORDER + sorted(later | {"eval_v0", "finalize"}, key=key)
+        order = STAGE_ORDER + sorted(later | {"eval_v0", "finalize"}, key=lambda s: (key(s), s))
         if name not in order:
             raise SystemExit(f"--redo: unknown stage {name!r}; stages: {', '.join(order)}")
         for s in order[order.index(name):]:
@@ -119,6 +119,11 @@ class WebBuild:
         self.log(f"kit catalog: {len(mods)} modules with functions ({', '.join(mods)}) in {time.time() - t:.1f}s"
                  + (f"; KIT ERRORS: {self.catalog['errors'][:2]}" if self.catalog.get("errors") else ""))
         await self.stage("plan", self.plan_stage)
+        if self.a.backfill_assets:
+            from blocksfield import web_assets
+            res = await web_assets.Assets(self.game_dir, self.run_dir, self.log).run_all(
+                self.plan, self.plan.get("art_direction", ""))
+            return {k: v for k, v in res["report"].items() if v.get("seconds", 0) > 0.5}
         await self.stage("art", self.art_stage)
         await self.stage("scaffold", self.scaffold_stage)
         await self.stage("build", self.build_stage)
@@ -267,8 +272,9 @@ class WebBuild:
         from blocksfield import web_build as wb
         if len(new["errors"]) != len(old["errors"]):
             return new if len(new["errors"]) < len(old["errors"]) else old
-        if abs(new["play_score"] - old["play_score"]) >= 1 or abs(new["score"] - old["score"]) >= 1 \
-                or "judge" not in self.roles:
+        # Absolute vision scores of two versions are not comparable (live: the same scaffold scored 6 and 7, the
+        # builder's version 4 and 5, all judged on the same kit art), so only the playtest decides outright.
+        if abs(new["play_score"] - old["play_score"]) >= 1 or "judge" not in self.roles:
             return new if new["score"] > old["score"] else old
         key = f"pair_{new['tag']}_{old['tag']}"
         got = self.stages.get(key)
@@ -463,6 +469,9 @@ def main() -> int:
     ap.add_argument("--video-seconds", type=float, default=16.0, help="0 = no gameplay video")
     ap.add_argument("--good-enough", type=float, default=8.5, help="stop repairing at this score")
     ap.add_argument("--no-assets", action="store_true", help="skip the art stage (kits' procedural fallbacks)")
+    ap.add_argument("--backfill-assets", action="store_true",
+                    help="only (re)try the plan's assets that are missing from the manifest, then stop (the game "
+                         "picks them up on its next load; nothing is rebuilt)")
     a = ap.parse_args()
     harness_path()
     if a.check:
