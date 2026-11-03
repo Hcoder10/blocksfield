@@ -1,0 +1,3 @@
+{"cutscene_intro": {"kind": "cutscene", "file": "../neon_drift/gameplay.mp4", "when": "intro"},
+ "cutscene_win": {"kind": "cutscene", "file": "../cloudhop/gameplay.mp4", "when": "win"},
+ "cutscene_lose": {"kind": "cutscene", "file": "../starbloom_isles/gameplay.mp4", "when": "lose"}}

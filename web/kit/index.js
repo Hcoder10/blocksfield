@@ -12,3 +12,4 @@ export * as UI from './ui.js';
 export * as FX from './fx.js';
 export * as Audio from './audio.js';
 export * as Debug from './debug.js';
+export * as Cutscene from './cutscene.js';
