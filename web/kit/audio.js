@@ -365,9 +365,12 @@ export function auto(game, opts = {}) {
   on('lap', () => play(map.lap, { rate: 1.12 }));
   // a generated cutscene (cutscene.js) brings its own audio: duck the music under it, skip the win/lose stinger
   let inCut = false;
+  // a win / lose clip is about to play (cutscene.js starts it ~0.3 s after the event): its own audio replaces the stinger
+  const cutFor = (when) => { const m = game.assets && game.assets.manifest; return !!(m && !game.__cutscenes?.disabled && Object.values(m).some(e => e && e.kind === 'cutscene' && e.when === when)); };
+  game.__audioMuted = () => muted;
   on('cutscene', (when, phase) => { inCut = phase === 'start'; duck(inCut, { freq: 1200, gain: 0.12 }); });
-  on('win', () => { if (inCut || (game.state && game.state.cutscene)) return; duck(true, { freq: 2500, gain: 0.35 }); play(map.win, {}, 'win'); setTimeout(() => duck(false), 2600); });
-  on('lose', () => { if (inCut || (game.state && game.state.cutscene)) return; duck(true, { freq: 900, gain: 0.4 }); play(map.lose, {}, 'lose'); });
+  on('win', () => { if (inCut || (game.state && game.state.cutscene) || cutFor('win')) return; duck(true, { freq: 2500, gain: 0.35 }); play(map.win, {}, 'win'); setTimeout(() => duck(false), 2600); });
+  on('lose', () => { if (inCut || (game.state && game.state.cutscene) || cutFor('lose')) return; duck(true, { freq: 900, gain: 0.4 }); play(map.lose, {}, 'lose'); });
   on('pause', (b) => duck(!!b));
   on('ui', (e) => { const t = e && (e.type || e); if (t === 'click') play('click', { volume: 0.7 }); else if (t === 'hover') play('hover', { minGap: 0.06 }); else if (t === 'countdown') play('tick'); else if (t === 'go') play('go'); else if (t === 'banner') play('banner', { volume: 0.6 }); else if (t === 'open') play('open', { volume: 0.6 }); else if (t === 'star') play('gem', { rate: 0.9 + 0.12 * ((e && e.n) || 1), pitchVariation: 0 }); else if (t === 'type') play('hover', { volume: 0.5, minGap: 0.05, pitchVariation: 0.15 }); else if (t === 'start') play(null, {}, 'start'); });
   if (opts.music !== false && !current) {

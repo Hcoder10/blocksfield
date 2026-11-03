@@ -398,6 +398,7 @@ export function install(game, opts = {}) {
       if (on === pilotOn) return pilotOn;
       try {
         if (on) {
+          if (typeof game.__cutsceneSkip === 'function') game.__cutsceneSkip();   // the bot plays; skip any intro clip
           if (typeof game.__uiDismissTitle === 'function') game.__uiDismissTitle();
           if (pilot && typeof pilot === 'object' && typeof pilot.start === 'function') pilot.start();
           else if (pilot && typeof pilot === 'object' && 'enabled' in pilot) pilot.enabled = true;
@@ -433,7 +434,7 @@ export function install(game, opts = {}) {
     },
     emit(name, ...args) { game.emit(name, ...args); return true; },
     // dismiss a title screen without a key press (harness), and hide/show the whole UI overlay for clean shots
-    start() { if (typeof game.__uiDismissTitle === 'function') game.__uiDismissTitle(); if (!game.started) game.start(); return true; },
+    start() { if (typeof game.__cutsceneSkip === 'function') game.__cutsceneSkip(); if (typeof game.__uiDismissTitle === 'function') game.__uiDismissTitle(); if (!game.started) game.start(); return true; },
     ui(on = true) { const r = game.__ui && game.__ui.root; if (r) r.classList.toggle('tk-hidden', !on); return !!r; },
     overlay(on) { dev = dev || overlay(); dev.style.display = (on == null ? dev.style.display === 'none' : on) ? 'block' : 'none'; return dev.style.display === 'block'; },
   };

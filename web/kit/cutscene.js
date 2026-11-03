@@ -55,6 +55,7 @@ export function play(game, urlOrWhen, opts = {}) {
     justifyContent: 'center', opacity: '0', transition: 'opacity 0.35s ease', cursor: 'pointer', userSelect: 'none' });
   const v = document.createElement('video');
   v.src = url; v.playsInline = true; v.preload = 'auto'; v.volume = opts.volume ?? 1;
+  if (game.__audioMuted && game.__audioMuted()) v.muted = true;          // the game's sound setting (audio.js)
   if (e && e.source) v.poster = game.assets.base + e.source;           // the clip's first image while it loads
   Object.assign(v.style, { width: '100%', height: '100%', objectFit: 'contain', display: 'block' });
   wrap.appendChild(v);
@@ -72,7 +73,8 @@ export function play(game, urlOrWhen, opts = {}) {
     wrap.appendChild(cap);
   }
   const skip = document.createElement('div');
-  skip.textContent = 'SKIP ▸';
+  const touch = (() => { try { return matchMedia('(pointer: coarse)').matches; } catch { return false; } })();
+  skip.textContent = touch ? 'TAP TO SKIP ▸' : 'SKIP ▸';
   Object.assign(skip.style, { position: 'absolute', right: '3vw', bottom: '2.2vh', padding: '6px 14px', borderRadius: c.style === 'sleek' || c.style === 'scifi' ? '4px' : '999px',
     background: c.ink, color: c.acc, font: `800 13px ${c.font}`, letterSpacing: '0.12em', opacity: '0', transition: 'opacity 0.4s', border: `2px solid ${c.acc}` });
   if (opts.skippable !== false) wrap.appendChild(skip);
@@ -98,6 +100,7 @@ export function play(game, urlOrWhen, opts = {}) {
     wrap.style.opacity = '0';
     setTimeout(() => { v.pause(); v.removeAttribute('src'); v.load(); wrap.remove(); }, 380);
     if (active && active.wrap === wrap) active = null;
+    if (game.__cutsceneSkip) game.__cutsceneSkip = null;
     if (game.state) game.state.cutscene = prevState ?? null;
     game.emit && game.emit('cutscene', when, 'end', result);
     opts.onEnd && opts.onEnd(result);
@@ -115,6 +118,7 @@ export function play(game, urlOrWhen, opts = {}) {
   // hard stop: a broken file never traps the player
   setTimeout(() => { if (!done && (v.readyState < 2 || v.paused)) finish('missing'); }, Math.max(4000, (opts.maxSeconds ?? 20) * 1000));
   active = { wrap, finish };
+  game.__cutsceneSkip = () => finish('skipped');      // the harness (__kit.start / autopilot) skips cutscenes
   return new Promise(r => { resolveP = r; });
 }
 

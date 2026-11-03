@@ -45,6 +45,15 @@ def cover(img: Image.Image, w: int = W, h: int = H) -> Image.Image:
     return img.crop((x, y, x + w, y + h))
 
 
+def clean(img: Image.Image) -> Image.Image:
+    """Concept boards are drawn as game screenshots and carry mock HUD in the corners and along the top (badges,
+    lap/score panels, "1ST" banners); LTX animates those into garbled glyphs. Keep the central field of view only:
+    trim 9% off each side, 25% off the top and 8% off the bottom (cover() then scales it back to 1280x736)."""
+    img = img.convert("RGB")
+    w, h = img.size
+    return img.crop((round(w * 0.09), round(h * 0.25), round(w * 0.91), round(h * 0.92)))
+
+
 def video_frame(path: Path, frac: float) -> Image.Image | None:
     r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)],
                        capture_output=True, text=True)
@@ -78,7 +87,8 @@ def shots(game_dir: Path, about: dict) -> dict:
     concepts = [game_dir / c for c in about.get("concepts", []) if (game_dir / c).exists()]
     cims = [Image.open(c).convert("RGB") for c in concepts]
     gp = game_dir / "gameplay.mp4"
-    # concept images have no HUD (LTX copies HUD text from gameplay frames into garbled digits), so prefer them:
+    # concept images (HUD trimmed off by clean(); LTX turns any HUD text into garbled digits) are preferred over
+    # gameplay frames:
     # win = the last concept (the planner draws the finish / goal last), intro = the most colourful of the others,
     # lose = a remaining one; gameplay frames only when the game has fewer concepts
     win_img = cims[-1] if cims else video_frame(gp, 0.85)
@@ -137,7 +147,7 @@ async def upload(http: httpx.AsyncClient, img: Image.Image, name: str, patience:
 
 
 async def clip(http: httpx.AsyncClient, img: Image.Image, prompt: str, name: str, seconds: float) -> bytes:
-    uploaded = await upload(http, cover(img), name)
+    uploaded = await upload(http, cover(clean(img)), name)
     r = await http.post(f"{ARBITER}/job", json={"workflow": "trailer_clip", "params": {
         "image": uploaded, "prompt": prompt, "negative": NEG, "seconds": seconds, "width": W, "height": H, "seed": -1}})
     if r.status_code >= 400:
@@ -177,7 +187,7 @@ async def run(gid: str, whens: list[str], seconds: float, dry: bool) -> int:
         tmp.mkdir(parents=True, exist_ok=True)
         for w in whens:
             img, prompt = plan[w]
-            cover(img).save(tmp / f"{w}_source.png")
+            cover(clean(img)).save(tmp / f"{w}_source.png")
             print(f"[{w}] {tmp / (w + '_source.png')}\n  {prompt}")
         return 0
     assets = d / "assets"
@@ -193,7 +203,7 @@ async def run(gid: str, whens: list[str], seconds: float, dry: bool) -> int:
                 raw = Path(td) / "raw.mp4"
                 raw.write_bytes(data)
                 finish(raw, assets / f"cutscene_{w}.mp4")
-            cover(img).save(assets / f"cutscene_{w}_source.jpg", quality=88)
+            cover(clean(img)).save(assets / f"cutscene_{w}_source.jpg", quality=88)
             man[f"cutscene_{w}"] = {"kind": "cutscene", "file": f"cutscene_{w}.mp4", "when": w, "model": "LTX-2.5",
                                     "source": f"cutscene_{w}_source.jpg", "prompt": prompt}
             made.append(w)
