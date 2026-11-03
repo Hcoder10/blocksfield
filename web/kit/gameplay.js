@@ -695,7 +695,7 @@ export function rules(game, opts = {}) {
     changed();
     game.emit('collect', it, by);
     if (collect && S.collected >= S.target && S.target > 0) {
-      if (!R.goal && !race) win();
+      if (!R.goal && !race && !(W && W.state !== 'done')) win();   // waves + collect: both are needed
       else if (R.goal && !S.goalOpen) { S.goalOpen = true; game.emit('goalOpen', R.goal); }
     }
     if (opts.scoreToWin && S.score >= opts.scoreToWin) win();
@@ -1270,10 +1270,10 @@ export function rules(game, opts = {}) {
       if (W.state === 'wait' && W.t > (S.wave === 0 ? 1.5 : cfg.delay)) { W.t = 0; startWave(); }
       else if (W.state === 'fight' && W.alive.every(e => !e.alive)) {
         W.state = 'wait'; W.t = 0; game.emit('waveClear', S.wave, cfg.count);
-        if (S.wave >= cfg.count) win(); else uiBanner('Wave clear!', { style: 'stage_clear' });
+        if (S.wave >= cfg.count) { W.state = 'done'; if (!(collect && S.collected < S.target)) win(); } else uiBanner('Wave clear!', { style: 'stage_clear' });
       }
     };
-    W.text = () => W.state === 'fight' ? `Wave ${S.wave}/${cfg.count}: defeat ${W.alive.filter(e => e.alive).length} enemies` : S.wave ? `Wave ${S.wave + 1} incoming...` : `Survive ${cfg.count} waves`;
+    W.text = () => W.state === 'done' ? `Bank ${S.target - S.collected} more ${collect && collect.label ? collect.label : (S.collectTag || 'coin') + 's'}` : W.state === 'fight' ? `Wave ${S.wave}/${cfg.count}: defeat ${W.alive.filter(e => e.alive).length} enemies` : S.wave ? `Wave ${S.wave + 1} incoming...` : `Survive ${cfg.count} waves`;
   }
   function uiBanner(text, o) {
     try { if (game.__ui && UIm && typeof UIm.banner === 'function') UIm.banner(game, text, o); } catch (e) { /* UI optional */ }
