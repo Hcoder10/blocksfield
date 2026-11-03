@@ -572,7 +572,8 @@ def game_segs(g: dict, dur: float) -> list[Seg]:
         y0 = H - 92 - 46 * len(pitch_lines) - 96
         text(d, (x0, y0), g["title"], font(60, "Bold"), FG, a, stroke=1)
         x = x0 + font(60, "Bold").getlength(g["title"]) + 28
-        x += chip(d, x, y0 + 14, g.get("genre", ""), a) + 12
+        genre = g.get("genre", "").split(" / ")[0]
+        x += chip(d, x, y0 + 14, genre if len(genre) <= 30 else genre[:29] + "…", a) + 12
         chip(d, x, y0 + 14, f"judge score {g['score_n']:.1f} / 10", a, fill=(30, 36, 48), fg=FG)
         shown = int(total_chars * min(1.0, max(0.0, (gt - 0.4) / 2.6)))
         pa = 1 - ramp(gt, 5.2, 0.6)
