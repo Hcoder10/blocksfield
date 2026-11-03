@@ -7,6 +7,7 @@ import * as Gameplay from './gameplay.js';
 import * as World from './world.js';
 import * as Physics from './physics.js';
 import * as Touch from './touch.js';
+import * as Assist from './assist.js';
 
 // ---- errors: capture from the moment the kit is imported, not just after install ----
 if (!window.__kitErrorHooks) {
@@ -459,6 +460,7 @@ export function install(game, opts = {}) {
   window.addEventListener('blur', () => kit.releaseAll());
 
   try { Touch.install(game, { player }); } catch (e) { reportError(e); }
+  try { Assist.install(game, { player, level }); } catch (e) { reportError(e); }   // R to reset, auto-unstick, boats stay on water
   // ?quality=low|high forces the Look tier (weak laptops, or to compare); auto-quality still runs otherwise
   try {
     const q = new URLSearchParams(location.search).get('quality');

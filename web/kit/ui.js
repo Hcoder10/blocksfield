@@ -7,6 +7,7 @@ import * as Look from './look.js';
 import * as Audio from './audio.js';
 import { frameBox, survey } from './debug.js';
 import * as Touch from './touch.js';
+import * as Assist from './assist.js';
 
 export const STYLES = ['arcade', 'cozy', 'sleek', 'fantasy', 'scifi'];
 const LOOK_STYLE = { neon_night: 'scifi', cozy: 'cozy', dark_fantasy: 'fantasy', snow: 'sleek', desert: 'arcade', sunset: 'arcade', candy: 'cozy', toon_bright: 'arcade' };
@@ -281,6 +282,7 @@ export function hud(game, opts = {}) {
   U.root.prepend(el);
   if (U.title) el.style.visibility = 'hidden';   // title screen is up: HUD slides in when it closes
   try { Touch.install(game, { player: opts.player }); } catch (e) { reportError(e); }
+  try { Assist.install(game, { player: opts.player, level: opts.level || (opts.minimap && opts.minimap.level) }); } catch (e) { reportError(e); }
   const H = U.hud = { el, opts, C, counters: [], ownTime: 0, running: false, autoPause: opts.pauseMenu !== false, offs: [], vign, last: {} };
 
   if (opts.title && opts.showTitle) C.tl.append(h('div', 'tk-gametitle tk-ol', [opts.title]));
@@ -697,11 +699,16 @@ export function countdown(game, opts = {}) {
 // ---------- toasts ----------
 export function toast(game, text, opts = {}) {
   const U = ui(game);
-  const { icon: ic = null, duration = 2.4 } = opts;
+  // phones: one short toast at a time; desktop: at most two (race chatter must not wall off the right third)
+  const touch = U.root.classList.contains('tk-touch');
+  const max = touch ? 1 : 2;
+  let { icon: ic = null, duration = 2.4 } = opts;
+  let txt = String(text);
+  if (touch) { duration = Math.min(duration, 1.6); if (txt.length > 26) txt = txt.replace(/^(.{0,24})\b.*$/, '$1').trim() + '…'; }
   if (!U.toasts) { U.toasts = h('div', 'tk-toasts'); U.root.append(U.toasts); }
-  const el = h('div', 'tk-toast', [wrap(panel([ic ? icon(game, ic) : null, h('span', '', [String(text)])]))]);
+  const el = h('div', 'tk-toast' + (touch ? ' tk-compact' : ''), [wrap(panel([ic ? icon(game, ic) : null, h('span', '', [txt])]))]);
   U.toasts.append(el);
-  while (U.toasts.children.length > 4) U.toasts.firstChild.remove();
+  while (U.toasts.children.length > max) U.toasts.firstChild.remove();
   emitUi(game, 'open');
   setTimeout(() => { el.classList.add('tk-out'); setTimeout(() => el.remove(), 360); }, duration * 1000);
   return el;

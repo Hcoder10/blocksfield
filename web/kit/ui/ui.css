@@ -508,3 +508,10 @@
 .tk-bonus:empty { display: none; }
 .tk-lives-n { font-size: 1.35em; margin-left: .25em; color: var(--tk-text); }
 .tk-lives-n.tk-lost { animation: tk-pop .5s cubic-bezier(.2, 2, .4, 1); }
+.tk-treset { position: absolute; right: calc(env(safe-area-inset-right, 0px) + 3vw); bottom: calc(6vh + clamp(84px, 23vmin, 142px) + 4vmin); pointer-events: auto; touch-action: none;
+  width: clamp(38px, 9vmin, 54px); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font: 700 clamp(18px, 5vmin, 28px)/1 var(--tk-body); color: #fff;
+  background: rgba(10, 8, 26, .45); border: 2px solid rgba(255, 255, 255, .55); opacity: .7; }
+.tk-treset.tk-on { animation: tk-pop .4s ease-out; }
+.tk-touchpad.tk-off .tk-treset { display: none; }
+.tk-touch .tk-toasts { top: 24%; }
+.tk-toast.tk-compact .tk-panel { font-size: .95em; padding: .3em .85em; }
