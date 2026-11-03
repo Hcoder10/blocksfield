@@ -90,6 +90,40 @@ class Turns:
         except httpx.HTTPError:
             return False
 
+    async def _asleep(self) -> bool:
+        try:
+            async with httpx.AsyncClient(timeout=10) as http:
+                return bool((await http.get(f"{VLLM_URL}/is_sleeping")).json().get("is_sleeping"))
+        except (httpx.HTTPError, ValueError):
+            return False
+
+    async def _wake(self) -> None:
+        """Wake vLLM and make sure it is awake. Live: a newer ComfyUI kept ~12 GB on the card after /free (a failed
+        custom node left weights behind), wake_up hit CUDA OOM, and vLLM stayed asleep while LLM calls queued
+        forever. If the wake does not take, restart ComfyUI (a fresh process holds no VRAM) and try again."""
+        for attempt in range(3):
+            await self._vllm("/wake_up")
+            if not await self._asleep():
+                return
+            log.warning("vLLM still asleep after wake_up (attempt %d): restarting ComfyUI to free the card", attempt + 1)
+            self.stats["last_error"] = f"wake_up failed (attempt {attempt + 1}); restarting ComfyUI"
+            await self._restart_comfy()
+        log.error("vLLM would not wake after 3 attempts")
+
+    async def _restart_comfy(self) -> None:
+        script = Path(__file__).resolve().parents[1] / "deploy" / "start_servers.sh"
+        proc = await asyncio.create_subprocess_shell(f"tmux kill-session -t comfy; sleep 2; bash {script} comfy",
+                                                     stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+        await proc.wait()
+        for _ in range(120):                     # wait until ComfyUI answers again
+            try:
+                async with httpx.AsyncClient(timeout=5) as http:
+                    if (await http.get(f"{self.comfy.url}/queue")).status_code == 200:
+                        return
+            except httpx.HTTPError:
+                pass
+            await asyncio.sleep(1)
+
     def event(self, kind: str, name: str, t0: float, **extra) -> None:
         self.events.append({"kind": kind, "name": name, "start": round(t0, 2), "end": round(time.time(), 2),
                             **extra})
@@ -161,7 +195,7 @@ class Turns:
             t = time.time()
             await self.comfy.free()
             if state == "up":
-                await self._vllm("/wake_up")
+                await self._wake()
                 self.event("wake", "LLM -> GPU", t)
             self.llm_loaded = state == "up"
             self.stats["wake_s"] = round(time.time() - t, 1)
@@ -223,7 +257,7 @@ def create_app() -> FastAPI:
             asleep = False
         if asleep:
             await turns.comfy.free()
-            await turns._vllm("/wake_up")
+            await turns._wake()
             log.warning("vLLM was asleep at startup: woke it")
         asyncio.create_task(turns.worker())
 
