@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-03T04:22:22-0800",
+ "generated": "2026-11-03T04:50:50-0800",
  "dev": false,
  "space": {
   "level_kind": [
@@ -264,7 +264,7 @@
    "start_layout": null,
    "laid_out": false,
    "mechanics": [],
-   "cutscenes": 0,
+   "cutscenes": 3,
    "species": "robot"
   },
   {
@@ -306,6 +306,44 @@
    "species": "robot"
   },
   {
+   "id": "bumble_dash",
+   "title": "Bumble Dash",
+   "tagline": "Dash, boing and double-jump the spring meadow \u2014 grab the carrots and beat the clock!",
+   "pitch": "Bumble Dash: a bunny obstacle-course sprint through a sunny spring meadow. Dash, double-jump and bounce over hurdles, spinning bars and bounce pads, grab golden carrots along the way, and burst through the giant flower finish arch before the timer runs out. Bright, bouncy, cheerful.",
+   "genre": "bouncy obstacle-course platformer sprint",
+   "controls": [
+    "WASD / arrows: run",
+    "Space: jump (again in the air: double jump)",
+    "Shift: dash / long jump",
+    "C: ground pound",
+    "P / Esc: pause"
+   ],
+   "created": "2026-11-03T04:29:23-0800",
+   "thumbnail": "thumb.jpg",
+   "video": "gameplay.mp4",
+   "play": "index.html",
+   "card_thumb": null,
+   "score": 6.0,
+   "repairs": 2,
+   "model_calls": 1,
+   "minutes": 37.6,
+   "dry_run": false,
+   "superseded_by": null,
+   "interventions": 0,
+   "look": "toon_bright",
+   "level_kind": "meadow_course",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "custom_level": false,
+   "layout": null,
+   "start_layout": null,
+   "laid_out": false,
+   "mechanics": [],
+   "cutscenes": 0,
+   "species": "bunny"
+  },
+  {
    "id": "cloudhop2",
    "title": "Cloudhop Meadows",
    "tagline": "Hop, dash and bloom your way to the flower portal at the top of the sky!",
@@ -331,43 +369,6 @@
    "interventions": 0,
    "look": "candy",
    "level_kind": "sky_islands",
-   "player_type": "platformer",
-   "camera": "follow",
-   "ui_style": "arcade",
-   "custom_level": false,
-   "layout": null,
-   "start_layout": null,
-   "laid_out": false,
-   "mechanics": [],
-   "cutscenes": 0,
-   "species": "bunny"
-  },
-  {
-   "id": "bumble_dash",
-   "title": "Bumble Dash",
-   "tagline": "Dash, boing and double-jump the spring meadow \u2014 grab the carrots and beat the clock!",
-   "pitch": "Bumble Dash: a bunny obstacle-course sprint through a sunny spring meadow. Dash, double-jump and bounce over hurdles, spinning bars and bounce pads, grab golden carrots along the way, and burst through the giant flower finish arch before the timer runs out. Bright, bouncy, cheerful.",
-   "genre": "bouncy obstacle-course platformer sprint",
-   "controls": [
-    "A / D or arrow keys: move",
-    "Space: jump, press again mid-air: double jump",
-    "Shift: dash",
-    "P: pause"
-   ],
-   "created": "2026-11-03T02:35:41-0800",
-   "thumbnail": "thumb.jpg",
-   "video": "gameplay.mp4",
-   "play": "index.html",
-   "card_thumb": null,
-   "score": 6.0,
-   "repairs": 2,
-   "model_calls": 66,
-   "minutes": 28.8,
-   "dry_run": false,
-   "superseded_by": null,
-   "interventions": 0,
-   "look": "toon_bright",
-   "level_kind": "meadow_course",
    "player_type": "platformer",
    "camera": "follow",
    "ui_style": "arcade",
@@ -413,7 +414,7 @@
    "start_layout": null,
    "laid_out": false,
    "mechanics": [],
-   "cutscenes": 0,
+   "cutscenes": 3,
    "species": "knight"
   },
   {

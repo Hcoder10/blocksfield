@@ -151,7 +151,7 @@
       html.push(`<h3 class="asset-h">Cutscenes</h3><div class="cuts">${cuts.map(([k, v]) => `<figure class="asset cut">
         <video src="${esc(url("assets/" + v.file))}" ${v.source ? `poster="${esc(url("assets/" + v.source))}"` : ""} controls muted playsinline preload="metadata"></video>
         <figcaption class="cap"><span class="chip ink">Cutscene · ${esc(v.model || stageModel)}${v.when ? ` · ${esc(v.when)}` : ""}</span>
-        ${v.prompt ? `<p>“${esc(v.prompt)}”</p>` : ""}</figcaption></figure>`).join("")}</div>`);
+        ${v.prompt ? `<p title="${esc(v.prompt)}">“${esc(v.prompt)}”</p>` : ""}</figcaption></figure>`).join("")}</div>`);
     }
     const post = postStagesLine(a.post_stages);
     if (post) html.push(`<p class="post-line">${post}</p>`);

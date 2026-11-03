@@ -97,6 +97,7 @@ ul.mnotes { padding-left: 18px; display: grid; gap: 6px; }
 .cuts { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 22px; }
 .cut { margin: 0; }
 .cut video { width: 100%; aspect-ratio: 16 / 9; background: var(--ink); border-bottom: 3px solid var(--ink); display: block; }
+.cut .cap p { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .post-line { margin: 22px 0 0; font-weight: 600; color: var(--ink-2); }
 .beyond-card { margin-bottom: 26px; padding: 24px 26px; background: var(--white); border: 3px solid var(--ink); border-radius: 18px; box-shadow: var(--shadow); }
 .beyond-card h3 { margin: 0 0 10px; }
