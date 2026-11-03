@@ -35,21 +35,25 @@ def running_ids() -> set[str]:
 
 
 def launch(job: dict, n: int) -> int:
+    """Start one build detached. On Windows through PowerShell Start-Process, exactly like deploy/launch_web.ps1: live,
+    builds started with subprocess.Popen(DETACHED_PROCESS | CREATE_BREAKAWAY_FROM_JOB) from this runner died about a
+    minute in with nothing logged, while Start-Process builds ran to the end."""
     run_dir = ROOT / "runs" / f"web_{job['id']}"
     run_dir.mkdir(parents=True, exist_ok=True)
-    args = [sys.executable, "-u", "-m", "blocksfield.web_run"]
-    if job.get("pitch"):
-        args.append(job["pitch"])
-    args += ["--id", job["id"], *job.get("args", [])]
-    env = {**os.environ, "PYTHONUTF8": "1"}
-    flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) | getattr(subprocess, "DETACHED_PROCESS", 0)
-    log = open(run_dir / f"queue_{n}.log", "w", encoding="utf-8")
-    try:     # out of the launcher's job object: stopping the queue (or the shell that started it) must not kill builds
-        p = subprocess.Popen(args, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
-                             creationflags=flags | getattr(subprocess, "CREATE_BREAKAWAY_FROM_JOB", 0))
-    except OSError:                                   # the job forbids breakaway
-        p = subprocess.Popen(args, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT, creationflags=flags)
-    return p.pid
+    args = ["-u", "-m", "blocksfield.web_run"] + ([job["pitch"]] if job.get("pitch") else [])         + ["--id", job["id"], *job.get("args", [])]
+    out, err = run_dir / f"queue_{n}.log", run_dir / f"queue_{n}.err.log"
+    if os.name == "nt":
+        def q(x: str) -> str:
+            return "'" + x.replace("'", "''") + "'"
+        arglist = ", ".join(q('"' + x.replace('"', '\\"') + '"' if " " in x else x) for x in args)
+        ps = (f"$env:PYTHONUTF8 = '1'; $p = Start-Process -FilePath {q(sys.executable)} -WorkingDirectory {q(str(ROOT))} "
+              f"-WindowStyle Hidden -PassThru -RedirectStandardOutput {q(str(out))} -RedirectStandardError {q(str(err))} "
+              f"-ArgumentList @({arglist}); $p.Id")
+        r = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True, timeout=60)
+        return int((r.stdout.strip().splitlines() or ["0"])[-1])
+    log = open(out, "w", encoding="utf-8")
+    return subprocess.Popen([sys.executable, *args], cwd=ROOT, env={**os.environ, "PYTHONUTF8": "1"}, stdout=log,
+                            stderr=subprocess.STDOUT, start_new_session=True).pid
 
 
 def main() -> int:
