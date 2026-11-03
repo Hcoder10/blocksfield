@@ -622,7 +622,7 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
   }
   game.lateUpdate(tick, 25);
   if (quality !== 'high') look.setQuality(quality, true);
-  // automatic quality, by wall clock so it also fires at 2 fps: skip the first 1.5 s (shader compiles, loading), then
+  // automatic quality, by wall clock so it also fires at 2 fps: skip the first 2 s (shader compiles, loading), then
   // count frames over 1 s. Under 50 fps -> 'low'; under 20 -> 'potato'. After a drop to 'low' it measures once more
   // (1.5 s settle + 1 s) and goes to 'potato' if still under 20.
   if (overrides.autoQuality !== false && quality === 'high') {
@@ -631,7 +631,7 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
       if (look.locked) { game.removeUpdate(probe); return; }   // a forced tier (?quality=...) wins
       const now = performance.now();
       if (!start) start = now;
-      if (now - start < 1500) return;
+      if (now - start < (round ? 1500 : 2000)) return;
       if (!w0) { w0 = now; frames = 0; return; }
       frames++;
       if (now - w0 < 1000) return;
