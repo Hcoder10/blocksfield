@@ -1060,7 +1060,7 @@ function lagoon(ctx) {
   }
   const np = []; for (let i = 0; i < N; i += 2) np.push(pts[i]);
   World.noPlant(game, np, W / 2 + 8);
-  World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: ext - 10 }, kinds: { grass: 0.8, flowers: 0.8, bush: 1, palm: 1.6, tree_round: 0.8, rock: 0.6 }, minY: WY + 0.35, density: 0.8, seed: ctx.seed + 8, focus: level.route, focusRadius: 35 });
+  World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: ext - 10 }, kinds: { grass: 0.45, flowers: 0.6, bush: 0.6, palm: 1.4, tree_round: 0.6, rock: 0.5 }, minY: WY + 0.35, density: 0.7, seed: ctx.seed + 8, focus: level.route, focusRadius: 30 });
   World.clouds(game, { ...P(ctx), count: 20, height: 60, radius: ext, seed: ctx.seed });
   level.ground = ground;
   level.bounds = boundsOf(pts, 14);
