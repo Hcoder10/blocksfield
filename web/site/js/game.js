@@ -55,6 +55,8 @@
       return v ? `<span><kbd>${esc(k)}</kbd> ${esc(v)}</span>` : `<span>${esc(c)}</span>`;
     }).join("");
 
+    $("#g-howto").innerHTML = howTo(a.mapping?.chosen?.player_type || plan.player_type, ctrls.length > 0, a.play || "index.html");
+
     // hero media
     const scr = $("#g-screen");
     if (a.video) {
@@ -153,6 +155,31 @@
     // build log
     $("#g-log").innerHTML = [timeline(t), scores(a.score), callsTable(a.model_calls, a.agents),
       builderReport(a.stages?.build)].filter(Boolean).join("");
+  }
+
+  // How to play: the kit's real bindings (web/kit/docs/Player.md, touch.js) per player type. The game's own controls
+  // list (shown in the header) wins for the keyboard; the kit line is the fallback when a game has none.
+  const HOWTO = {
+    platformer: ["WASD / arrows run · Space jump (again in the air: double jump, hold: higher) · Shift dash (long jump when running) · C ground pound · drag the mouse to turn the camera",
+      "left stick move · JUMP / DASH buttons · drag the right side to turn the camera"],
+    kart: ["W / ↑ throttle · S / ↓ brake and reverse · A D / ← → steer · hold Space while steering to drift, release to boost",
+      "left stick steer and throttle · hold DRIFT in a turn, release to boost"],
+    topdown: ["WASD / arrows move · Shift / E dash · Space jump (in blaster games Space / J / click fire)",
+      "left stick move · DASH / JUMP buttons"],
+    fps: ["WASD move · mouse look (click to lock the pointer) · click / E shoot · Space jump · Shift sprint",
+      "left stick move · drag the right side to look · FIRE / JUMP buttons"],
+  };
+  HOWTO.boat = HOWTO.kart;
+  function howTo(type, hasControls, play) {
+    const h = HOWTO[type];
+    if (!h) return "";
+    const rows = [];
+    if (!hasControls) rows.push(["Keyboard", h[0]]);
+    rows.push(["Phone", h[1]]);
+    rows.push(["Gamepad", "left stick move · A jump · X / RB action · right stick camera"]);
+    rows.push(["Pause", "Esc / P"]);
+    return `<h3>How to play</h3><dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
+      <p class="howto-foot">Phones: play in landscape. Weak laptop? Open <a href="${esc(url(play))}?quality=low">the low-quality version</a>.</p>`;
   }
 
   // about.json "mapping": how the pitch became kit choices (notes is null on games planned before 21:00)
