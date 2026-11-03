@@ -97,5 +97,29 @@
   "camera": {
    "yaw": 0.7415836590574046
   }
+ },
+ "cutscene_intro": {
+  "kind": "cutscene",
+  "file": "cutscene_intro.mp4",
+  "when": "intro",
+  "model": "LTX-2.5",
+  "source": "cutscene_intro_source.jpg",
+  "prompt": "Opening cutscene of the world of \"Neon Arena\", a top-down synthwave arena shooter / wave survival game. The camera slowly pushes in and glides over the world, revealing the level, then the hero character appears and strikes a confident pose. Synthwave at night: a deep indigo-black sky over a colosseum floor of glowing magenta and cyan grid tiles, everything edged in bloom-heavy neon. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Upbeat adventurous music."
+ },
+ "cutscene_win": {
+  "kind": "cutscene",
+  "file": "cutscene_win.mp4",
+  "when": "win",
+  "model": "LTX-2.5",
+  "source": "cutscene_win_source.jpg",
+  "prompt": "Victory cutscene of the world of \"Neon Arena\", a top-down synthwave arena shooter / wave survival game. The hero celebrates the win, jumping and cheering, confetti and sparkles burst around, warm triumphant light, the camera circles slowly. Synthwave at night: a deep indigo-black sky over a colosseum floor of glowing magenta and cyan grid tiles, everything edged in bloom-heavy neon. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Joyful fanfare."
+ },
+ "cutscene_lose": {
+  "kind": "cutscene",
+  "file": "cutscene_lose.mp4",
+  "when": "lose",
+  "model": "LTX-2.5",
+  "source": "cutscene_lose_source.jpg",
+  "prompt": "A gentle comedic fail moment in the world of \"Neon Arena\", a top-down synthwave arena shooter / wave survival game: the hero slips, tumbles playfully, sits up dazed with little stars circling, then shrugs it off. Light-hearted and cute, never violent. Synthwave at night: a deep indigo-black sky over a colosseum floor of glowing magenta and cyan grid tiles, everything edged in bloom-heavy neon. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Playful 'womp womp' cartoon sound."
  }
 }

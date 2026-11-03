@@ -1,0 +1,101 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Golden-hour panorama: amber-to-peach gradient, low glowing sun, big puffy clouds, distant floating islands silhouetted in warm haze.",
+  "wrap_seam": 0.55
+ },
+ "icon_coin": {
+  "file": "icon_coin.png",
+  "kind": "icon",
+  "prompt": "glossy gold coin with a tiny fox face stamped on it, toon style",
+  "for": "coins"
+ },
+ "icon_vault_key": {
+  "file": "icon_vault_key.png",
+  "kind": "icon",
+  "prompt": "ornate gold key with a gem-studded head, toon style",
+  "for": "keys"
+ },
+ "icon_flame": {
+  "file": "icon_flame.png",
+  "kind": "icon",
+  "prompt": "glowing orange flame with a grumpy face, toon style",
+  "for": "lava"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Upbeat heist jazz-funk loop: brushed drums, upright bass, muted trumpet, playful sneaky mood, 112 BPM."
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "bright golden coin chime with a sparkle"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "soft cartoon boing"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "muffled thud with a tiny dust puff"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "yelp and a sharp crack"
+ },
+ "sfx_checkpoint": {
+  "file": "sfx_checkpoint.mp3",
+  "kind": "sfx",
+  "event": "checkpoint",
+  "prompt": "heavy vault door grinding open"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "cash-register cha-ching into a brass fanfare"
+ },
+ "prop_vault_statue": {
+  "file": "prop_vault_statue.json",
+  "kind": "prop",
+  "prompt": "small brass vault door on a stone pedestal, round dial and gold handle",
+  "via": "idol",
+  "parts": 463
+ },
+ "prop_gold_crate": {
+  "file": "prop_gold_crate.json",
+  "kind": "prop",
+  "prompt": "wooden crate wrapped in gold bands with a coin emblem",
+  "via": "idol",
+  "parts": 438
+ },
+ "splat_vault_statue": {
+  "file": "splat_vault_statue.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "small brass vault door on a stone pedestal, round dial and gold handle",
+  "camera": {
+   "yaw": 0.6778296958836768
+  }
+ },
+ "splat_gold_crate": {
+  "file": "splat_gold_crate.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "wooden crate wrapped in gold bands with a coin emblem",
+  "camera": {
+   "yaw": 0.6786843391272319
+  }
+ }
+}

@@ -1,0 +1,117 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Sunny spring morning: soft blue gradient sky, big warm sun, fluffy cotton clouds, distant green hills",
+  "wrap_seam": 0.6
+ },
+ "icon_carrot": {
+  "file": "icon_carrot.png",
+  "kind": "icon",
+  "prompt": "chibi golden carrot icon, glossy orange tapered root with a leafy green top, thick dark outline, flat sticker style",
+  "for": "carrots"
+ },
+ "icon_clock": {
+  "file": "icon_clock.png",
+  "kind": "icon",
+  "prompt": "round pocket-watch icon with a little spring meadow scene on the face, thick dark outline, flat sticker style",
+  "for": "timer"
+ },
+ "icon_heart": {
+  "file": "icon_heart.png",
+  "kind": "icon",
+  "prompt": "plump pink heart with a tiny green leaf sprouting on top, thick dark outline, flat sticker style",
+  "for": "lives"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "bouncy ukulele + xylophone + handclaps, major key, 140 bpm, cheerful springtime pop"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "bright pling, two rising notes with a sparkle shimmer"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "soft boing whoosh, light and springy"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "thump with a little grass rustle"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "comical bonk with a wobble tail"
+ },
+ "sfx_boost": {
+  "file": "sfx_boost.mp3",
+  "kind": "sfx",
+  "event": "boost",
+  "prompt": "springy zip, rising pitch like a pogo stick"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "triumphant ukulele fanfare arpeggio with a confetti pop"
+ },
+ "prop_tulip": {
+  "file": "prop_tulip.json",
+  "kind": "prop",
+  "prompt": "single stylized tulip: bright pink petal cup on a green stem with two leaves, chunky voxel",
+  "via": "idol",
+  "parts": 427
+ },
+ "prop_hay_bale": {
+  "file": "prop_hay_bale.json",
+  "kind": "prop",
+  "prompt": "single golden hay bale: rounded rectangular block of straw with woven bands, warm yellow",
+  "via": "idol",
+  "parts": 622
+ },
+ "splat_tulip": {
+  "file": "splat_tulip.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "single stylized tulip: bright pink petal cup on a green stem with two leaves, chunky voxel",
+  "camera": {
+   "yaw": 1.2575645221250336
+  }
+ },
+ "splat_hay_bale": {
+  "file": "splat_hay_bale.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "single golden hay bale: rounded rectangular block of straw with woven bands, warm yellow",
+  "camera": {
+   "yaw": 2.289330856383545
+  }
+ },
+ "cutscene_intro": {
+  "kind": "cutscene",
+  "file": "cutscene_intro.mp4",
+  "when": "intro",
+  "model": "LTX-2.5",
+  "source": "cutscene_intro_source.jpg",
+  "prompt": "Opening cutscene of the world of \"Bumble Dash\", a bouncy obstacle-course platformer sprint game. The camera slowly pushes in and glides over the world, revealing the level, then the hero character appears and strikes a confident pose. Spring meadow in toon_bright: butter-yellow dandelions and pink tulips on grass green, a winding dirt path, sky blue with cotton-ball clouds; cel shading with soft dark ink outlines, warm morning sun and gentle bloom. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Upbeat adventurous music."
+ },
+ "cutscene_win": {
+  "kind": "cutscene",
+  "file": "cutscene_win.mp4",
+  "when": "win",
+  "model": "LTX-2.5",
+  "source": "cutscene_win_source.jpg",
+  "prompt": "Victory cutscene of the world of \"Bumble Dash\", a bouncy obstacle-course platformer sprint game. The hero celebrates the win, jumping and cheering, confetti and sparkles burst around, warm triumphant light, the camera circles slowly. Spring meadow in toon_bright: butter-yellow dandelions and pink tulips on grass green, a winding dirt path, sky blue with cotton-ball clouds; cel shading with soft dark ink outlines, warm morning sun and gentle bloom. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Joyful fanfare."
+ }
+}

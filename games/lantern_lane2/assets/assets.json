@@ -91,5 +91,13 @@
   "camera": {
    "yaw": 1.513953054316382
   }
+ },
+ "cutscene_intro": {
+  "kind": "cutscene",
+  "file": "cutscene_intro.mp4",
+  "when": "intro",
+  "model": "LTX-2.5",
+  "source": "cutscene_intro_source.jpg",
+  "prompt": "Opening cutscene of the world of \"Lantern Lane\", a cozy village collect & quest adventure game. The camera slowly pushes in and glides over the world, revealing the level, then the hero character appears and strikes a confident pose. Warm apricot-and-honey palette at golden hour deepening to dusk violet at the edges, with long soft shadows and a gentle rim light on every rounded form. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Upbeat adventurous music."
  }
 }

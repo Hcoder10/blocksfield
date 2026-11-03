@@ -22,6 +22,11 @@ function rng32(a) {
   };
 }
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
+function mixSeed(seed, salt) {
+  let h = (Number(seed) | 0) ^ 0x9e3779b9;
+  for (let i = 0; i < salt.length; i++) h = Math.imul(h ^ salt.charCodeAt(i), 0x01000193);
+  return (h >>> 0) % 1000003;
+}
 const yawTo = (from, to) => Math.atan2(to.x - from.x, to.z - from.z);   // yaw 0 faces +Z
 
 /**
@@ -35,7 +40,8 @@ export function build(game, kind, opts = {}) {
   if (!SIZES[size]) throw new Error(`Level.build: unknown size "${size}"; sizes: small, medium, large`);
   if (!game.look) Look.apply(game, 'toon_bright');
   World.reset(game);
-  const seed = opts.seed ?? 1;
+  // the game's title is mixed into the seed: two games asking for the same kind (and seed) never share a layout
+  const seed = mixSeed(opts.seed ?? 1, opts.unique === false ? '' : (game.title || (typeof document !== 'undefined' ? document.title : '')));
   const group = new THREE.Group(); group.name = 'kit:level:' + kind;
   game.scene.add(group);
   const level = {
@@ -49,6 +55,12 @@ export function build(game, kind, opts = {}) {
   } finally { World._collect(prev); }
   group.updateMatrixWorld(true);
   if (level.bounds.isEmpty()) level.bounds.setFromObject(group);
+  // no pickup right in front of the camera at the start: none within 4 u of spawn, and on tracks none in the first 15 u
+  {
+    const clear = (level.track || level.trackWidth) ? 15 : 4;
+    level.collectibles = level.collectibles.filter(c => Math.hypot(c.position.x - level.spawn.x, c.position.z - level.spawn.z) > clear
+      || Math.abs(c.position.y - level.spawn.y) > 6);
+  }
   // batch static props per material: hundreds of prop meshes -> a few dozen draws (opts.bake === false to skip)
   if (opts.bake !== false) {
     try { level.batching = World.bake(game, group, { keep: level.movers.map(m => m.mesh) }); }
@@ -87,6 +99,31 @@ function densify(points, step = 2) {
   out.push(points[points.length - 1].clone());
   return out;
 }
+/** low fences around an island rim, leaving the side toward `exitP` open (spawn safety) */
+function guardRails(ctx, isl, exitP, open = 0.75) {
+  const { game } = ctx;
+  const ex = Math.atan2(exitP.z - isl.position.z, exitP.x - isl.position.x);
+  const n = Math.max(8, Math.round(isl.radius * 1.3));
+  for (let k = 0; k < n; k++) {
+    const a = (k + 0.5) / n * Math.PI * 2;
+    if (Math.abs(Math.atan2(Math.sin(a - ex), Math.cos(a - ex))) < open) continue;
+    const p = isl.edgePoint(a, 0.9);
+    const len = 2 * Math.PI * (isl.radiusAt(a) - 0.9) / n * 0.92;
+    World.prop(game, 'fence', { ...P(ctx), position: p.add(V(0, -0.08, 0)), yaw: Math.atan2(-Math.cos(a), -Math.sin(a)), length: Math.max(2, len) });
+  }
+}
+
+/** the walkable surface nearest a reference height (stacked pieces: a pillar top far above must not win) */
+function heightNear(game, x, z, yRef) {
+  let best = null;
+  for (const s of (game._kitSurfaces || [])) {
+    const h = s.heightAt(x, z);
+    if (h == null || h > yRef + 3) continue;
+    if (best == null || Math.abs(h - yRef) < Math.abs(best - yRef)) best = h;
+  }
+  return best;
+}
+
 function boundsOf(points, pad = 10) {
   const b = new THREE.Box3().setFromPoints(points);
   b.expandByVector(V(pad, pad, pad));
@@ -96,31 +133,39 @@ function boundsOf(points, pad = 10) {
 // ------------------------------------------------------------------------------------------------ sky_islands
 function skyIslands(ctx) {
   const { game, level, rnd, S } = ctx;
-  const count = Math.max(4, Math.round(7 * S));
+  const count = Math.max(4, Math.round((6 + rnd() * 2.6) * S));
   const islands = [];
   const conns = [];      // {type, a, b, platforms}
   const route = [];
   let dir = rnd() * Math.PI * 2;
   let pos = V(0, 0, 0);
-  const types = ['hop', 'bridge', 'platforms', 'hop', 'platforms', 'bridge'];
+  // per-seed variety: the arrangement (wander / zig-zag / spiral / climb) and a shuffled crossing mix
+  const mode = ['wander', 'zigzag', 'spiral', 'climb'][Math.floor(rnd() * 4)];
+  const turn = rnd() < 0.5 ? -1 : 1;
+  const types = ['hop', 'bridge', 'platforms', 'hop', 'platforms', 'bridge', rnd() < 0.5 ? 'hop' : 'bridge'];
+  for (let k = types.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [types[k], types[j]] = [types[j], types[k]]; }
+  level.layout = mode;
   // start island
   islands.push(World.island(game, { ...P(ctx), position: pos, radius: 12, depth: 11, seed: ctx.seed * 31 + 1 }));
   for (let i = 1; i < count; i++) {
     const last = i === count - 1;
-    const type = last ? 'bridge' : types[(i - 1 + ctx.seed) % types.length];
+    // the first crossing is always an easy, obvious one: a short bridge (naive players must not die in the first 15 u)
+    const type = i === 1 ? 'first' : last ? 'bridge' : types[(i - 2) % types.length];
     const r = last ? 13 : 7 + rnd() * 4.5;
-    dir += (rnd() - 0.5) * 1.3;
+    if (i > 1) dir += mode === 'zigzag' ? turn * (i % 2 ? 1 : -1) * (0.55 + rnd() * 0.35)
+      : mode === 'spiral' ? turn * (0.42 + rnd() * 0.22) : (rnd() - 0.5) * 1.3;
     const A = islands[i - 1];
     let gap, rise;
-    if (type === 'hop') { gap = 3 + rnd() * 1.5; rise = (rnd() - 0.2) * MAX_RISE * 0.8; }
+    if (type === 'first') { gap = 6 + rnd() * 2; rise = 0; }
+    else if (type === 'hop') { gap = 3 + rnd() * 1.5; rise = (mode === 'climb' ? rnd() : rnd() - 0.2) * MAX_RISE * 0.8; }
     else if (type === 'bridge') { gap = 9 + rnd() * 5; rise = (rnd() - 0.5) * 2.0; }
-    else { gap = 13 + rnd() * 6; rise = 1.5 + rnd() * 2.5; }
+    else { gap = 13 + rnd() * 6; rise = (mode === 'climb' ? 2.5 : 1.5) + rnd() * 2.5; }
     const d = A.radius + r + gap;
     const np = V(A.position.x + Math.cos(dir) * d, A.position.y + rise, A.position.z + Math.sin(dir) * d);
     const B = World.island(game, { ...P(ctx), position: np, radius: r, depth: r * (0.8 + rnd() * 0.5), seed: ctx.seed * 31 + 1 + i,
       waterfall: !last && i % 3 === 1 });
     islands.push(B);
-    conns.push({ type, a: A, b: B });
+    conns.push({ type: type === 'first' ? 'bridge' : type, a: A, b: B, first: type === 'first' });
   }
   // connections: measure the real rim gap and build what crosses it
   const goalI = islands[islands.length - 1];
@@ -198,16 +243,16 @@ function skyIslands(ctx) {
   }
 
   // hazards (Gameplay draws them): spike patches beside the path, a spinner on the widest middle island
-  for (let i = 1; i < islands.length - 1; i++) {
+  for (let i = 2; i < islands.length - 1; i++) {
     const isl = islands[i];
-    if (i % 2 === 1 && isl.radius > 8) {
+    if (i % 2 === 0 && isl.radius > 8) {
       const c = isl.surfacePoint(isl.position.x, isl.position.z), a = rnd() * Math.PI * 2;
       const sp = isl.surfacePoint(c.x + Math.cos(a) * isl.radius * 0.5, c.z + Math.sin(a) * isl.radius * 0.5);
       if (level.route.every(r => r.distanceTo(sp) > 3.2)) { level.hazards.push({ type: 'spikes', position: sp, size: V(2, 0.7, 2) }); World.noPlant(game, [sp], 1.8); }
     }
   }
   {
-    const mids = islands.slice(1, -1).sort((a, b) => b.radius - a.radius);
+    const mids = islands.slice(2, -1).sort((a, b) => b.radius - a.radius);
     if (mids[0] && mids[0].radius > 9.5) { const isl = mids[0]; const c = isl.surfacePoint(isl.position.x, isl.position.z); level.hazards.push({ type: 'spinner', position: c, length: Math.min(9, isl.radius * 0.9), speed: 1.2, height: 0.9 }); World.noPlant(game, [c], 4.8); }
   }
   // collectibles: coin trail along the route + arcs over every jump
@@ -235,9 +280,10 @@ function skyIslands(ctx) {
     World.foliage(game, { ...P(ctx), area: isl, kinds: { grass: 1, flowers: 1, bush: 1, tree_round: big ? 1 : 0.6, tree_pine: 0.5, mushroom: 0.6, rock: 0.5 },
       seed: ctx.seed * 101 + i });
   });
+  if (islands[0]) guardRails(ctx, islands[0], level.route[1] || islands[1].position);
   if (islands[0]) {
     const f = V(Math.sin(level.spawnYaw), 0, Math.cos(level.spawnYaw)), sd = V(f.z, 0, -f.x);
-    const sp = level.spawn.clone().addScaledVector(f, 4).addScaledVector(sd, 3.2);
+    const sp = level.spawn.clone().addScaledVector(f, 3 + rnd() * 3).addScaledVector(sd, (rnd() < 0.5 ? -1 : 1) * 3.4);
     World.prop(game, 'sign', { ...P(ctx), position: islands[0].surfacePoint(sp.x, sp.z), yaw: level.spawnYaw + Math.PI + 0.4 });
   }
 
@@ -1191,6 +1237,82 @@ varying vec3 vWPos;
   }
   const gy = (x, z) => ground.heightAt(x, z) ?? 0;
 
+  // race dressing (road, curbs, chevrons) vs ruin dressing (sand path, broken columns, ruin walls): both are built and
+  // one is shown. opts.dress = 'race' | 'ruins' | 'auto' (default): auto decides on the first frame, once
+  // Gameplay.rules has run: a kart / boat player or a lap count means it is raced.
+  const raceDress = new THREE.Group(); raceDress.name = 'kit:canyon:race'; raceDress.userData.dynamic = true; ctx.group.add(raceDress);
+  const ruinDress = new THREE.Group(); ruinDress.name = 'kit:canyon:ruins'; ruinDress.userData.dynamic = true; ctx.group.add(ruinDress);
+  // ---- the racing line: a packed-dirt road ribbon draped on the floor, red/white curbs, white edge lines, darker
+  // tyre tracks, and chevron boards on the outside of every real bend, so the line reads at speed against the sand
+  {
+    const L = [-W / 2 - 1.1, -W / 2, -W / 2 + 0.35, -W * 0.34 - 0.35, -W * 0.34 + 0.35, -W * 0.14 - 0.3, -W * 0.14 + 0.3,
+      W * 0.14 - 0.3, W * 0.14 + 0.3, W * 0.34 - 0.35, W * 0.34 + 0.35, W / 2 - 0.35, W / 2, W / 2 + 1.1];
+    const dirtC = new THREE.Color('#8a4a2c'), dirt2 = new THREE.Color('#7a3f24'), track = new THREE.Color('#5e2f1c'), line = new THREE.Color('#f4efe6');
+    const curbA = new THREE.Color('#e0362f'), curbB = new THREE.Color('#ffffff');
+    const vtx = [], col = [], idx = [];
+    for (let i = 0; i <= N; i++) {
+      const sd = side(i % N);
+      for (const o of L) {
+        const x = pts[i].x + sd.x * o, z = pts[i].z + sd.z * o;
+        vtx.push(x, heightFn(x, z) + 0.05, z);
+      }
+    }
+    // per-quad colours (non-indexed so bands stay crisp)
+    const pos = [], cl = [], C = L.length;
+    const bandC = (b, i) => {
+      const d = i * lenT / N;
+      if (b === 0 || b === C - 2) return Math.floor(d / 2.5) % 2 ? curbA : curbB;
+      if (b === 1 || b === C - 3) return line;
+      if (b === 3 || b === 5 || b === 7 || b === 9) return track;                  // tyre tracks
+      return Math.floor(d / 6) % 2 ? dirtC : dirt2;
+    };
+    const P3 = (i, b) => [vtx[(i * C + b) * 3], vtx[(i * C + b) * 3 + 1], vtx[(i * C + b) * 3 + 2]];
+    for (let i = 0; i < N; i++) for (let b = 0; b < C - 1; b++) {
+      const c = bandC(b, i), sh = 0.95 + 0.05 * Math.sin(i * 1.3 + b);
+      for (const [ii, bb] of [[i, b], [i + 1, b], [i, b + 1], [i, b + 1], [i + 1, b], [i + 1, b + 1]]) { pos.push(...P3(ii, bb)); cl.push(c.r * sh, c.g * sh, c.b * sh); }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(cl, 3));
+    g.computeVertexNormals();
+    const rm = Look.material(game, { color: '#ffffff', vertexColors: true, rim: 0.131, side: 'double' });
+    rm.polygonOffset = true; rm.polygonOffsetFactor = -2; rm.polygonOffsetUnits = -4;
+    const road = new THREE.Mesh(g, rm); road.name = 'kit:canyon:road'; road.receiveShadow = true;
+    raceDress.add(road);
+
+    // chevron boards: red with white arrows, on posts outside each sharp bend, pointing the way
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128;
+    const c2 = cv.getContext('2d');
+    c2.fillStyle = '#d42a24'; c2.fillRect(0, 0, 256, 128); c2.strokeStyle = '#1a0d08'; c2.lineWidth = 10; c2.strokeRect(5, 5, 246, 118);
+    c2.fillStyle = '#ffffff';
+    for (const x0 of [40, 110, 180]) { c2.beginPath(); c2.moveTo(x0, 22); c2.lineTo(x0 + 44, 64); c2.lineTo(x0, 106); c2.lineTo(x0 + 22, 106); c2.lineTo(x0 + 66, 64); c2.lineTo(x0 + 22, 22); c2.closePath(); c2.fill(); }
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    const boardM = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false, side: THREE.DoubleSide });
+    const postM = Look.material(game, { color: '#3a2a22' });
+    const boardG = new THREE.PlaneGeometry(3.2, 1.6), postG = new THREE.CylinderGeometry(0.12, 0.12, 2.2, 6);
+    const turnAt = (i) => { const a = tans[(i - 6 + N) % N], b = tans[(i + 6) % N]; return a.x * b.z - a.z * b.x; };
+    let lastI = -999;
+    for (let i = 0; i < N; i += 3) {
+      const tr = turnAt(i);
+      if (Math.abs(tr) < 0.22 || i - lastI < 14) continue;
+      lastI = i;
+      const out = tr > 0 ? 1 : -1;                     // outside of the bend
+      for (const k of [-4, 0, 4]) {
+        const j = (i + k + N) % N, sd = side(j);
+        const q = pts[j].clone().addScaledVector(sd, out * (W / 2 + 2.2)); q.y = heightFn(q.x, q.z);
+        const grp = new THREE.Group(); grp.position.copy(q); grp.userData.dynamic = true;   // keep out of World.bake (textured)
+        const post = new THREE.Mesh(postG, postM); post.position.y = 1.1; grp.add(post);
+        const board = new THREE.Mesh(boardG, boardM); board.position.y = 2.6; grp.add(board);
+        const th = Math.atan2(-out * sd.x, -out * sd.z);   // board faces the road
+        grp.rotation.y = th;
+        const lx = Math.cos(th), lz = -Math.sin(th);       // the board's +X (arrow direction) in world space
+        board.scale.x = lx * tans[j].x + lz * tans[j].z >= 0 ? 1 : -1;   // arrows point the way the road runs
+        grp.traverse(o => { if (o.isMesh) o.castShadow = true; });
+        raceDress.add(grp);
+      }
+    }
+  }
+
   // ---- placements: start, route (platformers) to the goal arch, checkpoints, laps (races)
   const goalI = Math.round(N * 0.78);
   level.spawn = pts[N - 6].clone().add(V(0, 1.0, 0));
@@ -1336,9 +1458,85 @@ varying vec3 vWPos;
   }
   const np = []; for (let i = 0; i < N; i += 2) np.push(pts[i]);
   World.noPlant(game, np, W / 2 + 2.2);
+  // plants only on the canyon floor and the low desert: never on the terraced walls or ledges, where they float
   World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: ext - 12 }, kinds: { tree_round: 0.9, bush: 1.2, grass: 0.7, tree_dead: 0.5, rock: 0.6 },
-    density: 0.7, seed: ctx.seed + 8, focus: level.route, focusRadius: 26 });
+    density: 0.7, seed: ctx.seed + 8, focus: level.route, focusRadius: 26, maxY: 2.6 });
   World.clouds(game, { ...P(ctx), count: 10, height: 75, radius: ext, seed: ctx.seed });
+  // ---- ruin dressing (non-race games): a pale sand path with stone edging, broken columns and ruin walls
+  const ruinColliders = [];
+  {
+    const L = [-W * 0.32 - 0.5, -W * 0.32, W * 0.32, W * 0.32 + 0.5];
+    const edge = new THREE.Color('#b89a74'), sandP = new THREE.Color('#f0d6a8'), sandP2 = new THREE.Color('#e8c992');
+    const pos = [], cl = [];
+    const P3 = (i, o) => { const sd = side(i % N), x = pts[i].x + sd.x * o, z = pts[i].z + sd.z * o; return [x, heightFn(x, z) + 0.05, z]; };
+    for (let i = 0; i < N; i++) for (let b = 0; b < L.length - 1; b++) {
+      const c = b === 1 ? (Math.floor(i / 5) % 2 ? sandP : sandP2) : edge;
+      for (const [ii, oo] of [[i, L[b]], [i + 1, L[b]], [i, L[b + 1]], [i, L[b + 1]], [i + 1, L[b]], [i + 1, L[b + 1]]]) { pos.push(...P3(ii, oo)); cl.push(c.r, c.g, c.b); }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(cl, 3)); g.computeVertexNormals();
+    const pm = Look.material(game, { color: '#ffffff', vertexColors: true, rim: 0.121, side: 'double' });
+    pm.polygonOffset = true; pm.polygonOffsetFactor = -2; pm.polygonOffsetUnits = -4;
+    const path = new THREE.Mesh(g, pm); path.receiveShadow = true; path.name = 'kit:canyon:path'; ruinDress.add(path);
+    // columns (some broken, some fallen) and low ruin walls along the floor edges, kept off the path and the goal
+    const stone = Look.material(game, { color: '#e2c49a' }), stoneD = Look.material(game, { color: '#c9a479' });
+    const colG = new THREE.CylinderGeometry(0.7, 0.8, 1, 10), capG = new THREE.BoxGeometry(2.0, 0.5, 2.0), blockG = new THREE.BoxGeometry(1, 1, 1);
+    const rr = rng32(ctx.seed * 31 + 7);
+    for (let i = 8, k = 0; i < N; i += 9 + Math.floor(rr() * 6), k++) {
+      if (Math.abs(i - goalI) < 10 || i > N - 14) continue;
+      const sg = k % 2 ? 1 : -1, sd = side(i);
+      const q = pts[i].clone().addScaledVector(sd, sg * (W / 2 + 2.5 + rr() * 2.5)); q.y = heightFn(q.x, q.z);
+      const yaw = Math.atan2(tans[i].x, tans[i].z);
+      const kind = rr();
+      if (kind < 0.45) {                                   // standing column, maybe broken
+        const hgt = 2.5 + rr() * 4.5;
+        const col = new THREE.Mesh(colG, stone); col.scale.set(1, hgt, 1); col.position.set(q.x, q.y + hgt / 2 - 0.2, q.z); col.rotation.z = (rr() - 0.5) * 0.12;
+        ruinDress.add(col);
+        if (hgt > 5) { const cap = new THREE.Mesh(capG, stoneD); cap.position.set(q.x, q.y + hgt, q.z); cap.rotation.y = rr(); ruinDress.add(cap); }
+        ruinColliders.push(['cyl', V(q.x, q.y + hgt / 2, q.z), hgt / 2, 0.8]);
+      } else if (kind < 0.7) {                             // fallen column
+        const len = 4 + rr() * 3;
+        const col = new THREE.Mesh(colG, stone); col.scale.set(1, len, 1); col.rotation.z = Math.PI / 2; col.rotation.y = yaw + (rr() - 0.5);
+        col.position.set(q.x, q.y + 0.55, q.z); ruinDress.add(col);
+        ruinColliders.push(['box', V(q.x, q.y + 0.55, q.z), V(len / 2, 0.75, 0.8), col.rotation.y + Math.PI / 2]);
+      } else {                                             // ruin wall with a broken top, along the canyon
+        const len = 5 + rr() * 4, hgt = 1.6 + rr() * 1.8;
+        const n = Math.ceil(len / 1.2);
+        for (let b = 0; b < n; b++) {
+          const hb = hgt * (0.55 + 0.45 * Math.sin(b * 1.7 + k) ** 2);
+          const blk = new THREE.Mesh(blockG, b % 2 ? stone : stoneD);
+          blk.scale.set(1.2, hb, 0.9);
+          const off = (b - (n - 1) / 2) * 1.2;
+          blk.position.set(q.x + Math.sin(yaw) * off, q.y + hb / 2 - 0.1, q.z + Math.cos(yaw) * off); blk.rotation.y = yaw;
+          ruinDress.add(blk);
+        }
+        ruinColliders.push(['box', V(q.x, q.y + hgt / 2, q.z), V(0.5, hgt / 2, len / 2), yaw]);
+      }
+    }
+    ruinDress.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  }
+  let dressed = null;
+  const dress = (raced) => {
+    if (dressed !== null) return;
+    dressed = raced ? 'race' : 'ruins';
+    raceDress.visible = raced; ruinDress.visible = !raced;
+    if (!raced) for (const c of ruinColliders) {
+      if (c[0] === 'cyl') World.colliderCylinder(game, c[1], c[2], c[3], { what: 'ruin' });
+      else World.colliderBox(game, c[1], c[2], c[3], { what: 'ruin' });
+    }
+    level.dress = dressed;
+  };
+  const want = opts(ctx).dress || 'auto';
+  if (want === 'race' || want === 'ruins') dress(want === 'race');
+  else {
+    raceDress.visible = ruinDress.visible = false;
+    const decide = () => {
+      game.removeUpdate(decide);
+      const p = game.__player, st = game.state || {};
+      dress(!!((p && (p.type === 'kart' || p.type === 'boat')) || (Number.isFinite(st.laps) && st.laps > 0)));
+    };
+    game.lateUpdate(decide, -200);
+  }
   level.ground = ground;
   level.bounds = boundsOf(pts, 16);
 }
@@ -1398,7 +1596,7 @@ function probeSegment(game, a, b) {
   let prevH = a.y;
   for (let k = 1; k <= n; k++) {
     const t = k / n, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
-    const h = World.heightAt(game, x, z);
+    const h = heightNear(game, x, z, a.y + (b.y - a.y) * t + 1.0);
     const sup = h != null && h >= lo - 1.2 && h <= hi + 1.2;
     if (!sup) {
       if (run === 0) runStart = lastSup.clone();
@@ -1439,7 +1637,7 @@ export function compose(game, spec = {}) {
     collectibles: [], hazards: [], movers: [], goal: null, track: null, group, colliders: [], killY: -40, water: null, issues: [],
     pieces: [],
   };
-  const ctx = { group };
+  const ctx = { group, game };
   const issue = (severity, piece, message) => level.issues.push({ severity, piece, message });
   const dressing = spec.dressing ?? 'auto';
   const prev = World._collect(level.colliders);
@@ -1613,12 +1811,15 @@ export function compose(game, spec = {}) {
     const out = [route[0].clone()];
     const jumps = [];
     const autofix = spec.autofix !== false;
+    let firstJump = true;
     const dockSurfs = docks.map(d => World.addSurface(game, circleSurf(d.p, d.r)));
     for (let k = 1; k < route.length; k++) {
       const a = out[out.length - 1], b = route[k];
       if (ridden[k]) { out.push(b.clone()); continue; }                       // carried by a mover: board at a, get off at b
       let pr = probeSegment(game, a, b);
-      const bad = () => pr.gap > MAX_GAP || (pr.gap > 0.3 && pr.rise > MAX_RISE) || pr.ledge > MAX_RISE;
+      const easyFirst = firstJump && pr.gap > 3 && autofix;          // the first jump of the level: at most 3 u
+      if (pr.gap > 0.3) firstJump = false;
+      const bad = () => easyFirst || pr.gap > MAX_GAP || (pr.gap > 0.3 && pr.rise > MAX_RISE) || pr.ledge > MAX_RISE;
       if (bad()) {
         const what = pr.gap > 0.3 ? `${pr.gap.toFixed(1)} u across${pr.rise > 0.3 ? ` and ${pr.rise.toFixed(1)} u up` : ''}` : `a ${pr.ledge.toFixed(1)} u ledge`;
         const msg = `${label(k)} is ${what} from ${label(k - 1)}: the max jump is ${MAX_GAP} u across and ${MAX_RISE} u up; move it closer, lower it, or add a 'bridge', 'ramp' or 'stairs' piece between them`;
@@ -1626,7 +1827,8 @@ export function compose(game, spec = {}) {
         const dx = Math.hypot(to.x - from.x, to.z - from.z), dy = to.y - from.y;
         let n = 1;
         const pr2 = 1.8;
-        while (n <= 8 && ((dx - n * 2 * pr2) / (n + 1) > MAX_GAP - 1.0 || dy / (n + 1) > MAX_RISE - 0.4)) n++;
+        const maxGap = easyFirst ? 2.8 : MAX_GAP - 1.0;
+        while (n <= 8 && ((dx - n * 2 * pr2) / (n + 1) > maxGap || dy / (n + 1) > MAX_RISE - 0.4)) n++;
         if (autofix && n <= 8) {
           let prevP = from.clone();
           const dir = V(to.x - from.x, 0, to.z - from.z).normalize(), side = V(dir.z, 0, -dir.x);
@@ -1640,7 +1842,8 @@ export function compose(game, spec = {}) {
             out.push(q.clone()); jumps.push({ from: prevP, to: q.clone() }); prevP = q.clone();
           }
           jumps.push({ from: prevP, to: to.clone() });
-          issue('fixed', routePiece[k], msg.replace(/; move it closer.*/, `; added ${n} stepping platform${n > 1 ? 's' : ''} between them`));
+          if (!(easyFirst && pr.gap <= MAX_GAP && pr.rise <= MAX_RISE))
+            issue('fixed', routePiece[k], msg.replace(/; move it closer.*/, `; added ${n} stepping platform${n > 1 ? 's' : ''} between them`));
           out.push(b.clone());
           continue;
         }
@@ -1649,7 +1852,7 @@ export function compose(game, spec = {}) {
         // a real jump: route through the take-off and landing edges so the autopilot jumps at the right place
         const dir = V(pr.to.x - pr.from.x, 0, pr.to.z - pr.from.z).normalize();
         const t0 = pr.from.clone().addScaledVector(dir, -0.6), t1 = pr.to.clone().addScaledVector(dir, 0.8);
-        const h0 = World.heightAt(game, t0.x, t0.z), h1 = World.heightAt(game, t1.x, t1.z);
+        const h0 = heightNear(game, t0.x, t0.z, pr.from.y + 0.5), h1 = heightNear(game, t1.x, t1.z, pr.to.y + 0.5);
         if (h0 != null) t0.y = h0; if (h1 != null) t1.y = h1;
         if (t0.distanceTo(a) > 0.8) out.push(t0);
         out.push(t1); jumps.push({ from: t0, to: t1 });
@@ -1657,7 +1860,7 @@ export function compose(game, spec = {}) {
         // a walk: route points every ~4 u so the autopilot follows the surface (spiral stairs, long ramps, ground paths)
         const c = out[out.length - 1], L = Math.hypot(b.x - c.x, b.z - c.z);
         for (let s = 1, n = Math.floor(L / 4); s <= n && L > 5; s++) {
-          const q = c.clone().lerp(b, s / (n + 1)), h = World.heightAt(game, q.x, q.z);
+          const q = c.clone().lerp(b, s / (n + 1)), h = heightNear(game, q.x, q.z, q.y + 0.5);
           if (h != null) q.y = h;
           out.push(q);
         }
@@ -1666,6 +1869,10 @@ export function compose(game, spec = {}) {
     }
     game._kitSurfaces = (game._kitSurfaces || []).filter(x => !dockSurfs.includes(x));
     level.route = out;
+    { // spawn safety: rails on the first island facing the void, if the level floats
+      const first = level.pieces.find(p => p.island && Math.hypot(p.top.x - out[0].x, p.top.z - out[0].z) < p.r + 0.5);
+      if (first && !ground && dressing !== 'none' && out[1]) guardRails(ctx, first.island, out.find(q => !first.island.contains(q.x, q.z, 0.3)) || out[1]);
+    }
     level.spawn = (spec.spawn ? vecOf(spec.spawn, 'spawn') : out[0].clone()).add(V(0, 1, 0));
     level.spawnYaw = yawTo(out[0], out[Math.min(2, out.length - 1)]);
     if (goalP) level.goal = { position: goalP.clone().add(V(0, 0.5, 0)), radius: 3 };
@@ -1685,6 +1892,11 @@ export function compose(game, spec = {}) {
     for (const [k, h] of (spec.hazards || []).entries()) {
       if (!h || !HAZARD_TYPES.includes(h.type)) { issue('warning', null, `hazards[${k}].type "${h && h.type}" is not a hazard type (dropped); types: ${HAZARD_TYPES.join(', ')}`); continue; }
       const hp = { ...h, position: vecOf(h.position ?? [0, 0, 0], `hazards[${k}].position`) };
+      if (h.type !== 'void') {
+        let acc = 0, nearStart = false;
+        for (let q = 0; q < out.length && acc < 15; q++) { if (q) acc += out[q].distanceTo(out[q - 1]); if (out[q].distanceTo(hp.position) < 4) nearStart = true; }
+        if (nearStart) { issue('warning', null, `hazards[${k}] (${h.type}) is within the first 15 u of the route (dropped: the start must be safe); move it further along`); continue; }
+      }
       if (h.type !== 'void' && out.some(r => Math.hypot(r.x - hp.position.x, r.z - hp.position.z) < 1.2 && Math.abs(r.y - hp.position.y) < 2))
         issue('warning', null, `hazards[${k}] (${h.type}) sits right on the route; the player must jump it (fine for spikes/saw, move it 3 u aside otherwise)`);
       level.hazards.push(hp);

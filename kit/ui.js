@@ -7,6 +7,7 @@ import * as Look from './look.js';
 import * as Audio from './audio.js';
 import { frameBox, survey } from './debug.js';
 import * as Touch from './touch.js';
+import * as Assist from './assist.js';
 
 export const STYLES = ['arcade', 'cozy', 'sleek', 'fantasy', 'scifi'];
 const LOOK_STYLE = { neon_night: 'scifi', cozy: 'cozy', dark_fantasy: 'fantasy', snow: 'sleek', desert: 'arcade', sunset: 'arcade', candy: 'cozy', toon_bright: 'arcade' };
@@ -103,6 +104,9 @@ const ICON_SVG = {
   slowmo: (u) => `<path d="M16 6h32M16 58h32" stroke="${INK}" stroke-width="5" stroke-linecap="round"/><path d="M20 8c0 14 10 16 10 24S20 42 20 56h24c0-14-10-16-10-24S44 22 44 8z" fill="#c9f4ff" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>
     <path d="M26 52c2-6 6-8 6-12 0 4 4 6 6 12z" fill="#ffcf3a"/><path d="M26 16h12" stroke="#ffcf3a" stroke-width="4" stroke-linecap="round"/>`,
   ghost: (u) => `<path d="M14 56V28a18 18 0 0 1 36 0v28l-6-5-6 5-6-5-6 5-6-5z" fill="#eef2ff" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round" opacity=".92"/><ellipse cx="25" cy="28" rx="3.5" ry="5" fill="${INK}"/><ellipse cx="39" cy="28" rx="3.5" ry="5" fill="${INK}"/><path d="M20 18c2-4 6-6 10-6" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"/>`,
+  glide: (u) => `<defs><linearGradient id="g${u}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd23f"/><stop offset=".5" stop-color="#ff7ad9"/><stop offset="1" stop-color="#5ef1ff"/></linearGradient></defs>
+    <path d="M4 26C16 10 48 10 60 26c-8-3-14-3-20 2-3-4-13-4-16 0-6-5-12-5-20-2z" fill="url(#g${u})" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M14 24l18 18 18-18M24 28l8 14 8-14" stroke="${INK}" stroke-width="2" fill="none"/><circle cx="32" cy="48" r="6" fill="#ffd9b8" stroke="${INK}" stroke-width="3"/>`,
   // ---- interactables (mechanics.js) ----
   door: (u) => `<path d="M14 58V14a6 6 0 0 1 6-6h24a6 6 0 0 1 6 6v44z" fill="#b8763f" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><path d="M20 58V18h24v40" fill="#8a5228" stroke="${INK}" stroke-width="2.5"/><path d="M26 24v28M32 24v28M38 24v28" stroke="#6b3d1c" stroke-width="2"/>
     <circle cx="40" cy="38" r="3" fill="#ffd23f" stroke="${INK}" stroke-width="2"/><path d="M8 58h48" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>`,
@@ -126,6 +130,8 @@ const ICON_ALIAS = { coins: 'coin', gold: 'coin', stars: 'star', gems: 'gem', di
   jump_boost: 'jump', speed_boost: 'speed', haste: 'speed', fast: 'speed', portal: 'teleporter', teleport: 'teleporter', pressure_plate: 'button',
   plate: 'button', trampoline: 'spring', bounce: 'spring', bounce_pad: 'spring', box: 'crate', gate: 'door', treasure: 'chest', custom: 'gear',
   mechanic: 'gear', hazard: 'rule', warning: 'rule', invisible: 'ghost', phase: 'ghost',
+  highjump: 'jump', doublepoints: 'double_coins', double_points: 'double_coins', glider: 'glide', wings: 'glide', conveyor: 'speed',
+  zone: 'gear', crumble: 'rule', shrine: 'orb', shop: 'coin', platform: 'crate',
   flags: 'flag', goal: 'checkered', finish: 'checkered', energy: 'bolt', boost: 'bolt', enemy: 'skull', enemies: 'skull', kills: 'skull', time: 'clock', timer: 'clock',
   cup: 'trophy', score: 'trophy', crystals: 'crystal', apple: 'fruit', fruits: 'fruit', leaves: 'leaf', orbs: 'orb', flower: 'fruit', flowers: 'fruit', rings: 'coin' };
 export const ICONS = Object.keys(ICON_SVG);   // built-in icon names (CONTRACT choice list)
@@ -141,7 +147,8 @@ export function icon(game, name, cls = 'tk-ico') {
   const n = String(name || 'star');
   let url = null;
   if (/[/.]/.test(n)) url = n;
-  else if (game && game.asset) url = game.asset('icon_' + n) || game.asset(n + '_icon') || manifestFor(game, 'icon', n) || null;
+  else if (game && game.asset) url = game.asset('icon_' + n) || game.asset(n + '_icon') || manifestFor(game, 'icon', n)
+    || (game.assets && game.assets.manifest && game.assets.manifest[n] && game.assets.manifest[n].kind === 'icon' ? game.asset(n) : null) || null;
   if (url) {
     const img = h('img', cls, null, { src: url, alt: n, draggable: 'false' }); img.style.objectFit = 'contain';
     img.onerror = () => { const fb = icon(null, n, cls); img.replaceWith(fb); };   // missing generated file -> built-in SVG
@@ -247,6 +254,8 @@ function readCounter(game, c) {
   if (v == null && main) v = num(st.collected);
   let t = c.target ?? num(st[c.id + 'Target']) ?? num(st[c.id + 'Total']) ?? (st.targets ? num(st.targets[c.id]) : null);
   if (t == null && main) t = num(st.target) || null;
+  // races: pickups are a side score, not the goal; only an explicit counter target is shown there
+  if (c.target == null && num(st.laps) > 0) t = null;
   return { v: v ?? 0, t };
 }
 function readTimer(game, H) {
@@ -278,6 +287,7 @@ export function hud(game, opts = {}) {
   U.root.prepend(el);
   if (U.title) el.style.visibility = 'hidden';   // title screen is up: HUD slides in when it closes
   try { Touch.install(game, { player: opts.player }); } catch (e) { reportError(e); }
+  try { Assist.install(game, { player: opts.player, level: opts.level || (opts.minimap && opts.minimap.level) }); } catch (e) { reportError(e); }
   const H = U.hud = { el, opts, C, counters: [], ownTime: 0, running: false, autoPause: opts.pauseMenu !== false, offs: [], vign, last: {} };
 
   if (opts.title && opts.showTitle) C.tl.append(h('div', 'tk-gametitle tk-ol', [opts.title]));
@@ -288,10 +298,12 @@ export function hud(game, opts = {}) {
     if (!c || !c.id) throw new Error('UI.hud: every counter needs an id, e.g. counters: [{ id: "coins", icon: "coin", label: "Coins", target: 30 }]');
     const val = h('span', 'tk-val', ['0']), of = h('span', 'tk-of', ['']);
     const ico = icon(game, c.icon || c.id);
-    const lbl = c.label && c.showLabel ? h('span', 'tk-lbl tk-ol', [c.label]) : null;
+    const lbl = c.label && (c.showLabel || (counters.length > 1 && c.showLabel !== false)) ? h('span', 'tk-lbl tk-ol', [c.label]) : null;
     const box = h('div', 'tk-counter', [ico, lbl, wrap(panel([val, of]))]);
     C.tl.append(box);
-    H.counters.push({ c: { ...c, useGlobalTarget: counters.length === 1 }, box, val, of, last: null, lastT: undefined });
+    const bonus = h('span', 'tk-bonus tk-ol', ['']);
+    box.append(bonus);
+    H.counters.push({ c: { ...c, useGlobalTarget: counters.length === 1 }, box, val, of, bonus, last: null, lastT: undefined });
   });
 
   // timer + objective (top-centre)
@@ -345,12 +357,23 @@ export function hud(game, opts = {}) {
   return H;
 }
 
+// "Collect 20 orbs" -> "Collect 20 fish" when the HUD counter for the main pickup has its own label
+function nounFix(H, st, text) {
+  const tag = st.collectTag, c = H.counters.find(k => k.c.useGlobalTarget || k.c.id === 'collected' || k.c.id === tag);
+  if (!tag || !c || !c.c.label) return text;
+  const lbl = c.c.label.toLowerCase();
+  if (text.toLowerCase().includes(lbl)) return text;                    // already says "Sky Stars": leave it
+  return text.replace(new RegExp('\\b' + tag.replace(/[^a-z0-9_]/gi, '') + 's?\\b', 'gi'), lbl)
+    .replace(/\b(\w+)\s+\1\b/gi, '$1');                                  // never "Sky sky stars"
+}
 function refresh(game, H) {
   const st = game.state || {};
   for (const k of H.counters) {
     const { v, t } = readCounter(game, k.c);
+    // never "21/10": a met target reads "10/10" with a check, extras go in a "+11" bonus tag
+    const over = t != null && v > t ? Math.round(v - t) : 0;
+    if (v !== k.last || t !== k.lastT) { k.val.textContent = Math.round(t != null && v > t ? t : v).toLocaleString(); k.bonus.textContent = over ? `+${over}` : ''; }
     if (v !== k.last) {
-      k.val.textContent = Math.round(v).toLocaleString();
       if (k.last != null && v > k.last) {
         k.box.classList.remove('tk-pop'); void k.box.offsetWidth; k.box.classList.add('tk-pop');
         const g = h('span', 'tk-ghost tk-ol', [`+${Math.round(v - k.last)}`]); k.box.append(g); setTimeout(() => g.remove(), 850);
@@ -367,25 +390,45 @@ function refresh(game, H) {
     if (s !== H.timer.last) { H.timer.val.innerHTML = `${f.main}<small>${f.frac}</small>`; H.timer.last = s; }
     H.timer.box.classList.toggle('tk-urgent', down && t <= 10 && t > 0);
   }
-  if (typeof st.objective === 'string' && st.objective && H.opts.objective !== false && (!H.objective || st.objective !== H.objective.txt.textContent)) objective(game, st.objective);
+  // the game's own objective line wins over the rules' generic one (unless it was cut off mid-word by the plan's length cap)
+  const own = typeof H.opts.objective === 'string' ? H.opts.objective.trim() : '';
+  const ownOk = own && !(own.length >= 58 && !/[.!?)…]$/.test(own));
+  const progress = typeof st.objective === 'string' && /\(\d+\s*\/\s*\d+\)|^you (win|lose)/i.test(st.objective);   // quest steps "(1/4)", end lines
+  if ((!ownOk || progress) && typeof st.objective === 'string' && st.objective && H.opts.objective !== false) {
+    const txt = nounFix(H, st, st.objective);
+    if (!H.objective || txt !== H.objective.txt.textContent) objective(game, txt);
+  }
   if (H.lives) {
-    const L = H.lives, v = L.key === 'lives' ? num(st.lives) : (num(st.health) ?? num(st.hp));
-    if (v != null && v !== L.last) {
-      const max = (L.key === 'lives' ? num(st.maxLives) : num(st.maxHealth) ?? num(st.maxHp)) ?? L.max ?? Math.max(v, L.hearts.length || v);
+    // hearts show health whenever the rules track it (hits are visible), with the remaining lives as a "x2" tag;
+    // without health they show lives
+    const L = H.lives;
+    const hpMax = num(st.maxHealth) ?? num(st.maxHp), hp = num(st.health) ?? num(st.hp), lives = num(st.lives);
+    const useHp = L.key === 'health' || (hpMax != null && hpMax > 1 && hp != null);
+    const v = useHp ? hp : lives;
+    const showLives = useHp && L.key !== 'health' && lives != null;
+    const sig = `${useHp}|${v}|${showLives ? lives : ''}`;
+    if (v != null && sig !== L.sig) {
+      if (L.mode !== useHp) { L.mode = useHp; L.max = useHp ? null : (typeof H.opts.lives === 'number' ? H.opts.lives : null); L.hearts = []; L.big = false; L.last = null; L.lx = null; L.box.innerHTML = ''; }
+      const max = useHp ? (hpMax ?? L.max ?? v) : (num(st.maxLives) ?? L.max ?? Math.max(v, L.hearts.length || v));
       L.max = Math.max(max, L.max || 0);
       if (L.max > 6) {
-        if (!L.big) { L.box.innerHTML = ''; L.ico = icon(game, L.icon, 'tk-heart'); L.x = h('span', 'tk-lives-x', ['']); L.box.append(wrap(panel([L.ico, L.x]))); L.big = true; }
+        if (!L.big) { L.box.innerHTML = ''; L.ico = icon(game, L.icon, 'tk-heart'); L.x = h('span', 'tk-lives-x', ['']); L.box.append(wrap(panel([L.ico, L.x]))); L.big = true; L.lx = null; }
         L.x.textContent = `×${v}`;
         if (L.last != null && v < L.last) { L.ico.classList.remove('tk-lost'); void L.ico.offsetWidth; L.ico.classList.add('tk-lost'); }
       } else {
-        if (L.hearts.length !== L.max) { L.box.innerHTML = ''; L.hearts = []; const p = panel([]); for (let i = 0; i < L.max; i++) { const hh = icon(game, L.icon, 'tk-heart'); L.hearts.push(hh); p.append(hh); } L.box.append(wrap(p)); }
+        if (L.hearts.length !== L.max) { L.box.innerHTML = ''; L.hearts = []; L.lx = null; const p = panel([]); for (let i = 0; i < L.max; i++) { const hh = icon(game, L.icon, 'tk-heart'); L.hearts.push(hh); p.append(hh); } L.box.append(wrap(p)); }
         L.hearts.forEach((hh, i) => {
           const empty = i >= v;
           if (empty && !hh.classList.contains('tk-empty') && L.last != null) { hh.classList.add('tk-lost'); setTimeout(() => hh.classList.remove('tk-lost'), 600); }
           hh.classList.toggle('tk-empty', empty);
         });
       }
-      L.last = v;
+      if (showLives) {
+        if (!L.lx) { L.lx = h('span', 'tk-lives-x tk-lives-n', ['']); const p = L.box.querySelector('.tk-panel'); if (p) p.append(L.lx); }
+        if (L.lx.textContent && L.lx.textContent !== `×${lives}`) { L.lx.classList.remove('tk-lost'); void L.lx.offsetWidth; L.lx.classList.add('tk-lost'); }
+        L.lx.textContent = `×${lives}`;
+      }
+      L.last = v; L.sig = sig;
     }
   }
   if (H.lap) {
@@ -663,11 +706,16 @@ export function countdown(game, opts = {}) {
 // ---------- toasts ----------
 export function toast(game, text, opts = {}) {
   const U = ui(game);
-  const { icon: ic = null, duration = 2.4 } = opts;
+  // phones: one short toast at a time; desktop: at most two (race chatter must not wall off the right third)
+  const touch = U.root.classList.contains('tk-touch');
+  const max = touch ? 1 : 2;
+  let { icon: ic = null, duration = 2.4 } = opts;
+  let txt = String(text);
+  if (touch) { duration = Math.min(duration, 1.6); if (txt.length > 26) txt = txt.replace(/^(.{0,24})\b.*$/, '$1').trim() + '…'; }
   if (!U.toasts) { U.toasts = h('div', 'tk-toasts'); U.root.append(U.toasts); }
-  const el = h('div', 'tk-toast', [wrap(panel([ic ? icon(game, ic) : null, h('span', '', [String(text)])]))]);
+  const el = h('div', 'tk-toast' + (touch ? ' tk-compact' : ''), [wrap(panel([ic ? icon(game, ic) : null, h('span', '', [txt])]))]);
   U.toasts.append(el);
-  while (U.toasts.children.length > 4) U.toasts.firstChild.remove();
+  while (U.toasts.children.length > max) U.toasts.firstChild.remove();
   emitUi(game, 'open');
   setTimeout(() => { el.classList.add('tk-out'); setTimeout(() => el.remove(), 360); }, duration * 1000);
   return el;
@@ -676,7 +724,7 @@ export function toast(game, text, opts = {}) {
 // ---------- mechanics UI: power-up timers, key ring, contextual prompt, rule toasts, mechanic banner ----------
 // mechanics.js feature-detects these (and UI.hud wires them to its events), so games never call them by hand.
 const POWERUP_LABEL = { speed: 'Speed', jump: 'Super Jump', shield: 'Shield', magnet: 'Magnet', giant: 'Giant', tiny: 'Tiny', invincible: 'Invincible',
-  double_coins: 'Double Coins', slowmo: 'Slow-Mo', ghost: 'Ghost' };
+  double_coins: 'Double Coins', slowmo: 'Slow-Mo', ghost: 'Ghost', glide: 'Glide', highjump: 'Super Jump', doublepoints: 'Double Points' };
 const KEY_COLORS = { red: '#ff4d5e', blue: '#3d8bff', green: '#3cdc6a', yellow: '#ffd23f', gold: '#ffcf3a', purple: '#b47cff', orange: '#ff9a3c',
   pink: '#ff7ad9', cyan: '#3ee8ff', white: '#f4f7fb', silver: '#c9cbd8', black: '#3a3a4a' };
 const keyColor = (c) => KEY_COLORS[String(c || 'gold').toLowerCase()] || (/^#|^rgb/.test(String(c)) ? c : '#ffcf3a');
@@ -808,6 +856,11 @@ export function ruleToast(game, text, opts = {}) {
   return el;
 }
 /** UI.mechanicBanner(game, 'Gravity Flip', {text:'Press G to flip gravity'}) when a custom mechanic activates */
+/** UI.cutscene(game, urlOrWhen, opts) -> Promise: plays a generated cutscene (cutscene.js, kit-look-world) if the kit has it */
+export async function cutscene(game, what, opts = {}) {
+  try { const C = await import('./cutscene.js'); return C.play ? C.play(game, what, opts) : false; }
+  catch (e) { console.warn('UI.cutscene: cutscene.js not available', e && e.message); return false; }
+}
 export function mechanicBanner(game, name, opts = {}) {
   return banner(game, String(name || 'New mechanic'), { style: 'info', sub: opts.text || 'New mechanic!', duration: opts.duration || 2.2, ...opts, mechanic: true });
 }
@@ -839,6 +892,30 @@ function buttons(game, U, defs, onChoose) {
 function closeScreen(el, done) { el.classList.add('tk-out'); setTimeout(() => { el.remove(); done && done(); }, 380); }
 const restart = () => location.reload();
 
+// ---------- controls line (from player.js's real bindings) ----------
+const KEYS_TEXT = {
+  platformer: 'WASD / arrows: run · Space: jump (again: double jump) · Shift: dash · C: ground pound · R: reset · Esc: pause',
+  kart: 'W / ↑: throttle · S / ↓: brake · A D / ← →: steer · hold Space: drift, release to boost · R: reset · Esc: pause',
+  topdown: 'WASD / arrows: move · Shift / E: dash · Space: jump · R: reset · Esc: pause',
+  fps: 'WASD: move · mouse: look (click to lock) · click / E: shoot · Space: jump · Shift: sprint · Esc: pause',
+};
+const TOUCH_TEXT = {
+  platformer: 'Left stick: move · JUMP / DASH buttons · drag right side: camera · ↺: reset',
+  kart: 'Left stick: steer · hold DRIFT in turns, release to boost · ↺: reset',
+  topdown: 'Left stick: move · DASH / JUMP buttons · ↺: reset',
+  fps: 'Left stick: move · drag right side: look · FIRE / JUMP buttons',
+};
+function controlsLine(game, touch) {
+  const p = game.__player || (window.__kit && window.__kit.game === game && window.__kit.player) || null;
+  let t = (p && p.type) || 'platformer';
+  if (t === 'boat') t = 'kart';
+  if (t === 'topdown' && p && p.weapon && p.weapon !== 'none') return touch ? TOUCH_TEXT.topdown.replace('DASH / JUMP', 'FIRE / DASH') : 'WASD / arrows: move · Space / J / click: fire · Shift / E: dash · R: reset · Esc: pause';
+  return (touch ? TOUCH_TEXT : KEYS_TEXT)[t] || KEYS_TEXT.platformer;
+}
+// "A/D waddle, Space or W hop" -> true: a line that names keys (we print the real bindings instead)
+const namesKeys = (s) => /\b(wasd|arrows?|space(bar)?|shift|esc(ape)?|ctrl|enter|mouse|click|tap|joystick|stick)\b/i.test(String(s))
+  || /\b[A-Z]\s*(\/|or|,)\s*[A-Z]\b|\b[A-Z]\s*:|←|→|↑|↓/.test(String(s));
+
 // ---------- title screen ----------
 export function titleScreen(game, opts = {}) {
   const U = ui(game, opts);
@@ -866,13 +943,12 @@ export function titleScreen(game, opts = {}) {
   if (keyName) { const parts = String(start).split(new RegExp(keyName, 'i')); startEl.append(parts[0] || '', h('span', 'tk-key', [keyName === 'Space' ? 'SPACE' : 'ENTER']), parts[1] || ''); }
   else startEl.append(touch ? 'Tap to start' : start);
   el.append(startEl);
-  if (touch) {   // phones: a touch hint replaces the keyboard help
-    const pt = (game.__player && game.__player.type) || (window.__kit && window.__kit.player && window.__kit.player.type) || 'platformer';
-    const hint = pt === 'kart' || pt === 'boat' ? 'Left stick: steer · hold Drift, release to boost' : pt === 'fps' ? 'Left stick: move · drag right side: look · Fire / Jump buttons'
-      : 'Left stick: move · Jump / Dash buttons · drag right side: camera';
-    el.append(h('div', 'tk-controls', [hint]));
-  } else if (opts.controls) el.append(h('div', 'tk-controls', [String(opts.controls)]));
-  if (credit && !(touch && /wasd|arrows|space|shift|esc/i.test(credit))) el.append(h('div', 'tk-credit', [credit]));   // keyboard help is noise on a phone
+  // the controls line always comes from the kit's real bindings for the player type (games' own key text can be wrong);
+  // a game-supplied credit that names keys is dropped, any other credit line is kept
+  const ctl = h('div', 'tk-controls', [controlsLine(game, touch)]);
+  el.append(ctl);
+  setTimeout(() => { ctl.textContent = controlsLine(game, touch); }, 250);     // the player may be created after the title
+  if (credit && !namesKeys(credit)) el.append(h('div', 'tk-credit', [credit]));
   U.root.append(el);
   const wasPaused = game.paused;
   if (pause) game.paused = true;
@@ -961,9 +1037,15 @@ export function togglePause(game) { const U = ui(game); if (U.pauseEl) closePaus
 // ---------- win / lose ----------
 function autoStats(game) {
   const U = game.__ui, H = U && U.hud, st = game.state || {}, out = [];
-  if (H && H.timer) { const { t } = readTimer(game, H); const f = fmtTime(t); out.push({ label: 'Time', value: f.main + f.frac }); }
-  else if (num(st.time) != null) { const f = fmtTime(st.time); out.push({ label: 'Time', value: f.main + f.frac }); }
-  if (H) for (const k of H.counters) { const { v, t } = readCounter(game, k.c); out.push({ label: k.c.label || k.c.id, value: t != null ? `${v} / ${t}` : String(v), n: v }); }
+  // clear time is time ELAPSED (the rules' state.time, else the HUD's own clock); a countdown adds a "Time left" row
+  const el = num(st.time) ?? num(st.elapsed) ?? (H ? H.ownTime : null);
+  if (el != null && (el > 0 || (H && H.timer))) { const f = fmtTime(el); out.push({ label: 'Time', value: f.main + f.frac }); }
+  if (num(st.timeLeft) != null && st.timeLeft > 0) { const f = fmtTime(st.timeLeft); out.push({ label: 'Time left', value: f.main + f.frac }); }
+  if (H) for (const k of H.counters) {
+    const { v, t } = readCounter(game, k.c);
+    const shown = t != null ? Math.min(v, t) : v, over = t != null && v > t ? v - t : 0;
+    out.push({ label: k.c.label || k.c.id, value: t != null ? `${shown} / ${t}${over ? `  +${over} bonus` : ''}` : String(v), n: shown });
+  }
   if (num(st.score) != null && st.score !== st.collected && !(H && H.counters.some(k => k.c.id === 'score'))) out.push({ label: 'Score', value: st.score.toLocaleString(), n: st.score });
   if (num(st.deaths) != null) out.push({ label: 'Falls', value: String(st.deaths) });
   if (num(st.position) > 0) out.push({ label: 'Place', value: `${st.position}${ordinal(st.position)}` });

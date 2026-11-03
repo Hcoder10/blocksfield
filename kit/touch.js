@@ -40,6 +40,7 @@ function build(game, T) {
   el.className = 'tk-touchpad';
   el.innerHTML = `<div class="tk-stick"><div class="tk-stick-base"><i></i><i></i><i></i><i></i><div class="tk-stick-knob"></div></div></div>
     <div class="tk-tbtns"></div>
+    <div class="tk-treset" title="Back on track">&#x21BA;</div>
     <div class="tk-rotate"><div class="tk-phone"></div><b>Rotate your phone</b><span>This game plays sideways. Tap to play anyway.</span></div>`;
   root.append(el);
   const stickEl = el.querySelector('.tk-stick'), base = el.querySelector('.tk-stick-base'), knob = el.querySelector('.tk-stick-knob');
@@ -62,6 +63,8 @@ function build(game, T) {
     });
   };
   makeButtons();
+  const resetEl = el.querySelector('.tk-treset');
+  resetEl.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); game.emit('assistReset'); resetEl.classList.remove('tk-on'); void resetEl.offsetWidth; resetEl.classList.add('tk-on'); });
 
   // joystick: appears where the thumb lands inside the left zone (floating stick), springs back on release
   let cx = 0, cy = 0, R = 60;
@@ -141,7 +144,7 @@ function build(game, T) {
     T.keys = want;
   }, -20);
   // hide the pad while a full screen (title, pause, win/lose, dialog) is up
-  game.lateUpdate(() => { const U = game.__ui; el.classList.toggle('tk-off', !!(U && (U.title || U.screen || U.pauseEl || U.counting))); }, 32);
+  game.lateUpdate(() => { const U = game.__ui; el.classList.toggle('tk-off', !!((U && (U.title || U.screen || U.pauseEl || U.counting)) || (game.state && game.state.cutscene))); }, 32);
   game.emit('touch', true);
 }
 

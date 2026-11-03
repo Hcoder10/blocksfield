@@ -491,6 +491,7 @@ export function rules(game, opts = {}) {
     return E;
   }
   R.addEnemy = addEnemy;
+  R.addHazard = (h) => addHazard(h);
 
   for (const h of level.hazards) addHazard(h);
   if (opts.enemies) {
@@ -649,7 +650,28 @@ export function rules(game, opts = {}) {
     if (isFinite(S.lives)) { S.lives--; changed(); }
     if (S.lives <= 0 && isFinite(S.lives)) lose('lives');
   });
-  game.on('respawn', (who) => { if (who === player) { S.hp = maxHp; changed(); } });
+  game.on('respawn', (who, info) => { if (who === player && !(info && info.safe)) { S.hp = maxHp; changed(); } });
+  // fall rule: falling off (or into deep water) costs ONE heart and puts you back on the last safe ground with a short
+  // grace; only when the hearts run out (or there are no hearts) does it cost a life (checkpoint respawn)
+  player.onFall = (why = 'fall') => {
+    if (!player.alive || S.won || S.lost) return;
+    if (opts.fallRule === false || maxHp <= 1 || vehicle) { player.die(why); return; }
+    S.hp -= 1; changed();
+    game.emit('damage', player, 1, { type: why });
+    if (S.hp <= 0) { player.die(why); return; }
+    const sp = player.safePoint.clone().add(V3(0, 0.3, 0));
+    // face along the route (toward the next route point), away from the edge we fell off
+    let yaw = player.safeYaw;
+    if (level.route.length > 1) {
+      let bi = 0, bd = Infinity; level.route.forEach((r, i) => { const d = r.distanceToSquared(sp); if (d < bd) { bd = d; bi = i; } });
+      const nx = level.route.slice(bi + 1).find(r => Math.hypot(r.x - sp.x, r.z - sp.z) > 2) || null;
+      if (nx) yaw = Math.atan2(nx.x - sp.x, nx.z - sp.z);
+    }
+    player.teleport(sp, yaw); player.invulnerable = 1.6; player.inputLock = 0.5;
+    if (player.character) player.character.squash(1.3);
+    game.emit('fall', player, why); game.emit('respawn', player, { safe: true });
+    S.hp = Math.max(S.hp, 1);
+  };
 
   function win() {
     if (S.won || S.lost) return;
@@ -668,12 +690,12 @@ export function rules(game, opts = {}) {
     it.collected = true; it.t = 0;
     if (it.quest && Q) Q.collected(it);
     else if (!collect || it.tag === collect.tag) S.collected += collect ? 1 : 0;
-    S.score += it.value;
+    S.score += it.value * (game.__scoreMul || 1);
     if (it.tag === 'heart' && S.hp < maxHp) S.hp++;
     changed();
     game.emit('collect', it, by);
     if (collect && S.collected >= S.target && S.target > 0) {
-      if (!R.goal && !race) win();
+      if (!R.goal && !race && !(W && W.state !== 'done')) win();   // waves + collect: both are needed
       else if (R.goal && !S.goalOpen) { S.goalOpen = true; game.emit('goalOpen', R.goal); }
     }
     if (opts.scoreToWin && S.score >= opts.scoreToWin) win();
@@ -693,6 +715,11 @@ export function rules(game, opts = {}) {
       if (countdown !== null) { S.timeLeft = Math.max(0, countdown - S.time); if (S.timeLeft <= 0) lose('time'); }
     }
     S.goalOpen = !goalLocked();
+    // characters can't swim: going under deep water (level.water) is a fall -> respawn at the last checkpoint
+    if (level.water && !vehicle && player.alive && !S.won && !S.lost && opts.drown !== false) {
+      const wy = level.water.y ?? level.water;
+      if (pc.y < wy - 0.35) { R.underT = (R.underT || 0) + dt; if (R.underT > 0.35) { R.underT = 0; player.onFall('water'); } } else R.underT = 0;
+    }
     S.health = S.hp; S.maxHealth = maxHp;
     const phase = S.won ? 'won' : S.lost ? 'lost' : race && !race.started ? 'countdown' : !player.controls.enabled ? 'title' : 'playing';
     if (phase !== S.phase) { S.phase = phase; changed(); }
@@ -727,11 +754,13 @@ export function rules(game, opts = {}) {
         if (!pl.alive) continue;
         const c = pl.center || pl.position;
         const d = c.distanceTo(o.position);
-        if (pl === player && d < (vehicle ? 4.5 : 3.0) && d > 0.01) {                 // magnet
+        if (pl === player && d < (game.__magnetR || (vehicle ? 4.5 : 3.0)) && d > 0.01) {                 // magnet
           o.position.lerp(c, Math.min(1, dt * (vehicle ? 10 : 6)));
           it.home.lerp(c, Math.min(1, dt * (vehicle ? 10 : 6)));
         }
-        if (d < it.radius + (pl.radius || 0.5) * (vehicle ? 1.6 : 1)) { doCollect(it, pl); break; }
+        // top-down heroes can't jump for pickups that hover a little high: collect on the horizontal distance
+        const flat = pl.type === 'topdown' && Math.abs(c.y - o.position.y) < 2.8 && Math.hypot(c.x - o.position.x, c.z - o.position.z) < it.radius + (pl.radius || 0.5);
+        if (flat || d < it.radius + (pl.radius || 0.5) * (vehicle ? 1.6 : 1)) { doCollect(it, pl); break; }
       }
     }
     // checkpoints
@@ -877,7 +906,7 @@ export function rules(game, opts = {}) {
       }
     }
     // enemies
-    const grace = S.time < 2;
+    const grace = S.time < 2.5;
     for (const e of R.enemies) {
       e.t += dt;
       if (grace && e.alive) { e.body.position.y = Math.abs(Math.sin(e.t * 3)) * 0.1; continue; }
@@ -957,7 +986,7 @@ export function rules(game, opts = {}) {
           const want = Math.atan2(toP.x, toP.z);
           e.body.rotation.y += angWrap(want - e.body.rotation.y) * Math.min(1, dt * 3);
           e.cool -= dt;
-          if (e.cool <= 0 && playing && Math.abs(angWrap(want - e.body.rotation.y)) < 0.25) {
+          if (e.cool <= 0 && playing && !(e.harmlessT > 0) && Math.abs(angWrap(want - e.body.rotation.y)) < 0.25) {
             e.cool = 2.2; e.squash = 1;
             const m = new THREE.Mesh(shotGeo, shotMat); const y = e.body.rotation.y;
             m.position.copy(e.position).add(V3(Math.sin(y) * 1.4, 1.35, Math.cos(y) * 1.4));
@@ -970,11 +999,12 @@ export function rules(game, opts = {}) {
         }
         e.body.scale.setScalar(1 + e.squash * 0.15);
       }
-      // contact with the player
+      // contact with the player (freshly spawned wave enemies can't hurt yet)
+      if (e.harmlessT > 0) { e.harmlessT -= dt; e.object.visible = Math.floor(game.time * 12) % 2 === 0 || e.harmlessT < 0.05; continue; }
       if (!playing || !player.alive) continue;
       const ec = e.position.clone().add(V3(0, e.height * 0.5, 0));
       const d3 = pc.distanceTo(ec);
-      const attacking = player.mode === 'dash' || player.mode === 'pound' || player.boostT > 0;
+      const attacking = player.mode === 'dash' || player.mode === 'pound' || player.boostT > 0 || !!player.invincible;
       if (d3 < e.radius + (player.radius || 0.5) + 0.15 + (attacking && !vehicle ? 1.1 : 0)) {
         const above = player.position.y > e.position.y + e.height * 0.55;
         if ((player.type === 'platformer' || player.type === 'fps') && above && player.velocity.y < 1 && e.kind !== 'turret' || (player.type === 'platformer' && above && e.kind === 'turret' && player.velocity.y < 1)) {
@@ -1016,6 +1046,7 @@ export function rules(game, opts = {}) {
   };
 
   function objective() {
+    if (game.__objectiveOverride) return game.__objectiveOverride;   // Mechanics setObjective
     if (opts.objective) return typeof opts.objective === 'function' ? String(opts.objective(S)) : String(opts.objective);
     const noun = (n) => {
       if (collect && collect.label) return collect.label;
@@ -1206,7 +1237,7 @@ export function rules(game, opts = {}) {
       for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2 + game.rand(); pts.push(player.position.clone().add(V3(Math.cos(a) * 15, 2, Math.sin(a) * 15))); }
       // only spots the player can see (inside the arena, not behind its walls)
       const eye = player.position.clone().add(V3(0, 1.2, 0));
-      return pts.filter(p => p.distanceTo(player.position) > 8).map(p => { const gy = Physics.groundAt(game, p.x, p.z, p.y + 6, 20); return gy === null ? null : p.setY(gy); })
+      return pts.filter(p => p.distanceTo(player.position) > 12).map(p => { const gy = Physics.groundAt(game, p.x, p.z, p.y + 6, 20); return gy === null ? null : p.setY(gy); })
         .filter(p => { if (!p) return false; const d = p.clone().add(V3(0, 1.2, 0)).sub(eye); return !Physics.raycast(game, eye, d, d.length() - 0.5, { excludeCollider: player.collider }); });
     };
     const startWave = () => {
@@ -1218,7 +1249,7 @@ export function rules(game, opts = {}) {
       for (let i = 0; i < n; i++) {
         const p = pts.length ? pts[i % pts.length].clone().add(V3((game.rand() - 0.5) * 3, 0, (game.rand() - 0.5) * 3)) : player.position.clone().add(V3(10, 0, 0));
         const e = addEnemy(kinds[i % kinds.length], p, { hp: (kinds[i % kinds.length] === 'turret' ? 3 : 2) + Math.floor((S.wave - 1) / cfg.hpGrow) });
-        e.spawnT = 0.6 + i * 0.12; e.object.scale.setScalar(0.01);
+        e.spawnT = 0.6 + i * 0.12; e.object.scale.setScalar(0.01); e.harmlessT = 2.5;   // pop in, then 2.5 s before it can hurt
         W.alive.push(e);
       }
       game.emit('wave', S.wave, cfg.count);
@@ -1239,10 +1270,10 @@ export function rules(game, opts = {}) {
       if (W.state === 'wait' && W.t > (S.wave === 0 ? 1.5 : cfg.delay)) { W.t = 0; startWave(); }
       else if (W.state === 'fight' && W.alive.every(e => !e.alive)) {
         W.state = 'wait'; W.t = 0; game.emit('waveClear', S.wave, cfg.count);
-        if (S.wave >= cfg.count) win(); else uiBanner('Wave clear!', { style: 'stage_clear' });
+        if (S.wave >= cfg.count) { W.state = 'done'; if (!(collect && S.collected < S.target)) win(); } else uiBanner('Wave clear!', { style: 'stage_clear' });
       }
     };
-    W.text = () => W.state === 'fight' ? `Wave ${S.wave}/${cfg.count}: defeat ${W.alive.filter(e => e.alive).length} enemies` : S.wave ? `Wave ${S.wave + 1} incoming...` : `Survive ${cfg.count} waves`;
+    W.text = () => W.state === 'done' ? `Bank ${S.target - S.collected} more ${collect && collect.label ? collect.label : (S.collectTag || 'coin') + 's'}` : W.state === 'fight' ? `Wave ${S.wave}/${cfg.count}: defeat ${W.alive.filter(e => e.alive).length} enemies` : S.wave ? `Wave ${S.wave + 1} incoming...` : `Survive ${cfg.count} waves`;
   }
   function uiBanner(text, o) {
     try { if (game.__ui && UIm && typeof UIm.banner === 'function') UIm.banner(game, text, o); } catch (e) { /* UI optional */ }
@@ -1295,6 +1326,18 @@ export function rules(game, opts = {}) {
     };
   }
 
+  // nobody starts next to the hero: placed enemies within 12 u of the spawn move to the nearest route point /
+  // spawn point that is at least 12 u away (wave spawns follow the same rule)
+  {
+    const sp = player.position.clone();
+    const cands = [...(level.spawnPoints || []), ...level.route].map(v => v.clone()).filter(v => v.distanceTo(sp) >= 12);
+    for (const e of R.enemies) {
+      if (e.position.distanceTo(sp) >= 12) continue;
+      cands.sort((a, b) => a.distanceTo(e.position) - b.distanceTo(e.position));
+      const to = cands[0] || sp.clone().add(e.position.clone().sub(sp).setY(0).setLength(12));
+      e.position.copy(to); e.home.copy(to);
+    }
+  }
   game.update(update, 10);
   R.dispose = () => { game.removeUpdate(update); game.scene.remove(root); };
   game.__rules = R;
@@ -1344,12 +1387,15 @@ export function autopilot(game, opts = {}) {
   // simulate a jump arc from p with horizontal velocity hv: returns landing point on ground or null
   // simulate the jump the controller would really do: start from the current horizontal velocity, air-accelerate
   // toward `want` (desired horizontal velocity). Returns the landing point on solid ground or null.
-  function arcLands(p, want, v0, double) {
-    const pos = p.clone(); let vy = v0, used2 = !double; const dt = 1 / 30;
+  // dash: also air-dash right after the double jump's apex (long gaps)
+  function arcLands(p, want, v0, double, dash = false) {
+    const pos = p.clone(); let vy = v0, used2 = !double, dashT = -1, usedDash = !dash; const dt = 1 / 30;
     const hv = V3(player.velocity.x, 0, player.velocity.z), acc = (T.airAccel || 30) * dt;
     for (let i = 0; i < 90; i++) {
+      if (dashT > 0) { dashT -= dt; vy = Math.max(vy - 10 * dt, -2); pos.addScaledVector(hv, dt); pos.y += vy * dt; continue; }
       vy -= (vy > 0 ? T.riseGravity : T.fallGravity) * dt;
       if (!used2 && vy < 2) { vy = dblV; used2 = true; }
+      else if (used2 && !usedDash && vy < 1) { usedDash = true; dashT = T.dashTime || 0.18; hv.copy(want).setLength(T.dashSpeed || 24); vy = Math.max(vy, 3); continue; }
       const dv = want.clone().sub(hv); if (dv.length() > acc) dv.setLength(acc); hv.add(dv);
       pos.addScaledVector(hv, dt); pos.y += vy * dt;
       if (vy < 0) {
@@ -1467,9 +1513,15 @@ export function autopilot(game, opts = {}) {
     let goalP = route[st.idx];
     if (needMore && st.idx >= route.length - 1 && !st.item) {
       // roam to the nearest uncollected target item
-      const left = R.items.filter(i => !i.collected && i.tag === game.state.collectTag);
+      // nearest remaining target item, preferring ones we haven't given up on (all given up: try them all again)
+      let left = R.items.filter(i => !i.collected && i.tag === game.state.collectTag && !i.skip);
+      if (!left.length) { left = R.items.filter(i => !i.collected && i.tag === game.state.collectTag); for (const i of left) i.skip = false; }
       left.sort((a, b) => a.home.distanceTo(p) - b.home.distanceTo(p));
-      if (left[0]) { goalP = left[0].home; left[0].skip = false; st.item = left[0]; }
+      if (left[0]) { goalP = left[0].home; st.item = left[0]; }
+    }
+    // mechanics (keys before doors, switches, ...) can redirect the bot
+    if (game.__mech && typeof game.__mech.botTarget === 'function') {
+      try { const mt = game.__mech.botTarget(player, goalP); if (mt) { goalP = mt; if (st.item && st.item.home.distanceTo(p) > 4) st.item = null; } } catch (e) { /* never break the bot */ }
     }
     // quests first: fetch items, then walk to whoever wants them
     if (R && R.quests) {
@@ -1499,10 +1551,15 @@ export function autopilot(game, opts = {}) {
     if (dist < 0.4) { mx = 0; mz = 0; }
     // slow down near a target on a small platform
     if (dist < 2 && !st.item) { mx *= dist / 2; mz *= dist / 2; }
+    // landed on a small stone with momentum: brake hard (reverse input) instead of sliding off the far side
+    if (player.grounded && dist < 1.6 && !st.item) {
+      const hs = Math.hypot(player.velocity.x, player.velocity.z);
+      if (hs > 4) { mx = -player.velocity.x / hs; mz = -player.velocity.z / hs; }
+    }
     const tgtSupported = !!supported(tgt);
     const sp = Math.hypot(player.velocity.x, player.velocity.z);
     if (player.grounded) {
-      st.plan = null; st.wantDouble = false; st.hopInPlace = false; st.waiting = false;
+      st.plan = null; st.wantDouble = false; st.hopInPlace = false; st.waiting = false; st.wantDash = false; st.didDouble = false;
       const dy = tgt.y - p.y;
       const g1 = groundAhead(p, dir, 1.1), g2 = groundAhead(p, dir, 0.6);
       const edge = !g1 || g1.point.y < p.y - 1.4;
@@ -1517,12 +1574,17 @@ export function autopilot(game, opts = {}) {
         else { const c = gObj.getWorldPosition(V3()); const tc = V3(c.x - p.x, 0, c.z - p.z); const l = tc.length(); mx = l > 0.4 ? tc.x / l * Math.min(1, l) * 0.6 : 0; mz = l > 0.4 ? tc.z / l * Math.min(1, l) * 0.6 : 0; st.stuckClock = 0; }
       } else if (edge && dist > 1.5) {
         // gap or drop: walk off if the target is below and there is ground under the drop, else jump if an arc lands
-        const dropOk = g1 && dy < -0.8;
+        const wY = level.water ? (level.water.y ?? level.water) : -Infinity;
+        const dropOk = g1 && dy < -0.8 && g1.point.y > tgt.y - 1.5 && g1.point.y > wY;   // only drop onto ground near the target, never into water
         if (!dropOk) {
           const ok = (l) => l && l.y > p.y - 6 && (!l.kinematic || (Math.hypot(l.x - p.x, l.z - p.z) < 4.5 && moverBoardable(l))) && spinnerSafe(l, l.t);
           const land = arcLands(p, hv, jumpV, false);
           if (ok(land)) { jump = true; st.plan = land; }
-          else if (dblV) { const land2 = arcLands(p, hv, jumpV, true); if (ok(land2)) { jump = true; st.wantDouble = true; st.plan = land2; } }
+          else if (dblV) {
+            const land2 = arcLands(p, hv, jumpV, true);
+            if (ok(land2)) { jump = true; st.wantDouble = true; st.plan = land2; }
+            else if (T.dash) { const land3 = arcLands(p, hv, jumpV, true, true); if (ok(land3)) { jump = true; st.wantDouble = true; st.wantDash = true; st.plan = land3; } }
+          }
           // nothing to land on yet: if a moving platform serves this gap, wait for it (we walk on when it docks)
           const moverGap = moverNear(p.clone().addScaledVector(dir, 3.5));
           if (!jump) { if (!g2) { mx = -dir.x * 0.4; mz = -dir.z * 0.4; } else { mx = 0; mz = 0; } st.waiting = true; st.waitT += dt; if (moverGap) st.stuckClock = 0; if (st.waitT > (moverGap ? 12 : tgtSupported ? 1.5 : 7)) { jump = true; st.wantDouble = !!dblV; st.waitT = 0; mx = dir.x; mz = dir.z; } }
@@ -1555,7 +1617,7 @@ export function autopilot(game, opts = {}) {
         }
       }
       // stuck against something: hop
-      if (!jump && sp < 1.5 && dist > 2 && (Math.abs(mx) + Math.abs(mz)) > 0.5) { st.stuckT += dt; if (st.stuckT > 0.35) { jump = true; st.stuckT = 0; } }
+      if (!jump && !onMover && sp < 1.5 && dist > 2 && (Math.abs(mx) + Math.abs(mz)) > 0.5) { st.stuckT += dt; if (st.stuckT > 0.35) { jump = true; st.stuckT = 0; } }
       if (jump) {
         st.jumpHold = 0.45; st.jumpDir = dir.clone();
         // hops that aren't gap jumps (enemy, spinner, stuck) at a ledge go straight up and land where they started
@@ -1566,7 +1628,8 @@ export function autopilot(game, opts = {}) {
       // air: hold jump for full height, double-jump at apex if planned or if falling short of the target ledge
       if (st.hopInPlace) { mx = 0; mz = 0; }
       if (st.jumpHold > 0) { st.jumpHold -= dt; jump = true; }
-      if (st.wantDouble && player.velocity.y < 2) { jump = false; st.wantDouble = false; st.dblNext = true; }
+      if (st.wantDash && !st.wantDouble && !st.dblNext && st.didDouble && player.velocity.y < 1) { st.wantDash = false; st.didDouble = false; action = true; }
+      if (st.wantDouble && player.velocity.y < 2) { jump = false; st.wantDouble = false; st.dblNext = true; st.didDouble = true; }
       else if (st.dblNext) { jump = true; st.dblNext = false; st.jumpHold = 0.3; }
       else if (dblV && player.velocity.y < -2 && tgt.y > p.y - 0.5 && !st.usedEmergency && dist > 1) {
         const below = Physics.raycast(game, p.clone().add(V3(0, 0.5, 0)), V3(0, -1, 0), 6, { excludeCollider: player.collider });
@@ -1585,13 +1648,19 @@ export function autopilot(game, opts = {}) {
         // steer onto the planned landing; once we have flown past it (too high), keep going forward, never turn back
         const pd = V3(st.plan.x - p.x, 0, st.plan.z - p.z);
         if (st.jumpDir && pd.dot(st.jumpDir) < 0) st.plan = null;
-        else if (pd.length() > 0.5) { pd.normalize(); mx = pd.x; mz = pd.z; }
+        else if (pd.length() > 0.5) {
+          // ease off only once solid ground is under us (easing over the gap is how you fall short)
+          const l = pd.length(); pd.normalize();
+          const over = player.velocity.y < 0 && l < 2.5 && Physics.raycast(game, p.clone().add(V3(0, 0.5, 0)), V3(0, -1, 0), 3, { excludeCollider: player.collider });
+          const k = over ? Math.max(0.25, l / 2.5) : 1; mx = pd.x * k; mz = pd.z * k;
+        }
       }
       else if (st.lastGround && !Physics.raycast(game, p.clone().add(V3(0, 0.5, 0)), V3(0, -1, 0), 10, { excludeCollider: player.collider }) && !supported(tgt)) {
         // nothing under us and the target hangs in the air: head back to where we last stood
         const pd = V3(st.lastGround.x - p.x, 0, st.lastGround.z - p.z); if (pd.length() > 0.3) { pd.normalize(); mx = pd.x; mz = pd.z; }
       }
     }
+    if (game.__mech && game.__mech.lavaT > 0 && player.grounded && !jump) { jump = true; st.jumpHold = 0.3; }   // floor is lava: keep hopping
     if (player.grounded) { st.usedEmergency = false; st.spinDbl = false; if (!onMover) st.lastGround = p.clone(); }
     // stuck far from progress: assist teleport onto the current waypoint
     const prog = st.idx + (st.item ? 0.5 : 0) - dist * 0.01 + qProg * 10;

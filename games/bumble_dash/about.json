@@ -1,0 +1,373 @@
+{
+ "id": "bumble_dash",
+ "title": "Bumble Dash",
+ "tagline": "Dash, boing and double-jump the spring meadow \u2014 grab the carrots and beat the clock!",
+ "pitch": "Bumble Dash: a bunny obstacle-course sprint through a sunny spring meadow. Dash, double-jump and bounce over hurdles, spinning bars and bounce pads, grab golden carrots along the way, and burst through the giant flower finish arch before the timer runs out. Bright, bouncy, cheerful.",
+ "genre": "bouncy obstacle-course platformer sprint",
+ "controls": [
+  "WASD / arrows: run",
+  "Space: jump (again in the air: double jump)",
+  "Shift: dash / long jump",
+  "C: ground pound",
+  "P / Esc: pause"
+ ],
+ "mechanics": [],
+ "created": "2026-11-03T05:26:19-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "rerecord_1103_052412",
+  "score": 6.5,
+  "play": 8.0,
+  "vision": 5.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "s0",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "v1",
+    "score": 0.5,
+    "play_score": 0.5,
+    "vision_score": null
+   },
+   {
+    "tag": "v2",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "rerecord_1103_042034",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "rerecord_1103_052412",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Bumble Dash",
+  "tagline": "Dash, boing and double-jump the spring meadow \u2014 grab the carrots and beat the clock!",
+  "genre": "bouncy obstacle-course platformer sprint",
+  "core_loop": "Sprint the winding meadow path, dashing and double-jumping over fence hurdles and spinning bars, boinging off spring pads, grabbing golden carrots, and racing the 90-second clock to the giant flower finish arch.",
+  "controls": [
+   "A / D or arrow keys: move",
+   "Space: jump, press again mid-air: double jump",
+   "Shift: dash",
+   "P: pause"
+  ],
+  "win_condition": "Burst through the giant flower finish arch before the 90-second timer runs out.",
+  "lose_condition": "The timer hits zero, or all 3 lives are lost to spinners, bumblebees and falls.",
+  "look": "toon_bright",
+  "ui_style": "arcade",
+  "level_kind": "meadow_course",
+  "level_size": "medium",
+  "player_type": "platformer",
+  "camera": "follow",
+  "player_colors": {
+   "body": "#fff8ef",
+   "accent": "#ff5a5f"
+  },
+  "collectible": {
+   "tag": "seed",
+   "label": "Carrots",
+   "count": 20,
+   "target": 10
+  },
+  "goal": true,
+  "timer_seconds": 90,
+  "lives": 3,
+  "enemies": 2,
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  },
+  "character": {
+   "species": "bunny",
+   "accessory": "scarf"
+  },
+  "mode": "goal",
+  "art_direction": "Spring meadow in toon_bright: butter-yellow dandelions and pink tulips on grass green, a winding dirt path, sky blue with cotton-ball clouds; cel shading with soft dark ink outlines, warm morning sun and gentle bloom. References: Animal Crossing spring, Mario 64 meadows, Rayman \u2014 bright, bouncy, zero gloom.",
+  "concept_shots": [
+   "Cream bunny with a coral scarf mid double-jump over a wooden fence hurdle, a dotted trail of golden carrots behind, winding dirt path through a flower meadow with a windmill in the distance.",
+   "The bunny lands on a spring pad and launches sky-high toward the giant flower finish arch, confetti bursting, arcade timer ticking in the HUD.",
+   "A spinning bar hazard whips across the path as a striped bumblebee patrols by and the bunny dashes between them, speed lines trailing behind."
+  ],
+  "assets": {
+   "sky": "Sunny spring morning: soft blue gradient sky, big warm sun, fluffy cotton clouds, distant green hills",
+   "icons": [
+    {
+     "name": "carrot",
+     "prompt": "chibi golden carrot icon, glossy orange tapered root with a leafy green top, thick dark outline, flat sticker style",
+     "for": "carrots"
+    },
+    {
+     "name": "clock",
+     "prompt": "round pocket-watch icon with a little spring meadow scene on the face, thick dark outline, flat sticker style",
+     "for": "timer"
+    },
+    {
+     "name": "heart",
+     "prompt": "plump pink heart with a tiny green leaf sprouting on top, thick dark outline, flat sticker style",
+     "for": "lives"
+    }
+   ],
+   "music": "bouncy ukulele + xylophone + handclaps, major key, 140 bpm, cheerful springtime pop",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "bright pling, two rising notes with a sparkle shimmer"
+    },
+    {
+     "event": "jump",
+     "prompt": "soft boing whoosh, light and springy"
+    },
+    {
+     "event": "land",
+     "prompt": "thump with a little grass rustle"
+    },
+    {
+     "event": "damage",
+     "prompt": "comical bonk with a wobble tail"
+    },
+    {
+     "event": "boost",
+     "prompt": "springy zip, rising pitch like a pogo stick"
+    },
+    {
+     "event": "win",
+     "prompt": "triumphant ukulele fanfare arpeggio with a confetti pop"
+    }
+   ],
+   "props": [
+    {
+     "name": "tulip",
+     "prompt": "single stylized tulip: bright pink petal cup on a green stem with two leaves, chunky voxel",
+     "count": 12
+    },
+    {
+     "name": "hay_bale",
+     "prompt": "single golden hay bale: rounded rectangular block of straw with woven bands, warm yellow",
+     "count": 6
+    }
+   ]
+  },
+  "features": [
+   "Spring pads (World.prop spring_pad + bounce hazard) launch the bunny sky-high with squash-and-stretch pop and a boing SFX",
+   "Spinning bar hazards (spinner) sweep the path; touching one knocks the bunny back with hit flash and screen shake",
+   "Two patrolling bumblebees (spawnEnemy patrol, yellow-and-black) buzz the course \u2014 stomp them for a bounce or lose a life",
+   "Speed lines and a dust trail on dashes; sparkle burst and floating +1 text on every carrot pickup",
+   "Flower-flag checkpoint at the mid-course river: checkpoint jingle, ring FX, and timer relief",
+   "Win: confetti burst and slow-mo as the bunny bursts through the flower arch; lose: screen shake and a sad sting"
+  ],
+  "mapping_notes": "The bunny hero maps to Player species 'bunny' with a coral scarf accent. The sunny spring meadow is look toon_bright + level_kind meadow_course, whose built-in set is exactly the pitch: fence hurdles, crate stack, stepping stones over a river, rising blocks, farm and windmill. Golden carrots: the kit has no carrot tag, so the closest look is tag 'seed' (a small tapered golden sprout reads as a carrot), labeled 'Carrots' \u2014 20 placed, 10 shown as the HUD bonus target. The giant flower finish arch is the meadow_course goal arch that Gameplay.rules turns into the goal portal; the flower theme is carried by the tulip props and art direction. Spinning bars = Gameplay hazard 'spinner'; bounce pads = spring_pad prop + 'bounce' hazard; the 'Bumble' in the title becomes two 'patrol' enemies themed as striped bumblebees. Dash and double-jump come stock with the platformer kit. Mode 'goal' with a 90s timer and 3 lives: reach the arch to win, carrots are bonus score \u2014 race stays off (laps 0) since this is a sprint, not a lap race."
+ },
+ "timings_s": {
+  "art": 273.6,
+  "build": 546.7,
+  "eval_rerecord_1103_042034": 455.0,
+  "eval_rerecord_1103_052412": 65.3,
+  "eval_s0": 69.9,
+  "eval_v0": 119.9,
+  "eval_v1": 32.5,
+  "eval_v2": 70.0,
+  "finalize": 70.1,
+  "plan": 89.5,
+  "repair_1": 288.2,
+  "repair_2": 238.7,
+  "scaffold": 1.3
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Bumble Dash: a bunny obstacle-course sprint through a sunny spring meadow. Dash, double-jump and bounce over hurdles, spinning bars and bounce pads, grab golden carrots along the way, and burst through the giant flower finish arch before the timer runs out. Bright, bouncy, cheerful.",
+  "notes": "The bunny hero maps to Player species 'bunny' with a coral scarf accent. The sunny spring meadow is look toon_bright + level_kind meadow_course, whose built-in set is exactly the pitch: fence hurdles, crate stack, stepping stones over a river, rising blocks, farm and windmill. Golden carrots: the kit has no carrot tag, so the closest look is tag 'seed' (a small tapered golden sprout reads as a carrot), labeled 'Carrots' \u2014 20 placed, 10 shown as the HUD bonus target. The giant flower finish arch is the meadow_course goal arch that Gameplay.rules turns into the goal portal; the flower theme is carried by the tulip props and art direction. Spinning bars = Gameplay hazard 'spinner'; bounce pads = spring_pad prop + 'bounce' hazard; the 'Bumble' in the title becomes two 'patrol' enemies themed as striped bumblebees. Dash and double-jump come stock with the platformer kit. Mode 'goal' with a 90s timer and 3 lives: reach the arch to win, carrots are bonus score \u2014 race stays off (laps 0) since this is a sprint, not a lap race.",
+  "chosen": {
+   "level_kind": "meadow_course",
+   "look": "toon_bright",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "mode": "goal",
+   "species": "bunny",
+   "character": {
+    "species": "bunny",
+    "accessory": "scarf"
+   },
+   "collectible": "seed",
+   "collectible_label": "Carrots"
+  },
+  "planned": {
+   "level_kind": "meadow_course",
+   "look": "toon_bright",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "mode": "goal",
+   "species": "bunny"
+  },
+  "builder_overrides": []
+ },
+ "model_calls": {
+  "judge": {
+   "calls": 1,
+   "prompt_tokens": 6188,
+   "completion_tokens": 893,
+   "seconds": 21.4
+  }
+ },
+ "agents": {
+  "live": 0,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 102.1
+    },
+    "icon_carrot": {
+     "ok": true,
+     "seconds": 110.0
+    },
+    "icon_clock": {
+     "ok": true,
+     "seconds": 122.5
+    },
+    "icon_heart": {
+     "ok": true,
+     "seconds": 133.0
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 150.1
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 153.7
+    },
+    "sfx_jump": {
+     "ok": true,
+     "seconds": 154.7
+    },
+    "sfx_land": {
+     "ok": true,
+     "seconds": 155.8
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 156.8
+    },
+    "sfx_boost": {
+     "ok": true,
+     "seconds": 157.9
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 159.2
+    },
+    "prop_tulip": {
+     "ok": true,
+     "seconds": 242.5
+    },
+    "prop_hay_bale": {
+     "ok": true,
+     "seconds": 273.6
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Bumble Dash: a bouncy spring-meadow platformer sprint. A cream bunny with a coral scarf dashes, double-jumps and boings off spring pads through a winding meadow course, grabbing golden carrots (seed pickups, 20 placed / 10 target) and racing a 90-second clock to the flower finish arch. Features: 3 spinner bars across the path, 2 spring bounce pads with \"BOING!\" text bursts, 2 patrolling bumblebee-style enemies (stompable), checkpoint flags with banners, dash speed lines, win confetti + slow-mo, arcade HUD with carrot counter/timer/hearts/minimap, title screen selling the fantasy, generated sky/props/icons/music/SFX. Built on the scaffold: kept the generated sky, scenery props/splats, HUD, title, and rules; added custom hazard/collectible/enemy placements and extra FX event handlers.",
+    "changes": [
+     "Added 3 spinner bar hazards across the route at 30%/55%/80% with increasing speed",
+     "Added 2 spring bounce pads (hazard + spring_pad visual) at 42%/72% of the route",
+     "Added extra carrot (seed) collectibles along the route for 20+ total pickups",
+     "Added 2 patrol enemies (bumblebees) at 45%/75% of the route",
+     "Set objective text: 'Reach the flower arch before the clock runs out!'",
+     "Added FX juice: bounce burst + ring + BOING! text, stomp burst + text, dash speed lines + dust, checkpoint banner, win confetti + slow-mo",
+     "Configured rules with seed collect (target 10, label Carrots), goal mode, 90s timer, 3 lives, 2 enemies"
+    ],
+    "known_issues": [
+     "Autopilot is slow to reach the goal (cautious around spinner bars and enemies), but the game is fully playable by a human within the 90s timer",
+     "The 'patrol' enemies look like green slimes rather than bumblebees \u2014 the kit's patrol enemy is a fixed chibi monster; the bumblebee theme is carried by the title and art direction"
+    ]
+   },
+   "plays": 4
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ },
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "3b0d29e",
+   "at": "2026-11-03 04:28",
+   "score": 6.0,
+   "autopilot": {
+    "moved": 78.2,
+    "collected_end": 17,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.0
+  },
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:25",
+   "score": 6.5,
+   "autopilot": {
+    "moved": 80.8,
+    "collected_end": 17,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.0
+  },
+  {
+   "stage": "cutscenes",
+   "model": "LTX-2.5",
+   "run": "uniform pipeline stage after build",
+   "clips": [
+    "intro",
+    "win"
+   ],
+   "reviewed": true,
+   "at": "2026-11-03T06:20:26-0800"
+  }
+ ]
+}

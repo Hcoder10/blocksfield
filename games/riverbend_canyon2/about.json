@@ -1,0 +1,478 @@
+{
+ "id": "riverbend_canyon2",
+ "title": "Riverbend Canyon",
+ "tagline": "Paddle and hop down a red-rock canyon river to the waterfall pool.",
+ "pitch": "Riverbend Canyon: a frog paddles and hops down a winding red-rock canyon river, leaping between rocks and rafts to reach the waterfall pool",
+ "genre": "Stylised 3D platformer",
+ "controls": [
+  "WASD / arrows: run",
+  "Space: jump (again in the air: double jump)",
+  "Shift: dash / long jump",
+  "C: ground pound",
+  "P / Esc: pause"
+ ],
+ "mechanics": [
+  {
+   "name": "zone",
+   "how": "builtin",
+   "api": "Mechanics.add",
+   "file": "game.js",
+   "line_start": 107,
+   "line_end": 107,
+   "snippet": "  K.Mechanics.add(game, { type: 'zone', id: 'raft' + i, position: raftZones[i], size: [4, 2, 4] });"
+  },
+  {
+   "name": "tune",
+   "how": "builtin",
+   "api": "Mechanics.tune",
+   "file": "game.js",
+   "line_start": 113,
+   "line_end": 113,
+   "snippet": "K.Mechanics.tune(player, {\"jump\": 1.2, \"speed\": 1.05, \"dash\": true, \"glide\": true, \"airJumps\": 1, \"size\": 0.8});"
+  },
+  {
+   "name": "Drift Rafts",
+   "how": "custom",
+   "api": "Mechanics.custom",
+   "file": "game.js",
+   "line_start": 117,
+   "line_end": 138,
+   "snippet": "K.Mechanics.custom(game, {\n  name: 'Drift Rafts',\n  text: 'Log rafts bob and drift down the current - hop on and ride them across the wide water.',\n  update(dt, ctx) {\n    const p = ctx.player;\n    if (!p || !p.object) return;\n    const pos = p.position;\n    let riding = null;\n    for (const m of (ctx.level.movers || [])) {\n      const mesh = m.mesh;\n      if (!mesh || !mesh.position) continue;\n      const dx = pos.x - mesh.position.x, dz = pos.z - mesh.position.z;\n      if (Math.abs(dx) < 3 && Math.abs(dz) < 3 && Math.abs(pos.y - mesh.position.y) < 2) { riding = m; break; }\n    }\n    const was = ctx.vars.raftRiding;\n    ctx.vars.raftRiding = !!riding;\n    if (riding && !was) {\n      ctx.emit('raftRide', riding);\n      ctx.toast('Riding the current!', 2);\n    }\n  }\n});"
+  },
+  {
+   "name": "Rip Current",
+   "how": "rule",
+   "api": "Mechanics.rule",
+   "file": "game.js",
+   "line_start": 141,
+   "line_end": 147,
+   "snippet": "  K.Mechanics.rule(game, {\n    name: 'Rip Current',\n    text: 'Ride a raft and the current pushes you downstream - time your hops off before it sweeps you past the rocks.',\n    when: 'enter',\n    id: 'raft' + i,\n    do: [{ tune: { speed: 1.45 }, seconds: 3 }, { banner: 'Rip current!' }, { sfx: 'boost' }]\n  });"
+  },
+  {
+   "name": "Lily Rush",
+   "how": "rule",
+   "api": "Mechanics.rule",
+   "file": "game.js",
+   "line_start": 151,
+   "line_end": 164,
+   "snippet": "K.Mechanics.rule(game, {\n  name: 'Lily Rush',\n  text: 'Every 6 lily seeds: a springy Lily Rush burst!',\n  when: 'collect',\n  tag: 'seed',\n  every: 6,\n  do: [\n    { give: 'highjump', duration: 6 },\n    { give: 'speed', duration: 4 },\n    { banner: 'Lily Rush!' },\n    { sfx: 'powerup' },\n    { fx: 'sparkle' }\n  ]\n});"
+  }
+ ],
+ "created": "2026-11-03T05:43:27-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "rerecord_1103_054111",
+  "score": 5.89,
+  "play": 6.78,
+  "vision": 5.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 5.95,
+    "play_score": 6.89,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "s0",
+    "score": 0.5,
+    "play_score": 0.5,
+    "vision_score": null
+   },
+   {
+    "tag": "v1",
+    "score": 6.0,
+    "play_score": 7.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "v2",
+    "score": 6.61,
+    "play_score": 7.22,
+    "vision_score": 6.0
+   },
+   {
+    "tag": "rerecord_1103_053311",
+    "score": 5.83,
+    "play_score": 6.67,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "rerecord_1103_054111",
+    "score": 5.89,
+    "play_score": 6.78,
+    "vision_score": 5.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Riverbend Canyon",
+  "tagline": "Paddle and hop down a red-rock canyon river to the waterfall pool.",
+  "genre": "Stylised 3D platformer",
+  "core_loop": "Hop and leap from rock to rock and drifting raft down a winding canyon river, snatching lily seeds, timing the moving rafts, and dodging boulders and saws until you reach the waterfall pool.",
+  "controls": [
+   "WASD / arrows: move and paddle",
+   "Space: hop (hold for a higher leap)",
+   "Shift: quick dash",
+   "E: interact / grab a raft",
+   "P: pause"
+  ],
+  "win_condition": "Reach the waterfall pool at the end of the canyon.",
+  "lose_condition": "Lose all 3 lives to boulders, saw blades or falling into the river.",
+  "look": "desert",
+  "level_kind": "canyon",
+  "ui_style": "arcade",
+  "level_size": "large",
+  "player_type": "platformer",
+  "camera": "follow",
+  "player_colors": {
+   "body": "#5ec93f",
+   "accent": "#ffd23f"
+  },
+  "collectible": {
+   "tag": "seed",
+   "label": "Lily Seeds",
+   "count": 24,
+   "target": 18
+  },
+  "goal": true,
+  "timer_seconds": 0,
+  "lives": 3,
+  "enemies": 4,
+  "character": {
+   "species": "frog",
+   "accessory": "backpack"
+  },
+  "mode": "goal",
+  "mechanics": [
+   {
+    "name": "Frog Hop",
+    "how": "tune",
+    "text": "A springy leap and a quick dash let the frog clear wide rock gaps and drift rafts.",
+    "tune": {
+     "jump": 1.2,
+     "speed": 1.05,
+     "dash": true,
+     "glide": true,
+     "airJumps": 1,
+     "size": 0.8
+    }
+   },
+   {
+    "name": "Drift Rafts",
+    "how": "custom",
+    "text": "Log rafts bob and drift down the current - hop on and ride them across the wide water.",
+    "count": 4
+   },
+   {
+    "name": "Rip Current",
+    "how": "rule",
+    "text": "Ride a raft and the current pushes you downstream - time your hops off before it sweeps you past the rocks.",
+    "rule": {
+     "when": "enter",
+     "kind": "raft",
+     "do": [
+      {
+       "tune": {
+        "speed": 1.45
+       },
+       "seconds": 3
+      },
+      {
+       "banner": "Rip current!"
+      }
+     ]
+    }
+   }
+  ],
+  "art_direction": "Warm late-afternoon red-rock canyon: banded rust-orange and ochre sandstone mesas, hoodoos and natural arches, a ribbon of turquoise river catching golden light, green lily pads and cacti for contrast. Toon shading with soft ink outlines and a gentle warm colour grade; light rakes across the terraced rock walls to read the bands.",
+  "concept_shots": [
+   "The frog mid-leap between two mossy boulders over turquoise water, lily seeds spinning in a loose arc above the river, red-rock walls banded in rust and ochre behind.",
+   "A log raft drifting downstream with the frog balanced on it, a rip-current banner flashing, boulders patrolling the channel and a saw blade glinting in a rock slot ahead.",
+   "The goal: a wide waterfall spilling into a misty pool, the goal arch glowing at its base, the last stretch of stepping rocks leading up to it."
+  ],
+  "assets": {
+   "sky": "Golden late-afternoon desert sky: warm amber and peach horizon, a low bright sun, thin high cirrus clouds, faint haze over distant mesas.",
+   "icons": [
+    {
+     "name": "lily_seed",
+     "prompt": "A single glossy green lily seed with a tiny leaf sprout, toon style, soft rim light",
+     "for": "collectible"
+    },
+    {
+     "name": "life_frog",
+     "prompt": "A cute round green frog head icon with big eyes, toon style",
+     "for": "lives"
+    },
+    {
+     "name": "raft_log",
+     "prompt": "A small brown log raft icon, toon style",
+     "for": "raft"
+    },
+    {
+     "name": "waterfall_flag",
+     "prompt": "A turquoise waterfall flag marker icon, toon style",
+     "for": "goal"
+    }
+   ],
+   "music": "Light acoustic desert adventure: acoustic guitar, soft ukulele, gentle hand drums, warm flute accents, mid-tempo bouncy groove",
+   "sfx": [
+    {
+     "event": "jump",
+     "prompt": "Springy cartoon frog hop, short boing",
+     "seconds": 1
+    },
+    {
+     "event": "land",
+     "prompt": "Soft squishy landing thud",
+     "seconds": 1
+    },
+    {
+     "event": "collect",
+     "prompt": "Bright little seed pickup chime",
+     "seconds": 1
+    },
+    {
+     "event": "damage",
+     "prompt": "Short hurt boop with a little wobble",
+     "seconds": 1
+    },
+    {
+     "event": "boost",
+     "prompt": "Whooshing water rush as the rip current takes hold",
+     "seconds": 1
+    },
+    {
+     "event": "win",
+     "prompt": "Triumphant waterfall splash and fanfare sting",
+     "seconds": 6
+    }
+   ],
+   "props": [
+    {
+     "name": "lily_pad",
+     "prompt": "A flat round green lily pad with a notch cut out, a small pink lily flower on top",
+     "count": 24
+    },
+    {
+     "name": "hoodoo",
+     "prompt": "A tall slender red-rock hoodoo pillar with a rounded cap, banded rust-orange sandstone",
+     "count": 18
+    }
+   ]
+  },
+  "features": [
+   "Drifting log rafts (movers) to ride across the wide water",
+   "Patrolling boulders to hop over or avoid",
+   "Saw blades set in rock slots along the route",
+   "Spring pads on a couple of rocks for big leaps",
+   "Splash FX on every water touch plus a misty waterfall goal",
+   "Rip-current push rule while riding rafts"
+  ],
+  "mapping_notes": "The pitch's space is a winding river through a red-rock canyon, which is exactly the canyon kind: its route runs start -> goal arch, it is built for platformers, and it already carries the red-rock mesas, arches, hoodoos, cacti, jump ramps and hazards. A frog is a native species, so the hero is a frog with a backpack (a little explorer's kit). The 'paddle and hop' fantasy maps to a platformer with a tuned springy jump, dash and a single air-hop, plus glide so long canyon leaps feel floaty. Rafts become Level movers the frog can hop onto and ride; the rip-current is a trigger->effect rule that speeds the frog while on a raft. The waterfall pool is the goal at the route's end (goal=true). Collect mode is not the win condition - reaching the pool wins - so mode is goal and the lily seeds are a bonus pickup along the way (18 of 24 to feel complete). Enemies are patrolling boulders (4) plus saw blades as hazards. The desert look preset matches the red-rock palette; a golden afternoon sky keeps the warm canyon mood.",
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  }
+ },
+ "timings_s": {
+  "art": 383.2,
+  "build": 1710.0,
+  "eval_rerecord_1103_053311": 83.4,
+  "eval_rerecord_1103_054111": 96.3,
+  "eval_s0": 30.8,
+  "eval_v0": 166.4,
+  "eval_v1": 75.9,
+  "eval_v2": 82.6,
+  "finalize": 95.5,
+  "plan": 1219.8,
+  "repair_1": 626.4,
+  "repair_2": 170.6,
+  "scaffold": 4.7
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Riverbend Canyon: a frog paddles and hops down a winding red-rock canyon river, leaping between rocks and rafts to reach the waterfall pool",
+  "notes": "The pitch's space is a winding river through a red-rock canyon, which is exactly the canyon kind: its route runs start -> goal arch, it is built for platformers, and it already carries the red-rock mesas, arches, hoodoos, cacti, jump ramps and hazards. A frog is a native species, so the hero is a frog with a backpack (a little explorer's kit). The 'paddle and hop' fantasy maps to a platformer with a tuned springy jump, dash and a single air-hop, plus glide so long canyon leaps feel floaty. Rafts become Level movers the frog can hop onto and ride; the rip-current is a trigger->effect rule that speeds the frog while on a raft. The waterfall pool is the goal at the route's end (goal=true). Collect mode is not the win condition - reaching the pool wins - so mode is goal and the lily seeds are a bonus pickup along the way (18 of 24 to feel complete). Enemies are patrolling boulders (4) plus saw blades as hazards. The desert look preset matches the red-rock palette; a golden afternoon sky keeps the warm canyon mood. Builder overrides: the builder changed level_kind from canyon to custom.",
+  "chosen": {
+   "level_kind": "custom",
+   "look": "desert",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "mode": "goal",
+   "species": "frog",
+   "character": {
+    "species": "frog",
+    "accessory": "backpack"
+   },
+   "collectible": "seed",
+   "collectible_label": "Lily Seeds"
+  },
+  "planned": {
+   "level_kind": "canyon",
+   "look": "desert",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "mode": "goal",
+   "species": "frog"
+  },
+  "builder_overrides": [
+   "the builder changed level_kind from canyon to custom"
+  ],
+  "layout": {
+   "start": "builder (scaffold was the canyon preset)",
+   "pieces_start": 0,
+   "pieces_final": 21,
+   "pieces_changed_from_start": 21
+  }
+ },
+ "model_calls": {
+  "judge": {
+   "calls": 1,
+   "prompt_tokens": 6183,
+   "completion_tokens": 887,
+   "seconds": 51.0
+  }
+ },
+ "agents": {
+  "live": 0,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "icon_lily_seed": {
+     "ok": true,
+     "seconds": 166.6
+    },
+    "sky": {
+     "ok": true,
+     "seconds": 171.9
+    },
+    "icon_life_frog": {
+     "ok": true,
+     "seconds": 174.5
+    },
+    "icon_raft_log": {
+     "ok": true,
+     "seconds": 184.7
+    },
+    "icon_waterfall_flag": {
+     "ok": true,
+     "seconds": 198.2
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 226.6
+    },
+    "sfx_jump": {
+     "ok": true,
+     "seconds": 228.6
+    },
+    "sfx_land": {
+     "ok": true,
+     "seconds": 229.6
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 230.6
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 231.6
+    },
+    "sfx_boost": {
+     "ok": true,
+     "seconds": 233.3
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 234.7
+    },
+    "prop_lily_pad": {
+     "ok": true,
+     "seconds": 319.4
+    },
+    "prop_hoodoo": {
+     "ok": true,
+     "seconds": 383.2
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Riverbend Canyon: a frog with a backpack hops and paddles down a winding red-rock canyon river to the waterfall pool. Built on the scaffold using Level.compose for a hand-laid canyon river run (sand ground flooded by a turquoise water piece, stepping rocks, a rope bridge, stairs, pillars, a goal mesa, plus canyon-wall cliffs and a natural arch as scenery). The desert look + generated golden sky, lily-pad/hoodoo props and splat landmarks are all kept. Plan features added: 24 lily seeds (target 18, tag 'seed') along the route, 3 saw blades in rock slots, 2 spring pads, 4 drifting log rafts (raft movers), and 4 patrolling boulder enemies. All three signature mechanics are wired and verified firing: Frog Hop (tune: springy jump/dash/glide/air-jump), Drift Rafts (custom mechanic tracking raft riding + toast), and Rip Current (enter-zone rules at each raft boarding point that speed the frog + banner + boost sfx). I invented a twist mechanic, Lily Rush: every 6 lily seeds collected grants a highjump + speed burst with a banner, sfx and sparkles. HUD (arcade style) shows the lily-seed counter with the generated icon, lives, minimap and objective; title screen sells the fantasy. Autopilot verified: moves along the route, collects seeds (reached 21/18 in a 25s run, opening the goal), fires rules/powerups/mechanic banners, with 0 console errors throughout.",
+    "changes": [
+     "Replaced Level.build with a composed canyon river run (Level.compose): water river, stepping platforms, bridge, stairs, pillars, goal mesa, canyon-wall cliffs and a natural arch",
+     "Tagged all collectibles as 'seed' and placed 24 lily seeds along the route (target 18)",
+     "Added plan hazards: 3 saw blades, 2 spring pads, and 4 patrolling boulder enemies along the route",
+     "Added 4 drifting log rafts as raft movers on the river",
+     "Added invisible rip-current trigger zones at each raft boarding point",
+     "Wired Rip Current as enter-zone rules (speed tune + banner + boost sfx) for each raft",
+     "Implemented Drift Rafts as a custom mechanic that detects raft riding and toasts",
+     "Invented the Lily Rush twist mechanic: every 6 seeds grants highjump + speed burst with banner, sfx and sparkles",
+     "Removed the duplicate ALONG helper and the enemies count from rules (enemies now come from level.hazards)"
+    ],
+    "known_issues": [
+     "The raft movers use mesh:null; Gameplay animates them but the visible raft mesh may be minimal \u2014 the rip-current zones and ride-detection still work",
+     "Autopilot prefers the stepping-rock route and only occasionally rides a raft, so the Rip Current rule fires less often than Lily Rush in bot runs (it fires reliably for a human who hops onto a raft)"
+    ]
+   },
+   "plays": 6
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ },
+ "incidents": [
+  "a duplicate builder process of the same pipeline ran 04:48-04:52 on this run dir and was killed; game.js was written during that window and may include its writes"
+ ],
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:34",
+   "score": 5.83,
+   "autopilot": {
+    "moved": 75.5,
+    "collected_end": 6,
+    "won": false,
+    "lost": false,
+    "deaths": 1
+   },
+   "previous_score": 6.61
+  },
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:42",
+   "score": 5.89,
+   "autopilot": {
+    "moved": 79.2,
+    "collected_end": 7,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 5.83
+  }
+ ]
+}

@@ -5,12 +5,14 @@
  "pitch": "Lantern Lane: a cozy evening village collect-a-thon. Wander a warm little town at golden hour as a cat, gather lost lanterns and letters for the neighbours, chat with friendly villagers, and light the big lantern tree in the plaza. Soft acoustic music, a cozy rounded HUD, no rush.",
  "genre": "Cozy village collect & quest adventure",
  "controls": [
-  "WASD / arrows: move",
-  "Space: hop",
-  "Walk up to a villager: chat",
-  "Esc: pause"
+  "WASD / arrows: run",
+  "Space: jump (again in the air: double jump)",
+  "Shift: dash / long jump",
+  "C: ground pound",
+  "P / Esc: pause"
  ],
- "created": "2026-11-03T01:55:55-0800",
+ "mechanics": [],
+ "created": "2026-11-03T05:29:54-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -22,7 +24,7 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "v2",
+  "best": "rerecord_1103_052714",
   "score": 6.0,
   "play": 7.0,
   "vision": 5.0,
@@ -47,6 +49,12 @@
    },
    {
     "tag": "v2",
+    "score": 6.0,
+    "play_score": 7.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "rerecord_1103_052714",
     "score": 6.0,
     "play_score": 7.0,
     "vision_score": 5.0
@@ -233,11 +241,12 @@
  "timings_s": {
   "art": 328.2,
   "build": 835.6,
+  "eval_rerecord_1103_052714": 86.8,
   "eval_s0": 43.6,
   "eval_v0": 64.8,
   "eval_v1": 37.3,
   "eval_v2": 74.2,
-  "finalize": 97.9,
+  "finalize": 80.7,
   "plan": 134.5,
   "repair_1": 74.0,
   "repair_2": 275.7,
@@ -273,7 +282,14 @@
   },
   "builder_overrides": []
  },
- "model_calls": {},
+ "model_calls": {
+  "judge": {
+   "calls": 1,
+   "prompt_tokens": 6192,
+   "completion_tokens": 1012,
+   "seconds": 20.2
+  }
+ },
  "agents": {
   "live": 0,
   "cached": 0,
@@ -362,5 +378,31 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:28",
+   "score": 6.0,
+   "autopilot": {
+    "moved": 94.9,
+    "collected_end": 4,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.0
+  },
+  {
+   "stage": "cutscenes",
+   "model": "LTX-2.5",
+   "run": "uniform pipeline stage after build",
+   "clips": [
+    "intro"
+   ],
+   "reviewed": true,
+   "at": "2026-11-03T06:29:29-0800"
+  }
+ ]
 }

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Blocksfield: type a pitch, get a game</title>
-<meta name="description" content="Type a one-paragraph pitch and get a playable game, made entirely by open-weight models on one RTX 5090: Qwen3.8-27B plans, codes, playtests and repairs it; ComfyUI makes the art, music, sound and props. $0 per generation. #OpenSourceHiggsfield">
+<meta name="description" content="Type a one-paragraph pitch and get a playable game, made entirely by open-weight models on one RTX 5090: Qwen3.8-27B plans, codes, playtests and repairs it; ComfyUI makes the art, music, sound and props. No API fees. #OpenSourceHiggsfield">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Blocksfield">
 <meta property="og:title" content="Blocksfield: type a pitch, get a game">
@@ -55,7 +55,7 @@
         <div class="hero-facts">
           <span class="chip sun">Every model open-weight</span>
           <span class="chip">One RTX 5090</span>
-          <span class="chip grass">$0 per generation</span>
+          <span class="chip grass">No API fees</span>
         </div>
       </div>
       <div>
@@ -85,6 +85,20 @@
         </div>
       </div>
       <div class="grid" id="grid"><div class="empty">Loading games…</div></div>
+    </div>
+  </section>
+
+  <section class="sec beyond-sec" id="beyond" hidden>
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div>
+          <p class="kicker" style="--k:var(--tomato)">Beyond the kits</p>
+          <h2 class="display h2">What the model can do beyond the kits</h2>
+          <p class="lede">Most of a game is the model composing tested kit parts. These go further: it lays out a level
+            piece by piece, or writes a mechanic the kits don't have.</p>
+        </div>
+      </div>
+      <div class="beyond-grid" id="beyond-grid"></div>
     </div>
   </section>
 
@@ -198,8 +212,8 @@
         <div>
           <p class="kicker" style="--k:var(--grass)">Open weights only</p>
           <h2 class="display h2">Every model is open-weight</h2>
-          <p class="lede">No partner nodes, no closed APIs. All of them run on one rented RTX 5090, so a game costs
-            $0 per generation.</p>
+          <p class="lede">No partner nodes, no closed APIs. All of them run on one rented RTX 5090, so a game costs no
+            per-call API fees, only GPU time.</p>
         </div>
       </div>
       <table class="tbl reveal">

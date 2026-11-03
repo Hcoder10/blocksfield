@@ -5,11 +5,14 @@
  "pitch": "Frostbeak: a little penguin waddles and belly-slides across a snowy mountain, hopping between icy ledges and frozen floating floes to collect glittering fish, dodging rolling snowballs, and reaching the summit igloo. Crisp blue-white snow, pink dawn sky, cosy and playful.",
  "genre": "cozy platformer",
  "controls": [
-  "A / D or \u2190 / \u2192: waddle",
-  "Space or W / \u2191: hop",
-  "P: pause"
+  "WASD / arrows: run",
+  "Space: jump (again in the air: double jump)",
+  "Shift: dash / long jump",
+  "C: ground pound",
+  "P / Esc: pause"
  ],
- "created": "2026-11-03T01:56:44-0800",
+ "mechanics": [],
+ "created": "2026-11-03T05:50:37-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -21,10 +24,10 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "v2",
-  "score": 6.0,
+  "best": "rerecord_1103_054811",
+  "score": 6.5,
   "play": 8.0,
-  "vision": 4.0,
+  "vision": 5.0,
   "versions": [
    {
     "tag": "v0",
@@ -49,6 +52,18 @@
     "score": 6.0,
     "play_score": 8.0,
     "vision_score": 4.0
+   },
+   {
+    "tag": "rerecord_1103_052916",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "rerecord_1103_054811",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
    }
   ]
  },
@@ -177,10 +192,13 @@
  "timings_s": {
   "art": 249.7,
   "build": 231.3,
+  "eval_rerecord_1103_052916": 73.6,
+  "eval_rerecord_1103_054811": 77.1,
   "eval_s0": 77.5,
   "eval_v0": 82.1,
   "eval_v1": 74.5,
   "eval_v2": 88.4,
+  "finalize": 78.3,
   "plan": 262.7,
   "repair_1": 130.2,
   "repair_2": 183.2,
@@ -196,36 +214,36 @@
    "player_type": "platformer",
    "camera": "follow",
    "ui_style": "cozy",
+   "mode": "collect",
+   "species": "penguin",
    "character": {
     "species": "penguin",
     "accessory": "scarf"
    },
    "collectible": "star",
    "collectible_label": "Fish"
-  }
+  },
+  "planned": {
+   "level_kind": "sky_islands",
+   "look": "snow",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "cozy",
+   "mode": "collect",
+   "species": "penguin"
+  },
+  "builder_overrides": []
  },
  "model_calls": {
-  "lead": {
-   "calls": 2,
-   "prompt_tokens": 15392,
-   "completion_tokens": 8407,
-   "seconds": 261.4
-  },
-  "builder": {
-   "calls": 40,
-   "prompt_tokens": 967596,
-   "completion_tokens": 8047,
-   "seconds": 226.8
-  },
   "judge": {
-   "calls": 10,
-   "prompt_tokens": 51888,
-   "completion_tokens": 3930,
-   "seconds": 81.6
+   "calls": 1,
+   "prompt_tokens": 6174,
+   "completion_tokens": 1070,
+   "seconds": 19.5
   }
  },
  "agents": {
-  "live": 4,
+  "live": 0,
   "cached": 0,
   "failed": 0
  },
@@ -315,5 +333,45 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:30",
+   "score": 6.5,
+   "autopilot": {
+    "moved": 95.9,
+    "collected_end": 15,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.0
+  },
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:49",
+   "score": 6.5,
+   "autopilot": {
+    "moved": 98.5,
+    "collected_end": 15,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.5
+  },
+  {
+   "stage": "cutscenes",
+   "model": "LTX-2.5",
+   "run": "uniform pipeline stage after build",
+   "clips": [
+    "intro"
+   ],
+   "reviewed": true,
+   "at": "2026-11-03T06:20:42-0800"
+  }
+ ]
 }

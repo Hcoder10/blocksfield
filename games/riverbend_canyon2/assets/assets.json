@@ -1,0 +1,107 @@
+{
+ "icon_lily_seed": {
+  "file": "icon_lily_seed.png",
+  "kind": "icon",
+  "prompt": "A single glossy green lily seed with a tiny leaf sprout, toon style, soft rim light",
+  "for": "collectible"
+ },
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Golden late-afternoon desert sky: warm amber and peach horizon, a low bright sun, thin high cirrus clouds, faint haze over distant mesas.",
+  "wrap_seam": 1.0
+ },
+ "icon_life_frog": {
+  "file": "icon_life_frog.png",
+  "kind": "icon",
+  "prompt": "A cute round green frog head icon with big eyes, toon style",
+  "for": "lives"
+ },
+ "icon_raft_log": {
+  "file": "icon_raft_log.png",
+  "kind": "icon",
+  "prompt": "A small brown log raft icon, toon style",
+  "for": "raft"
+ },
+ "icon_waterfall_flag": {
+  "file": "icon_waterfall_flag.png",
+  "kind": "icon",
+  "prompt": "A turquoise waterfall flag marker icon, toon style",
+  "for": "goal"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Light acoustic desert adventure: acoustic guitar, soft ukulele, gentle hand drums, warm flute accents, mid-tempo bouncy groove"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "Springy cartoon frog hop, short boing"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "Soft squishy landing thud"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "Bright little seed pickup chime"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "Short hurt boop with a little wobble"
+ },
+ "sfx_boost": {
+  "file": "sfx_boost.mp3",
+  "kind": "sfx",
+  "event": "boost",
+  "prompt": "Whooshing water rush as the rip current takes hold"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "Triumphant waterfall splash and fanfare sting"
+ },
+ "prop_lily_pad": {
+  "file": "prop_lily_pad.json",
+  "kind": "prop",
+  "prompt": "A flat round green lily pad with a notch cut out, a small pink lily flower on top",
+  "via": "idol",
+  "parts": 227
+ },
+ "splat_lily_pad": {
+  "file": "splat_lily_pad.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "A flat round green lily pad with a notch cut out, a small pink lily flower on top",
+  "camera": {
+   "yaw": 2.163110554665942
+  }
+ },
+ "prop_hoodoo": {
+  "file": "prop_hoodoo.json",
+  "kind": "prop",
+  "prompt": "A tall slender red-rock hoodoo pillar with a rounded cap, banded rust-orange sandstone",
+  "via": "idol",
+  "parts": 387
+ },
+ "splat_hoodoo": {
+  "file": "splat_hoodoo.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "A tall slender red-rock hoodoo pillar with a rounded cap, banded rust-orange sandstone",
+  "camera": {
+   "yaw": 1.4053031077359301
+  }
+ }
+}

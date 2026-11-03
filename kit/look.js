@@ -622,25 +622,42 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
   }
   game.lateUpdate(tick, 25);
   if (quality !== 'high') look.setQuality(quality, true);
-  // automatic quality, by wall clock so it also fires at 2 fps: skip the first 2 s (shader compiles, loading), then
-  // count frames over 1 s. Under 50 fps -> 'low'; under 20 -> 'potato'. After a drop to 'low' it measures once more
-  // (1.5 s settle + 1 s) and goes to 'potato' if still under 20.
+  // automatic quality, by wall clock so it also decides at 2 fps. It only measures during GAMEPLAY: never on the title
+  // card, pause, countdown or end screens (paused, shaders still warming up, and what judges screenshot first), and
+  // only after the first 3 s of play. Windows are 3 s and are thrown away while the tab is hidden or the frame loop
+  // stalls (> 250 ms between frames: background tab, debugger, a hitch). It never acts on one window: it steps down
+  // after two slow windows in a row (~6 s sustained) and steps back up one tier after two fast windows in a row
+  // (potato -> low -> high); after stepping up and then down again it stops stepping up (no ping-pong).
   if (overrides.autoQuality !== false && quality === 'high') {
-    let start = 0, w0 = 0, frames = 0, round = 0;
+    const ORDER = ['potato', 'low', 'high'];
+    let playT = 0, w0 = 0, frames = 0, last = 0, slow = 0, fast = 0, ups = 0, noUp = false, bigRun = 0;
+    const reset = (now) => { w0 = now; frames = 0; };
+    const inPlay = () => {
+      const U = game.__ui, st = game.state || {};
+      return game.started && !game.paused && !st.cutscene && !(U && (U.title || U.screen || U.pauseEl || U.counting)) && (!st.phase || st.phase === 'playing');
+    };
     const probe = () => {
       if (look.locked) { game.removeUpdate(probe); return; }   // a forced tier (?quality=...) wins
       const now = performance.now();
-      if (!start) start = now;
-      if (now - start < (round ? 1500 : 2000)) return;
-      if (!w0) { w0 = now; frames = 0; return; }
+      const gap = last ? now - last : 0; last = now;
+      // one long frame is a hitch (thrown away); a run of them is a genuinely slow machine (2 fps), which must count
+      bigRun = gap > 250 ? bigRun + 1 : 0;
+      if (document.hidden || (bigRun > 0 && bigRun < 4) || !inPlay()) { reset(now); return; }
+      playT += gap;
+      if (playT < 3000) { reset(now); return; }
+      if (!w0) { reset(now); return; }
       frames++;
-      if (now - w0 < 1000) return;
+      if (now - w0 < 3000) return;
       const fps = frames / ((now - w0) / 1000);
+      reset(now);
       look.measuredFps = fps;
-      const next = fps < 20 ? 'potato' : fps < 50 && look.quality === 'high' ? 'low' : null;
-      if (next && next !== look.quality) { console.warn(`[kit] Look: ${fps.toFixed(0)} fps, switching to quality '${next}'`); look.setQuality(next); }
-      if (look.quality === 'low' && round === 0) { round = 1; start = now; w0 = 0; return; }   // re-check the low tier once
-      game.removeUpdate(probe);
+      const q = look.quality, i = ORDER.indexOf(q);
+      const tooSlow = fps < 20 ? 'potato' : fps < 50 && q === 'high' ? 'low' : null;
+      if (tooSlow && tooSlow !== q) { fast = 0; if (++slow >= 2) { slow = 0; if (ups) noUp = true; console.warn(`[kit] Look: ${fps.toFixed(0)} fps for ~6 s of play, switching to quality '${tooSlow}'`); look.setQuality(tooSlow); } return; }
+      slow = 0;
+      const roomy = q === 'potato' ? fps >= 40 : q === 'low' ? fps >= 58 : false;
+      if (roomy && !noUp && ups < 2) { if (++fast >= 2) { fast = 0; ups++; console.warn(`[kit] Look: ${fps.toFixed(0)} fps, back up to quality '${ORDER[i + 1]}'`); look.setQuality(ORDER[i + 1]); } }
+      else fast = 0;
     };
     game.lateUpdate(probe, 99);
   }
@@ -648,6 +665,11 @@ export function apply(game, name = 'toon_bright', overrides = {}) {
   game.on && game.on('resize', onResize);
   tick();
   game.look = look;
+  // generated cutscenes (LTX-2.5 clips in the manifest) play automatically: intro / win / lose (kit/cutscene.js)
+  const man = game.assets && game.assets.manifest;
+  if (man && Object.values(man).some(e => e && e.kind === 'cutscene') && !game.__cutscenes) {
+    import('./cutscene.js').then(m => m.install(game)).catch(err => console.warn('[kit] cutscenes unavailable', err));
+  }
   return look;
 }
 

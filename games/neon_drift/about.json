@@ -5,13 +5,13 @@
  "pitch": "Neon Drift Circuit: a synthwave arcade kart racer at night. Drift through glowing neon corners, charge drift boosts, hit boost pads and race five rivals over three laps on a track lined with glowing palm trees and a giant setting sun. Pumping synth music, a slick sci-fi HUD with speedometer, lap counter and position.",
  "genre": "Synthwave arcade kart racing",
  "controls": [
-  "W / \u2191: accelerate",
-  "S / \u2193: brake / reverse",
-  "A / D or \u2190 / \u2192: steer",
-  "Space: hold to drift, release for boost",
-  "R: reset kart to track"
+  "W / up: throttle, S / down: brake",
+  "A D / left right: steer",
+  "Space (hold while steering): drift, release = boost",
+  "P / Esc: pause"
  ],
- "created": "2026-11-02T21:05:35-0800",
+ "mechanics": [],
+ "created": "2026-11-03T05:42:41-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -23,10 +23,10 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "v2",
-  "score": 7.5,
+  "best": "rerecord_1103_054046",
+  "score": 7.0,
   "play": 8.0,
-  "vision": 7.0,
+  "vision": 6.0,
   "versions": [
    {
     "tag": "v0",
@@ -51,6 +51,18 @@
     "score": 7.5,
     "play_score": 8.0,
     "vision_score": 7.0
+   },
+   {
+    "tag": "rerecord_1103_051533",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "rerecord_1103_054046",
+    "score": 7.0,
+    "play_score": 8.0,
+    "vision_score": 6.0
    }
   ]
  },
@@ -174,37 +186,50 @@
  "timings_s": {
   "art": 220.4,
   "build": 668.4,
+  "eval_rerecord_1103_051533": 113.3,
+  "eval_rerecord_1103_054046": 68.7,
   "eval_s0": 111.6,
   "eval_v0": 58.8,
   "eval_v1": 49.8,
   "eval_v2": 122.0,
+  "finalize": 62.1,
   "plan": 83.7,
   "repair_1": 147.1,
   "repair_2": 409.6,
   "scaffold": 0.6
  },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Neon Drift Circuit: a synthwave arcade kart racer at night. Drift through glowing neon corners, charge drift boosts, hit boost pads and race five rivals over three laps on a track lined with glowing palm trees and a giant setting sun. Pumping synth music, a slick sci-fi HUD with speedometer, lap counter and position.",
+  "notes": null,
+  "chosen": {
+   "level_kind": "race_track",
+   "look": "neon_night",
+   "player_type": "kart",
+   "camera": "chase",
+   "ui_style": "scifi",
+   "collectible": "orb",
+   "collectible_label": "Volt Orbs"
+  },
+  "planned": {
+   "level_kind": "race_track",
+   "look": "neon_night",
+   "player_type": "kart",
+   "camera": "chase",
+   "ui_style": "scifi"
+  },
+  "builder_overrides": []
+ },
  "model_calls": {
-  "lead": {
-   "calls": 1,
-   "prompt_tokens": 5771,
-   "completion_tokens": 3958,
-   "seconds": 83.5
-  },
-  "builder": {
-   "calls": 55,
-   "prompt_tokens": 1431293,
-   "completion_tokens": 7786,
-   "seconds": 927.6
-  },
   "judge": {
-   "calls": 10,
-   "prompt_tokens": 51970,
-   "completion_tokens": 3961,
-   "seconds": 199.0
+   "calls": 1,
+   "prompt_tokens": 6187,
+   "completion_tokens": 826,
+   "seconds": 17.7
   }
  },
  "agents": {
-  "live": 4,
+  "live": 0,
   "cached": 0,
   "failed": 0
  },
@@ -299,16 +324,45 @@
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
  },
- "operator_interventions": [],
- "mapping": {
-  "pitch": "Neon Drift Circuit: a synthwave arcade kart racer at night. Drift through glowing neon corners, charge drift boosts, hit boost pads and race five rivals over three laps on a track lined with glowing palm trees and a giant setting sun. Pumping synth music, a slick sci-fi HUD with speedometer, lap counter and position.",
-  "notes": null,
-  "chosen": {
-   "level_kind": "race_track",
-   "look": "neon_night",
-   "player_type": "kart",
-   "camera": "chase",
-   "ui_style": "scifi"
+ "post_stages": [
+  {
+   "stage": "cutscenes",
+   "model": "LTX-2.5",
+   "run": "uniform pipeline stage after build",
+   "clips": [
+    "intro",
+    "win",
+    "lose"
+   ],
+   "at": "2026-11-03T03:57:43-0800"
+  },
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "cc32aaf",
+   "at": "2026-11-03 05:17",
+   "score": 6.5,
+   "autopilot": {
+    "moved": 363.8,
+    "collected_end": 14,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 7.5
+  },
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:41",
+   "score": 7.0,
+   "autopilot": {
+    "moved": 368.4,
+    "collected_end": 12,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.5
   }
- }
+ ]
 }

@@ -1,0 +1,347 @@
+{
+ "id": "dune_raiders",
+ "title": "Dune Raiders",
+ "tagline": "Blast the scorpions, grab the gold, and run for the sun gate.",
+ "pitch": "Dune Raiders: a desert top-down treasure hunt. Play a little robot explorer roaming a sun-baked desert ruin, blasting scorpion turrets and sand slimes, collecting ancient gold relics, and escaping through the glowing sun gate. Warm sand colours, long shadows, punchy blaster hits.",
+ "genre": "Top-down action treasure hunt",
+ "controls": [
+  "WASD / arrows: run",
+  "Space / J / click: fire",
+  "Shift / E: dash",
+  "P / Esc: pause"
+ ],
+ "mechanics": [],
+ "created": "2026-11-03T05:20:15-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "rerecord_1103_051637",
+  "score": 6.5,
+  "play": 8.0,
+  "vision": 5.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "s0",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "v1",
+    "score": 0.5,
+    "play_score": 0.5,
+    "vision_score": null
+   },
+   {
+    "tag": "v2",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "rerecord_1103_051637",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Dune Raiders",
+  "tagline": "Blast the scorpions, grab the gold, and run for the sun gate.",
+  "genre": "Top-down action treasure hunt",
+  "core_loop": "Steer the robot through the sun-baked canyon, blast scorpion turrets and sand slimes, and grab gold relics \u2014 once the target is hit the sun gate opens and you dash for it.",
+  "controls": [
+   "WASD / arrows: move",
+   "Mouse: aim blaster",
+   "Left click: fire blaster",
+   "P / Esc: pause"
+  ],
+  "win_condition": "Collect 20 of 24 gold relics to open the sun gate, then reach the gate.",
+  "lose_condition": "Lose all 3 lives to turret fire or slime contact.",
+  "look": "desert",
+  "ui_style": "arcade",
+  "level_kind": "canyon",
+  "level_size": "medium",
+  "player_type": "topdown",
+  "camera": "topdown",
+  "player_colors": {
+   "body": "#e6b455",
+   "accent": "#a63d2a"
+  },
+  "collectible": {
+   "tag": "coin",
+   "label": "Relics",
+   "count": 24,
+   "target": 20
+  },
+  "goal": true,
+  "timer_seconds": 0,
+  "lives": 3,
+  "enemies": 8,
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  },
+  "character": {
+   "species": "robot",
+   "accessory": "backpack"
+  },
+  "mode": "collect",
+  "art_direction": "Warm ochre, terracotta and bone-white palette with gold reserved for relics and the sun gate. A low late-afternoon sun rakes long shadows across the packed-dirt canyon floor; stylized toon shading with soft ink outlines, matte sandstone, and a faint heat-haze fog. Mood: sun-baked adventure \u2014 Chibi-Robo meets stylized Tomb Raider, punchy and readable.",
+  "concept_shots": [
+   "The little brass robot stands on the packed-dirt canyon floor, blaster raised, as a scorpion turret's glowing red eye aims from behind a ruin arch \u2014 long shadows stretch across the sand.",
+   "A cluster of spinning gold relics glows in a sunbeam between hoodoos while a sand slime oozes toward the player, dust kicking up.",
+   "The massive sun gate blazes gold at the canyon's end, a ring of light rippling out as the robot dashes through it, sparks trailing."
+  ],
+  "assets": {
+   "sky": "High-desert late afternoon: amber-to-burnt-orange gradient, low golden sun, long haze bands, distant mesa and butte silhouettes, a few wispy cirrus clouds",
+   "icons": [
+    {
+     "name": "relic_icon",
+     "prompt": "Glossy ancient gold relic medallion with a carved sun symbol, warm amber metal, cream outline, game UI icon on transparent background",
+     "for": "relics"
+    },
+    {
+     "name": "heart_icon",
+     "prompt": "Chibi game UI heart icon, warm rust-red with cream outline, soft toon shading, transparent background",
+     "for": "lives"
+    },
+    {
+     "name": "gate_icon",
+     "prompt": "Glowing golden sun-gate arch icon, radiant rays, warm gold and orange, game UI icon on transparent background",
+     "for": "goal"
+    }
+   ],
+   "music": "Dune-funk desert adventure loop: warm, adventurous, faintly mysterious; plucked oud, frame drum, soft synth pad, mid-tempo 108 BPM groove",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "Bright gold chime with a shimmering two-note arpeggio, relic pickup",
+     "seconds": 1
+    },
+    {
+     "event": "damage",
+     "prompt": "Short gritty blaster hit with a metallic robot wince, crunchy and punchy",
+     "seconds": 1
+    },
+    {
+     "event": "death",
+     "prompt": "Robot power-down: descending whir with a clatter of falling parts",
+     "seconds": 2
+    },
+    {
+     "event": "win",
+     "prompt": "Triumphant dune-drum fanfare with a shimmering sun-gate chord",
+     "seconds": 3
+    },
+    {
+     "event": "lose",
+     "prompt": "Low desolate drone with a gust of wind sweeping across sand",
+     "seconds": 2
+    }
+   ],
+   "props": [
+    {
+     "name": "sun_urn",
+     "prompt": "Small ancient clay urn with a gold sun emblem, terracotta body with brass bands, weathered",
+     "count": 6
+    },
+    {
+     "name": "scorpion_totem",
+     "prompt": "Carved sandstone scorpion totem statue, weathered red rock with bone-white chisel marks",
+     "count": 4
+    }
+   ]
+  },
+  "features": [
+   "Scorpion turrets (spawnEnemy 'turret') guard relic clusters; sand slimes ('patrol') wander the canyon floor",
+   "Topdown blaster juice: muzzle spark burst on fire, hit-flash + poof on enemy kills (FX.burst, FX.hitFlash, FX.poof)",
+   "Relic pickup juice: sparkle + floating '+1' text with a gold chime (FX.sparkle, FX.text, Audio)",
+   "Sun gate stays dark until the relic target is met, then a ring shockwave + banner 'THE SUN GATE OPENS' (FX.ring, UI.banner)",
+   "Long shadows: low warm sun via Look overrides (uSunDir) for the sun-baked late-afternoon feel",
+   "Ancient ruin cover: scattered World.prop 'ruins' and 'pillar' props to break turret sightlines"
+  ],
+  "mapping_notes": "Top-down treasure hunt \u2192 player_type 'topdown' + camera 'topdown': the kit's topdown controller ships with a blaster weapon, matching 'blasting' exactly. Desert ruin \u2192 'canyon' level (the only desert setting) with the 'desert' look; the 'ruin' fantasy is carried by scattered 'ruins'/'pillar' props plus the scorpion-totem prop. Scorpion turrets \u2192 'turret' enemies (closest to fixed scorpion guns); sand slimes \u2192 'patrol' enemies. Ancient gold relics \u2192 'coin' collectible (the gold look) labeled 'Relics'. Glowing sun gate \u2192 the level's goal portal, gold-styled; collect mode opens it once the target is met. No kart/boat in the pitch, so race laps 0 and no timer (0 = no time limit)."
+ },
+ "timings_s": {
+  "art": 434.0,
+  "build": 209.4,
+  "eval_rerecord_1103_051637": 152.5,
+  "eval_s0": 72.4,
+  "eval_v0": 77.2,
+  "eval_v1": 32.4,
+  "eval_v2": 83.2,
+  "finalize": 48.5,
+  "plan": 92.7,
+  "repair_1": 243.2,
+  "repair_2": 161.2,
+  "scaffold": 7.1
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Dune Raiders: a desert top-down treasure hunt. Play a little robot explorer roaming a sun-baked desert ruin, blasting scorpion turrets and sand slimes, collecting ancient gold relics, and escaping through the glowing sun gate. Warm sand colours, long shadows, punchy blaster hits.",
+  "notes": "Top-down treasure hunt \u2192 player_type 'topdown' + camera 'topdown': the kit's topdown controller ships with a blaster weapon, matching 'blasting' exactly. Desert ruin \u2192 'canyon' level (the only desert setting) with the 'desert' look; the 'ruin' fantasy is carried by scattered 'ruins'/'pillar' props plus the scorpion-totem prop. Scorpion turrets \u2192 'turret' enemies (closest to fixed scorpion guns); sand slimes \u2192 'patrol' enemies. Ancient gold relics \u2192 'coin' collectible (the gold look) labeled 'Relics'. Glowing sun gate \u2192 the level's goal portal, gold-styled; collect mode opens it once the target is met. No kart/boat in the pitch, so race laps 0 and no timer (0 = no time limit).",
+  "chosen": {
+   "level_kind": "canyon",
+   "look": "desert",
+   "player_type": "topdown",
+   "camera": "topdown",
+   "ui_style": "arcade",
+   "mode": "collect",
+   "species": "robot",
+   "character": {
+    "species": "robot",
+    "accessory": "backpack"
+   },
+   "collectible": "coin",
+   "collectible_label": "Relics"
+  },
+  "planned": {
+   "level_kind": "canyon",
+   "look": "desert",
+   "player_type": "topdown",
+   "camera": "topdown",
+   "ui_style": "arcade",
+   "mode": "collect",
+   "species": "robot"
+  },
+  "builder_overrides": []
+ },
+ "model_calls": {
+  "judge": {
+   "calls": 1,
+   "prompt_tokens": 6187,
+   "completion_tokens": 682,
+   "seconds": 73.4
+  }
+ },
+ "agents": {
+  "live": 0,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 220.2
+    },
+    "icon_relic_icon": {
+     "ok": true,
+     "seconds": 227.2
+    },
+    "icon_heart_icon": {
+     "ok": true,
+     "seconds": 238.0
+    },
+    "icon_gate_icon": {
+     "ok": true,
+     "seconds": 248.1
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 289.9
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 294.8
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 295.8
+    },
+    "sfx_death": {
+     "ok": true,
+     "seconds": 296.9
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 297.8
+    },
+    "sfx_lose": {
+     "ok": true,
+     "seconds": 299.6
+    },
+    "prop_sun_urn": {
+     "ok": true,
+     "seconds": 398.4
+    },
+    "prop_scorpion_totem": {
+     "ok": true,
+     "seconds": 433.9
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Dune Raiders: a desert top-down treasure hunt. The brass robot explores a sun-baked red-rock canyon (canyon level, medium, desert look), blasts scorpion turrets and sand slimes with a gold blaster, collects 20 of 24 gold relics to open the sun gate, and dashes through it. 3 lives, 8 enemies, arcade HUD with relic counter, hearts, minimap and objective line. Built on the scaffold: kept the generated sky, props/splats, HUD, title and rules, and tuned everything to the plan.",
+    "changes": [
+     "Look: desert look with low late-afternoon sun (elevation 14, warm intensity 2.6) for long shadows, plus faint heat-haze fog",
+     "Level: canyon medium with 24 collectibles (fixed seed 7); added scattered ruins/pillar/arch props beside the route as ruin cover to break turret sightlines",
+     "Player: topdown robot with backpack, brass body / rust accent, gold blaster bolts",
+     "Rules: collect 20 of 24 'Relics' (coin tag) to unlock the goal, 3 lives, 8 enemies (turrets + patrol slimes along the route)",
+     "HUD: arcade style with relic counter, lives, minimap and objective 'Grab 20 relics to open the sun gate'",
+     "Title screen: sells the fantasy with a punchy subtitle",
+     "Juice: '+1' gold text on relic pickup, 'THE SUN GATE OPENS' banner + gold ring shockwave + starburst when the target is met, confetti on win, screen shake on player death (on top of FX.auto/Audio.auto)"
+    ],
+    "known_issues": [
+     "Autopilot collects slowly (only ~3 relics in 25 s) \u2014 it follows the route and is not stuck, but reaching 20 relics in a test run takes a long time; the goal-open/win FX were verified by event wiring rather than a full playthrough"
+    ]
+   },
+   "plays": 2
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ },
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:19",
+   "score": 6.5,
+   "autopilot": {
+    "moved": 119.0,
+    "collected_end": 0,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.5
+  },
+  {
+   "stage": "cutscenes",
+   "model": "LTX-2.5",
+   "run": "uniform pipeline stage after build",
+   "clips": [
+    "intro",
+    "win"
+   ],
+   "reviewed": true,
+   "at": "2026-11-03T06:26:23-0800"
+  }
+ ]
+}

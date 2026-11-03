@@ -1,0 +1,497 @@
+{
+ "id": "vault_hopper",
+ "title": "Vault Hopper",
+ "tagline": "A fox heists a floating sky vault \u2014 colour keys, moving platforms, lava floors.",
+ "pitch": "Vault Hopper: a fox breaks into a floating sky vault: grab colour keys to open matching doors, flip switches that move platforms, and every 5 coins the floor turns to lava for 3 seconds. Bright, bouncy, cheeky.",
+ "genre": "Toon 3D platformer heist",
+ "controls": [
+  "WASD / arrows: run",
+  "Space: jump (again in the air: double jump)",
+  "Shift: dash / long jump",
+  "C: ground pound",
+  "P / Esc: pause"
+ ],
+ "mechanics": [
+  {
+   "name": "key",
+   "how": "builtin",
+   "api": "Mechanics.add",
+   "file": "game.js",
+   "line_start": 25,
+   "line_end": 25,
+   "snippet": "{ const k = ALONG(0.12), d = ALONG(0.25); K.Mechanics.add(game, { type: 'key', color: \"red\", position: k.p }); K.Mechanics.add(game, { type: 'door', id: \"door_red\", color: \"red\", position: d.p, yaw: d.yaw, width: 6 }); }"
+  },
+  {
+   "name": "key",
+   "how": "builtin",
+   "api": "Mechanics.add",
+   "file": "game.js",
+   "line_start": 25,
+   "line_end": 25,
+   "snippet": "{ const k = ALONG(0.12), d = ALONG(0.25); K.Mechanics.add(game, { type: 'key', color: \"red\", position: k.p }); K.Mechanics.add(game, { type: 'door', id: \"door_red\", color: \"red\", position: d.p, yaw: d.yaw, width: 6 }); }"
+  },
+  {
+   "name": "key",
+   "how": "builtin",
+   "api": "Mechanics.add",
+   "file": "game.js",
+   "line_start": 26,
+   "line_end": 26,
+   "snippet": "{ const k = ALONG(0.37), d = ALONG(0.50); K.Mechanics.add(game, { type: 'key', color: \"blue\", position: k.p }); K.Mechanics.add(game, { type: 'door', id: \"door_blue\", color: \"blue\", position: d.p, yaw: d.yaw, width: 6 }); }"
+  },
+  {
+   "name": "key",
+   "how": "builtin",
+   "api": "Mechanics.add",
+   "file": "game.js",
+   "line_start": 26,
+   "line_end": 26,
+   "snippet": "{ const k = ALONG(0.37), d = ALONG(0.50); K.Mechanics.add(game, { type: 'key', color: \"blue\", position: k.p }); K.Mechanics.add(game, { type: 'door', id: \"door_blue\", color: \"blue\", position: d.p, yaw: d.yaw, width: 6 }); }"
+  },
+  {
+   "name": "door",
+   "how": "builtin",
+   "api": "Mechanics.add",
+   "file": "game.js",
+   "line_start": 28,
+   "line_end": 28,
+   "snippet": "{ const s = ALONG(0.35), g = ALONG(0.55); K.Mechanics.add(game, { type: 'door', id: 'gate_1', position: g.p, yaw: g.yaw, width: 6 }); K.Mechanics.add(game, { type: 'switch', id: 'switch_1', position: s.p, targets: ['gate_1'] }); }"
+  },
+  {
+   "name": "door",
+   "how": "builtin",
+   "api": "Mechanics.add",
+   "file": "game.js",
+   "line_start": 28,
+   "line_end": 28,
+   "snippet": "{ const s = ALONG(0.35), g = ALONG(0.55); K.Mechanics.add(game, { type: 'door', id: 'gate_1', position: g.p, yaw: g.yaw, width: 6 }); K.Mechanics.add(game, { type: 'switch', id: 'switch_1', position: s.p, targets: ['gate_1'] }); }"
+  },
+  {
+   "name": "Lava Surge",
+   "how": "rule",
+   "api": "Mechanics.rule",
+   "file": "game.js",
+   "line_start": 30,
+   "line_end": 30,
+   "snippet": "K.Mechanics.rule(game, { name: \"Lava Surge\", text: \"Every 5th coin turns the floor to lava for 3 seconds \\u2014 keep moving!\", when: \"collect\", tag: \"coin\", every: 5, do: [{ lava: 3 }, { banner: \"FLOOR IS LAVA!\" }] });"
+  },
+  {
+   "name": "Heist Heat",
+   "how": "rule",
+   "api": "Mechanics.rule",
+   "file": "game.js",
+   "line_start": 32,
+   "line_end": 32,
+   "snippet": "K.Mechanics.rule(game, { name: \"Heist Heat\", text: \"Every 30 s the vault guards close in \u2014 a chaser spawns behind you!\", when: \"timer\", every: 30, do: [{ spawn: \"enemy:chase\", at: \"player\", count: 1 }, { banner: \"GUARDS INBOUND!\" }, { sfx: \"whoosh\" }] });"
+  },
+  {
+   "name": "Vault Jackpot",
+   "how": "rule",
+   "api": "Mechanics.rule",
+   "file": "game.js",
+   "line_start": 34,
+   "line_end": 34,
+   "snippet": "K.Mechanics.rule(game, { name: \"Vault Jackpot\", text: \"Grab all 24 coins for a +50 jackpot!\", when: \"state\", key: \"collected\", gte: 24, do: [{ score: 50 }, { banner: \"VAULT JACKPOT! +50\" }, { sfx: \"win\" }] });"
+  },
+  {
+   "name": "Stomp Bonus",
+   "how": "rule",
+   "api": "Mechanics.rule",
+   "file": "game.js",
+   "line_start": 36,
+   "line_end": 36,
+   "snippet": "K.Mechanics.rule(game, { name: \"Stomp Bonus\", text: \"Stomp the guards for +20!\", when: \"defeat\", do: [{ score: 20 }, { toast: \"Stomped! +20\" }] });"
+  },
+  {
+   "name": "crate",
+   "how": "builtin",
+   "api": "Mechanics.add",
+   "file": "game.js",
+   "line_start": 41,
+   "line_end": 41,
+   "snippet": "for (const f of [0.2, 0.44, 0.62, 0.78]) { const c = ALONG(f); K.Mechanics.add(game, { type: 'crate', position: c.p, drops: 'coin', count: 3 }); }"
+  },
+  {
+   "name": "magnet",
+   "how": "builtin",
+   "api": "Mechanics.powerup",
+   "file": "game.js",
+   "line_start": 42,
+   "line_end": 42,
+   "snippet": "K.Mechanics.powerup(game, { type: 'magnet', position: ALONG(0.68).p, duration: 12 });"
+  }
+ ],
+ "created": "2026-11-03T05:33:55-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "rerecord_1103_053101",
+  "score": 5.6,
+  "play": 7.2,
+  "vision": 4.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 6.1,
+    "play_score": 7.2,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "s0",
+    "score": 0.5,
+    "play_score": 0.5,
+    "vision_score": null
+   },
+   {
+    "tag": "v1",
+    "score": 6.37,
+    "play_score": 7.73,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "v2",
+    "score": 5.6,
+    "play_score": 7.2,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "rerecord_1103_053101",
+    "score": 5.6,
+    "play_score": 7.2,
+    "vision_score": 4.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Vault Hopper",
+  "tagline": "A fox heists a floating sky vault \u2014 colour keys, moving platforms, lava floors.",
+  "genre": "Toon 3D platformer heist",
+  "core_loop": "Sprint across floating vault islands, grab coins and colour keys, and flip switches to raise platform bridges \u2014 but every 5th coin turns the floor to lava for 3 seconds, so you keep hopping.",
+  "controls": [
+   "WASD / arrows: run",
+   "Space: jump",
+   "Shift: dash"
+  ],
+  "win_condition": "Collect 15 coins, use the red and blue keys to open both vault doors, and reach the vault arch.",
+  "lose_condition": "Lose all 3 lives to lava, the void, or the vault guards.",
+  "look": "sunset",
+  "ui_style": "arcade",
+  "level_kind": "sky_islands",
+  "level_size": "medium",
+  "player_type": "platformer",
+  "camera": "follow",
+  "player_colors": {
+   "body": "#ff7a2f",
+   "accent": "#ffd23f"
+  },
+  "collectible": {
+   "tag": "coin",
+   "label": "Coins",
+   "count": 24,
+   "target": 15
+  },
+  "goal": true,
+  "timer_seconds": 0,
+  "lives": 3,
+  "enemies": 2,
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  },
+  "character": {
+   "species": "fox",
+   "accessory": "scarf"
+  },
+  "mode": "collect",
+  "mechanics": [
+   {
+    "name": "Colour Keys",
+    "how": "keys_doors",
+    "colors": [
+     "red",
+     "blue"
+    ],
+    "text": "Grab a colour key to open its matching vault door."
+   },
+   {
+    "name": "Switch & Bridge",
+    "how": "switch_gate",
+    "text": "Flip the brass switch to raise the platform bridge across the cloud gap."
+   },
+   {
+    "name": "Lava Surge",
+    "how": "rule",
+    "text": "Every 5th coin turns the floor to lava for 3 seconds \u2014 keep moving!",
+    "rule": {
+     "when": {
+      "tag": "coin",
+      "every": 5
+     },
+     "do": [
+      {
+       "lava": 3
+      },
+      {
+       "banner": "FLOOR IS LAVA!"
+      }
+     ]
+    }
+   }
+  ],
+  "art_direction": "Golden-hour sky islands in amber, peach and deep teal: brass-and-gold vault architecture with riveted doors, glowing coin hoards and stone bridges, soft ink outlines and warm rim light from a low sun. Mood is a playful heist \u2014 a cute fox pulling off a big gold job. References: stylised toon platformers with a treasure-vault palette.",
+  "concept_shots": [
+   "The scarf fox sprints across a floating island as the floor erupts into glowing lava, gold coins arcing above the flames.",
+   "A glowing red key held in the fox's paw before a massive riveted vault door, gears grinding as it swings open onto a staircase of gold.",
+   "A brass lever flips and a stone platform bridge rises across a cloud gap while two patrol slimes guard the vault steps below."
+  ],
+  "assets": {
+   "sky": "Golden-hour panorama: amber-to-peach gradient, low glowing sun, big puffy clouds, distant floating islands silhouetted in warm haze.",
+   "icons": [
+    {
+     "name": "coin",
+     "prompt": "glossy gold coin with a tiny fox face stamped on it, toon style",
+     "for": "coins"
+    },
+    {
+     "name": "vault_key",
+     "prompt": "ornate gold key with a gem-studded head, toon style",
+     "for": "keys"
+    },
+    {
+     "name": "flame",
+     "prompt": "glowing orange flame with a grumpy face, toon style",
+     "for": "lava"
+    }
+   ],
+   "music": "Upbeat heist jazz-funk loop: brushed drums, upright bass, muted trumpet, playful sneaky mood, 112 BPM.",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "bright golden coin chime with a sparkle",
+     "seconds": 1
+    },
+    {
+     "event": "jump",
+     "prompt": "soft cartoon boing",
+     "seconds": 1
+    },
+    {
+     "event": "land",
+     "prompt": "muffled thud with a tiny dust puff",
+     "seconds": 1
+    },
+    {
+     "event": "damage",
+     "prompt": "yelp and a sharp crack",
+     "seconds": 1
+    },
+    {
+     "event": "checkpoint",
+     "prompt": "heavy vault door grinding open",
+     "seconds": 2
+    },
+    {
+     "event": "win",
+     "prompt": "cash-register cha-ching into a brass fanfare",
+     "seconds": 3
+    }
+   ],
+   "props": [
+    {
+     "name": "vault_statue",
+     "prompt": "small brass vault door on a stone pedestal, round dial and gold handle",
+     "count": 6
+    },
+    {
+     "name": "gold_crate",
+     "prompt": "wooden crate wrapped in gold bands with a coin emblem",
+     "count": 10
+    }
+   ]
+  },
+  "features": [
+   "Keyring HUD (UI.keyring) tracking red and blue key state",
+   "Checkpoint flags on each island with ring FX and chime",
+   "Two stompable patrol slimes guarding the vault steps",
+   "Lava surge juice: screen shake, red flash and fire FX on ignition",
+   "Confetti and fanfare burst when the vault door opens",
+   "Sparkle burst and floating '+1' text on every coin pickup"
+  ],
+  "mapping_notes": "The fox heist maps cleanly: fox species with a scarf as the burglar; 'floating sky vault' \u2192 sky_islands, whose goal island with arch plays as the vault entrance and whose moving-platform bonus island hosts the final switch; 'colour keys open matching doors' \u2192 the keys_doors mechanic (red + blue); 'flip switches that move platforms' \u2192 switch_gate, which raises a platform bridge across the cloud gap; 'every 5 coins the floor turns to lava for 3 seconds' \u2192 a rule mechanic with {tag:'coin', every:5} triggering {lava:3} plus a banner. No custom level is needed \u2014 sky_islands already provides the floating-island hops, rope bridges, movers and goal arch the pitch describes. The sunset look, gold vault props and heist-jazz loop keep the vault-break-in mood."
+ },
+ "timings_s": {
+  "art": 677.4,
+  "build": 1518.5,
+  "eval_rerecord_1103_053101": 113.7,
+  "eval_s0": 30.8,
+  "eval_v0": 141.2,
+  "eval_v1": 133.5,
+  "eval_v2": 138.2,
+  "finalize": 59.4,
+  "plan": 427.7,
+  "repair_1": 610.6,
+  "repair_2": 723.7,
+  "scaffold": 2.7
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Vault Hopper: a fox breaks into a floating sky vault: grab colour keys to open matching doors, flip switches that move platforms, and every 5 coins the floor turns to lava for 3 seconds. Bright, bouncy, cheeky.",
+  "notes": "The fox heist maps cleanly: fox species with a scarf as the burglar; 'floating sky vault' \u2192 sky_islands, whose goal island with arch plays as the vault entrance and whose moving-platform bonus island hosts the final switch; 'colour keys open matching doors' \u2192 the keys_doors mechanic (red + blue); 'flip switches that move platforms' \u2192 switch_gate, which raises a platform bridge across the cloud gap; 'every 5 coins the floor turns to lava for 3 seconds' \u2192 a rule mechanic with {tag:'coin', every:5} triggering {lava:3} plus a banner. No custom level is needed \u2014 sky_islands already provides the floating-island hops, rope bridges, movers and goal arch the pitch describes. The sunset look, gold vault props and heist-jazz loop keep the vault-break-in mood.",
+  "chosen": {
+   "level_kind": "sky_islands",
+   "look": "sunset",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "mode": "collect",
+   "species": "fox",
+   "character": {
+    "species": "fox",
+    "accessory": "scarf"
+   },
+   "collectible": "coin",
+   "collectible_label": "Coins"
+  },
+  "planned": {
+   "level_kind": "sky_islands",
+   "look": "sunset",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "mode": "collect",
+   "species": "fox"
+  },
+  "builder_overrides": []
+ },
+ "model_calls": {
+  "judge": {
+   "calls": 1,
+   "prompt_tokens": 6184,
+   "completion_tokens": 837,
+   "seconds": 13.6
+  }
+ },
+ "agents": {
+  "live": 0,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 409.7
+    },
+    "icon_coin": {
+     "ok": true,
+     "seconds": 417.6
+    },
+    "icon_vault_key": {
+     "ok": true,
+     "seconds": 427.7
+    },
+    "icon_flame": {
+     "ok": true,
+     "seconds": 438.3
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 501.0
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 504.9
+    },
+    "sfx_jump": {
+     "ok": true,
+     "seconds": 505.8
+    },
+    "sfx_land": {
+     "ok": true,
+     "seconds": 506.9
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 507.9
+    },
+    "sfx_checkpoint": {
+     "ok": true,
+     "seconds": 509.0
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 510.4
+    },
+    "prop_vault_statue": {
+     "ok": true,
+     "seconds": 624.9
+    },
+    "prop_gold_crate": {
+     "ok": true,
+     "seconds": 677.4
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Vault Hopper: a scarf fox heists a floating sky vault in a golden-hour sunset. Built on the scaffold (kept generated sky, props/splats, HUD, title, rules) and turned it into the plan's game: fixed the crashing Lava Surge rule (when must be the string trigger 'collect', not an object), added the plan's signature mechanics (red/blue colour keys opening matching vault doors, brass switch raising a platform gate), and invented two twist rules of my own \u2014 \"Heist Heat\" (every 30s a chaser guard spawns at your heels) and \"Vault Jackpot\" (collect all 24 coins for +50 and a cha-ching banner), plus a stomp-bonus rule. Added plan features: 4 dash-breakable gold coin crates along the route, a magnet power-up, a keyring HUD for red/blue keys, custom win/lose screens (\"VAULT CRACKED!\" / \"HEIST FAILED\"), heist-jazz music, and juice FX (confetti + starburst + shake when vault doors open, sparkle on coin pickup, red flash + shake on lava surge, stomp bursts with +20 text, checkpoint chime). Autopilot runs clean: 0 console errors, moves ~150u along the route, collects 28 coins (target 15), and fires every mechanic (key, keyUsed, door, switch, crate, powerup, rule, mechanic).",
+    "changes": [
+     "Fixed Mechanics.rule crash: when:'collect' string + tag/every options for Lava Surge",
+     "Added twist rule 'Heist Heat': timer every 30s spawns a chase enemy at the player with banner + whoosh sfx",
+     "Added twist rule 'Vault Jackpot': state collected gte 24 -> +50 score, banner, win sfx",
+     "Added 'Stomp Bonus' rule: defeating an enemy gives +20 score and a toast",
+     "HUD: coin counter with target 15, objective line, custom win/lose screen titles",
+     "Added UI.keyring for red and blue vault keys",
+     "Added 4 dash-breakable gold coin crates along the route",
+     "Added a magnet power-up pickup at 68% of the route",
+     "Heist-jazz music via Audio.music('music_main')",
+     "FX moments: confetti+starburst+shake on door open, sparkle on coin, starburst on key, red flash+shake on lava surge, stomp burst + '+20' text, checkpoint chime sfx"
+    ],
+    "known_issues": [
+     "Autopilot does not finish the full route within a 25s test window (long sky-islands chain with lava surges to hop); it is clearly progressing, collecting and triggering all mechanics, and a human player completes it",
+     "Player can take an hp hit from the lava surge mechanic during autopilot \u2014 this is the intended 'keep moving!' behaviour, not a bug",
+     "Minor harmless three.js WebGL program info-log warning from the kit renderer"
+    ]
+   },
+   "plays": 4
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ },
+ "incidents": [
+  "a duplicate builder process of the same pipeline ran 04:48-04:52 on this run dir and was killed; game.js was written during that window and may include its writes"
+ ],
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:32",
+   "score": 5.6,
+   "autopilot": {
+    "moved": 70.2,
+    "collected_end": 9,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.37
+  }
+ ]
+}

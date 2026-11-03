@@ -97,5 +97,29 @@
   "camera": {
    "yaw": 2.290859047936735
   }
+ },
+ "cutscene_intro": {
+  "kind": "cutscene",
+  "file": "cutscene_intro.mp4",
+  "when": "intro",
+  "model": "LTX-2.5",
+  "source": "cutscene_intro_source.jpg",
+  "prompt": "Opening cutscene of the world of \"Crystal Hollow\", a dark fantasy first-person arena survival game. The camera slowly pushes in and glides over the world, revealing the level, then the hero character appears and strikes a confident pose. Deep indigo night washed in violet moonlight; chunky low-poly basalt ruins with ink outlines, glowing cyan soul crystals, and warm ember runes carved into weathered pillars. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Upbeat adventurous music."
+ },
+ "cutscene_win": {
+  "kind": "cutscene",
+  "file": "cutscene_win.mp4",
+  "when": "win",
+  "model": "LTX-2.5",
+  "source": "cutscene_win_source.jpg",
+  "prompt": "Victory cutscene of the world of \"Crystal Hollow\", a dark fantasy first-person arena survival game. The hero celebrates the win, jumping and cheering, confetti and sparkles burst around, warm triumphant light, the camera circles slowly. Deep indigo night washed in violet moonlight; chunky low-poly basalt ruins with ink outlines, glowing cyan soul crystals, and warm ember runes carved into weathered pillars. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Joyful fanfare."
+ },
+ "cutscene_lose": {
+  "kind": "cutscene",
+  "file": "cutscene_lose.mp4",
+  "when": "lose",
+  "model": "LTX-2.5",
+  "source": "cutscene_lose_source.jpg",
+  "prompt": "A gentle comedic fail moment in the world of \"Crystal Hollow\", a dark fantasy first-person arena survival game: the hero slips, tumbles playfully, sits up dazed with little stars circling, then shrugs it off. Light-hearted and cute, never violent. Deep indigo night washed in violet moonlight; chunky low-poly basalt ruins with ink outlines, glowing cyan soul crystals, and warm ember runes carved into weathered pillars. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Playful 'womp womp' cartoon sound."
  }
 }

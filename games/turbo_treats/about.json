@@ -1,0 +1,415 @@
+{
+ "id": "turbo_treats",
+ "title": "Turbo Treats",
+ "tagline": "Sugar-rush coins, spin-out oil slicks, and a trail of gumdrops behind the leader.",
+ "pitch": "Turbo Treats: a candy kart race where coins give a sugar-rush speed boost, oil puddles spin you out, and the leader leaves a trail of gumdrops. Sweet pastel colours, three laps.",
+ "genre": "Candy arcade kart racer",
+ "controls": [
+  "W / up: throttle, S / down: brake",
+  "A D / left right: steer",
+  "Space (hold while steering): drift, release = boost",
+  "P / Esc: pause"
+ ],
+ "mechanics": [
+  {
+   "name": "rule",
+   "how": "rule",
+   "api": "Mechanics.rule",
+   "file": "game.js",
+   "line_start": 76,
+   "line_end": 76,
+   "snippet": "K.Mechanics.rule(game, {\"name\": \"Sugar Rush\", \"text\": \"12 sugar coins = SUGAR RUSH: 4 seconds of 1.5x speed.\", \"when\": \"state\", \"key\": \"collected\", \"gte\": 12, \"do\": [{\"tune\": {\"speed\": 1.5}, \"seconds\": 4}, {\"banner\": \"SUGAR RUSH!\"}, {\"score\": 50}, {\"fx\": \"speedLines\"}, {\"sfx\": \"boost\"}]});"
+  },
+  {
+   "name": "Oil Slick Spin-Out",
+   "how": "custom",
+   "api": "Mechanics.custom",
+   "file": "game.js",
+   "line_start": 78,
+   "line_end": 126,
+   "snippet": "K.Mechanics.custom(game, {\n  name: \"Oil Slick Spin-Out\",\n  text: \"Cross an oil slick and your kart spins out \u2014 dizzy wobble, no steering for a second.\",\n  init(ctx) {\n    ctx.vars.slips = [];\n    ctx.vars.spin = 0;\n    // Place 5 oil slicks on the racing line, avoiding the start area.\n    const fracs = [0.15, 0.32, 0.5, 0.68, 0.85];\n    const THREE = ctx.THREE;\n    const dark = new THREE.MeshBasicMaterial({ color: '#1c2028', transparent: true, opacity: 0.85 });\n    const sheen = new THREE.MeshBasicMaterial({ color: '#8a6cff', transparent: true, opacity: 0.4 });\n    for (const f of fracs) {\n      const a = ALONG(f), b = ALONG(f + 0.004);\n      const yaw = Math.atan2(b.p[0] - a.p[0], b.p[2] - a.p[2]);\n      const g = new THREE.Group();\n      const blob = new THREE.Mesh(new THREE.CircleGeometry(1.7, 22), dark);\n      blob.rotation.x = -Math.PI / 2;\n      const ring = new THREE.Mesh(new THREE.RingGeometry(1.15, 1.55, 22), sheen);\n      ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02;\n      g.add(blob, ring);\n      g.position.set(a.p[0], a.p[1] + 0.06, a.p[2]); g.rotation.y = yaw;\n      ctx.level.group.add(g);\n      ctx.vars.slips.push({ x: a.p[0], z: a.p[2], mesh: g, hit: false,"
+  },
+  {
+   "name": "Gumdrops of the Leader",
+   "how": "custom",
+   "api": "Mechanics.custom",
+   "file": "game.js",
+   "line_start": 128,
+   "line_end": 165,
+   "snippet": "K.Mechanics.custom(game, {\n  name: \"Gumdrops of the Leader\",\n  text: \"The leader leaves a trail of gumdrops; trailing karts can pick them up for a boost.\",\n  init(ctx) {\n    ctx.vars.t = 0;\n    ctx.vars.drops = [];\n    const THREE = ctx.THREE;\n    ctx.vars.mat = new THREE.MeshBasicMaterial({ color: '#ff7ab8' });\n  },\n  update(dt, ctx) {\n    ctx.vars.t += dt;\n    // We track the leader via ctx.state.position (player's rank). If player is leader, they drop gumdrops behind.\n    if (ctx.state.position === 1 && ctx.vars.t > 0.5) {\n      ctx.vars.t = 0;\n      const p = ctx.player;\n      const THREE = ctx.THREE;\n      const m = new THREE.Mesh(new THREE.SphereGeometry(0.35, 10, 8), ctx.vars.mat);\n      m.position.set(p.position.x, p.position.y + 0.3, p.position.z);\n      ctx.level.group.add(m);\n      ctx.vars.drops.push({ mesh: m, born: ctx.time });\n    }\n    // expire drops after 6s, and let the player (if not leader) collect them for a boost\n    for (let i = ctx.vars.drops.length - 1; i >= 0; i--) {\n      const d = ctx.vars.drops[i];\n      if (ctx.time - d.born > 6) { ctx.level.group.remove(d.mesh); ctx.vars.drops.splice(i, 1); continue; }\n      if (ctx.state.position !== 1) {\n        co"
+  }
+ ],
+ "created": "2026-11-03T05:34:36-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "rerecord_1103_053228",
+  "score": 6.5,
+  "play": 8.0,
+  "vision": 5.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "s0",
+    "score": 0.5,
+    "play_score": 0.5,
+    "vision_score": null
+   },
+   {
+    "tag": "v1",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "v2",
+    "score": 0.5,
+    "play_score": 0.5,
+    "vision_score": null
+   },
+   {
+    "tag": "rerecord_1103_053228",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Turbo Treats",
+  "tagline": "Sugar-rush coins, spin-out oil slicks, and a trail of gumdrops behind the leader.",
+  "genre": "Candy arcade kart racer",
+  "core_loop": "Lap a candy circuit against 3 AI karts, grabbing sugar coins to charge a sugar-rush speed boost, dodging oil slicks that spin you out, and snatching gumdrops from the leader's trail to overtake.",
+  "controls": [
+   "W / \u2191: accelerate",
+   "S / \u2193: brake / reverse",
+   "A / D or \u2190 / \u2192: steer",
+   "Space: drift",
+   "R: reset to the racing line"
+  ],
+  "win_condition": "Finish 3 laps ahead of the 3 AI karts (1st place at the finish gantry).",
+  "lose_condition": "Finish 4th \u2014 the candy shop closes and you get a lollipop consolation.",
+  "look": "candy",
+  "ui_style": "arcade",
+  "level_kind": "race_track",
+  "level_size": "medium",
+  "player_type": "kart",
+  "camera": "chase",
+  "player_colors": {
+   "body": "#ff5d8f",
+   "accent": "#59e8c2"
+  },
+  "collectible": {
+   "tag": "coin",
+   "label": "Sugar Coins",
+   "count": 40,
+   "target": 12
+  },
+  "goal": true,
+  "timer_seconds": 0,
+  "lives": 0,
+  "enemies": 0,
+  "race": {
+   "laps": 3,
+   "opponents": 3
+  },
+  "character": {
+   "species": "bunny",
+   "accessory": "scarf"
+  },
+  "mode": "race",
+  "mechanics": [
+   {
+    "name": "Sugar Rush",
+    "how": "rule",
+    "text": "12 sugar coins = SUGAR RUSH: 4 seconds of 1.5x speed.",
+    "rule": {
+     "when": {
+      "kind": "count",
+      "tag": "coin",
+      "gte": 12
+     },
+     "do": [
+      {
+       "tune": {
+        "speed": 1.5
+       },
+       "seconds": 4
+      },
+      {
+       "banner": "SUGAR RUSH!"
+      },
+      {
+       "score": 50
+      }
+     ]
+    }
+   },
+   {
+    "name": "Oil Slick Spin-Out",
+    "how": "custom",
+    "text": "Cross an oil slick and your kart spins out \u2014 dizzy wobble, no steering for a second."
+   },
+   {
+    "name": "Gumdrops of the Leader",
+    "how": "custom",
+    "text": "The leader leaves a trail of gumdrops; trailing karts can pick them up for a boost."
+   }
+  ],
+  "art_direction": "Glossy toon Candy Land: bubblegum pink, mint, lemon and caramel palette with thick ink outlines; candy-glass materials, candy-cane striped curbs, gumdrop bumpers and a lemon-yellow sun. Bright high-noon light with cotton-candy clouds, cheerful arcade-kart mood \u2014 Candy Land meets a retro kart racer.",
+  "concept_shots": [
+   "The pink bunny kart drifts a banked corner, candy-cane curbs and a glowing trail of gumdrops behind it, a mint AI kart chasing on the inside line.",
+   "Sugar rush: the kart blurs down the straight with speed lines, sugar coins streaking past, cotton-candy clouds and a lemon sun behind.",
+   "A kart hits an oil slick and spins out in a dizzy wobble while gumdrops bounce off the candy barriers and the leader's trail glistens ahead."
+  ],
+  "assets": {
+   "sky": "High-noon candy sky: cotton-candy clouds in pink, peach and cream, soft lemon-yellow sun, horizon fading to mint.",
+   "icons": [
+    {
+     "name": "coin",
+     "prompt": "glossy pink sugar coin with a white swirl, toon style with ink outline",
+     "for": "coins"
+    },
+    {
+     "name": "bolt",
+     "prompt": "caramel lightning bolt wrapped in candy stripes, toon style",
+     "for": "rush"
+    },
+    {
+     "name": "lap",
+     "prompt": "checkered flag made of candy stripes, toon style",
+     "for": "laps"
+    },
+    {
+     "name": "trophy",
+     "prompt": "candy-cane trophy cup with a gumdrop on top, toon style",
+     "for": "rank"
+    }
+   ],
+   "music": "upbeat chiptune-pop kart race loop, bouncy 140 BPM, synth brass stabs, bubbly bass, candy-shop pizzicato",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "bright ping like a candy wrapper crinkle"
+    },
+    {
+     "event": "boost",
+     "prompt": "rising sugar-rush whoosh with a fizzy pop"
+    },
+    {
+     "event": "damage",
+     "prompt": "cartoon wobble boing spin-out sound"
+    },
+    {
+     "event": "checkpoint",
+     "prompt": "cheerful ding like a candy-jar lid"
+    },
+    {
+     "event": "win",
+     "prompt": "candy fanfare with bells and confetti pops"
+    },
+    {
+     "event": "lose",
+     "prompt": "deflating womp with a sad trombone blip"
+    }
+   ],
+   "props": [
+    {
+     "name": "gumdrop",
+     "prompt": "one big glossy gumdrop, round dome with a sugar-dusted top, candy pink",
+     "count": 24
+    },
+    {
+     "name": "lollipop",
+     "prompt": "one giant lollipop signpost, swirled candy head on a striped stick, mint and pink",
+     "count": 8
+    }
+   ]
+  },
+  "features": [
+   "Oil slicks (spinner hazards) scattered on the racing line \u2014 hitting one spins the kart out with a wobble and a splat sound",
+   "Gumdrops of the leader: the leading kart leaves a trail of glowing gumdrops that trailing karts can pick up for a small boost",
+   "Boost pads on the straights with speed-lines FX and a boost sfx",
+   "Candy-cane curbs and striped barriers with sparkle FX when a kart clips them",
+   "Sugar-rush meter in the HUD: 12 coins fills it and triggers a 4s 1.5x speed burst with speed lines",
+   "Confetti burst at the finish gantry and a podium banner showing final placement"
+  ],
+  "mapping_notes": "Candy kart race \u2192 look 'candy' (glossy pastel candy preset), player_type 'kart', mode 'race', level_kind 'race_track' (the only preset built for kart racing: closed banked circuit with curbs, barriers, start/finish gantry, boost pads, lake infield), camera 'chase', race {laps: 3, opponents: 3} for the AI karts. 'Coins give a sugar-rush speed boost' \u2192 collectible tag 'coin' labelled Sugar Coins (40 placed along the racing line, target 12) plus the 'Sugar Rush' count rule: 12 coins \u2192 4s of 1.5x speed with banner and speed lines. 'Oil puddles spin you out' \u2192 the catalog has no literal oil puddle, so Gameplay.HAZARDS 'spinner' stands in as the puddle footprint and the 'Oil Slick Spin-Out' custom mechanic codes the spin-out: a dizzy wobble, splat sfx and a lost second of steering. 'The leader leaves a trail of gumdrops' \u2192 'Gumdrops of the Leader' custom mechanic: the current leader's kart gets an FX trail of glowing gumdrops and the builder spawns short-lived gumdrop pickups along it, so chasers get a boost lane \u2014 turning the leader's advantage into a pickup for everyone behind. Hero: the pitch names no protagonist, so a candy bunny (species 'bunny', accessory 'scarf') in pink/mint is the closest candy mascot. HUD is arcade style with icons for sugar coins, the rush meter (bolt), laps and placement (trophy); props are scattered gumdrops and lollipop signposts dressing the infield and barriers."
+ },
+ "timings_s": {
+  "art": 602.0,
+  "build": 2059.9,
+  "eval_rerecord_1103_053228": 63.0,
+  "eval_s0": 48.9,
+  "eval_v0": 165.0,
+  "eval_v1": 82.2,
+  "eval_v2": 28.4,
+  "finalize": 73.0,
+  "plan": 121.3,
+  "repair_1": 1225.3,
+  "repair_2": 198.0,
+  "scaffold": 8.3
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Turbo Treats: a candy kart race where coins give a sugar-rush speed boost, oil puddles spin you out, and the leader leaves a trail of gumdrops. Sweet pastel colours, three laps.",
+  "notes": "Candy kart race \u2192 look 'candy' (glossy pastel candy preset), player_type 'kart', mode 'race', level_kind 'race_track' (the only preset built for kart racing: closed banked circuit with curbs, barriers, start/finish gantry, boost pads, lake infield), camera 'chase', race {laps: 3, opponents: 3} for the AI karts. 'Coins give a sugar-rush speed boost' \u2192 collectible tag 'coin' labelled Sugar Coins (40 placed along the racing line, target 12) plus the 'Sugar Rush' count rule: 12 coins \u2192 4s of 1.5x speed with banner and speed lines. 'Oil puddles spin you out' \u2192 the catalog has no literal oil puddle, so Gameplay.HAZARDS 'spinner' stands in as the puddle footprint and the 'Oil Slick Spin-Out' custom mechanic codes the spin-out: a dizzy wobble, splat sfx and a lost second of steering. 'The leader leaves a trail of gumdrops' \u2192 'Gumdrops of the Leader' custom mechanic: the current leader's kart gets an FX trail of glowing gumdrops and the builder spawns short-lived gumdrop pickups along it, so chasers get a boost lane \u2014 turning the leader's advantage into a pickup for everyone behind. Hero: the pitch names no protagonist, so a candy bunny (species 'bunny', accessory 'scarf') in pink/mint is the closest candy mascot. HUD is arcade style with icons for sugar coins, the rush meter (bolt), laps and placement (trophy); props are scattered gumdrops and lollipop signposts dressing the infield and barriers.",
+  "chosen": {
+   "level_kind": "race_track",
+   "look": "candy",
+   "player_type": "kart",
+   "camera": "chase",
+   "ui_style": "arcade",
+   "mode": "race",
+   "species": "bunny",
+   "character": {
+    "species": "bunny",
+    "accessory": "scarf"
+   },
+   "collectible": "coin",
+   "collectible_label": "Sugar Coins"
+  },
+  "planned": {
+   "level_kind": "race_track",
+   "look": "candy",
+   "player_type": "kart",
+   "camera": "chase",
+   "ui_style": "arcade",
+   "mode": "race",
+   "species": "bunny"
+  },
+  "builder_overrides": []
+ },
+ "model_calls": {
+  "judge": {
+   "calls": 1,
+   "prompt_tokens": 6183,
+   "completion_tokens": 673,
+   "seconds": 12.4
+  }
+ },
+ "agents": {
+  "live": 0,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 151.5
+    },
+    "icon_coin": {
+     "ok": true,
+     "seconds": 160.9
+    },
+    "icon_bolt": {
+     "ok": true,
+     "seconds": 171.0
+    },
+    "icon_lap": {
+     "ok": true,
+     "seconds": 181.2
+    },
+    "icon_trophy": {
+     "ok": true,
+     "seconds": 191.5
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 219.9
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 224.8
+    },
+    "sfx_boost": {
+     "ok": true,
+     "seconds": 225.8
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 226.7
+    },
+    "sfx_checkpoint": {
+     "ok": true,
+     "seconds": 227.9
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 229.5
+    },
+    "sfx_lose": {
+     "ok": true,
+     "seconds": 230.3
+    },
+    "prop_gumdrop": {
+     "ok": true,
+     "seconds": 320.4
+    },
+    "prop_lollipop": {
+     "ok": true,
+     "seconds": 602.0
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Turbo Treats scaffold: fixed the one blocking error \u2014 the 'Sugar Rush' K.Mechanics.rule used an unsupported object form for `when` ({kind:'count', tag, gte}) which threw \"unknown when.kind 'count'\"; replaced it with the documented state-trigger form (when:'state', key:'collected', gte:12) so the 12-coin sugar-rush rule (4s 1.5x speed, banner, +50 score) now registers. The rest of the scaffold (candy look, generated sky/props/splats, race_track level with 40 coins, bunny kart, chase cam, 3-lap race vs 3 AI, arcade HUD, title screen, FX/Audio auto) is intact.",
+    "changes": [
+     "game.js: corrected Sugar Rush rule trigger from {kind:'count',tag:'coin',gte:12} to {when:'state',key:'collected',gte:12}"
+    ],
+    "known_issues": [
+     "Two plan mechanics remain TODO stubs: 'Oil Slick Spin-Out' (spinner hazards exist on the level but the dizzy-wobble/no-steering custom mechanic is not implemented) and 'Gumdrops of the Leader' (leader trail + gumdrop pickups not implemented).",
+     "No twist mechanic of my own was added (required at least one).",
+     "The fix was applied but play_game was not re-run to confirm zero errors and mechanic firing before the step budget ran out.",
+     "Win/lose screens, extra FX moments (confetti at gantry, podium banner) and oil-slick visuals were not added."
+    ]
+   },
+   "plays": 1
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ },
+ "incidents": [
+  "a duplicate builder process of the same pipeline ran 04:48-04:52 on this run dir and was killed; game.js was not written during that window, so it most likely has none of its writes"
+ ],
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:33",
+   "score": 6.5,
+   "autopilot": {
+    "moved": 210.5,
+    "collected_end": 14,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.0
+  }
+ ]
+}

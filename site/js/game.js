@@ -23,10 +23,14 @@
   }
   if (!/^[\w.-]+$/.test(id)) return fail("No game id in the link.");
 
-  Promise.all([getJSON(base + "about.json"), getJSON(base + "assets/assets.json")]).then(([a, assets]) => {
-    if (!a) return fail(`No record for "${id}".`);
-    render(a, assets || {});
-  });
+  Promise.all([getJSON(base + "about.json"), getJSON(base + "assets/assets.json"), getJSON("../games/index.json")])
+    .then(([a, assets, idx]) => {
+      if (!a) return fail(`No record for "${id}".`);
+      // the index's controls are checked against the kit and game code (lines naming an unbound key are dropped)
+      const entry = ((idx && idx.games) || []).find((g) => g.id === id);
+      if (entry && Array.isArray(entry.controls)) a = { ...a, controls: entry.controls };
+      render(a, assets || {});
+    });
 
   function render(a, assets) {
     const plan = a.plan || {};
@@ -47,6 +51,16 @@
     if (total) facts.push(`<span class="chip grass">Built in ${fmtS(total)}</span>`);
     if (calls) facts.push(`<span class="chip sky">${nf.format(calls)} model calls</span>`);
     if (repairs) facts.push(`<span class="chip pink">${repairs} repair round${repairs > 1 ? "s" : ""}</span>`);
+    const chosenLevel = a.mapping?.chosen?.level_kind;
+    const mechs = Array.isArray(a.mechanics) ? a.mechanics : [];
+    const lay = a.mapping?.layout;
+    const laidOut = chosenLevel === "custom" && laidOutBy(lay);
+    const startLayout = a.mapping?.chosen?.custom_layout || plan.custom_layout;
+    if (chosenLevel === "custom") facts.push(laidOut ? '<a class="chip sun" href="#beyond">Level laid out by the model</a>'
+      : `<a class="chip" href="#beyond">Composed level${startLayout ? ` (from '${esc(startLayout)}')` : ""}</a>`);
+    const own = mechs.filter((m) => m && (m.how === "custom" || m.how === "rule")).length;
+    if (mechs.length) facts.push(own ? `<a class="chip pink" href="#beyond">Custom mechanics: ${own}</a>`
+      : `<a class="chip" href="#beyond">Kit mechanics: ${mechs.length}</a>`);
     if (a.dry_run) facts.push('<span class="chip ink">DEV: dry run, fake models</span>');
     $("#g-facts").innerHTML = facts.join("");
     const ctrls = a.controls || plan.controls || [];
@@ -98,6 +112,7 @@
     if (plan.features?.length) add("Extras", plan.features.map(esc).join(" · "), "wide");
     $("#g-plan").innerHTML = rows.join("");
     $("#g-map").innerHTML = mappingBlock(a.mapping);
+    renderBeyond(a, chosenLevel, mechs, laidOut, startLayout);
 
     // concept vs result
     const shots = plan.concept_shots || [];
@@ -128,6 +143,18 @@
     for (const [k, v] of by("splat")) tiles.push(`<div class="asset tile"><div class="pic checker"><img src="${esc(url(`about/${k}_preview.png`))}" alt="" loading="lazy" onerror="this.parentNode.classList.add('noimg')"><span class="pname">${esc(title(k.replace(/^splat_/, "")))}</span></div>
       <div class="cap"><span class="chip pink">Gaussian splat · Idol</span>${v.prompt ? `<p>“${esc(v.prompt)}”</p>` : ""}${secs(k)}</div></div>`);
         if (tiles.length) html.push(`<div class="tiles">${tiles.join("")}</div>`);
+    const cuts = by("cutscene");
+    if (cuts.length) {
+      const order = { intro: 0, win: 1, lose: 2 };
+      cuts.sort(([, x], [, y]) => (order[x.when] ?? 9) - (order[y.when] ?? 9));
+      const stageModel = cutsceneModel(a.post_stages);
+      html.push(`<h3 class="asset-h">Cutscenes</h3><div class="cuts">${cuts.map(([k, v]) => `<figure class="asset cut">
+        <video src="${esc(url("assets/" + v.file))}" ${v.source ? `poster="${esc(url("assets/" + v.source))}"` : ""} controls muted playsinline preload="metadata"></video>
+        <figcaption class="cap"><span class="chip ink">Cutscene · ${esc(v.model || stageModel)}${v.when ? ` · ${esc(v.when)}` : ""}</span>
+        ${v.prompt ? `<p title="${esc(v.prompt)}">“${esc(v.prompt)}”</p>` : ""}</figcaption></figure>`).join("")}</div>`);
+    }
+    const post = postStagesLine(a.post_stages);
+    if (post) html.push(`<p class="post-line">${post}</p>`);
     const sounds = [...by("music"), ...by("sfx")];
     if (sounds.length) html.push(`<div class="sounds">${sounds.map(([k, v]) => `<div class="sound">
       <button class="playbtn" data-src="${esc(url("assets/" + v.file))}" aria-label="Play ${esc(k)}"><i></i></button>
@@ -153,8 +180,96 @@
     wireAudio();
 
     // build log
-    $("#g-log").innerHTML = [timeline(t), scores(a.score), callsTable(a.model_calls, a.agents),
+    $("#g-log").innerHTML = [timeline(t), scores(a.score), postStages(a.post_stages), incidents(a.incidents), callsTable(a.model_calls, a.agents),
       builderReport(a.stages?.build)].filter(Boolean).join("");
+  }
+
+  // post_stages: a list (["cutscenes"]) or a dict ({cutscenes: {model: "LTX-2.5"}}); LTX-2.5 unless a model is recorded
+  // blocksfield/web_cutscenes.py appends {"stage": "cutscenes", "model", "run", "clips": [...], "at"} to post_stages
+  function cutsceneStage(ps) {
+    return (Array.isArray(ps) ? ps : []).find((x) => x && typeof x === "object" && x.stage === "cutscenes") || null;
+  }
+  function cutsceneModel(ps) {
+    const c = cutsceneStage(ps);
+    return (c && c.model) || "LTX-2.5";
+  }
+  // about.json "incidents": pipeline problems during the run, listed as recorded; not operator interventions, no chip
+  function incidents(xs) {
+    const items = (Array.isArray(xs) ? xs : typeof xs === "string" && xs.trim() ? [xs] : [])
+      .map((x) => (typeof x === "string" ? x : JSON.stringify(x))).filter((x) => x.trim());
+    if (!items.length) return "";
+    return `<div class="panel wide incidents"><h3>Incidents <small>pipeline problems during this run, as recorded</small></h3>
+      <ul class="post-list">${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
+  }
+
+  // post_stages entries written by web_run ({stage, kit_commit, at}): uniform passes run after every build
+  function postStages(ps) {
+    const items = (Array.isArray(ps) ? ps : []).filter((x) => x && typeof x === "object" && x.stage);
+    if (!items.length) return "";
+    const text = (x) => x.stage === "cutscenes"
+      ? `Cutscenes generated by ${esc(x.model || "LTX-2.5")}${Array.isArray(x.clips) && x.clips.length ? ` (${x.clips.map(esc).join(", ")})` : ""}, ${esc(x.run || "uniform pipeline stage after build")}`
+      : esc(x.stage);
+    return `<div class="panel wide"><h3>After the build <small>the same passes for every game</small></h3><ul class="post-list">${items.map((x) =>
+      `<li>${text(x)}${x.kit_commit ? ` <code>kit ${esc(String(x.kit_commit).slice(0, 10))}</code>` : ""}${x.at ? ` <span>${esc(x.at)}</span>` : ""}</li>`).join("")}</ul></div>`;
+  }
+  function postStagesLine(ps) {
+    const c = cutsceneStage(ps);
+    return c ? `Cutscenes generated by ${esc(c.model || "LTX-2.5")} in a uniform post-build stage.` : "";
+  }
+
+  // "Beyond the kits": a model-laid level (mapping.layout, verbatim) and custom mechanics with their code
+  // same rule as build_index.level_laid_out: evidence in mapping.layout, or no strong claim
+  function laidOutBy(lay) {
+    if (!lay || typeof lay !== "object") return false;
+    return lay.start === "freeform" || Number(lay.pieces_changed_from_start || 0) > 0;
+  }
+  function renderBeyond(a, level, mechs, laidOut, startLayout) {
+    const parts = [];
+    if (level === "custom") {
+      const lay = a.mapping?.layout;
+      const rows = lay && typeof lay === "object"
+        ? Object.entries(lay).map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(typeof v === "object" ? JSON.stringify(v) : v)}</td></tr>`).join("")
+        : "";
+      parts.push(laidOut
+        ? `<div class="beyond-card"><h3><span class="chip sun">Level laid out by the model</span></h3>
+          <p>Instead of a one-call kit level, the model placed this level's pieces itself.</p>
+          ${rows ? `<table class="layout-tbl">${rows}</table>` : ""}</div>`
+        : `<div class="beyond-card"><h3><span class="chip">Composed level (Level.compose)</span></h3>
+          <p>${startLayout ? `From the '${esc(startLayout)}' starting layout.` : "Built with Level.compose."}</p></div>`);
+    }
+    if (mechs.length) {
+      const anyOwn = mechs.some((m) => m && (m.how === "custom" || m.how === "rule"));
+      parts.push(`<div class="beyond-card"><h3><span class="chip ${anyOwn ? "pink" : ""}">${anyOwn ? "Mechanics" : "Kit mechanics"}</span></h3><div class="mechs">${mechs.map((m, i) => {
+        const o = typeof m === "object" && m ? m : { name: String(m) };
+        const how = o.how || o.implementation || o.kind;
+        return `<div class="mech"><div class="mech-head"><b>${esc(o.name || `mechanic ${i + 1}`)}</b>${how ? `<span class="how how-${esc(how)}">${esc(how)}</span>` : ""}${o.api ? `<code class="api">${esc(o.api)}</code>` : ""}${o.line_start ? `<span class="where">${esc(o.file || "game.js")}:${esc(o.line_start)}</span>` : ""}</div>
+          ${o.description ? `<p>${esc(o.description)}</p>` : ""}<pre class="snip" data-i="${i}" hidden><code></code></pre></div>`;
+      }).join("")}</div></div>`);
+    }
+    if (!parts.length) return;
+    $("#g-beyond").innerHTML = parts.join("");
+    $("#beyond").hidden = false;
+    mechs.forEach((m, i) => snippet(m).then((code) => {
+      if (!code) return;
+      const pre = document.querySelector(`.snip[data-i="${i}"]`);
+      pre.querySelector("code").textContent = code;
+      pre.hidden = false;
+    }));
+  }
+  // a mechanic's code: inline (snippet / code), a line range (lines [a, b] or line_start / line_end, 1-based) or an
+  // anchor string, in game.js unless the record names another file of the game
+  function snippet(m) {
+    if (!m || typeof m !== "object") return Promise.resolve("");
+    if (typeof m.snippet === "string" && m.snippet.trim()) return Promise.resolve(m.snippet);
+    if (typeof m.code === "string" && m.code.trim()) return Promise.resolve(m.code);
+    const range = Array.isArray(m.lines) ? m.lines : (m.line_start ? [m.line_start, m.line_end || m.line_start] : null);
+    if (!range && !m.anchor) return Promise.resolve("");
+    return fetch(url(m.file || "game.js")).then((r) => (r.ok ? r.text() : "")).then((src) => {
+      const lines = src.split("\n");
+      if (range) return lines.slice(Math.max(0, range[0] - 1), Math.min(lines.length, range[1])).join("\n");
+      const at = lines.findIndex((l) => l.includes(m.anchor));
+      return at < 0 ? "" : lines.slice(at, at + 24).join("\n");
+    }).catch(() => "");
   }
 
   // How to play: the kit's real bindings (web/kit/docs/Player.md, touch.js) per player type. The game's own controls
@@ -170,14 +285,23 @@
       "left stick move · drag the right side to look · FIRE / JUMP buttons"],
   };
   HOWTO.boat = HOWTO.kart;
+  // gamepad, per type, from the kit's readKeys (A = button 0 jump, X / RB / RT = action, B / LT = pound) and the
+  // vehicle drift input (jump or action); the right stick turns the orbit/follow camera, not the vehicles' chase cam
+  const PAD = {
+    platformer: "left stick move · A jump · X / RB dash · B ground pound · right stick camera",
+    kart: "left stick steer (push up to accelerate, down to brake) · hold A, X, RB or RT in a turn to drift, release to boost",
+    topdown: "left stick move · A jump (fire in blaster games) · X / RB dash",
+    fps: "left stick move · A jump and fire · X / RB action",
+  };
+  PAD.boat = PAD.kart;
   function howTo(type, hasControls, play) {
     const h = HOWTO[type];
     if (!h) return "";
     const rows = [];
     if (!hasControls) rows.push(["Keyboard", h[0]]);
     rows.push(["Phone", h[1]]);
-    rows.push(["Gamepad", "left stick move · A jump · X / RB action · right stick camera"]);
-    rows.push(["Pause", "Esc / P"]);
+    rows.push(["Gamepad", PAD[type] || PAD.platformer]);
+    rows.push(["Pause / reset", "Esc / P pause · R puts you back on the route"]);
     return `<h3>How to play</h3><dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
       <p class="howto-foot">Phones: play in landscape. Weak laptop? Open <a href="${esc(url(play))}?quality=low">the low-quality version</a>.</p>`;
   }
@@ -204,7 +328,7 @@
     else if (Array.isArray(bo) && bo.length) over = bo.map((x) => esc(typeof x === "string" ? x : JSON.stringify(x))).join(" · ");
     else if (bo && typeof bo === "object" && Object.keys(bo).length) over = Object.entries(bo).map(([k, x]) =>
       `<b>${esc(L[k] || title(k))}:</b> ${esc(typeof x === "string" ? x : JSON.stringify(x))}`).join(" · ");
-    if (over) over = `<p class="moverride"><b>The builder changed the plan:</b> ${over}</p>`;
+    if (over) over = `<p class="moverride"><b>Builder changes:</b> ${over.replace(/^the /, "The ")}</p>`;
     return `<div class="mapping"><h3>From pitch to kit choices</h3><div class="mchoices">${chips}</div>${over}${notes}</div>`;
   }
 

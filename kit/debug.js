@@ -7,6 +7,7 @@ import * as Gameplay from './gameplay.js';
 import * as World from './world.js';
 import * as Physics from './physics.js';
 import * as Touch from './touch.js';
+import * as Assist from './assist.js';
 
 // ---- errors: capture from the moment the kit is imported, not just after install ----
 if (!window.__kitErrorHooks) {
@@ -397,6 +398,7 @@ export function install(game, opts = {}) {
       if (on === pilotOn) return pilotOn;
       try {
         if (on) {
+          if (typeof game.__cutsceneSkip === 'function') game.__cutsceneSkip();   // the bot plays; skip any intro clip
           if (typeof game.__uiDismissTitle === 'function') game.__uiDismissTitle();
           if (pilot && typeof pilot === 'object' && typeof pilot.start === 'function') pilot.start();
           else if (pilot && typeof pilot === 'object' && 'enabled' in pilot) pilot.enabled = true;
@@ -432,7 +434,7 @@ export function install(game, opts = {}) {
     },
     emit(name, ...args) { game.emit(name, ...args); return true; },
     // dismiss a title screen without a key press (harness), and hide/show the whole UI overlay for clean shots
-    start() { if (typeof game.__uiDismissTitle === 'function') game.__uiDismissTitle(); if (!game.started) game.start(); return true; },
+    start() { if (typeof game.__cutsceneSkip === 'function') game.__cutsceneSkip(); if (typeof game.__uiDismissTitle === 'function') game.__uiDismissTitle(); if (!game.started) game.start(); return true; },
     ui(on = true) { const r = game.__ui && game.__ui.root; if (r) r.classList.toggle('tk-hidden', !on); return !!r; },
     overlay(on) { dev = dev || overlay(); dev.style.display = (on == null ? dev.style.display === 'none' : on) ? 'block' : 'none'; return dev.style.display === 'block'; },
   };
@@ -459,6 +461,7 @@ export function install(game, opts = {}) {
   window.addEventListener('blur', () => kit.releaseAll());
 
   try { Touch.install(game, { player }); } catch (e) { reportError(e); }
+  try { Assist.install(game, { player, level }); } catch (e) { reportError(e); }   // R to reset, auto-unstick, boats stay on water
   // ?quality=low|high forces the Look tier (weak laptops, or to compare); auto-quality still runs otherwise
   try {
     const q = new URLSearchParams(location.search).get('quality');

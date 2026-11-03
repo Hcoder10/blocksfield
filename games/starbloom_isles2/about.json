@@ -5,11 +5,14 @@
  "pitch": "Starbloom Isles: a bright, juicy toon 3D platformer. A little fox hops across floating sky islands, rope bridges and moving platforms collecting glowing star blooms, stomping grumpy slimes, and reaching the beacon portal on the last island. Cheerful, saturated, sunny.",
  "genre": "Toon 3D platformer",
  "controls": [
-  "WASD / arrows: move",
-  "Space: jump (tap again mid-air to double-jump)",
-  "Esc / P: pause"
+  "WASD / arrows: run",
+  "Space: jump (again in the air: double jump)",
+  "Shift: dash / long jump",
+  "C: ground pound",
+  "P / Esc: pause"
  ],
- "created": "2026-11-03T02:00:33-0800",
+ "mechanics": [],
+ "created": "2026-11-03T05:20:06-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -21,9 +24,9 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "v1",
-  "score": 6.45,
-  "play": 7.9,
+  "best": "rerecord_1103_051642",
+  "score": 6.3,
+  "play": 7.6,
   "vision": 5.0,
   "versions": [
    {
@@ -49,6 +52,12 @@
     "score": 6.85,
     "play_score": 7.7,
     "vision_score": 6.0
+   },
+   {
+    "tag": "rerecord_1103_051642",
+    "score": 6.3,
+    "play_score": 7.6,
+    "vision_score": 5.0
    }
   ]
  },
@@ -177,11 +186,12 @@
  "timings_s": {
   "art": 430.5,
   "build": 774.7,
+  "eval_rerecord_1103_051642": 144.0,
   "eval_s0": 69.6,
   "eval_v0": 56.0,
   "eval_v1": 71.7,
   "eval_v2": 83.7,
-  "finalize": 62.2,
+  "finalize": 52.3,
   "plan": 74.5,
   "repair_1": 178.0,
   "repair_2": 182.8,
@@ -217,7 +227,14 @@
   },
   "builder_overrides": []
  },
- "model_calls": {},
+ "model_calls": {
+  "judge": {
+   "calls": 1,
+   "prompt_tokens": 6177,
+   "completion_tokens": 721,
+   "seconds": 80.5
+  }
+ },
  "agents": {
   "live": 0,
   "cached": 0,
@@ -309,5 +326,32 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "post_stages": [
+  {
+   "stage": "cutscenes",
+   "model": "LTX-2.5",
+   "run": "uniform pipeline stage after build",
+   "clips": [
+    "intro",
+    "win",
+    "lose"
+   ],
+   "at": "2026-11-03T04:08:43-0800"
+  },
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:19",
+   "score": 6.3,
+   "autopilot": {
+    "moved": 105.1,
+    "collected_end": 16,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.45
+  }
+ ]
 }

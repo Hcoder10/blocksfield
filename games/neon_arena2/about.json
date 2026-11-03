@@ -5,13 +5,13 @@
  "pitch": "Neon Arena: a fast top-down twin-stick-style arena shooter at night in a synthwave colosseum. A tiny hover-robot dashes around a glowing tiled arena, blasting waves of chasing spiky orbs and patrolling slimes, grabbing energy cores dropped across the floor, and surviving the timer. Neon pink and cyan light, dark night sky, punchy hits, screen shake, scifi HUD.",
  "genre": "Top-down synthwave arena shooter / wave survival",
  "controls": [
-  "WASD / arrows: dash around the arena",
-  "Mouse: aim",
-  "Left click (hold): fire blaster",
-  "Shift: boost dash",
+  "WASD / arrows: run",
+  "Space / J / click: fire",
+  "Shift / E: dash",
   "P / Esc: pause"
  ],
- "created": "2026-11-03T01:58:22-0800",
+ "mechanics": [],
+ "created": "2026-11-03T05:24:04-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -23,9 +23,9 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "v2",
-  "score": 6.14,
-  "play": 6.29,
+  "best": "rerecord_1103_052122",
+  "score": 6.29,
+  "play": 6.57,
   "vision": 6.0,
   "versions": [
    {
@@ -50,6 +50,12 @@
     "tag": "v2",
     "score": 6.14,
     "play_score": 6.29,
+    "vision_score": 6.0
+   },
+   {
+    "tag": "rerecord_1103_052122",
+    "score": 6.29,
+    "play_score": 6.57,
     "vision_score": 6.0
    }
   ]
@@ -179,11 +185,12 @@
  "timings_s": {
   "art": 255.1,
   "build": 831.7,
+  "eval_rerecord_1103_052122": 98.6,
   "eval_s0": 73.5,
   "eval_v0": 68.3,
   "eval_v1": 76.8,
   "eval_v2": 68.2,
-  "finalize": 62.7,
+  "finalize": 75.9,
   "plan": 77.7,
   "repair_1": 191.6,
   "repair_2": 161.5,
@@ -219,7 +226,14 @@
   },
   "builder_overrides": []
  },
- "model_calls": {},
+ "model_calls": {
+  "judge": {
+   "calls": 1,
+   "prompt_tokens": 6182,
+   "completion_tokens": 915,
+   "seconds": 50.5
+  }
+ },
  "agents": {
   "live": 0,
   "cached": 0,
@@ -311,5 +325,32 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "post_stages": [
+  {
+   "stage": "cutscenes",
+   "model": "LTX-2.5",
+   "run": "uniform pipeline stage after build",
+   "clips": [
+    "intro",
+    "win",
+    "lose"
+   ],
+   "at": "2026-11-03T04:16:58-0800"
+  },
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:23",
+   "score": 6.29,
+   "autopilot": {
+    "moved": 59.4,
+    "collected_end": 4,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.14
+  }
+ ]
 }

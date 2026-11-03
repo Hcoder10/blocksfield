@@ -1,0 +1,117 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "High-noon candy sky panorama: gradient from sky blue at the top to soft peach at the horizon, big fluffy white cumulus clouds, a warm sun disc, and a few tiny distant floating islands.",
+  "wrap_seam": 0.79
+ },
+ "icon_seed": {
+  "file": "icon_seed.png",
+  "kind": "icon",
+  "prompt": "Chubby glowing star-shaped seed, pink and gold with a glossy candy shine and a soft halo, chunky cartoon icon",
+  "for": "seeds"
+ },
+ "icon_clock": {
+  "file": "icon_clock.png",
+  "kind": "icon",
+  "prompt": "Bouncy candy clock icon, mint face, pink hands, thick rounded outline, cartoon style",
+  "for": "timer"
+ },
+ "icon_heart": {
+  "file": "icon_heart.png",
+  "kind": "icon",
+  "prompt": "Glossy pink candy heart with a white shine spot, thick cartoon outline",
+  "for": "lives"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Cheerful chiptune-pop: ukulele, xylophone, hand claps and bouncy bass, major key, ~120 BPM, light and bouncy"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "Bright ascending two-note chime with a tiny sparkle shimmer, like picking up a glowing seed"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "Short bouncy boing whoosh, cartoon springy"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "Soft squishy thump with a little puff, like landing on a candy platform"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "Comical bonk with a wobble, not scary, cartoon hit"
+ },
+ "sfx_boost": {
+  "file": "sfx_boost.mp3",
+  "kind": "sfx",
+  "event": "boost",
+  "prompt": "Snappy dash whoosh with a rising zip"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "Bright fanfare arpeggio with confetti pop and a warm chime finale"
+ },
+ "prop_mushroom": {
+  "file": "prop_mushroom.json",
+  "kind": "prop",
+  "prompt": "Plump candy mushroom with a glossy pink cap, white spots and a mint stem, rounded and chunky",
+  "via": "idol",
+  "parts": 472
+ },
+ "prop_flower_portal": {
+  "file": "prop_flower_portal.json",
+  "kind": "prop",
+  "prompt": "Giant blooming flower with layered glossy pink petals, a glowing golden centre and a soft halo, candy sculpture style",
+  "via": "idol",
+  "parts": 379
+ },
+ "splat_mushroom": {
+  "file": "splat_mushroom.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "Plump candy mushroom with a glossy pink cap, white spots and a mint stem, rounded and chunky",
+  "camera": {
+   "yaw": 1.5322170246600135
+  }
+ },
+ "splat_flower_portal": {
+  "file": "splat_flower_portal.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "Giant blooming flower with layered glossy pink petals, a glowing golden centre and a soft halo, candy sculpture style",
+  "camera": {
+   "yaw": 1.4705606918035654
+  }
+ },
+ "cutscene_intro": {
+  "kind": "cutscene",
+  "file": "cutscene_intro.mp4",
+  "when": "intro",
+  "model": "LTX-2.5",
+  "source": "cutscene_intro_source.jpg",
+  "prompt": "Opening cutscene of the world of \"Cloudhop Meadows\", a juicy 3D platformer / collect-and-climb game. The camera slowly pushes in and glides over the world, revealing the level, then the hero character appears and strikes a confident pose. Candy-sculpted sky world: strawberry-pink, mint, butter-yellow and sky-blue islands with soft toon shading, thin ink outlines and glossy highlights, floating above a sea of fluffy cumulus. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Upbeat adventurous music."
+ },
+ "cutscene_win": {
+  "kind": "cutscene",
+  "file": "cutscene_win.mp4",
+  "when": "win",
+  "model": "LTX-2.5",
+  "source": "cutscene_win_source.jpg",
+  "prompt": "Victory cutscene of the world of \"Cloudhop Meadows\", a juicy 3D platformer / collect-and-climb game. The hero celebrates the win, jumping and cheering, confetti and sparkles burst around, warm triumphant light, the camera circles slowly. Candy-sculpted sky world: strawberry-pink, mint, butter-yellow and sky-blue islands with soft toon shading, thin ink outlines and glossy highlights, floating above a sea of fluffy cumulus. stylised 3D video game cinematic, same characters, world and art style as the image, smooth camera, vivid colour. Joyful fanfare."
+ }
+}
