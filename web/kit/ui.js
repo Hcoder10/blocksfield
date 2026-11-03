@@ -104,6 +104,9 @@ const ICON_SVG = {
   slowmo: (u) => `<path d="M16 6h32M16 58h32" stroke="${INK}" stroke-width="5" stroke-linecap="round"/><path d="M20 8c0 14 10 16 10 24S20 42 20 56h24c0-14-10-16-10-24S44 22 44 8z" fill="#c9f4ff" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>
     <path d="M26 52c2-6 6-8 6-12 0 4 4 6 6 12z" fill="#ffcf3a"/><path d="M26 16h12" stroke="#ffcf3a" stroke-width="4" stroke-linecap="round"/>`,
   ghost: (u) => `<path d="M14 56V28a18 18 0 0 1 36 0v28l-6-5-6 5-6-5-6 5-6-5z" fill="#eef2ff" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round" opacity=".92"/><ellipse cx="25" cy="28" rx="3.5" ry="5" fill="${INK}"/><ellipse cx="39" cy="28" rx="3.5" ry="5" fill="${INK}"/><path d="M20 18c2-4 6-6 10-6" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"/>`,
+  glide: (u) => `<defs><linearGradient id="g${u}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd23f"/><stop offset=".5" stop-color="#ff7ad9"/><stop offset="1" stop-color="#5ef1ff"/></linearGradient></defs>
+    <path d="M4 26C16 10 48 10 60 26c-8-3-14-3-20 2-3-4-13-4-16 0-6-5-12-5-20-2z" fill="url(#g${u})" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M14 24l18 18 18-18M24 28l8 14 8-14" stroke="${INK}" stroke-width="2" fill="none"/><circle cx="32" cy="48" r="6" fill="#ffd9b8" stroke="${INK}" stroke-width="3"/>`,
   // ---- interactables (mechanics.js) ----
   door: (u) => `<path d="M14 58V14a6 6 0 0 1 6-6h24a6 6 0 0 1 6 6v44z" fill="#b8763f" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/><path d="M20 58V18h24v40" fill="#8a5228" stroke="${INK}" stroke-width="2.5"/><path d="M26 24v28M32 24v28M38 24v28" stroke="#6b3d1c" stroke-width="2"/>
     <circle cx="40" cy="38" r="3" fill="#ffd23f" stroke="${INK}" stroke-width="2"/><path d="M8 58h48" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>`,
@@ -127,6 +130,8 @@ const ICON_ALIAS = { coins: 'coin', gold: 'coin', stars: 'star', gems: 'gem', di
   jump_boost: 'jump', speed_boost: 'speed', haste: 'speed', fast: 'speed', portal: 'teleporter', teleport: 'teleporter', pressure_plate: 'button',
   plate: 'button', trampoline: 'spring', bounce: 'spring', bounce_pad: 'spring', box: 'crate', gate: 'door', treasure: 'chest', custom: 'gear',
   mechanic: 'gear', hazard: 'rule', warning: 'rule', invisible: 'ghost', phase: 'ghost',
+  highjump: 'jump', doublepoints: 'double_coins', double_points: 'double_coins', glider: 'glide', wings: 'glide', conveyor: 'speed',
+  zone: 'gear', crumble: 'rule', shrine: 'orb', shop: 'coin', platform: 'crate',
   flags: 'flag', goal: 'checkered', finish: 'checkered', energy: 'bolt', boost: 'bolt', enemy: 'skull', enemies: 'skull', kills: 'skull', time: 'clock', timer: 'clock',
   cup: 'trophy', score: 'trophy', crystals: 'crystal', apple: 'fruit', fruits: 'fruit', leaves: 'leaf', orbs: 'orb', flower: 'fruit', flowers: 'fruit', rings: 'coin' };
 export const ICONS = Object.keys(ICON_SVG);   // built-in icon names (CONTRACT choice list)
@@ -357,7 +362,9 @@ function nounFix(H, st, text) {
   const tag = st.collectTag, c = H.counters.find(k => k.c.useGlobalTarget || k.c.id === 'collected' || k.c.id === tag);
   if (!tag || !c || !c.c.label) return text;
   const lbl = c.c.label.toLowerCase();
-  return text.replace(new RegExp('\\b' + tag.replace(/[^a-z0-9_]/gi, '') + 's?\\b', 'gi'), lbl);
+  if (text.toLowerCase().includes(lbl)) return text;                    // already says "Sky Stars": leave it
+  return text.replace(new RegExp('\\b' + tag.replace(/[^a-z0-9_]/gi, '') + 's?\\b', 'gi'), lbl)
+    .replace(/\b(\w+)\s+\1\b/gi, '$1');                                  // never "Sky sky stars"
 }
 function refresh(game, H) {
   const st = game.state || {};
@@ -717,7 +724,7 @@ export function toast(game, text, opts = {}) {
 // ---------- mechanics UI: power-up timers, key ring, contextual prompt, rule toasts, mechanic banner ----------
 // mechanics.js feature-detects these (and UI.hud wires them to its events), so games never call them by hand.
 const POWERUP_LABEL = { speed: 'Speed', jump: 'Super Jump', shield: 'Shield', magnet: 'Magnet', giant: 'Giant', tiny: 'Tiny', invincible: 'Invincible',
-  double_coins: 'Double Coins', slowmo: 'Slow-Mo', ghost: 'Ghost' };
+  double_coins: 'Double Coins', slowmo: 'Slow-Mo', ghost: 'Ghost', glide: 'Glide', highjump: 'Super Jump', doublepoints: 'Double Points' };
 const KEY_COLORS = { red: '#ff4d5e', blue: '#3d8bff', green: '#3cdc6a', yellow: '#ffd23f', gold: '#ffcf3a', purple: '#b47cff', orange: '#ff9a3c',
   pink: '#ff7ad9', cyan: '#3ee8ff', white: '#f4f7fb', silver: '#c9cbd8', black: '#3a3a4a' };
 const keyColor = (c) => KEY_COLORS[String(c || 'gold').toLowerCase()] || (/^#|^rgb/.test(String(c)) ? c : '#ffcf3a');
@@ -885,6 +892,30 @@ function buttons(game, U, defs, onChoose) {
 function closeScreen(el, done) { el.classList.add('tk-out'); setTimeout(() => { el.remove(); done && done(); }, 380); }
 const restart = () => location.reload();
 
+// ---------- controls line (from player.js's real bindings) ----------
+const KEYS_TEXT = {
+  platformer: 'WASD / arrows: run · Space: jump (again: double jump) · Shift: dash · C: ground pound · R: reset · Esc: pause',
+  kart: 'W / ↑: throttle · S / ↓: brake · A D / ← →: steer · hold Space: drift, release to boost · R: reset · Esc: pause',
+  topdown: 'WASD / arrows: move · Shift / E: dash · Space: jump · R: reset · Esc: pause',
+  fps: 'WASD: move · mouse: look (click to lock) · click / E: shoot · Space: jump · Shift: sprint · Esc: pause',
+};
+const TOUCH_TEXT = {
+  platformer: 'Left stick: move · JUMP / DASH buttons · drag right side: camera · ↺: reset',
+  kart: 'Left stick: steer · hold DRIFT in turns, release to boost · ↺: reset',
+  topdown: 'Left stick: move · DASH / JUMP buttons · ↺: reset',
+  fps: 'Left stick: move · drag right side: look · FIRE / JUMP buttons',
+};
+function controlsLine(game, touch) {
+  const p = game.__player || (window.__kit && window.__kit.game === game && window.__kit.player) || null;
+  let t = (p && p.type) || 'platformer';
+  if (t === 'boat') t = 'kart';
+  if (t === 'topdown' && p && p.weapon && p.weapon !== 'none') return touch ? TOUCH_TEXT.topdown.replace('DASH / JUMP', 'FIRE / DASH') : 'WASD / arrows: move · Space / J / click: fire · Shift / E: dash · R: reset · Esc: pause';
+  return (touch ? TOUCH_TEXT : KEYS_TEXT)[t] || KEYS_TEXT.platformer;
+}
+// "A/D waddle, Space or W hop" -> true: a line that names keys (we print the real bindings instead)
+const namesKeys = (s) => /\b(wasd|arrows?|space(bar)?|shift|esc(ape)?|ctrl|enter|mouse|click|tap|joystick|stick)\b/i.test(String(s))
+  || /\b[A-Z]\s*(\/|or|,)\s*[A-Z]\b|\b[A-Z]\s*:|←|→|↑|↓/.test(String(s));
+
 // ---------- title screen ----------
 export function titleScreen(game, opts = {}) {
   const U = ui(game, opts);
@@ -912,13 +943,12 @@ export function titleScreen(game, opts = {}) {
   if (keyName) { const parts = String(start).split(new RegExp(keyName, 'i')); startEl.append(parts[0] || '', h('span', 'tk-key', [keyName === 'Space' ? 'SPACE' : 'ENTER']), parts[1] || ''); }
   else startEl.append(touch ? 'Tap to start' : start);
   el.append(startEl);
-  if (touch) {   // phones: a touch hint replaces the keyboard help
-    const pt = (game.__player && game.__player.type) || (window.__kit && window.__kit.player && window.__kit.player.type) || 'platformer';
-    const hint = pt === 'kart' || pt === 'boat' ? 'Left stick: steer · hold Drift, release to boost' : pt === 'fps' ? 'Left stick: move · drag right side: look · Fire / Jump buttons'
-      : 'Left stick: move · Jump / Dash buttons · drag right side: camera';
-    el.append(h('div', 'tk-controls', [hint]));
-  } else if (opts.controls) el.append(h('div', 'tk-controls', [String(opts.controls)]));
-  if (credit && !(touch && /wasd|arrows|space|shift|esc/i.test(credit))) el.append(h('div', 'tk-credit', [credit]));   // keyboard help is noise on a phone
+  // the controls line always comes from the kit's real bindings for the player type (games' own key text can be wrong);
+  // a game-supplied credit that names keys is dropped, any other credit line is kept
+  const ctl = h('div', 'tk-controls', [controlsLine(game, touch)]);
+  el.append(ctl);
+  setTimeout(() => { ctl.textContent = controlsLine(game, touch); }, 250);     // the player may be created after the title
+  if (credit && !namesKeys(credit)) el.append(h('div', 'tk-credit', [credit]));
   U.root.append(el);
   const wasPaused = game.paused;
   if (pause) game.paused = true;
