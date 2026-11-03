@@ -10,7 +10,7 @@
   "Shift: dash",
   "P / Esc: pause"
  ],
- "created": "2026-11-02T22:32:53-0800",
+ "created": "2026-11-02T23:39:33-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -23,21 +23,21 @@
  "survey": "about/survey.jpg",
  "score": {
   "best": "v2",
-  "score": 6.56,
+  "score": 6.06,
   "play": 7.12,
-  "vision": 6.0,
+  "vision": 5.0,
   "versions": [
    {
     "tag": "v0",
-    "score": 6.56,
-    "play_score": 7.12,
-    "vision_score": 6.0
+    "score": 5.12,
+    "play_score": 6.24,
+    "vision_score": 4.0
    },
    {
     "tag": "s0",
-    "score": 6.22,
-    "play_score": 7.44,
-    "vision_score": 5.0
+    "score": 1.0,
+    "play_score": 1.0,
+    "vision_score": null
    },
    {
     "tag": "v1",
@@ -47,9 +47,9 @@
    },
    {
     "tag": "v2",
-    "score": 6.56,
+    "score": 6.06,
     "play_score": 7.12,
-    "vision_score": 6.0
+    "vision_score": 5.0
    }
   ]
  },
@@ -177,14 +177,14 @@
  },
  "timings_s": {
   "art": 289.1,
-  "build": 255.0,
-  "eval_s0": 65.7,
-  "eval_v0": 72.2,
-  "eval_v1": 54.8,
-  "eval_v2": 55.2,
+  "build": 345.5,
+  "eval_s0": 59.5,
+  "eval_v0": 67.4,
+  "eval_v1": 80.2,
+  "eval_v2": 78.9,
   "plan": 69.2,
-  "repair_1": 49.4,
-  "repair_2": 116.9,
+  "repair_1": 332.4,
+  "repair_2": 116.4,
   "scaffold": 2.2
  },
  "operator_interventions": [
@@ -207,16 +207,16 @@
  },
  "model_calls": {
   "builder": {
-   "calls": 41,
-   "prompt_tokens": 799972,
-   "completion_tokens": 7689,
-   "seconds": 189.4
+   "calls": 45,
+   "prompt_tokens": 975491,
+   "completion_tokens": 10124,
+   "seconds": 331.6
   },
   "judge": {
-   "calls": 10,
-   "prompt_tokens": 51940,
-   "completion_tokens": 4004,
-   "seconds": 81.7
+   "calls": 7,
+   "prompt_tokens": 36688,
+   "completion_tokens": 2972,
+   "seconds": 67.4
   }
  },
  "agents": {
@@ -300,25 +300,20 @@
   },
   "build": {
    "result": {
-    "summary": "Cloudhop Meadows is a bright, juicy 3D platformer across floating candy-coloured sky islands. The player (a bubblegum-pink chibi bunny) runs, double-jumps and dashes between islands, grabs 25 of 40 glowing star seeds, dodges spinning thorn bars and 4 enemies, rides spring bounce pads and wobbly movers, and reaches the giant golden bloom portal at the top before the 180-second timer runs out. Losing all 3 lives (thorn hits, enemies, or falling into the void) or running out of time loses the game.\n\nBuilt with kit calls only: toon_bright look with a candy palette override (pink cliffs, mint grass, butter-yellow accents), large sky_islands level, platformer player with the plan's colours, follow camera, Gameplay.rules (star collect target 25, goal, 180s timer, 3 lives, 4 enemies), arcade HUD with the generated star-seed icon, timer, hearts, minimap and objective, title screen with 3-2-1 countdown, FX.auto plus custom moments (double-jump sparkle ring, dash speed lines + dust, confetti when the bloom opens, win star-burst), and the generated chiptune music + custom sfx.\n\nVerified via play_game: zero console errors; autopilot moved 217 units, collected 25/25 stars, opened the goal portal (objective switched to \"Reach the goal!\"), with no deaths.",
+    "summary": "Cloudhop Meadows: a bright candy-coloured 3D platformer across floating sky islands. Built on the scaffold and tuned to the plan: candy Look palette (mint grass, bubblegum-pink islands, butter-yellow earth, warm noon rim light), generated sky panorama, star-seed pickups (40, target 25), a 180s countdown, 3 lives, 4 enemies, and a locked goal portal that opens at 25 seeds. Added the plan's features: four spinning thorn bars along the route, spring bounce pads (one near the goal plus two mid-route), and candy dressing (8 candy mushrooms + 10 glow flowers as voxel props, plus splat versions on the goal island). Rich FX juice on top of FX.auto: star-burst/ring/sparkle on collect, sparkle ring on double jump, speed lines + dust on dash, mint ring + magic on checkpoint, and confetti + star burst on goal. Arcade-style HUD with star counter, timer, hearts, minimap and objective, plus custom win/lose screen titles and a title screen that sells the fantasy. Verified with play_game: zero console errors, autopilot moves along the route and collects 21-27 seeds, checkpoints and hazards work, goal unlocks at target.",
     "changes": [
-     "Tuned Look.apply to a candy palette (bubblegum-pink primary, butter-yellow accent, pastel-mint grass, pink cliffs) with stronger sun and bloom",
-     "Recoloured the player as a pink bunny with the plan's body/accent colours",
-     "Added spring bounce pads along the route (hazards: bounce) to launch the player to the next tier",
-     "Added spinning thorn-bar hazards (hazards: spinner) at route midpoints to dodge or get bonked by",
-     "Kept the generated voxel props (candy mushrooms, glow flowers) and Gaussian-splat landmarks beside the route",
-     "Configured Gameplay.rules: star collect target 25 of 40, goal portal, 180s countdown timer, 3 lives, 4 enemies",
-     "Added custom FX moments: double-jump sparkle ring, dash speed lines + dust puff, confetti + toast when the goal opens, win confetti + star burst",
-     "Plays the generated chiptune-pop music loop via Audio.music alongside Audio.auto",
-     "Arcade HUD with generated star-seed icon counter, timer, hearts, minimap, objective line, and custom win/lose screen titles",
-     "Title screen with the fantasy tagline, control hints and a 3-2-1-GO countdown"
+     "Tuned Level.build to sky_islands/large with 40 collectibles retagged to 'star'",
+     "Added 4 spinning thorn-bar hazards and 3 spring bounce pads along the route",
+     "Placed generated candy_mushroom + glow_flower props (voxel) and splats on islands and the goal",
+     "Switched HUD to arcade style with star-seed icon, custom win/lose screen titles",
+     "Added FX for double-jump, dash, checkpoint and goal on top of FX.auto",
+     "Refined title screen subtitle/credit to match the plan controls"
     ],
     "known_issues": [
-     "The three.js WebGL program info log warning (signed/unsigned mismatch) is a harmless three.js internal warning, not a game error",
-     "Autopilot in the final check collected 25 stars and opened the goal but the 25s window ended just before it reached the portal; the route is fully reachable (goal portal opened, objective updated)"
+     "Autopilot occasionally takes a thorn-bar hit (loses 1 hp / a life) but still collects and progresses; a human player can time the spinners"
     ]
    },
-   "plays": 4
+   "plays": 3
   }
  },
  "models": {
