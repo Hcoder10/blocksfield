@@ -136,7 +136,8 @@
 
   // ---- generalization strip: the planner's option lists, with what the listed games picked ----
   function renderRange(space, games) {
-    const dims = [["level_kind", "level kinds", "Level"], ["look", "looks", "Look"], ["player_type", "player types", "Player"]]
+    const dims = [["level_kind", "level kinds", "Level"], ["look", "looks", "Look"], ["player_type", "player types", "Player"],
+      ["species", "character species", "Species"]]
       .filter(([k]) => (space[k] || []).length);
     if (!dims.length || !games.length) return;
     $("#gen-eq").innerHTML = dims.map(([k, label]) => `<b>${space[k].length}</b> ${label}`).join('<span class="x">×</span>') +

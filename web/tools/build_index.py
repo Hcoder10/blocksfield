@@ -40,6 +40,8 @@ def game_entry(d: Path) -> dict | None:
     plan = about.get("plan") or {}
     for k in ("look", "level_kind", "player_type", "camera", "ui_style"):
         e[k] = plan.get(k)
+    player = plan.get("player") if isinstance(plan.get("player"), dict) else {}
+    e["species"] = plan.get("species") or player.get("species")
     return e
 
 
@@ -80,7 +82,12 @@ def design_space() -> dict:
         except (OSError, ValueError):
             continue
     en = web_plan.enums(cat)
-    return {k: list(en[k]) for k in ("level_kind", "look", "player_type") if k in en}
+    out = {k: list(en[k]) for k in ("level_kind", "look", "player_type") if k in en}
+    # Player.SPECIES (kit-player-gameplay): listed only once the kit exports it, so the page never claims it early
+    species = en.get("species") or (web_plan._pick(cat, "Player", r"^SPECIES$") if cat else None)
+    if species:
+        out["species"] = list(species)
+    return out
 
 
 def build(games: Path, dev: bool = False) -> dict:
