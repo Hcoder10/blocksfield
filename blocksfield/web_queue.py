@@ -49,8 +49,14 @@ def launch(job: dict, n: int) -> int:
         ps = (f"$env:PYTHONUTF8 = '1'; $p = Start-Process -FilePath {q(sys.executable)} -WorkingDirectory {q(str(ROOT))} "
               f"-WindowStyle Hidden -PassThru -RedirectStandardOutput {q(str(out))} -RedirectStandardError {q(str(err))} "
               f"-ArgumentList @({arglist}); $p.Id")
-        r = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True, timeout=60)
-        return int((r.stdout.strip().splitlines() or ["0"])[-1])
+        # no pipes: the build would inherit them and run() would wait for the whole build; the pid comes back in a file
+        pid_file = run_dir / f"queue_{n}.pid"
+        subprocess.run(["powershell", "-NoProfile", "-Command", f"{ps} | Out-File -Encoding ascii {q(str(pid_file))}"],
+                       stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=60)
+        try:
+            return int(pid_file.read_text(encoding="ascii").strip() or 0)
+        except (OSError, ValueError):
+            return 0
     log = open(out, "w", encoding="utf-8")
     return subprocess.Popen([sys.executable, *args], cwd=ROOT, env={**os.environ, "PYTHONUTF8": "1"}, stdout=log,
                             stderr=subprocess.STDOUT, start_new_session=True).pid
