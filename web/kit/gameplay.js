@@ -650,7 +650,21 @@ export function rules(game, opts = {}) {
     if (isFinite(S.lives)) { S.lives--; changed(); }
     if (S.lives <= 0 && isFinite(S.lives)) lose('lives');
   });
-  game.on('respawn', (who) => { if (who === player) { S.hp = maxHp; changed(); } });
+  game.on('respawn', (who, info) => { if (who === player && !(info && info.safe)) { S.hp = maxHp; changed(); } });
+  // fall rule: falling off (or into deep water) costs ONE heart and puts you back on the last safe ground with a short
+  // grace; only when the hearts run out (or there are no hearts) does it cost a life (checkpoint respawn)
+  player.onFall = (why = 'fall') => {
+    if (!player.alive || S.won || S.lost) return;
+    if (opts.fallRule === false || maxHp <= 1 || vehicle) { player.die(why); return; }
+    S.hp -= 1; changed();
+    game.emit('damage', player, 1, { type: why });
+    if (S.hp <= 0) { player.die(why); return; }
+    const sp = player.safePoint.clone().add(V3(0, 0.3, 0));
+    player.teleport(sp, player.safeYaw); player.invulnerable = 1.6; player.inputLock = 0.5;
+    if (player.character) player.character.squash(1.3);
+    game.emit('fall', player, why); game.emit('respawn', player, { safe: true });
+    S.hp = Math.max(S.hp, 1);
+  };
 
   function win() {
     if (S.won || S.lost) return;
@@ -697,7 +711,7 @@ export function rules(game, opts = {}) {
     // characters can't swim: going under deep water (level.water) is a fall -> respawn at the last checkpoint
     if (level.water && !vehicle && player.alive && !S.won && !S.lost && opts.drown !== false) {
       const wy = level.water.y ?? level.water;
-      if (pc.y < wy - 0.35) { R.underT = (R.underT || 0) + dt; if (R.underT > 0.35) { R.underT = 0; player.die('water'); } } else R.underT = 0;
+      if (pc.y < wy - 0.35) { R.underT = (R.underT || 0) + dt; if (R.underT > 0.35) { R.underT = 0; player.onFall('water'); } } else R.underT = 0;
     }
     S.health = S.hp; S.maxHealth = maxHp;
     const phase = S.won ? 'won' : S.lost ? 'lost' : race && !race.started ? 'countdown' : !player.controls.enabled ? 'title' : 'playing';
