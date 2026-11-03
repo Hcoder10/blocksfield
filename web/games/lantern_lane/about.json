@@ -63,7 +63,7 @@
    "P: pause"
   ],
   "win_condition": "Collect 18 lanterns and reach the big lantern tree in the plaza to light it.",
-  "lose_condition": "None \u2014 no timer, no enemies, unlimited lives; the dusk waits as long as you need.",
+  "lose_condition": "None — no timer, no enemies, unlimited lives; the dusk waits as long as you need.",
   "look": "cozy",
   "ui_style": "cozy",
   "level_kind": "town",
@@ -88,7 +88,7 @@
    "laps": 0,
    "opponents": 0
   },
-  "art_direction": "Warm honey-and-peach palette at golden hour: chunky, rounded low-poly houses with thatched roofs, wooden stalls and fences, cobblestone lanes, and glowing amber lanterns that pop against the first blue of dusk. Soft long shadows, gentle bloom on every light, storybook warmth in the spirit of Animal Crossing dusk and Ghibli village scenes. The mood is unhurried and safe \u2014 every corner feels like home.",
+  "art_direction": "Warm honey-and-peach palette at golden hour: chunky, rounded low-poly houses with thatched roofs, wooden stalls and fences, cobblestone lanes, and glowing amber lanterns that pop against the first blue of dusk. Soft long shadows, gentle bloom on every light, storybook warmth in the spirit of Animal Crossing dusk and Ghibli village scenes. The mood is unhurried and safe — every corner feels like home.",
   "concept_shots": [
    "The ginger cat trots down a cobblestone lane at golden hour past a bakery stall and a mailbox with a letter, amber lanterns bobbing on fence posts, long warm shadows stretching across the lane.",
    "The plaza at dusk: the big lantern tree heavy with glowing lanterns, the cat standing beneath it as the last light blooms and warm confetti drifts down.",
@@ -256,7 +256,7 @@
   },
   "build": {
    "result": {
-    "summary": "Lantern Lane is a cozy golden-hour village collect-a-thon built on the town level. The ginger cat (orange body, teal accent) wanders a warm honey-and-peach village with a low sun for long shadows, a peach-to-dusk-blue sky, warm fog and gentle bloom. The player gathers 18 glowing lantern orbs scattered along the lanes (24 placed, off-route bonuses included) and then reaches the big lantern tree in the plaza to light it. Features: a lantern tree at the goal that gains brighter/wider warm sparkles as the counter climbs; four villager NPCs (Mira the Baker, Old Bram, Postman Pip, Sage) placed beside the route who pop cozy speech-bubble dialogs and make the cat wave when approached; pickup juice with a warm amber burst + floating '+1' on every lantern; a gentle win moment with slow-mo, warm confetti, a flash, a star burst on the tree, a 'The tree glows!' banner and the win screen; generated lantern-post and mailbox voxel props along the lanes; cozy-styled HUD with a lantern counter (18 target), minimap and objective line; title screen selling the fantasy; generated sky, music and sfx. No timer, no enemies, no lives \u2014 the dusk waits as long as you need. Autopilot confirmed the player moves along the route and collects lanterns with zero console errors.",
+    "summary": "Lantern Lane is a cozy golden-hour village collect-a-thon built on the town level. The ginger cat (orange body, teal accent) wanders a warm honey-and-peach village with a low sun for long shadows, a peach-to-dusk-blue sky, warm fog and gentle bloom. The player gathers 18 glowing lantern orbs scattered along the lanes (24 placed, off-route bonuses included) and then reaches the big lantern tree in the plaza to light it. Features: a lantern tree at the goal that gains brighter/wider warm sparkles as the counter climbs; four villager NPCs (Mira the Baker, Old Bram, Postman Pip, Sage) placed beside the route who pop cozy speech-bubble dialogs and make the cat wave when approached; pickup juice with a warm amber burst + floating '+1' on every lantern; a gentle win moment with slow-mo, warm confetti, a flash, a star burst on the tree, a 'The tree glows!' banner and the win screen; generated lantern-post and mailbox voxel props along the lanes; cozy-styled HUD with a lantern counter (18 target), minimap and objective line; title screen selling the fantasy; generated sky, music and sfx. No timer, no enemies, no lives — the dusk waits as long as you need. Autopilot confirmed the player moves along the route and collects lanterns with zero console errors.",
     "changes": [
      "Tuned the cozy look to golden hour: honey/peach palette (warm ground, roofs, glow), low sun (elevation 14), peach-to-dusk sky, warm fog, gentle bloom",
      "Recolored the player to the plan (orange body, teal accent, cream skin)",
@@ -293,5 +293,6 @@
    "camera": "follow",
    "ui_style": "cozy"
   }
- }
+ },
+ "superseded_by": "lantern_lane2"
 }

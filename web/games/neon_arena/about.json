@@ -90,10 +90,10 @@
    "laps": 0,
    "opponents": 0
   },
-  "art_direction": "Deep indigo night where hot neon pink (#ff2d95) and cyan (#00e5ff) are the only saturated colors; glossy dark arena tiles with an emissive magenta grid, bloom-heavy rim light and soft glow around every prop. Mood: a retro-future colosseum at 2 a.m. \u2014 OutRun horizon, Tron light-cycles, high-voltage arcade energy.",
+  "art_direction": "Deep indigo night where hot neon pink (#ff2d95) and cyan (#00e5ff) are the only saturated colors; glossy dark arena tiles with an emissive magenta grid, bloom-heavy rim light and soft glow around every prop. Mood: a retro-future colosseum at 2 a.m. — OutRun horizon, Tron light-cycles, high-voltage arcade energy.",
   "concept_shots": [
    "Straight-down view: the tiny cyan hover-robot sprints across the glowing magenta grid, a cyan thruster trail streaming behind, while three spiky orbs converge from the arena edge and the screen shakes on a near miss.",
-   "The bot weaves between two patrolling slimes around a neon pillar and snags a spinning energy core \u2014 a shockwave ring, sparkles and a floating '+1' pop at the pickup as the scifi HUD core counter ticks up.",
+   "The bot weaves between two patrolling slimes around a neon pillar and snags a spinning energy core — a shockwave ring, sparkles and a floating '+1' pop at the pickup as the scifi HUD core counter ticks up.",
    "Final seconds: the timer flashes red at 0:10, the last needed core hovers over the arena centre with orbs swarming in; the bot banks it, slow-mo ripples out, and the win screen bursts in."
   ],
   "assets": {
@@ -116,7 +116,7 @@
     },
     {
      "name": "skull",
-     "prompt": "A spiky orb skull icon \u2014 a round spiked ball with glowing cyan eye sockets, dark background",
+     "prompt": "A spiky orb skull icon — a round spiked ball with glowing cyan eye sockets, dark background",
      "for": "waves"
     }
    ],
@@ -156,7 +156,7 @@
    "props": [
     {
      "name": "neon_pillar",
-     "prompt": "One tall hexagonal colosseum pillar, dark charcoal stone with two emissive neon bands \u2014 one hot pink, one cyan \u2014 and a glowing ring at the top",
+     "prompt": "One tall hexagonal colosseum pillar, dark charcoal stone with two emissive neon bands — one hot pink, one cyan — and a glowing ring at the top",
      "count": 8
     },
     {
@@ -174,7 +174,7 @@
    "Two spinner hazards sweeping the arena midline for extra risk (Gameplay hazards).",
    "Scifi HUD with core counter, timer and lives; UI.banner on each wave spawn and a big-text warning when the clock drops below 30s."
   ],
-  "mapping_notes": "The pitch's \"twin-stick arena shooter\" has no shooting system in the kits, so the fantasy is kept as topdown dash-and-dodge: the hover-robot (topdown player, cyan body / pink accent) sprints through waves of 'chase' enemies (the spiky orbs) and 'patrol' enemies (the slimes) in a medium arena \u2014 10 enemies total, 6 chase + 4 patrol. Mouse aim keeps the twin-stick feel (the bot faces the cursor) and the \"blasting\" energy is carried by dash bursts, hit flash, spark bursts and screen shake. \"Energy cores\" map to the 'orb' collectible (40 placed, 25 to win). The pitch's \"survive the timer\" is inverted to the kit's time-limit model: the 150s clock is a survival timer and the win is banking the core target before it dies \u2014 the timer stays the pressure. \"Synthwave colosseum at night\" \u2192 neon_night look + arena level + generated midnight sky with a neon skyline; neon pillars and holo obelisks dress the colosseum. Scifi HUD \u2192 UI scifi style with generated gem/clock/heart/skull icons. No race (laps 0, opponents 0) and no goal portal (goal false) \u2014 the arena itself is the stage."
+  "mapping_notes": "The pitch's \"twin-stick arena shooter\" has no shooting system in the kits, so the fantasy is kept as topdown dash-and-dodge: the hover-robot (topdown player, cyan body / pink accent) sprints through waves of 'chase' enemies (the spiky orbs) and 'patrol' enemies (the slimes) in a medium arena — 10 enemies total, 6 chase + 4 patrol. Mouse aim keeps the twin-stick feel (the bot faces the cursor) and the \"blasting\" energy is carried by dash bursts, hit flash, spark bursts and screen shake. \"Energy cores\" map to the 'orb' collectible (40 placed, 25 to win). The pitch's \"survive the timer\" is inverted to the kit's time-limit model: the 150s clock is a survival timer and the win is banking the core target before it dies — the timer stays the pressure. \"Synthwave colosseum at night\" → neon_night look + arena level + generated midnight sky with a neon skyline; neon pillars and holo obelisks dress the colosseum. Scifi HUD → UI scifi style with generated gem/clock/heart/skull icons. No race (laps 0, opponents 0) and no goal portal (goal false) — the arena itself is the stage."
  },
  "timings_s": {
   "art": 239.5,
@@ -191,7 +191,7 @@
  "operator_interventions": [],
  "mapping": {
   "pitch": "Neon Arena: a fast top-down twin-stick-style arena shooter at night in a synthwave colosseum. A tiny hover-robot dashes around a glowing tiled arena, blasting waves of chasing spiky orbs and patrolling slimes, grabbing energy cores dropped across the floor, and surviving the timer. Neon pink and cyan light, dark night sky, punchy hits, screen shake, scifi HUD.",
-  "notes": "The pitch's \"twin-stick arena shooter\" has no shooting system in the kits, so the fantasy is kept as topdown dash-and-dodge: the hover-robot (topdown player, cyan body / pink accent) sprints through waves of 'chase' enemies (the spiky orbs) and 'patrol' enemies (the slimes) in a medium arena \u2014 10 enemies total, 6 chase + 4 patrol. Mouse aim keeps the twin-stick feel (the bot faces the cursor) and the \"blasting\" energy is carried by dash bursts, hit flash, spark bursts and screen shake. \"Energy cores\" map to the 'orb' collectible (40 placed, 25 to win). The pitch's \"survive the timer\" is inverted to the kit's time-limit model: the 150s clock is a survival timer and the win is banking the core target before it dies \u2014 the timer stays the pressure. \"Synthwave colosseum at night\" \u2192 neon_night look + arena level + generated midnight sky with a neon skyline; neon pillars and holo obelisks dress the colosseum. Scifi HUD \u2192 UI scifi style with generated gem/clock/heart/skull icons. No race (laps 0, opponents 0) and no goal portal (goal false) \u2014 the arena itself is the stage.",
+  "notes": "The pitch's \"twin-stick arena shooter\" has no shooting system in the kits, so the fantasy is kept as topdown dash-and-dodge: the hover-robot (topdown player, cyan body / pink accent) sprints through waves of 'chase' enemies (the spiky orbs) and 'patrol' enemies (the slimes) in a medium arena — 10 enemies total, 6 chase + 4 patrol. Mouse aim keeps the twin-stick feel (the bot faces the cursor) and the \"blasting\" energy is carried by dash bursts, hit flash, spark bursts and screen shake. \"Energy cores\" map to the 'orb' collectible (40 placed, 25 to win). The pitch's \"survive the timer\" is inverted to the kit's time-limit model: the 150s clock is a survival timer and the win is banking the core target before it dies — the timer stays the pressure. \"Synthwave colosseum at night\" → neon_night look + arena level + generated midnight sky with a neon skyline; neon pillars and holo obelisks dress the colosseum. Scifi HUD → UI scifi style with generated gem/clock/heart/skull icons. No race (laps 0, opponents 0) and no goal portal (goal false) — the arena itself is the stage.",
   "chosen": {
    "level_kind": "arena",
    "look": "neon_night",
@@ -293,7 +293,7 @@
   },
   "build": {
    "result": {
-    "summary": "Neon Arena is built and runs with zero console errors. The scaffold was tuned into the plan's game: neon_night look with cyan/pink palette and boosted bloom; the kit's arena exterior foliage and clouds are hidden (they broke the \"colosseum at night\" mood) so the scene reads as a clean glowing colosseum; the plan's two spinner hazards sweep the arena midline; the scifi HUD uses the generated gem/clock/heart icons with a core counter (target 25), timer, lives and minimap; win/lose screens are themed (GRID CLEARED / SIGNAL LOST); the title screen sells the fantasy with the tagline and control credit. Juice: cyan\u2192pink thruster trail on the hover-robot, core pickup ring + sparkle + floating '+1', hit juice (hitFlash + spark burst + shake + red edge flash), death burst, slow-mo + confetti on win, red flash on lose, and big-text banners at start and when the clock drops below 30s/10s. Autopilot playtest: player moves along the route and collects (13/25 cores in ~10s), no errors, 150fps.",
+    "summary": "Neon Arena is built and runs with zero console errors. The scaffold was tuned into the plan's game: neon_night look with cyan/pink palette and boosted bloom; the kit's arena exterior foliage and clouds are hidden (they broke the \"colosseum at night\" mood) so the scene reads as a clean glowing colosseum; the plan's two spinner hazards sweep the arena midline; the scifi HUD uses the generated gem/clock/heart icons with a core counter (target 25), timer, lives and minimap; win/lose screens are themed (GRID CLEARED / SIGNAL LOST); the title screen sells the fantasy with the tagline and control credit. Juice: cyan→pink thruster trail on the hover-robot, core pickup ring + sparkle + floating '+1', hit juice (hitFlash + spark burst + shake + red edge flash), death burst, slow-mo + confetti on win, red flash on lose, and big-text banners at start and when the clock drops below 30s/10s. Autopilot playtest: player moves along the route and collects (13/25 cores in ~10s), no errors, 150fps.",
     "changes": [
      "Look.apply with palette (cyan #00e5ff / pink #ff2d95) and stronger bloom for the neon_night look",
      "Hid kit arena exterior foliage (kit:foliage:* instanced meshes) and clouds so the arena reads as a night colosseum",
@@ -301,7 +301,7 @@
      "Camera.topdown tuned (height 24, pitch 1.15, fov 50)",
      "Scifi HUD with generated gem/clock/heart icons, core counter with target 25, timer, lives, minimap, themed win/lose screens",
      "Title screen with tagline subtitle and control credit line",
-     "FX.trail cyan\u2192pink thruster trail behind the player",
+     "FX.trail cyan→pink thruster trail behind the player",
      "Event juice: collect (ring+sparkle+floating +1), damage (hitFlash+burst+shake+red vignette flash), death (big burst+shake), win (slowmo+confetti+ring), lose (red flash)",
      "Per-frame timer warnings: banners at 30s and 10s remaining, shake at 10s"
     ],
@@ -309,7 +309,7 @@
      "Mouse aim is not true twin-stick cursor-facing: the kit's topdown controller only reads mouse deltas when pointer-locked (documented 'lookX/lookY' input), so the bot faces movement direction rather than the cursor; the plan's twin-stick feel is approximated by the dash + aim-free topdown movement",
      "The arena's bounce pads and fountain (kit defaults) remain in play; they add movement variety but were not in the plan",
      "Exterior foliage was hidden by object name matching (kit:foliage:*), which depends on the kit's internal naming; if the kit renames foliage the filter would need updating",
-     "Autopilot dies once during the 10s test (enemy contact) but recovers and keeps collecting \u2014 expected given 8+ chasing enemies"
+     "Autopilot dies once during the 10s test (enemy contact) but recovers and keeps collecting — expected given 8+ chasing enemies"
     ]
    },
    "plays": 4
@@ -321,5 +321,6 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "superseded_by": "neon_arena2"
 }

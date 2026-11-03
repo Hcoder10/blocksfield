@@ -88,7 +88,7 @@
    "laps": 0,
    "opponents": 0
   },
-  "art_direction": "Saturated candy-sky palette \u2014 azure, tangerine, cream \u2014 with cel-shaded toon surfaces, thick ink outlines and a soft warm rim light on every island edge. Materials read as glossy plastic and plush: rounded grass tufts, taut rope bridges, translucent glowing star blooms. Mood is sunny, weightless and joyful; references Skylanders meets Toon Blast, lit by a high warm sun with long soft shadows.",
+  "art_direction": "Saturated candy-sky palette — azure, tangerine, cream — with cel-shaded toon surfaces, thick ink outlines and a soft warm rim light on every island edge. Materials read as glossy plastic and plush: rounded grass tufts, taut rope bridges, translucent glowing star blooms. Mood is sunny, weightless and joyful; references Skylanders meets Toon Blast, lit by a high warm sun with long soft shadows.",
   "concept_shots": [
    "The fox mid-hop between two grassy sky islands, a rope bridge sagging below, a sparkling arc of star blooms ahead, fluffy clouds far underneath.",
    "A grumpy green slime patrolling a stone platform as the fox lands on its head with a squash-and-stretch poof, star blooms popping into the air.",
@@ -162,7 +162,7 @@
   "features": [
    "Moving platforms that shuttle the fox across wide gaps between islands",
    "Spring pads that launch the fox to the higher bloom-rich islands",
-   "Void below the islands \u2014 falling costs a life and respawns at the last checkpoint",
+   "Void below the islands — falling costs a life and respawns at the last checkpoint",
    "Checkpoint flags at island midpoints so progress is never lost",
    "Patrol slimes to stomp or dodge, with hit flash, squash and a poof on stomp",
    "Beacon portal goal with a light ring, confetti burst and victory banner"
@@ -290,7 +290,7 @@
   },
   "build": {
    "result": {
-    "summary": "Starbloom Isles: a bright, juicy toon 3D platformer where a fox hops across floating sky islands collecting star blooms, stomping slimes, and reaching the beacon portal. Built on the scaffold with generated sky, props (star shrooms, beacon lanterns), and splats. The game features 24 star blooms (12 target to unlock the beacon), 2 spring pads with bounce hazards, 4 patrol slimes with stomp poof FX, checkpoint flags, a beacon portal goal, arcade HUD with minimap, title screen, and win/lose screens. All FX moments are wired: star bursts on collect, poof+ring on stomp, dust on bounce, confetti on win, smoke on death. The autopilot verified the game is playable \u2014 it moves along the route, collects stars, and unlocks the beacon.",
+    "summary": "Starbloom Isles: a bright, juicy toon 3D platformer where a fox hops across floating sky islands collecting star blooms, stomping slimes, and reaching the beacon portal. Built on the scaffold with generated sky, props (star shrooms, beacon lanterns), and splats. The game features 24 star blooms (12 target to unlock the beacon), 2 spring pads with bounce hazards, 4 patrol slimes with stomp poof FX, checkpoint flags, a beacon portal goal, arcade HUD with minimap, title screen, and win/lose screens. All FX moments are wired: star bursts on collect, poof+ring on stomp, dust on bounce, confetti on win, smoke on death. The autopilot verified the game is playable — it moves along the route, collects stars, and unlocks the beacon.",
     "changes": [
      "Added 2 bonus star blooms above the goal island for a full-bloom finish",
      "Placed 8 star shroom props (generated) on islands and 5 beacon lanterns (generated) at goal and along the route",
@@ -306,7 +306,7 @@
      "Added collect label 'Star Blooms' to the rules"
     ],
     "known_issues": [
-     "The autopilot does not complete the full level in 25s (the level is long), but it does collect 17/24 stars, unlock the beacon, and progress toward the goal \u2014 the win path is reachable by a human player"
+     "The autopilot does not complete the full level in 25s (the level is long), but it does collect 17/24 stars, unlock the beacon, and progress toward the goal — the win path is reachable by a human player"
     ]
    },
    "plays": 4
@@ -318,5 +318,6 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "superseded_by": "starbloom_isles2"
 }
