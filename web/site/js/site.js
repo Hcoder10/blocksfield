@@ -51,6 +51,9 @@
     const thumb = g.thumbnail ? `<img src="${esc(gameUrl(g, g.thumbnail))}" alt="" loading="lazy">` : "";
     const video = g.video ? `<video muted loop playsinline preload="none" data-src="${esc(gameUrl(g, g.video))}"></video>` : "";
     const meta = [];
+    const ops = g.interventions
+      ? `<a class="chip ink ops" href="site/game.html?id=${encodeURIComponent(g.id)}#pitch">${g.interventions} operator intervention${g.interventions > 1 ? "s" : ""}</a>`
+      : g.interventions === 0 ? '<span class="chip grass ops">No operator interventions</span>' : "";
     if (g.score != null) meta.push(`Judge score ${esc(g.score)}/10`);
     if (g.repairs) meta.push(`${g.repairs} repair round${g.repairs > 1 ? "s" : ""}`);
     if (g.model_calls) meta.push(`${g.model_calls} model calls`);
@@ -65,6 +68,7 @@
         ${g.tagline ? `<p class="tagline">${esc(g.tagline)}</p>` : ""}
         ${g.pitch ? `<p class="pitch"><span>“${esc(g.pitch)}”</span></p>` : ""}
         ${meta.length ? `<p class="meta">${meta.map((m) => `<span>${m}</span>`).join("")}</p>` : ""}
+        ${ops ? `<p class="opsrow">${ops}</p>` : ""}
         <div class="actions">
           <a class="btn sm" href="${esc(gameUrl(g, g.play))}"><i class="tri"></i>Play</a>
           ${g.dev && !g.model_calls ? "" : `<a class="btn sm ghost" href="${esc(making)}">How it was made</a>`}

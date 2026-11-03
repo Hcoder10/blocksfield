@@ -159,6 +159,9 @@ section { position: relative; }
 .card .pitch span { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .card .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 14px 0 0; font-size: 13px; font-weight: 600;
   color: var(--ink-soft); }
+.card .opsrow { margin: 12px 0 0; }
+.card .opsrow .chip { font-size: 12px; text-decoration: none; }
+.card .opsrow a.chip:hover { background: var(--ink-2); }
 .card .actions { display: flex; gap: 10px; margin-top: auto; padding-top: 18px; }
 .card .actions .btn { flex: 1; justify-content: center; }
 .card.dev::after { content: "DEV ONLY · NOT PUBLISHED"; position: absolute; top: 18px; right: -46px; z-index: 4;

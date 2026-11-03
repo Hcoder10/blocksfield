@@ -38,6 +38,10 @@ def game_entry(d: Path) -> dict | None:
     e["minutes"] = round(sum((about.get("timings_s") or {}).values()) / 60, 1)
     e["dry_run"] = bool(about.get("dry_run"))
     e["superseded_by"] = about.get("superseded_by")
+    ops = about.get("operator_interventions")
+    if isinstance(ops, str):
+        ops = [ops] if ops.strip() else []
+    e["interventions"] = len(ops) if isinstance(ops, list) else None  # None: the game predates the field
     plan = about.get("plan") or {}
     for k in ("look", "level_kind", "player_type", "camera", "ui_style"):
         e[k] = plan.get(k)
@@ -128,10 +132,11 @@ def build(games: Path, dev: bool = False) -> dict:
         if superseded(games, e):
             continue
         out.append(e)
-    # Real games first, best judge score first (the hero reel takes the top of this list), then newest; dev last.
+    # Real games first; among them games no operator touched, then best judge score, then newest; dev cards last.
+    # The hero reel and the og card take the top of this list.
     def created(e):
         return time.mktime(time.strptime(e["created"][:19], "%Y-%m-%dT%H:%M:%S")) if e.get("created") else 0
-    out.sort(key=lambda e: (bool(e.get("dev")), -(e.get("score") or 0), -created(e)))
+    out.sort(key=lambda e: (bool(e.get("dev")), bool(e.get("interventions")), -(e.get("score") or 0), -created(e)))
     return {"generated": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "dev": dev, "space": design_space(), "games": out}
 
 
