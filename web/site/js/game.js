@@ -58,7 +58,9 @@
     const startLayout = a.mapping?.chosen?.custom_layout || plan.custom_layout;
     if (chosenLevel === "custom") facts.push(laidOut ? '<a class="chip sun" href="#beyond">Level laid out by the model</a>'
       : `<a class="chip" href="#beyond">Composed level${startLayout ? ` (from '${esc(startLayout)}')` : ""}</a>`);
-    if (mechs.length) facts.push(`<a class="chip pink" href="#beyond">Custom mechanics: ${mechs.length}</a>`);
+    const own = mechs.filter((m) => m && (m.how === "custom" || m.how === "rule")).length;
+    if (mechs.length) facts.push(own ? `<a class="chip pink" href="#beyond">Custom mechanics: ${own}</a>`
+      : `<a class="chip" href="#beyond">Kit mechanics: ${mechs.length}</a>`);
     if (a.dry_run) facts.push('<span class="chip ink">DEV: dry run, fake models</span>');
     $("#g-facts").innerHTML = facts.join("");
     const ctrls = a.controls || plan.controls || [];
@@ -178,7 +180,7 @@
     wireAudio();
 
     // build log
-    $("#g-log").innerHTML = [timeline(t), scores(a.score), callsTable(a.model_calls, a.agents),
+    $("#g-log").innerHTML = [timeline(t), scores(a.score), postStages(a.post_stages), callsTable(a.model_calls, a.agents),
       builderReport(a.stages?.build)].filter(Boolean).join("");
   }
 
@@ -186,6 +188,13 @@
   function cutsceneModel(ps) {
     const c = ps && !Array.isArray(ps) && typeof ps === "object" ? ps.cutscenes : null;
     return (c && typeof c === "object" && c.model) || "LTX-2.5";
+  }
+  // post_stages entries written by web_run ({stage, kit_commit, at}): uniform passes run after every build
+  function postStages(ps) {
+    const items = (Array.isArray(ps) ? ps : []).filter((x) => x && typeof x === "object" && x.stage);
+    if (!items.length) return "";
+    return `<div class="panel wide"><h3>After the build <small>the same pass for every game</small></h3><ul class="post-list">${items.map((x) =>
+      `<li>${esc(x.stage)}${x.kit_commit ? ` <code>kit ${esc(String(x.kit_commit).slice(0, 10))}</code>` : ""}${x.at ? ` <span>${esc(x.at)}</span>` : ""}</li>`).join("")}</ul></div>`;
   }
   function postStagesLine(ps) {
     const has = Array.isArray(ps) ? ps.includes("cutscenes") : !!(ps && typeof ps === "object" && ps.cutscenes);
@@ -213,10 +222,11 @@
           <p>${startLayout ? `From the '${esc(startLayout)}' starting layout.` : "Built with Level.compose."}</p></div>`);
     }
     if (mechs.length) {
-      parts.push(`<div class="beyond-card"><h3><span class="chip pink">Custom mechanics</span></h3><div class="mechs">${mechs.map((m, i) => {
+      const anyOwn = mechs.some((m) => m && (m.how === "custom" || m.how === "rule"));
+      parts.push(`<div class="beyond-card"><h3><span class="chip ${anyOwn ? "pink" : ""}">${anyOwn ? "Mechanics" : "Kit mechanics"}</span></h3><div class="mechs">${mechs.map((m, i) => {
         const o = typeof m === "object" && m ? m : { name: String(m) };
         const how = o.how || o.implementation || o.kind;
-        return `<div class="mech"><div class="mech-head"><b>${esc(o.name || `mechanic ${i + 1}`)}</b>${how ? `<span class="how how-${esc(how)}">${esc(how)}</span>` : ""}</div>
+        return `<div class="mech"><div class="mech-head"><b>${esc(o.name || `mechanic ${i + 1}`)}</b>${how ? `<span class="how how-${esc(how)}">${esc(how)}</span>` : ""}${o.api ? `<code class="api">${esc(o.api)}</code>` : ""}${o.line_start ? `<span class="where">${esc(o.file || "game.js")}:${esc(o.line_start)}</span>` : ""}</div>
           ${o.description ? `<p>${esc(o.description)}</p>` : ""}<pre class="snip" data-i="${i}" hidden><code></code></pre></div>`;
       }).join("")}</div></div>`);
     }

@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-03T03:54:45-0800",
+ "generated": "2026-11-03T04:22:22-0800",
  "dev": false,
  "space": {
   "level_kind": [
@@ -81,7 +81,7 @@
    "start_layout": null,
    "laid_out": false,
    "mechanics": [],
-   "cutscenes": 0,
+   "cutscenes": 3,
    "species": null
   },
   {
@@ -154,7 +154,7 @@
    "start_layout": null,
    "laid_out": false,
    "mechanics": [],
-   "cutscenes": 0,
+   "cutscenes": 3,
    "species": "fox"
   },
   {
@@ -302,7 +302,7 @@
    "start_layout": null,
    "laid_out": false,
    "mechanics": [],
-   "cutscenes": 0,
+   "cutscenes": 3,
    "species": "robot"
   },
   {

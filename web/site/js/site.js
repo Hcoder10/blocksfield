@@ -63,7 +63,8 @@
     const badges = [];
     if (g.custom_level) badges.push(g.laid_out ? '<span class="chip sun">Level laid out by the model</span>'
       : `<span class="chip">Composed level${g.start_layout ? ` (from '${esc(g.start_layout)}')` : ""}</span>`);
-    if ((g.mechanics || []).length) badges.push('<span class="chip pink">Custom mechanics</span>');
+    const ownMech = (g.mechanics || []).some((m) => m.how === "custom" || m.how === "rule");
+    if ((g.mechanics || []).length) badges.push(ownMech ? '<span class="chip pink">Custom mechanics</span>' : '<span class="chip">Kit mechanics</span>');
     if (g.cutscenes) badges.push(`<span class="chip">${g.cutscenes} cutscene${g.cutscenes > 1 ? "s" : ""}</span>`);
     return `<article class="card reveal${g.dev ? " dev" : ""}">
       ${g.dev ? '<span class="chip ink devlabel">DEV PLACEHOLDER</span>' : ""}
@@ -155,7 +156,8 @@
       ex.push({ g: lvl, badge: '<span class="chip sun">Level laid out by the model</span>',
         body: `<p>The model placed this level's pieces itself instead of calling a kit preset.</p>${facts ? `<ul>${facts}</ul>` : ""}` });
     }
-    const mg = games.find((g) => (g.mechanics || []).some((m) => m.how === "custom")) || games.find((g) => (g.mechanics || []).length);
+    const mg = games.find((g) => (g.mechanics || []).some((m) => m.how === "custom")) ||
+      games.find((g) => (g.mechanics || []).some((m) => m.how === "rule"));  // builtin-only is not beyond the kits
     if (mg && mg !== lvl) {
       ex.push({ g: mg, badge: '<span class="chip pink">Custom mechanics</span>',
         body: `<ul>${mg.mechanics.slice(0, 3).map((m) => `<li><b>${esc(m.name || "mechanic")}</b>${m.how ? ` <span class="how how-${esc(m.how)}">${esc(m.how)}</span>` : ""}</li>`).join("")}</ul>` });
