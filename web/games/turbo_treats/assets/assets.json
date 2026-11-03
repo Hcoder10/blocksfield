@@ -1,0 +1,107 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "High-noon candy sky: cotton-candy clouds in pink, peach and cream, soft lemon-yellow sun, horizon fading to mint.",
+  "wrap_seam": 0.62
+ },
+ "icon_coin": {
+  "file": "icon_coin.png",
+  "kind": "icon",
+  "prompt": "glossy pink sugar coin with a white swirl, toon style with ink outline",
+  "for": "coins"
+ },
+ "icon_bolt": {
+  "file": "icon_bolt.png",
+  "kind": "icon",
+  "prompt": "caramel lightning bolt wrapped in candy stripes, toon style",
+  "for": "rush"
+ },
+ "icon_lap": {
+  "file": "icon_lap.png",
+  "kind": "icon",
+  "prompt": "checkered flag made of candy stripes, toon style",
+  "for": "laps"
+ },
+ "icon_trophy": {
+  "file": "icon_trophy.png",
+  "kind": "icon",
+  "prompt": "candy-cane trophy cup with a gumdrop on top, toon style",
+  "for": "rank"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "upbeat chiptune-pop kart race loop, bouncy 140 BPM, synth brass stabs, bubbly bass, candy-shop pizzicato"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "bright ping like a candy wrapper crinkle"
+ },
+ "sfx_boost": {
+  "file": "sfx_boost.mp3",
+  "kind": "sfx",
+  "event": "boost",
+  "prompt": "rising sugar-rush whoosh with a fizzy pop"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "cartoon wobble boing spin-out sound"
+ },
+ "sfx_checkpoint": {
+  "file": "sfx_checkpoint.mp3",
+  "kind": "sfx",
+  "event": "checkpoint",
+  "prompt": "cheerful ding like a candy-jar lid"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "candy fanfare with bells and confetti pops"
+ },
+ "sfx_lose": {
+  "file": "sfx_lose.mp3",
+  "kind": "sfx",
+  "event": "lose",
+  "prompt": "deflating womp with a sad trombone blip"
+ },
+ "prop_gumdrop": {
+  "file": "prop_gumdrop.json",
+  "kind": "prop",
+  "prompt": "one big glossy gumdrop, round dome with a sugar-dusted top, candy pink",
+  "via": "idol",
+  "parts": 455
+ },
+ "splat_gumdrop": {
+  "file": "splat_gumdrop.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "one big glossy gumdrop, round dome with a sugar-dusted top, candy pink",
+  "camera": {
+   "yaw": 1.4427730136677173
+  }
+ },
+ "prop_lollipop": {
+  "file": "prop_lollipop.json",
+  "kind": "prop",
+  "prompt": "one giant lollipop signpost, swirled candy head on a striped stick, mint and pink",
+  "via": "idol",
+  "parts": 346
+ },
+ "splat_lollipop": {
+  "file": "splat_lollipop.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "one giant lollipop signpost, swirled candy head on a striped stick, mint and pink",
+  "camera": {
+   "yaw": 1.5403313156728644
+  }
+ }
+}

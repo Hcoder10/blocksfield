@@ -5,11 +5,14 @@
  "pitch": "Riverbend Canyon: a frog paddles and hops down a winding red-rock canyon river, leaping between rocks and rafts to reach the waterfall pool",
  "genre": "Chibi canyon river platformer",
  "controls": [
-  "WASD / arrows: move",
-  "Space: jump (hold for a higher hop)",
-  "Esc / P: pause"
+  "WASD / arrows: run",
+  "Space: jump (again in the air: double jump)",
+  "Shift: dash / long jump",
+  "C: ground pound",
+  "P / Esc: pause"
  ],
- "created": "2026-11-03T03:00:37-0800",
+ "mechanics": [],
+ "created": "2026-11-03T05:23:24-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -21,9 +24,9 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "v1",
-  "score": 6.28,
-  "play": 7.56,
+  "best": "rerecord_1103_052055",
+  "score": 6.33,
+  "play": 7.67,
   "vision": 5.0,
   "versions": [
    {
@@ -48,6 +51,12 @@
     "tag": "v2",
     "score": 6.11,
     "play_score": 7.22,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "rerecord_1103_052055",
+    "score": 6.33,
+    "play_score": 7.67,
     "vision_score": 5.0
    }
   ]
@@ -178,10 +187,12 @@
  "timings_s": {
   "art": 226.5,
   "build": 75.0,
+  "eval_rerecord_1103_052055": 74.7,
   "eval_s0": 70.3,
   "eval_v0": 60.4,
   "eval_v1": 75.8,
   "eval_v2": 61.4,
+  "finalize": 46.7,
   "plan": 96.7,
   "repair_1": 211.0,
   "repair_2": 483.8,
@@ -217,30 +228,25 @@
   },
   "builder_overrides": [
    "the builder changed species from frog to kid"
-  ]
+  ],
+  "layout": {
+   "start": "river_run",
+   "pieces_start": 15,
+   "pieces_final": 24,
+   "pieces_changed_from_start": 12,
+   "pieces_changed_from_example": 12
+  }
  },
  "model_calls": {
-  "lead": {
-   "calls": 1,
-   "prompt_tokens": 7604,
-   "completion_tokens": 7108,
-   "seconds": 95.7
-  },
-  "builder": {
-   "calls": 71,
-   "prompt_tokens": 1785036,
-   "completion_tokens": 14279,
-   "seconds": 513.3
-  },
   "judge": {
-   "calls": 10,
-   "prompt_tokens": 51962,
-   "completion_tokens": 3665,
-   "seconds": 101.7
+   "calls": 1,
+   "prompt_tokens": 6182,
+   "completion_tokens": 670,
+   "seconds": 32.0
   }
  },
  "agents": {
-  "live": 4,
+  "live": 0,
   "cached": 0,
   "failed": 0
  },
@@ -322,5 +328,22 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:22",
+   "score": 6.33,
+   "autopilot": {
+    "moved": 66.7,
+    "collected_end": 15,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.28
+  }
+ ],
+ "superseded_by": "riverbend_canyon2"
 }

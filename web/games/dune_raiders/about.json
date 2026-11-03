@@ -5,12 +5,13 @@
  "pitch": "Dune Raiders: a desert top-down treasure hunt. Play a little robot explorer roaming a sun-baked desert ruin, blasting scorpion turrets and sand slimes, collecting ancient gold relics, and escaping through the glowing sun gate. Warm sand colours, long shadows, punchy blaster hits.",
  "genre": "Top-down action treasure hunt",
  "controls": [
-  "WASD / arrows: move",
-  "Mouse: aim blaster",
-  "Left click: fire blaster",
+  "WASD / arrows: run",
+  "Space / J / click: fire",
+  "Shift / E: dash",
   "P / Esc: pause"
  ],
- "created": "2026-11-03T02:27:34-0800",
+ "mechanics": [],
+ "created": "2026-11-03T05:20:15-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -22,7 +23,7 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "v0",
+  "best": "rerecord_1103_051637",
   "score": 6.5,
   "play": 8.0,
   "vision": 5.0,
@@ -50,6 +51,12 @@
     "score": 6.0,
     "play_score": 8.0,
     "vision_score": 4.0
+   },
+   {
+    "tag": "rerecord_1103_051637",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
    }
   ]
  },
@@ -174,10 +181,12 @@
  "timings_s": {
   "art": 434.0,
   "build": 209.4,
+  "eval_rerecord_1103_051637": 152.5,
   "eval_s0": 72.4,
   "eval_v0": 77.2,
   "eval_v1": 32.4,
   "eval_v2": 83.2,
+  "finalize": 48.5,
   "plan": 92.7,
   "repair_1": 243.2,
   "repair_2": 161.2,
@@ -214,27 +223,15 @@
   "builder_overrides": []
  },
  "model_calls": {
-  "lead": {
-   "calls": 1,
-   "prompt_tokens": 7449,
-   "completion_tokens": 7037,
-   "seconds": 91.6
-  },
-  "builder": {
-   "calls": 50,
-   "prompt_tokens": 1427252,
-   "completion_tokens": 8577,
-   "seconds": 376.5
-  },
   "judge": {
-   "calls": 7,
-   "prompt_tokens": 36709,
-   "completion_tokens": 3215,
-   "seconds": 62.7
+   "calls": 1,
+   "prompt_tokens": 6187,
+   "completion_tokens": 682,
+   "seconds": 73.4
   }
  },
  "agents": {
-  "live": 4,
+  "live": 0,
   "cached": 0,
   "failed": 0
  },
@@ -319,5 +316,21 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:19",
+   "score": 6.5,
+   "autopilot": {
+    "moved": 119.0,
+    "collected_end": 0,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.5
+  }
+ ]
 }

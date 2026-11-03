@@ -5,12 +5,14 @@
  "pitch": "Bumble Dash: a bunny obstacle-course sprint through a sunny spring meadow. Dash, double-jump and bounce over hurdles, spinning bars and bounce pads, grab golden carrots along the way, and burst through the giant flower finish arch before the timer runs out. Bright, bouncy, cheerful.",
  "genre": "bouncy obstacle-course platformer sprint",
  "controls": [
-  "A / D or arrow keys: move",
-  "Space: jump, press again mid-air: double jump",
-  "Shift: dash",
-  "P: pause"
+  "WASD / arrows: run",
+  "Space: jump (again in the air: double jump)",
+  "Shift: dash / long jump",
+  "C: ground pound",
+  "P / Esc: pause"
  ],
- "created": "2026-11-03T02:35:41-0800",
+ "mechanics": [],
+ "created": "2026-11-03T05:26:19-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -22,10 +24,10 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "v0",
-  "score": 6.0,
+  "best": "rerecord_1103_052412",
+  "score": 6.5,
   "play": 8.0,
-  "vision": 4.0,
+  "vision": 5.0,
   "versions": [
    {
     "tag": "v0",
@@ -47,6 +49,18 @@
    },
    {
     "tag": "v2",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "rerecord_1103_042034",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "rerecord_1103_052412",
     "score": 6.5,
     "play_score": 8.0,
     "vision_score": 5.0
@@ -173,10 +187,13 @@
  "timings_s": {
   "art": 273.6,
   "build": 546.7,
+  "eval_rerecord_1103_042034": 455.0,
+  "eval_rerecord_1103_052412": 65.3,
   "eval_s0": 69.9,
   "eval_v0": 119.9,
   "eval_v1": 32.5,
   "eval_v2": 70.0,
+  "finalize": 70.1,
   "plan": 89.5,
   "repair_1": 288.2,
   "repair_2": 238.7,
@@ -213,27 +230,15 @@
   "builder_overrides": []
  },
  "model_calls": {
-  "lead": {
-   "calls": 1,
-   "prompt_tokens": 7449,
-   "completion_tokens": 7102,
-   "seconds": 88.2
-  },
-  "builder": {
-   "calls": 58,
-   "prompt_tokens": 1556644,
-   "completion_tokens": 14980,
-   "seconds": 617.3
-  },
   "judge": {
-   "calls": 7,
-   "prompt_tokens": 36692,
-   "completion_tokens": 2807,
-   "seconds": 283.4
+   "calls": 1,
+   "prompt_tokens": 6188,
+   "completion_tokens": 893,
+   "seconds": 21.4
   }
  },
  "agents": {
-  "live": 4,
+  "live": 0,
   "cached": 0,
   "failed": 0
  },
@@ -323,5 +328,35 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "3b0d29e",
+   "at": "2026-11-03 04:28",
+   "score": 6.0,
+   "autopilot": {
+    "moved": 78.2,
+    "collected_end": 17,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.0
+  },
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:25",
+   "score": 6.5,
+   "autopilot": {
+    "moved": 80.8,
+    "collected_end": 17,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.0
+  }
+ ]
 }

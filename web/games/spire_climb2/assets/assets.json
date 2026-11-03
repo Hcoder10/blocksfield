@@ -1,0 +1,100 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Golden hour above a cloud sea: peach-to-lavender gradient, a big warm sun low on the horizon, puffy cumulus far below, first stars twinkling.",
+  "wrap_seam": 0.91
+ },
+ "icon_star": {
+  "file": "icon_star.png",
+  "kind": "icon",
+  "prompt": "chibi glowing star icon, warm cream and gold, rounded chunky edges",
+  "for": "collect"
+ },
+ "icon_heart": {
+  "file": "icon_heart.png",
+  "kind": "icon",
+  "prompt": "plump cozy heart icon, dusty rose with a cream highlight",
+  "for": "lives"
+ },
+ "icon_bell": {
+  "file": "icon_bell.png",
+  "kind": "icon",
+  "prompt": "chunky golden bell icon with a tiny clapper and a warm glow"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "lo-fi cozy acoustic: soft ukulele strums, brushed snare, warm music-box melody, mellow and dreamy, ~90 BPM, gentle rising feel for the climb"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "bright plinky chime like a tiny bell, warm and sweet"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "soft springy boing, light and playful"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "muffled cozy thump with a small dust puff"
+ },
+ "sfx_checkpoint": {
+  "file": "sfx_checkpoint.mp3",
+  "kind": "sfx",
+  "event": "checkpoint",
+  "prompt": "warm two-note music-box ding"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "big joyful bell ring with a shimmering chime cascade"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "soft 'oof' pop, gentle, not harsh"
+ },
+ "prop_lantern": {
+  "file": "prop_lantern.json",
+  "kind": "prop",
+  "prompt": "a chunky wooden post lantern with a warm amber glass globe and a rounded stone base",
+  "via": "idol",
+  "parts": 390
+ },
+ "prop_bell": {
+  "file": "prop_bell.json",
+  "kind": "prop",
+  "prompt": "a small golden bell on a short wooden post tied with a red ribbon, chunky rounded shape",
+  "via": "idol",
+  "parts": 433
+ },
+ "splat_lantern": {
+  "file": "splat_lantern.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "a chunky wooden post lantern with a warm amber glass globe and a rounded stone base",
+  "camera": {
+   "yaw": 2.4054220020208206
+  }
+ },
+ "splat_bell": {
+  "file": "splat_bell.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "a small golden bell on a short wooden post tied with a red ribbon, chunky rounded shape",
+  "camera": {
+   "yaw": 0.9807160756246597
+  }
+ }
+}

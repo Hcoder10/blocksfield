@@ -5,12 +5,13 @@
  "pitch": "Lagoon Rush: a sunny tropical jet-boat race. Skim across a turquoise lagoon past palm beaches, a striped lighthouse and buoy-lined lanes, hit boost pads and a big jump ramp, and beat three rival boats over three laps. Bright, splashy, summery, toon colours.",
  "genre": "arcade boat racing",
  "controls": [
-  "W / \u2191: throttle",
-  "S / \u2193: brake and reverse",
-  "A / D or \u2190 / \u2192: steer",
-  "Gamepad: steer and throttle"
+  "W / up: throttle, S / down: brake",
+  "A D / left right: steer",
+  "Space (hold while steering): drift, release = boost",
+  "P / Esc: pause"
  ],
- "created": "2026-11-03T03:42:12-0800",
+ "mechanics": [],
+ "created": "2026-11-03T05:30:23-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -22,7 +23,7 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "v2",
+  "best": "rerecord_1103_052745",
   "score": 5.42,
   "play": 6.83,
   "vision": 4.0,
@@ -47,6 +48,12 @@
    },
    {
     "tag": "v2",
+    "score": 5.42,
+    "play_score": 6.83,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "rerecord_1103_052745",
     "score": 5.42,
     "play_score": 6.83,
     "vision_score": 4.0
@@ -179,10 +186,12 @@
  "timings_s": {
   "art": 382.1,
   "build": 416.3,
+  "eval_rerecord_1103_052745": 78.6,
   "eval_s0": 62.2,
   "eval_v0": 63.3,
   "eval_v1": 69.1,
   "eval_v2": 67.2,
+  "finalize": 56.8,
   "plan": 283.6,
   "repair_1": 592.2,
   "repair_2": 383.8,
@@ -219,27 +228,15 @@
   "builder_overrides": []
  },
  "model_calls": {
-  "lead": {
-   "calls": 1,
-   "prompt_tokens": 7637,
-   "completion_tokens": 6792,
-   "seconds": 282.7
-  },
-  "builder": {
-   "calls": 49,
-   "prompt_tokens": 1242904,
-   "completion_tokens": 10614,
-   "seconds": 796.2
-  },
   "judge": {
-   "calls": 10,
-   "prompt_tokens": 52250,
-   "completion_tokens": 4055,
-   "seconds": 75.0
+   "calls": 1,
+   "prompt_tokens": 6212,
+   "completion_tokens": 937,
+   "seconds": 15.6
   }
  },
  "agents": {
-  "live": 4,
+  "live": 0,
   "cached": 0,
   "failed": 0
  },
@@ -330,5 +327,21 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:29",
+   "score": 5.42,
+   "autopilot": {
+    "moved": 242.9,
+    "collected_end": 5,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 5.42
+  }
+ ]
 }

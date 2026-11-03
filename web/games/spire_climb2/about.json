@@ -1,0 +1,434 @@
+{
+ "id": "spire_climb2",
+ "title": "Spire Climb",
+ "tagline": "Hop the spiral, ring the bell \u2014 a cozy cat's climb above the clouds.",
+ "pitch": "Spire Climb: a cozy spiral tower climb above the clouds as a cat, hopping up ledges, bridges and rotating platforms to ring the bell at the top",
+ "genre": "cozy 3D platformer",
+ "controls": [
+  "WASD / arrows: run",
+  "Space: jump (again in the air: double jump)",
+  "Shift: dash / long jump",
+  "C: ground pound",
+  "P / Esc: pause"
+ ],
+ "mechanics": [
+  {
+   "name": "tune",
+   "how": "builtin",
+   "api": "Mechanics.tune",
+   "file": "game.js",
+   "line_start": 60,
+   "line_end": 60,
+   "snippet": "K.Mechanics.tune(player, {\"speed\": 1.08, \"jump\": 1.15, \"airJumps\": 1});"
+  },
+  {
+   "name": "glide",
+   "how": "builtin",
+   "api": "Mechanics.powerup",
+   "file": "game.js",
+   "line_start": 62,
+   "line_end": 62,
+   "snippet": "K.Mechanics.powerup(game, { type: \"glide\", count: 3 });"
+  },
+  {
+   "name": "rule",
+   "how": "rule",
+   "api": "Mechanics.rule",
+   "file": "game.js",
+   "line_start": 64,
+   "line_end": 64,
+   "snippet": "K.Mechanics.rule(game, {\"name\": \"Star Chirp\", \"text\": \"Every 8 stardust: +50 and a happy chirp!\", \"when\": \"collect\", \"every\": 8, \"do\": [{\"score\": 50}, {\"banner\": \"Chirp! +50\"}]});"
+  }
+ ],
+ "created": "2026-11-03T05:42:39-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "rerecord_1103_054100",
+  "score": 6.0,
+  "play": 8.0,
+  "vision": 4.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "s0",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "v1",
+    "score": 6.38,
+    "play_score": 7.75,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "v2",
+    "score": 7.0,
+    "play_score": 8.0,
+    "vision_score": 6.0
+   },
+   {
+    "tag": "rerecord_1103_053253",
+    "score": 6.5,
+    "play_score": 8.0,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "rerecord_1103_054100",
+    "score": 6.0,
+    "play_score": 8.0,
+    "vision_score": 4.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Spire Climb",
+  "tagline": "Hop the spiral, ring the bell \u2014 a cozy cat's climb above the clouds.",
+  "genre": "cozy 3D platformer",
+  "core_loop": "Hop up ledges, rope bridges and rotating platforms around a spiral tower, grabbing stardust and checkpoint flags on the way, until you ring the great bell at the top.",
+  "controls": [
+   "WASD / arrows: move",
+   "Space: jump (one air-hop)",
+   "Hold jump mid-air: glide (with Scarf Glide)",
+   "P: pause"
+  ],
+  "win_condition": "Ring the great bell on the spire platform at the top of the tower.",
+  "lose_condition": "Lose all 3 lives by falling into the cloud sea below.",
+  "look": "cozy",
+  "level_kind": "custom",
+  "custom_layout": "spiral_climb",
+  "ground": "none",
+  "level_size": "medium",
+  "player_type": "platformer",
+  "camera": "follow",
+  "player_colors": {
+   "body": "#f4a259",
+   "accent": "#8ab6a0"
+  },
+  "collectible": {
+   "tag": "star",
+   "label": "Stardust",
+   "count": 24,
+   "target": 8
+  },
+  "goal": true,
+  "timer_seconds": 0,
+  "lives": 3,
+  "enemies": 0,
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  },
+  "character": {
+   "species": "cat",
+   "accessory": "scarf"
+  },
+  "mode": "goal",
+  "mechanics": [
+   {
+    "name": "Nimble Paws",
+    "how": "tune",
+    "text": "Milo is nimble: a springier jump and one air-hop for the tight ledges.",
+    "tune": {
+     "speed": 1.08,
+     "jump": 1.15,
+     "airJumps": 1
+    }
+   },
+   {
+    "name": "Scarf Glide",
+    "how": "powerup",
+    "text": "Scarf Glide: hold jump in the air to drift across the cloud gaps.",
+    "powerup": "glide",
+    "count": 3
+   },
+   {
+    "name": "Star Chirp",
+    "how": "rule",
+    "text": "Every 8 stardust: +50 and a happy chirp!",
+    "rule": {
+     "when": "collect",
+     "every": 8,
+     "do": [
+      {
+       "score": 50
+      },
+      {
+       "banner": "Chirp! +50"
+      }
+     ]
+    }
+   }
+  ],
+  "art_direction": "A cozy pastel world above the clouds: warm cream and peach stone, sage moss, honey-wood bridges and a dusty-peach sky at golden hour. Soft rounded voxel shapes with gentle ink outlines, glowing amber lanterns and a warm rim light like late afternoon. References: Ghibli sky meadows, Animal Crossing softness, Monument Valley color blocking.",
+  "concept_shots": [
+   "A chibi orange cat with a sage scarf leaps from a mossy stone ledge onto a rope bridge, the spiral of floating pillars rising behind it and a sea of clouds far below.",
+   "A rotating wooden platform carries the cat across a wide cloud gap toward a lantern-lit tower tier, stardust motes twinkling along the route.",
+   "The cat rings the big golden bell on the spire platform as confetti bursts and warm light spills over the whole spiral tower wrapped in sunset clouds."
+  ],
+  "assets": {
+   "sky": "Golden hour above a cloud sea: peach-to-lavender gradient, a big warm sun low on the horizon, puffy cumulus far below, first stars twinkling.",
+   "icons": [
+    {
+     "name": "star",
+     "prompt": "chibi glowing star icon, warm cream and gold, rounded chunky edges",
+     "for": "collect"
+    },
+    {
+     "name": "heart",
+     "prompt": "plump cozy heart icon, dusty rose with a cream highlight",
+     "for": "lives"
+    },
+    {
+     "name": "bell",
+     "prompt": "chunky golden bell icon with a tiny clapper and a warm glow"
+    }
+   ],
+   "music": "lo-fi cozy acoustic: soft ukulele strums, brushed snare, warm music-box melody, mellow and dreamy, ~90 BPM, gentle rising feel for the climb",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "bright plinky chime like a tiny bell, warm and sweet"
+    },
+    {
+     "event": "jump",
+     "prompt": "soft springy boing, light and playful"
+    },
+    {
+     "event": "land",
+     "prompt": "muffled cozy thump with a small dust puff"
+    },
+    {
+     "event": "checkpoint",
+     "prompt": "warm two-note music-box ding"
+    },
+    {
+     "event": "win",
+     "prompt": "big joyful bell ring with a shimmering chime cascade"
+    },
+    {
+     "event": "damage",
+     "prompt": "soft 'oof' pop, gentle, not harsh"
+    }
+   ],
+   "props": [
+    {
+     "name": "lantern",
+     "prompt": "a chunky wooden post lantern with a warm amber glass globe and a rounded stone base",
+     "count": 14
+    },
+    {
+     "name": "bell",
+     "prompt": "a small golden bell on a short wooden post tied with a red ribbon, chunky rounded shape",
+     "count": 4
+    }
+   ]
+  },
+  "mapping_notes": "No preset level kind is a vertical spiral tower above the clouds \u2014 sky_islands is a horizontal hop between islands, and floating_castle is a keep-and-bridge castle, not a spiral climb \u2014 so use custom with the kit's own spiral_climb example (a spiral of pillars around a tall tower above the clouds), which is exactly the pitch's space. The bell at the top becomes the goal portal on the spire; the cozy look + golden-hour sky carries the 'cozy above the clouds' mood; the cat hero is the kit's cat species with a scarf accessory; the rotating platforms are Level movers with rotate motion; falling into the cloud sea is the void hazard with 3 lives.",
+  "features": [
+   "Checkpoint flags at each tier of the spiral \u2014 fall and respawn where you last flagged (Gameplay.rules checkpoints)",
+   "Rotating stone platforms and a ping-pong cloud raft between tiers (Level movers: rotate / pingpong)",
+   "Void below the cloud sea: falling costs a life and drops you back at the last checkpoint (hazard: void)",
+   "Scarf Glide power-up pickups mid-climb (Mechanics powerup: glide)",
+   "Sparkle burst and floating '+1' text on every stardust pickup (FX.sparkle + FX.text)",
+   "Confetti, warm flash and a big bell chime the moment the bell is rung (FX.confetti + FX.flash + win SFX)"
+  ],
+  "ui_style": "cozy"
+ },
+ "timings_s": {
+  "art": 730.0,
+  "build": 1328.8,
+  "eval_rerecord_1103_053253": 59.1,
+  "eval_rerecord_1103_054100": 50.4,
+  "eval_s0": 78.8,
+  "eval_v0": 151.9,
+  "eval_v1": 195.3,
+  "eval_v2": 78.3,
+  "finalize": 64.4,
+  "plan": 462.0,
+  "repair_1": 544.3,
+  "repair_2": 596.8,
+  "scaffold": 6.4
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Spire Climb: a cozy spiral tower climb above the clouds as a cat, hopping up ledges, bridges and rotating platforms to ring the bell at the top",
+  "notes": "No preset level kind is a vertical spiral tower above the clouds \u2014 sky_islands is a horizontal hop between islands, and floating_castle is a keep-and-bridge castle, not a spiral climb \u2014 so use custom with the kit's own spiral_climb example (a spiral of pillars around a tall tower above the clouds), which is exactly the pitch's space. The bell at the top becomes the goal portal on the spire; the cozy look + golden-hour sky carries the 'cozy above the clouds' mood; the cat hero is the kit's cat species with a scarf accessory; the rotating platforms are Level movers with rotate motion; falling into the cloud sea is the void hazard with 3 lives.",
+  "chosen": {
+   "level_kind": "custom",
+   "look": "cozy",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "cozy",
+   "mode": "goal",
+   "species": "cat",
+   "character": {
+    "species": "cat",
+    "accessory": "scarf"
+   },
+   "collectible": "star",
+   "collectible_label": "Stardust"
+  },
+  "planned": {
+   "level_kind": "custom",
+   "look": "cozy",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "cozy",
+   "mode": "goal",
+   "species": "cat"
+  },
+  "builder_overrides": [],
+  "layout": {
+   "start": "spiral_climb",
+   "pieces_start": 14,
+   "pieces_final": 15,
+   "pieces_changed_from_start": 6,
+   "pieces_changed_from_example": 6
+  }
+ },
+ "model_calls": {
+  "judge": {
+   "calls": 1,
+   "prompt_tokens": 6173,
+   "completion_tokens": 851,
+   "seconds": 16.5
+  }
+ },
+ "agents": {
+  "live": 0,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 556.0
+    },
+    "icon_star": {
+     "ok": true,
+     "seconds": 564.1
+    },
+    "icon_heart": {
+     "ok": true,
+     "seconds": 574.1
+    },
+    "icon_bell": {
+     "ok": true,
+     "seconds": 584.0
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 588.5
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 588.6
+    },
+    "sfx_jump": {
+     "ok": true,
+     "seconds": 589.6
+    },
+    "sfx_land": {
+     "ok": true,
+     "seconds": 590.7
+    },
+    "sfx_checkpoint": {
+     "ok": true,
+     "seconds": 591.8
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 593.1
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 594.2
+    },
+    "prop_lantern": {
+     "ok": true,
+     "seconds": 680.4
+    },
+    "prop_bell": {
+     "ok": true,
+     "seconds": 730.0
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Spire Climb: a cozy spiral-tower platformer above the clouds. Built on the scaffold: hand-laid spiral route (10 mossy pillars around the tower core), a rotating stone beam and a ping-pong cloud raft between tiers, a rope bridge to the spire, and a bell platform as the goal. Cat hero with scarf, cozy look + generated golden-hour sky, lantern/bell props and splat landmarks, stardust collectibles (24, target 8), 3 lives with void fall-death, checkpoint flags per tier. Signature mechanics wired: Nimble Paws (tune: springier jump + air-hop), Scarf Glide (3 glide power-ups along the route), Star Chirp (every 8 stardust: +50 and a banner). Cozy HUD with stardust counter, hearts, minimap and objective; title screen sells the fantasy; FX.auto + Audio.auto give sparkles, confetti, bell chime and music.",
+    "changes": [
+     "Rebuilt LAYOUT by hand: start island, tower core, 10-pillar spiral, rotating 'rotate' mover beam (tier 1), ping-pong cloud raft (tier 2), rope bridge to the spire, mossy step pillar and a 5.5u bell platform as the goal",
+     "Tuned the rotating beam's sweep so the jump off it is within the 5u/2.5u limits (no more autofix stepping platform)",
+     "HUD: added objective line 'Ring the great bell at the top of the spire'",
+     "Title screen credit line now matches the plan's controls (move / jump + air-hop + scarf glide / pause)"
+    ],
+    "known_issues": [
+     "Autopilot only reached ~10/24 stardust and the tower mid-climb in a 12 s test (level is a long vertical climb; it was still progressing with no deaths or errors)",
+     "The plan's twist mechanic (e.g. a custom rule) was not added \u2014 the three signature mechanics from the plan are all wired and firing instead"
+    ]
+   },
+   "plays": 1
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ },
+ "incidents": [
+  "a duplicate builder process of the same pipeline ran 04:48-04:52 on this run dir and was killed; game.js was not written during that window, so it most likely has none of its writes"
+ ],
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:33",
+   "score": 6.5,
+   "autopilot": {
+    "moved": 66.3,
+    "collected_end": 13,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 7.0
+  },
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:41",
+   "score": 6.0,
+   "autopilot": {
+    "moved": 101.5,
+    "collected_end": 11,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.5
+  }
+ ]
+}

@@ -6,11 +6,13 @@
  "genre": "Juicy 3D platformer / collect-and-climb",
  "controls": [
   "WASD / arrows: run",
-  "Space: jump (tap again mid-air: double jump)",
-  "Shift: dash",
+  "Space: jump (again in the air: double jump)",
+  "Shift: dash / long jump",
+  "C: ground pound",
   "P / Esc: pause"
  ],
- "created": "2026-11-03T03:38:59-0800",
+ "mechanics": [],
+ "created": "2026-11-03T05:27:54-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -22,10 +24,10 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "v2",
-  "score": 6.0,
+  "best": "rerecord_1103_052440",
+  "score": 7.0,
   "play": 8.0,
-  "vision": 4.0,
+  "vision": 6.0,
   "versions": [
    {
     "tag": "v0",
@@ -50,6 +52,12 @@
     "score": 6.0,
     "play_score": 8.0,
     "vision_score": 4.0
+   },
+   {
+    "tag": "rerecord_1103_052440",
+    "score": 7.0,
+    "play_score": 8.0,
+    "vision_score": 6.0
    }
   ]
  },
@@ -179,10 +187,12 @@
  "timings_s": {
   "art": 291.5,
   "build": 756.3,
+  "eval_rerecord_1103_052440": 116.1,
   "eval_s0": 64.4,
   "eval_v0": 73.2,
   "eval_v1": 223.0,
   "eval_v2": 50.5,
+  "finalize": 56.0,
   "plan": 61.6,
   "repair_1": 293.7,
   "repair_2": 414.8,
@@ -219,27 +229,15 @@
   "builder_overrides": []
  },
  "model_calls": {
-  "lead": {
-   "calls": 1,
-   "prompt_tokens": 7650,
-   "completion_tokens": 4744,
-   "seconds": 60.4
-  },
-  "builder": {
-   "calls": 40,
-   "prompt_tokens": 1003212,
-   "completion_tokens": 6679,
-   "seconds": 918.0
-  },
   "judge": {
-   "calls": 10,
-   "prompt_tokens": 51968,
-   "completion_tokens": 4075,
-   "seconds": 231.5
+   "calls": 1,
+   "prompt_tokens": 6191,
+   "completion_tokens": 866,
+   "seconds": 62.9
   }
  },
  "agents": {
-  "live": 4,
+  "live": 0,
   "cached": 0,
   "failed": 0
  },
@@ -328,5 +326,21 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:26",
+   "score": 7.0,
+   "autopilot": {
+    "moved": 88.8,
+    "collected_end": 15,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.0
+  }
+ ]
 }

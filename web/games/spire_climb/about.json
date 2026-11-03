@@ -5,12 +5,14 @@
  "pitch": "Spire Climb: a cozy spiral tower climb above the clouds as a cat, hopping up ledges, bridges and rotating platforms to ring the bell at the top",
  "genre": "cozy platformer",
  "controls": [
-  "A / D or \u2190 / \u2192: move",
-  "Space / W / \u2191: jump",
-  "S / \u2193: drop / crouch",
-  "P or Esc: pause"
+  "WASD / arrows: run",
+  "Space: jump (again in the air: double jump)",
+  "Shift: dash / long jump",
+  "C: ground pound",
+  "P / Esc: pause"
  ],
- "created": "2026-11-03T02:59:37-0800",
+ "mechanics": [],
+ "created": "2026-11-03T05:22:31-0800",
  "dry_run": false,
  "play": "index.html",
  "thumbnail": "thumb.jpg",
@@ -22,9 +24,9 @@
  ],
  "survey": "about/survey.jpg",
  "score": {
-  "best": "v1",
-  "score": 6.39,
-  "play": 7.78,
+  "best": "rerecord_1103_051939",
+  "score": 6.5,
+  "play": 8.0,
   "vision": 5.0,
   "versions": [
    {
@@ -49,6 +51,12 @@
     "tag": "v2",
     "score": 6.39,
     "play_score": 7.78,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "rerecord_1103_051939",
+    "score": 6.5,
+    "play_score": 8.0,
     "vision_score": 5.0
    }
   ]
@@ -174,10 +182,12 @@
  "timings_s": {
   "art": 246.1,
   "build": 708.9,
+  "eval_rerecord_1103_051939": 121.5,
   "eval_s0": 51.1,
   "eval_v0": 70.4,
   "eval_v1": 131.7,
   "eval_v2": 76.5,
+  "finalize": 45.1,
   "plan": 166.6,
   "repair_1": 188.6,
   "repair_2": 166.3,
@@ -211,30 +221,25 @@
    "mode": "goal",
    "species": "cat"
   },
-  "builder_overrides": []
+  "builder_overrides": [],
+  "layout": {
+   "start": "spiral_climb",
+   "pieces_start": 14,
+   "pieces_final": 14,
+   "pieces_changed_from_start": 0,
+   "pieces_changed_from_example": 0
+  }
  },
  "model_calls": {
-  "lead": {
-   "calls": 1,
-   "prompt_tokens": 7606,
-   "completion_tokens": 11575,
-   "seconds": 165.5
-  },
-  "builder": {
-   "calls": 61,
-   "prompt_tokens": 1430013,
-   "completion_tokens": 11619,
-   "seconds": 524.3
-  },
   "judge": {
-   "calls": 8,
-   "prompt_tokens": 42736,
-   "completion_tokens": 3528,
-   "seconds": 159.1
+   "calls": 1,
+   "prompt_tokens": 6160,
+   "completion_tokens": 810,
+   "seconds": 66.3
   }
  },
  "agents": {
-  "live": 4,
+  "live": 0,
   "cached": 0,
   "failed": 0
  },
@@ -323,5 +328,22 @@
   "music": "ACE-Step",
   "sfx": "Stable Audio",
   "props": "Idol image->splat -> voxels"
- }
+ },
+ "post_stages": [
+  {
+   "stage": "re-recorded and re-scored after the final kit update",
+   "kit_commit": "64143bb",
+   "at": "2026-11-03 05:21",
+   "score": 6.5,
+   "autopilot": {
+    "moved": 79.7,
+    "collected_end": 18,
+    "won": false,
+    "lost": false,
+    "deaths": 0
+   },
+   "previous_score": 6.39
+  }
+ ],
+ "superseded_by": "spire_climb2"
 }
