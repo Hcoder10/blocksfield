@@ -1,0 +1,101 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "A soft sunset-to-dusk panorama: buttery peach and rose clouds stacked in puffy layers, a low golden sun, and a gradient from warm amber at the horizon to soft lavender at the top, with a sea of cloud puffs far below.",
+  "wrap_seam": 0.64
+ },
+ "icon_star": {
+  "file": "icon_star.png",
+  "kind": "icon",
+  "prompt": "A chunky five-pointed golden star icon with a soft cream outline, friendly game-HUD style",
+  "for": "star"
+ },
+ "icon_heart": {
+  "file": "icon_heart.png",
+  "kind": "icon",
+  "prompt": "A rounded coral-pink heart icon with a glossy highlight, cozy game-HUD style",
+  "for": "lives"
+ },
+ "icon_clock": {
+  "file": "icon_clock.png",
+  "kind": "icon",
+  "prompt": "A warm amber clock icon with a simple hand and cream face, cozy game-HUD style",
+  "for": "timer"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Cozy lo-fi acoustic loop: soft ukulele strums, warm marimba, gentle music-box melody, light brushed percussion, ~90 BPM, dreamy and uplifting."
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "A bright, warm 'ding' chime like a tiny bell, with a soft sparkle tail"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "A soft, rounded 'boing' with a gentle whoosh"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "A muffled, cozy thud, like landing on a cushion"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "A gentle 'oof' with a soft puff, not harsh"
+ },
+ "sfx_checkpoint": {
+  "file": "sfx_checkpoint.mp3",
+  "kind": "sfx",
+  "event": "checkpoint",
+  "prompt": "A warm, rising two-note chime, like a little flag unfurling"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "A big warm bell toll with a rising chime arpeggio and confetti sparkle"
+ },
+ "prop_lantern": {
+  "file": "prop_lantern.json",
+  "kind": "prop",
+  "prompt": "A small rounded lantern, warm amber glass with a cream metal frame and a tiny tassel, glowing softly",
+  "via": "idol",
+  "parts": 319
+ },
+ "prop_cat_statue": {
+  "file": "prop_cat_statue.json",
+  "kind": "prop",
+  "prompt": "A tiny rounded stone cat statue in a sitting pose, cream and grey with a soft sheen",
+  "via": "idol",
+  "parts": 479
+ },
+ "splat_lantern": {
+  "file": "splat_lantern.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "A small rounded lantern, warm amber glass with a cream metal frame and a tiny tassel, glowing softly",
+  "camera": {
+   "yaw": 1.6111076073401605
+  }
+ },
+ "splat_cat_statue": {
+  "file": "splat_cat_statue.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "A tiny rounded stone cat statue in a sitting pose, cream and grey with a soft sheen",
+  "camera": {
+   "yaw": 1.1536312551520203
+  }
+ }
+}

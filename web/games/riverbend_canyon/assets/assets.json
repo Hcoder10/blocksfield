@@ -1,0 +1,101 @@
+{
+ "sky": {
+  "file": "sky.jpg",
+  "kind": "sky",
+  "projection": "equirect",
+  "prompt": "Golden-hour desert sky panorama: peach-to-dusty-rose gradient, low amber sun, thin wispy cirrus clouds, faint mesa silhouettes on the horizon, turquoise haze over the river",
+  "wrap_seam": 0.81
+ },
+ "icon_lily": {
+  "file": "icon_lily.png",
+  "kind": "icon",
+  "prompt": "Flat cartoon water-lily flower icon, round teal-green petals with a golden center and a small notch leaf, thick dark outline, transparent background",
+  "for": "collectible"
+ },
+ "icon_heart": {
+  "file": "icon_heart.png",
+  "kind": "icon",
+  "prompt": "Chunky cartoon heart icon, coral red with a glossy highlight, thick dark outline, transparent background",
+  "for": "lives"
+ },
+ "icon_flag": {
+  "file": "icon_flag.png",
+  "kind": "icon",
+  "prompt": "Small wooden flag icon on a short pole, turquoise banner with a white wave pattern, thick dark outline, transparent background",
+  "for": "goal"
+ },
+ "music_main": {
+  "file": "music_main.mp3",
+  "kind": "music",
+  "loop": true,
+  "prompt": "Upbeat laid-back world-folk loop: acoustic guitar, hand drum, tin whistle, 100 BPM, bouncy and sunny, adventurous"
+ },
+ "sfx_jump": {
+  "file": "sfx_jump.mp3",
+  "kind": "sfx",
+  "event": "jump",
+  "prompt": "Short bouncy boing with a rising pitch, like a frog's leap"
+ },
+ "sfx_land": {
+  "file": "sfx_land.mp3",
+  "kind": "sfx",
+  "event": "land",
+  "prompt": "Soft squishy thud with a tiny water plop"
+ },
+ "sfx_collect": {
+  "file": "sfx_collect.mp3",
+  "kind": "sfx",
+  "event": "collect",
+  "prompt": "Bright pling chime with a watery shimmer, two notes"
+ },
+ "sfx_hit": {
+  "file": "sfx_hit.mp3",
+  "kind": "sfx",
+  "event": "damage",
+  "prompt": "Muffled honk with a wobble, a frog's grumble"
+ },
+ "sfx_checkpoint": {
+  "file": "sfx_checkpoint.mp3",
+  "kind": "sfx",
+  "event": "checkpoint",
+  "prompt": "Soft wooden chime, like a lily pad plunk"
+ },
+ "sfx_win": {
+  "file": "sfx_win.mp3",
+  "kind": "sfx",
+  "event": "win",
+  "prompt": "Triumphant little fanfare with a waterfall shimmer"
+ },
+ "prop_lily_pad": {
+  "file": "prop_lily_pad.json",
+  "kind": "prop",
+  "prompt": "One round water lily pad: flat green disc with a notch cut, a small pink flower on top, thick toon outline",
+  "via": "idol",
+  "parts": 217
+ },
+ "prop_totem_rock": {
+  "file": "prop_totem_rock.json",
+  "kind": "prop",
+  "prompt": "One small carved sandstone totem: stacked banded red and cream blocks with a simple frog face, moss on top",
+  "via": "idol",
+  "parts": 529
+ },
+ "splat_lily_pad": {
+  "file": "splat_lily_pad.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "One round water lily pad: flat green disc with a notch cut, a small pink flower on top, thick toon outline",
+  "camera": {
+   "yaw": 1.4536594978493753
+  }
+ },
+ "splat_totem_rock": {
+  "file": "splat_totem_rock.spz",
+  "kind": "splat",
+  "up": "idol",
+  "prompt": "One small carved sandstone totem: stacked banded red and cream blocks with a simple frog face, moss on top",
+  "camera": {
+   "yaw": 0.858275708780265
+  }
+ }
+}

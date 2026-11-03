@@ -1,0 +1,327 @@
+{
+ "id": "spire_climb",
+ "title": "Spire Climb",
+ "tagline": "Hop the cloud spire, spin the platforms, and ring the great bell.",
+ "pitch": "Spire Climb: a cozy spiral tower climb above the clouds as a cat, hopping up ledges, bridges and rotating platforms to ring the bell at the top",
+ "genre": "cozy platformer",
+ "controls": [
+  "A / D or \u2190 / \u2192: move",
+  "Space / W / \u2191: jump",
+  "S / \u2193: drop / crouch",
+  "P or Esc: pause"
+ ],
+ "created": "2026-11-03T02:59:37-0800",
+ "dry_run": false,
+ "play": "index.html",
+ "thumbnail": "thumb.jpg",
+ "video": "gameplay.mp4",
+ "concepts": [
+  "about/concept_0.jpg",
+  "about/concept_1.jpg",
+  "about/concept_2.jpg"
+ ],
+ "survey": "about/survey.jpg",
+ "score": {
+  "best": "v1",
+  "score": 6.39,
+  "play": 7.78,
+  "vision": 5.0,
+  "versions": [
+   {
+    "tag": "v0",
+    "score": 5.55,
+    "play_score": 6.11,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "s0",
+    "score": 5.89,
+    "play_score": 7.78,
+    "vision_score": 4.0
+   },
+   {
+    "tag": "v1",
+    "score": 6.39,
+    "play_score": 7.78,
+    "vision_score": 5.0
+   },
+   {
+    "tag": "v2",
+    "score": 6.39,
+    "play_score": 7.78,
+    "vision_score": 5.0
+   }
+  ]
+ },
+ "plan": {
+  "title": "Spire Climb",
+  "tagline": "Hop the cloud spire, spin the platforms, and ring the great bell.",
+  "genre": "cozy platformer",
+  "core_loop": "Hop up the spiral of ledges, rope bridges and spinning platforms, grab stars along the way, and reach the great bell at the top.",
+  "controls": [
+   "A / D or \u2190 / \u2192: move",
+   "Space / W / \u2191: jump",
+   "S / \u2193: drop / crouch",
+   "P or Esc: pause"
+  ],
+  "win_condition": "Ring the great bell at the summit of the spire.",
+  "lose_condition": "Lose all three lives by falling off the tower or being bumped by patrolling slimes.",
+  "look": "cozy",
+  "ui_style": "cozy",
+  "level_kind": "custom",
+  "level_size": "large",
+  "player_type": "platformer",
+  "camera": "follow",
+  "player_colors": {
+   "body": "#f2a154",
+   "accent": "#6e3b12"
+  },
+  "collectible": {
+   "tag": "star",
+   "label": "Sky Stars",
+   "count": 18,
+   "target": 18
+  },
+  "goal": true,
+  "timer_seconds": 240,
+  "lives": 3,
+  "enemies": 3,
+  "custom_layout": "spiral_climb",
+  "character": {
+   "species": "cat",
+   "accessory": "scarf"
+  },
+  "mode": "goal",
+  "race": {
+   "laps": 0,
+   "opponents": 0
+  },
+  "art_direction": "Soft pastel palette of warm peach, buttercream and dusty-rose clouds under a honey-gold sun. Rounded, chunky voxel materials with gentle ink outlines and a warm rim light, like a storybook diorama floating above a sea of clouds. Cozy, dreamy late-afternoon light with long soft shadows and a quiet sense of height.",
+  "concept_shots": [
+   "The ginger cat mid-hop across a swaying rope bridge, three golden stars trailing behind, the spiral of the tower rising into peach clouds below.",
+   "A spinning disc platform carrying the cat around the spire, a sleepy slime patrolling a wide ledge, and a peach checkpoint flag fluttering on a small island.",
+   "The summit: the cat leaping onto the bell platform as golden confetti bursts and the big bronze bell rings, the whole tower and a sea of clouds visible far below."
+  ],
+  "assets": {
+   "sky": "A soft sunset-to-dusk panorama: buttery peach and rose clouds stacked in puffy layers, a low golden sun, and a gradient from warm amber at the horizon to soft lavender at the top, with a sea of cloud puffs far below.",
+   "icons": [
+    {
+     "name": "star",
+     "prompt": "A chunky five-pointed golden star icon with a soft cream outline, friendly game-HUD style",
+     "for": "star"
+    },
+    {
+     "name": "heart",
+     "prompt": "A rounded coral-pink heart icon with a glossy highlight, cozy game-HUD style",
+     "for": "lives"
+    },
+    {
+     "name": "clock",
+     "prompt": "A warm amber clock icon with a simple hand and cream face, cozy game-HUD style",
+     "for": "timer"
+    }
+   ],
+   "music": "Cozy lo-fi acoustic loop: soft ukulele strums, warm marimba, gentle music-box melody, light brushed percussion, ~90 BPM, dreamy and uplifting.",
+   "sfx": [
+    {
+     "event": "collect",
+     "prompt": "A bright, warm 'ding' chime like a tiny bell, with a soft sparkle tail"
+    },
+    {
+     "event": "jump",
+     "prompt": "A soft, rounded 'boing' with a gentle whoosh"
+    },
+    {
+     "event": "land",
+     "prompt": "A muffled, cozy thud, like landing on a cushion"
+    },
+    {
+     "event": "damage",
+     "prompt": "A gentle 'oof' with a soft puff, not harsh"
+    },
+    {
+     "event": "checkpoint",
+     "prompt": "A warm, rising two-note chime, like a little flag unfurling"
+    },
+    {
+     "event": "win",
+     "prompt": "A big warm bell toll with a rising chime arpeggio and confetti sparkle"
+    }
+   ],
+   "props": [
+    {
+     "name": "lantern",
+     "prompt": "A small rounded lantern, warm amber glass with a cream metal frame and a tiny tassel, glowing softly",
+     "count": 6
+    },
+    {
+     "name": "cat_statue",
+     "prompt": "A tiny rounded stone cat statue in a sitting pose, cream and grey with a soft sheen",
+     "count": 3
+    }
+   ]
+  },
+  "mapping_notes": "The pitch is a vertical tower climb, so no preset level kind fits \u2014 I use level_kind 'custom' with custom_layout 'spiral_climb', which is exactly a spiral of pillars around a tall tower above the clouds. 'Cozy' maps to look 'cozy' and ui_style 'cozy'. 'As a cat' maps to character species 'cat' with a 'scarf' for warmth. 'Hopping up ledges, bridges and rotating platforms' maps to player_type 'platformer' on the spiral layout, with the rotating platforms added as Level movers using the 'rotate' motion (a feature). 'Ring the bell at the summit' maps to mode 'goal' with the bell as the goal; the win is a bell-ringing finale (confetti + ring + bell toll). 'Above the clouds' maps to the puffy cloud sky panorama and a cloud-sea setting. Stars are score pickups along the climb; the actual win is reaching the bell.",
+  "features": [
+   "Rotating disc platforms (Level movers, 'rotate') that spin the cat around the spire as it climbs.",
+   "Bouncing spring pads (World.prop 'spring_pad') that fling the cat up tall ledges.",
+   "Checkpoints every few floors (Gameplay checkpoint flags) so a fall respawns you mid-climb, not at the base.",
+   "Void fall: drop off the tower and you lose a life and respawn at the last checkpoint (Gameplay 'void' hazard).",
+   "Gentle wind gusts (Gameplay 'wind' hazard) that nudge the cat sideways on exposed bridges.",
+   "Bell-ringing finale: golden confetti, a shockwave ring, and a warm bell toll when the cat reaches the summit (FX + Audio)."
+  ]
+ },
+ "timings_s": {
+  "art": 246.1,
+  "build": 708.9,
+  "eval_s0": 51.1,
+  "eval_v0": 70.4,
+  "eval_v1": 131.7,
+  "eval_v2": 76.5,
+  "plan": 166.6,
+  "repair_1": 188.6,
+  "repair_2": 166.3,
+  "scaffold": 2.3
+ },
+ "operator_interventions": [],
+ "mapping": {
+  "pitch": "Spire Climb: a cozy spiral tower climb above the clouds as a cat, hopping up ledges, bridges and rotating platforms to ring the bell at the top",
+  "notes": "The pitch is a vertical tower climb, so no preset level kind fits \u2014 I use level_kind 'custom' with custom_layout 'spiral_climb', which is exactly a spiral of pillars around a tall tower above the clouds. 'Cozy' maps to look 'cozy' and ui_style 'cozy'. 'As a cat' maps to character species 'cat' with a 'scarf' for warmth. 'Hopping up ledges, bridges and rotating platforms' maps to player_type 'platformer' on the spiral layout, with the rotating platforms added as Level movers using the 'rotate' motion (a feature). 'Ring the bell at the summit' maps to mode 'goal' with the bell as the goal; the win is a bell-ringing finale (confetti + ring + bell toll). 'Above the clouds' maps to the puffy cloud sky panorama and a cloud-sea setting. Stars are score pickups along the climb; the actual win is reaching the bell.",
+  "chosen": {
+   "level_kind": "custom",
+   "look": "cozy",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "cozy",
+   "mode": "goal",
+   "species": "cat",
+   "character": {
+    "species": "cat",
+    "accessory": "scarf"
+   },
+   "collectible": "star",
+   "collectible_label": "Sky Stars"
+  },
+  "planned": {
+   "level_kind": "custom",
+   "look": "cozy",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "cozy",
+   "mode": "goal",
+   "species": "cat"
+  },
+  "builder_overrides": []
+ },
+ "model_calls": {
+  "lead": {
+   "calls": 1,
+   "prompt_tokens": 7606,
+   "completion_tokens": 11575,
+   "seconds": 165.5
+  },
+  "builder": {
+   "calls": 61,
+   "prompt_tokens": 1430013,
+   "completion_tokens": 11619,
+   "seconds": 524.3
+  },
+  "judge": {
+   "calls": 8,
+   "prompt_tokens": 42736,
+   "completion_tokens": 3528,
+   "seconds": 159.1
+  }
+ },
+ "agents": {
+  "live": 4,
+  "cached": 0,
+  "failed": 0
+ },
+ "stages": {
+  "art": {
+   "report": {
+    "sky": {
+     "ok": true,
+     "seconds": 65.3
+    },
+    "icon_star": {
+     "ok": true,
+     "seconds": 73.5
+    },
+    "icon_heart": {
+     "ok": true,
+     "seconds": 85.4
+    },
+    "icon_clock": {
+     "ok": true,
+     "seconds": 95.1
+    },
+    "music_main": {
+     "ok": true,
+     "seconds": 111.8
+    },
+    "sfx_collect": {
+     "ok": true,
+     "seconds": 116.2
+    },
+    "sfx_jump": {
+     "ok": true,
+     "seconds": 117.1
+    },
+    "sfx_land": {
+     "ok": true,
+     "seconds": 118.0
+    },
+    "sfx_hit": {
+     "ok": true,
+     "seconds": 119.3
+    },
+    "sfx_checkpoint": {
+     "ok": true,
+     "seconds": 120.1
+    },
+    "sfx_win": {
+     "ok": true,
+     "seconds": 121.8
+    },
+    "prop_lantern": {
+     "ok": true,
+     "seconds": 202.4
+    },
+    "prop_cat_statue": {
+     "ok": true,
+     "seconds": 246.1
+    }
+   }
+  },
+  "scaffold": {
+   "problems": []
+  },
+  "build": {
+   "result": {
+    "summary": "Spire Climb: a cozy spiral tower climb above the clouds. Rebuilt the scaffold's flat pillar layout into a real helix of ledges around a tall spire (17 route pieces), with two rope bridges, a spinning disc platform (Level mover, 'rotate') carrying a spring pad, a void-fall plane, two wind gusts on the exposed bridges, and three mid-climb checkpoint flags so a fall respawns you partway up. The ginger cat (scarf, peach/amber palette) hops up the spiral collecting 18 Sky Stars to unlock the goal, then rings the great bell at the summit. Kept all the generated assets (sunset sky panorama, lantern/cat-statue props and splats, cozy HUD with star/heart/clock icons, title screen). Added a bell-ringing win finale (golden confetti, shockwave ring, starburst, screen shake, warm bell-toll SFX, custom win screen) and a themed lose screen for falling / running out of time. Autopilot climbs the route, collects stars, hits checkpoints and rides the movers with no errors.",
+    "changes": [
+     "Replaced the flat LAYOUT with a computed spiral: helix of pillars (radius 10, 0.62 rad/step, 2 u rise) around the spire tower, two rope bridges, a 'rotate' mover disc, and a wide bell platform as the goal.",
+     "Added hazards: void fall plane (y=-14), two wind gusts (Vector3 size) on the bridges, and a bounce spring pad on the spinning disc.",
+     "Added three checkpoint flags mid-climb (floors ~9.5, 17.5, 25.5) so falls respawn partway up.",
+     "Set a clean objective via rules.objective + UI.objective on state change.",
+     "Added win/lose event handlers: confetti + ring + starburst + shake + sfx_win + custom win screen; themed lose screen for time-out vs falling.",
+     "Tuned collect label and HUD to the plan (18 Sky Stars, 240s timer, 3 lives, 3 enemies)."
+    ],
+    "known_issues": [
+     "The one-time objective banner shows 'Collect 18 Sky sky stars...' \u2014 the auto-generated objective double-prints the collectible tag's display name ('Sky' + 'sky'). The persistent HUD objective line (state.objective) is clean; only the transient banner is affected and I could not find a documented API to override that specific banner text.",
+     "Autopilot occasionally takes a hit from a patrolling slime or drops off a ledge (1 death observed over 25s), which is expected gameplay difficulty, not a bug."
+    ]
+   },
+   "plays": 6
+  }
+ },
+ "models": {
+  "llm": "Qwen3.8-27B (vLLM, local)",
+  "image": "Qwen-Image-2.1 + BiRefNet",
+  "music": "ACE-Step",
+  "sfx": "Stable Audio",
+  "props": "Idol image->splat -> voxels"
+ }
+}
