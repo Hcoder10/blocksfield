@@ -68,5 +68,7 @@ the side Idol's input camera saw toward -Z.
 
 Use splats for **hero scenery and landmarks at mid distance** (trees, giant mushrooms, statues, a shrine): they look
 painterly and rich from 5+ units away, and slightly grainy right up against the camera. 4-8 splats per scene is plenty
-(130k Gaussians each). They are not lit by the sun and cast no real shadow; avoid using them for things the player
+(130k Gaussians each). Pick **chunky subjects**: trees, mushrooms, rocks, statues, houses, crystals. Thin subjects
+(flowers, lamps, fences, signs, poles) break up as splats: use `Assets.prop` (voxel) or a `World.prop` kind for those.
+They are not lit by the sun and cast no real shadow; avoid using them for things the player
 must read exactly (platforms, pickups).
