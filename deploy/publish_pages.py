@@ -40,10 +40,14 @@ SKIP_GAME = shutil.ignore_patterns("*.webm", "__pycache__", "*.pyc", ".DS_Store"
 
 
 def shippable_games() -> list[Path]:
+    """Finished games, minus any superseded by a finished re-run (see build_index.superseded)."""
+    games = WEB / "games"
     out = []
-    for d in sorted(p for p in (WEB / "games").iterdir() if p.is_dir() and not p.name.startswith("_")):
-        e = build_index.game_entry(d)
-        if e and not e["dry_run"] and (d / e["play"]).exists():
+    for d in sorted(p for p in games.iterdir() if p.is_dir() and not p.name.startswith("_")):
+        if build_index.finished(d):
+            if build_index.superseded(games, build_index.game_entry(d)):
+                print(f"skipping {d.name}: superseded by {build_index.game_entry(d)['superseded_by']}")
+                continue
             out.append(d)
     return out
 

@@ -37,6 +37,7 @@ def game_entry(d: Path) -> dict | None:
     e["model_calls"] = sum(int(v.get("calls", 0)) for v in (about.get("model_calls") or {}).values())
     e["minutes"] = round(sum((about.get("timings_s") or {}).values()) / 60, 1)
     e["dry_run"] = bool(about.get("dry_run"))
+    e["superseded_by"] = about.get("superseded_by")
     plan = about.get("plan") or {}
     for k in ("look", "level_kind", "player_type", "camera", "ui_style"):
         e[k] = plan.get(k)
@@ -93,6 +94,19 @@ def design_space() -> dict:
     return out
 
 
+def finished(d: Path) -> bool:
+    """A game that can ship: has about.json, is not a dry run, and its play page exists."""
+    e = game_entry(d) if d.is_dir() else None
+    return bool(e and not e["dry_run"] and (d / e["play"]).exists())
+
+
+def superseded(games: Path, e: dict) -> bool:
+    """Hidden when about.json names a replacement (a fresh re-run) and that replacement is itself finished; if the
+    re-run never finished, the earlier game stays listed rather than leaving a hole."""
+    new = e.get("superseded_by")
+    return bool(new and new != e["id"] and finished(games / new))
+
+
 def build(games: Path, dev: bool = False) -> dict:
     out = []
     for d in sorted(p for p in games.iterdir() if p.is_dir()):
@@ -110,6 +124,8 @@ def build(games: Path, dev: bool = False) -> dict:
         if e["dry_run"]:
             if dev:
                 out.append({**e, "dev": True})
+            continue
+        if superseded(games, e):
             continue
         out.append(e)
     # Real games first, best judge score first (the hero reel takes the top of this list), then newest; dev last.
