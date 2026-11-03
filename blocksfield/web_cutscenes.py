@@ -1,6 +1,8 @@
 """Cutscenes for a shipped web game: intro / win / lose clips made with LTX-2.5 (image-to-video with its own audio).
 
     python -m blocksfield.web_cutscenes --id neon_drift [--when intro,win,lose] [--seconds 5] [--dry-run]
+    python -m blocksfield.web_cutscenes --id neon_drift --publish --when intro,win     # after reviewing the sheets
+    python -m blocksfield.web_cutscenes --id neon_drift --drop lose                    # remove a bad clip
 
 A uniform post stage after the build, run the same way on every shipped game (recorded in about.json "post_stages",
 not as an operator intervention). Per clip:
@@ -190,10 +192,13 @@ async def run(gid: str, whens: list[str], seconds: float, dry: bool) -> int:
             cover(clean(img)).save(tmp / f"{w}_source.png")
             print(f"[{w}] {tmp / (w + '_source.png')}\n  {prompt}")
         return 0
+    # generate: the clips are written next to the game's assets but NOT registered, plus a frame sheet per clip in
+    # runs/cutscenes_<id>/ for review. `--publish intro,win` then registers the reviewed clips (manifest + about.json),
+    # `--drop lose` removes one. A game with no clips is better than one with a bad clip.
     assets = d / "assets"
-    man_p = assets / "assets.json"
-    man = json.loads(man_p.read_text(encoding="utf-8")) if man_p.exists() else {}
-    made = []
+    review = ROOT / "runs" / f"cutscenes_{gid}"
+    review.mkdir(parents=True, exist_ok=True)
+    prompts = {}
     async with httpx.AsyncClient(timeout=1800) as http:
         for w in whens:
             img, prompt = plan[w]
@@ -204,16 +209,57 @@ async def run(gid: str, whens: list[str], seconds: float, dry: bool) -> int:
                 raw.write_bytes(data)
                 finish(raw, assets / f"cutscene_{w}.mp4")
             cover(clean(img)).save(assets / f"cutscene_{w}_source.jpg", quality=88)
+            sheet(assets / f"cutscene_{w}.mp4", review / f"sheet_{w}.jpg")
+            prompts[w] = prompt
+            print(f"[{w}] {assets / f'cutscene_{w}.mp4'}  sheet {review / f'sheet_{w}.jpg'}  ({time.time() - t0:.0f} s)", flush=True)
+    (review / "prompts.json").write_text(json.dumps(prompts, indent=1), encoding="utf-8")
+    return 0
+
+
+def sheet(video: Path, out: Path) -> None:
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(video), "-vf", "fps=2,scale=320:-1,tile=6x2",
+                    "-frames:v", "1", str(out)], check=False)
+
+
+def _rw_json(p: Path, fn) -> None:
+    """Merge-safe update: re-read the file right before writing (other stages write about.json too)."""
+    cur = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+    fn(cur)
+    tmp = p.with_suffix(p.suffix + ".tmp")
+    tmp.write_text(json.dumps(cur, indent=1), encoding="utf-8")
+    tmp.replace(p)
+
+
+def publish(gid: str, whens: list[str], drop: list[str]) -> int:
+    d = GAMES / gid
+    assets = d / "assets"
+    review = ROOT / "runs" / f"cutscenes_{gid}"
+    prompts = json.loads((review / "prompts.json").read_text(encoding="utf-8")) if (review / "prompts.json").exists() else {}
+    keep = [w for w in whens if (assets / f"cutscene_{w}.mp4").exists()]
+
+    def man_fn(man: dict) -> None:
+        for w in drop:
+            man.pop(f"cutscene_{w}", None)
+        for w in keep:
+            old = man.get(f"cutscene_{w}") or {}
             man[f"cutscene_{w}"] = {"kind": "cutscene", "file": f"cutscene_{w}.mp4", "when": w, "model": "LTX-2.5",
-                                    "source": f"cutscene_{w}_source.jpg", "prompt": prompt}
-            made.append(w)
-            print(f"[{w}] {assets / f'cutscene_{w}.mp4'}  ({time.time() - t0:.0f} s)", flush=True)
-    man_p.write_text(json.dumps(man, indent=1), encoding="utf-8")
-    stages = [s for s in about.get("post_stages", []) if s.get("stage") != "cutscenes"]
-    stages.append({"stage": "cutscenes", "model": "LTX-2.5", "run": "uniform pipeline stage after build",
-                   "clips": made, "at": time.strftime("%Y-%m-%dT%H:%M:%S%z")})
-    about["post_stages"] = stages
-    about_p.write_text(json.dumps(about, indent=1), encoding="utf-8")
+                                    "source": f"cutscene_{w}_source.jpg", "prompt": prompts.get(w) or old.get("prompt", "")}
+
+    def about_fn(about: dict) -> None:
+        stages = [s for s in about.get("post_stages", []) if s.get("stage") != "cutscenes"]
+        man = json.loads((assets / "assets.json").read_text(encoding="utf-8"))
+        clips = sorted(e["when"] for e in man.values() if isinstance(e, dict) and e.get("kind") == "cutscene")
+        if clips:
+            stages.append({"stage": "cutscenes", "model": "LTX-2.5", "run": "uniform pipeline stage after build",
+                           "clips": clips, "reviewed": True, "at": time.strftime("%Y-%m-%dT%H:%M:%S%z")})
+        about["post_stages"] = stages
+
+    _rw_json(assets / "assets.json", man_fn)
+    _rw_json(d / "about.json", about_fn)
+    for w in drop:
+        for f in (assets / f"cutscene_{w}.mp4", assets / f"cutscene_{w}_source.jpg"):
+            f.unlink(missing_ok=True)
+    print(f"{gid}: published {keep or '-'}; dropped {drop or '-'}")
     return 0
 
 
@@ -223,8 +269,13 @@ def main() -> int:
     ap.add_argument("--when", default="intro,win,lose")
     ap.add_argument("--seconds", type=float, default=5.0)
     ap.add_argument("--dry-run", action="store_true", help="only write the source frames and print the prompts")
+    ap.add_argument("--publish", action="store_true", help="register the reviewed clips (--when) in the manifest + about.json")
+    ap.add_argument("--drop", default="", help="remove these clips (manifest entries and files), e.g. lose")
     a = ap.parse_args()
     whens = [w for w in a.when.split(",") if w in ("intro", "win", "lose")]
+    drop = [w for w in a.drop.split(",") if w in ("intro", "win", "lose")]
+    if a.publish or drop:
+        return publish(a.id, whens if a.publish else [], drop)
     if not shutil.which("ffmpeg"):
         print("ffmpeg is required")
         return 1

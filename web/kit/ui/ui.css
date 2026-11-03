@@ -294,15 +294,15 @@
 .tk-sleek .tk-title .tk-logo .tk-big, .tk-scifi .tk-title .tk-logo .tk-big, .tk-fantasy .tk-title .tk-logo .tk-big { transform: none; }
 @keyframes tk-logo-in { from { transform: scale(.2) rotate(-12deg); opacity: 0; } 60% { opacity: 1; } }
 @keyframes tk-bob { 50% { transform: translateY(-.06em) rotate(.6deg); } }
-.tk-title .tk-subtitle { margin-top: 2.6em; animation: tk-fade-up .6s ease-out both .7s; }
+.tk-title .tk-subtitle { margin-top: 2.6em; animation: tk-fade-up .45s ease-out both .3s; }
 .tk-title .tk-subtitle .tk-panel { font-size: 1.45em; padding: .45em 1.4em; font-weight: 700; letter-spacing: .03em; }
 .tk-title .tk-start { margin-top: 3.2em; font-family: var(--tk-display); font-weight: var(--tk-weight); text-transform: var(--tk-caps); font-size: 2em; color: #fff; letter-spacing: .08em;
-  animation: tk-fade-up .5s ease-out both 1s, tk-breathe 1.3s ease-in-out infinite 1.5s; display: flex; align-items: center; gap: .5em; }
+  animation: tk-fade-up .45s ease-out both .45s, tk-breathe 1.3s ease-in-out infinite 1s; display: flex; align-items: center; gap: .5em; }
 .tk-cozy .tk-title .tk-start { color: #fff; text-shadow: 0 .08em 0 #6b4630, 0 0 .6em rgba(90, 56, 38, .5); }
 @keyframes tk-breathe { 50% { transform: scale(1.07); opacity: .78; } }
 .tk-key { display: inline-flex; align-items: center; justify-content: center; min-width: 1.8em; height: 1.6em; padding: 0 .45em; border-radius: .3em; font-size: .7em; letter-spacing: .05em;
   background: linear-gradient(180deg, #fff, #d6dde8); color: #1a2233; border: .1em solid #1a2233; box-shadow: 0 .18em 0 #1a2233; text-shadow: none; font-family: var(--tk-body); font-weight: 800; }
-.tk-title .tk-controls { margin-top: 1.4em; font-size: 1.05em; letter-spacing: .08em; color: #fff; opacity: .85; padding: .35em 1em; border-radius: 2em; background: rgba(0, 0, 0, .28); animation: tk-fade-up .5s ease-out both 1.2s; }
+.tk-title .tk-controls { margin-top: 1.4em; font-size: 1.05em; letter-spacing: .08em; color: #fff; padding: .4em 1.1em; border-radius: 2em; background: rgba(8, 6, 20, .55); text-shadow: 0 1px 2px rgba(0, 0, 0, .6); animation: tk-fade-up .45s ease-out both .55s; }
 .tk-title .tk-credit { position: absolute; bottom: 2.6vh; font-size: .85em; letter-spacing: .14em; opacity: .7; color: #fff; text-transform: uppercase; }
 .tk-title .tk-sparks { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .tk-title .tk-sparks i { position: absolute; width: .5em; height: .5em; border-radius: 50%; background: var(--tk-p); box-shadow: 0 0 1em var(--tk-p); opacity: 0;
