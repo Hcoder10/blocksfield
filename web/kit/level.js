@@ -93,6 +93,31 @@ function densify(points, step = 2) {
   out.push(points[points.length - 1].clone());
   return out;
 }
+/** low fences around an island rim, leaving the side toward `exitP` open (spawn safety) */
+function guardRails(ctx, isl, exitP, open = 0.75) {
+  const { game } = ctx;
+  const ex = Math.atan2(exitP.z - isl.position.z, exitP.x - isl.position.x);
+  const n = Math.max(8, Math.round(isl.radius * 1.3));
+  for (let k = 0; k < n; k++) {
+    const a = (k + 0.5) / n * Math.PI * 2;
+    if (Math.abs(Math.atan2(Math.sin(a - ex), Math.cos(a - ex))) < open) continue;
+    const p = isl.edgePoint(a, 0.9);
+    const len = 2 * Math.PI * (isl.radiusAt(a) - 0.9) / n * 0.92;
+    World.prop(game, 'fence', { ...P(ctx), position: p.add(V(0, -0.08, 0)), yaw: Math.atan2(-Math.cos(a), -Math.sin(a)), length: Math.max(2, len) });
+  }
+}
+
+/** the walkable surface nearest a reference height (stacked pieces: a pillar top far above must not win) */
+function heightNear(game, x, z, yRef) {
+  let best = null;
+  for (const s of (game._kitSurfaces || [])) {
+    const h = s.heightAt(x, z);
+    if (h == null || h > yRef + 3) continue;
+    if (best == null || Math.abs(h - yRef) < Math.abs(best - yRef)) best = h;
+  }
+  return best;
+}
+
 function boundsOf(points, pad = 10) {
   const b = new THREE.Box3().setFromPoints(points);
   b.expandByVector(V(pad, pad, pad));
@@ -108,25 +133,33 @@ function skyIslands(ctx) {
   const route = [];
   let dir = rnd() * Math.PI * 2;
   let pos = V(0, 0, 0);
-  const types = ['hop', 'bridge', 'platforms', 'hop', 'platforms', 'bridge'];
+  // per-seed variety: the arrangement (wander / zig-zag / spiral / climb) and a shuffled crossing mix
+  const mode = ['wander', 'zigzag', 'spiral', 'climb'][Math.floor(rnd() * 4)];
+  const turn = rnd() < 0.5 ? -1 : 1;
+  const types = ['hop', 'bridge', 'platforms', 'hop', 'platforms', 'bridge', rnd() < 0.5 ? 'hop' : 'bridge'];
+  for (let k = types.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [types[k], types[j]] = [types[j], types[k]]; }
+  level.layout = mode;
   // start island
   islands.push(World.island(game, { ...P(ctx), position: pos, radius: 12, depth: 11, seed: ctx.seed * 31 + 1 }));
   for (let i = 1; i < count; i++) {
     const last = i === count - 1;
-    const type = last ? 'bridge' : types[(i - 1 + ctx.seed) % types.length];
+    // the first crossing is always an easy, obvious one: a short bridge (naive players must not die in the first 15 u)
+    const type = i === 1 ? 'first' : last ? 'bridge' : types[(i - 2) % types.length];
     const r = last ? 13 : 7 + rnd() * 4.5;
-    dir += (rnd() - 0.5) * 1.3;
+    if (i > 1) dir += mode === 'zigzag' ? turn * (i % 2 ? 1 : -1) * (0.55 + rnd() * 0.35)
+      : mode === 'spiral' ? turn * (0.42 + rnd() * 0.22) : (rnd() - 0.5) * 1.3;
     const A = islands[i - 1];
     let gap, rise;
-    if (type === 'hop') { gap = 3 + rnd() * 1.5; rise = (rnd() - 0.2) * MAX_RISE * 0.8; }
+    if (type === 'first') { gap = 6 + rnd() * 2; rise = 0; }
+    else if (type === 'hop') { gap = 3 + rnd() * 1.5; rise = (mode === 'climb' ? rnd() : rnd() - 0.2) * MAX_RISE * 0.8; }
     else if (type === 'bridge') { gap = 9 + rnd() * 5; rise = (rnd() - 0.5) * 2.0; }
-    else { gap = 13 + rnd() * 6; rise = 1.5 + rnd() * 2.5; }
+    else { gap = 13 + rnd() * 6; rise = (mode === 'climb' ? 2.5 : 1.5) + rnd() * 2.5; }
     const d = A.radius + r + gap;
     const np = V(A.position.x + Math.cos(dir) * d, A.position.y + rise, A.position.z + Math.sin(dir) * d);
     const B = World.island(game, { ...P(ctx), position: np, radius: r, depth: r * (0.8 + rnd() * 0.5), seed: ctx.seed * 31 + 1 + i,
       waterfall: !last && i % 3 === 1 });
     islands.push(B);
-    conns.push({ type, a: A, b: B });
+    conns.push({ type: type === 'first' ? 'bridge' : type, a: A, b: B, first: type === 'first' });
   }
   // connections: measure the real rim gap and build what crosses it
   const goalI = islands[islands.length - 1];
@@ -241,6 +274,7 @@ function skyIslands(ctx) {
     World.foliage(game, { ...P(ctx), area: isl, kinds: { grass: 1, flowers: 1, bush: 1, tree_round: big ? 1 : 0.6, tree_pine: 0.5, mushroom: 0.6, rock: 0.5 },
       seed: ctx.seed * 101 + i });
   });
+  if (islands[0]) guardRails(ctx, islands[0], level.route[1] || islands[1].position);
   if (islands[0]) {
     const f = V(Math.sin(level.spawnYaw), 0, Math.cos(level.spawnYaw)), sd = V(f.z, 0, -f.x);
     const sp = level.spawn.clone().addScaledVector(f, 3 + rnd() * 3).addScaledVector(sd, (rnd() < 0.5 ? -1 : 1) * 3.4);
@@ -1476,7 +1510,7 @@ function probeSegment(game, a, b) {
   let prevH = a.y;
   for (let k = 1; k <= n; k++) {
     const t = k / n, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
-    const h = World.heightAt(game, x, z);
+    const h = heightNear(game, x, z, a.y + (b.y - a.y) * t + 1.0);
     const sup = h != null && h >= lo - 1.2 && h <= hi + 1.2;
     if (!sup) {
       if (run === 0) runStart = lastSup.clone();
@@ -1691,12 +1725,15 @@ export function compose(game, spec = {}) {
     const out = [route[0].clone()];
     const jumps = [];
     const autofix = spec.autofix !== false;
+    let firstJump = true;
     const dockSurfs = docks.map(d => World.addSurface(game, circleSurf(d.p, d.r)));
     for (let k = 1; k < route.length; k++) {
       const a = out[out.length - 1], b = route[k];
       if (ridden[k]) { out.push(b.clone()); continue; }                       // carried by a mover: board at a, get off at b
       let pr = probeSegment(game, a, b);
-      const bad = () => pr.gap > MAX_GAP || (pr.gap > 0.3 && pr.rise > MAX_RISE) || pr.ledge > MAX_RISE;
+      const easyFirst = firstJump && pr.gap > 3 && autofix;          // the first jump of the level: at most 3 u
+      if (pr.gap > 0.3) firstJump = false;
+      const bad = () => easyFirst || pr.gap > MAX_GAP || (pr.gap > 0.3 && pr.rise > MAX_RISE) || pr.ledge > MAX_RISE;
       if (bad()) {
         const what = pr.gap > 0.3 ? `${pr.gap.toFixed(1)} u across${pr.rise > 0.3 ? ` and ${pr.rise.toFixed(1)} u up` : ''}` : `a ${pr.ledge.toFixed(1)} u ledge`;
         const msg = `${label(k)} is ${what} from ${label(k - 1)}: the max jump is ${MAX_GAP} u across and ${MAX_RISE} u up; move it closer, lower it, or add a 'bridge', 'ramp' or 'stairs' piece between them`;
@@ -1704,7 +1741,8 @@ export function compose(game, spec = {}) {
         const dx = Math.hypot(to.x - from.x, to.z - from.z), dy = to.y - from.y;
         let n = 1;
         const pr2 = 1.8;
-        while (n <= 8 && ((dx - n * 2 * pr2) / (n + 1) > MAX_GAP - 1.0 || dy / (n + 1) > MAX_RISE - 0.4)) n++;
+        const maxGap = easyFirst ? 2.8 : MAX_GAP - 1.0;
+        while (n <= 8 && ((dx - n * 2 * pr2) / (n + 1) > maxGap || dy / (n + 1) > MAX_RISE - 0.4)) n++;
         if (autofix && n <= 8) {
           let prevP = from.clone();
           const dir = V(to.x - from.x, 0, to.z - from.z).normalize(), side = V(dir.z, 0, -dir.x);
@@ -1718,7 +1756,8 @@ export function compose(game, spec = {}) {
             out.push(q.clone()); jumps.push({ from: prevP, to: q.clone() }); prevP = q.clone();
           }
           jumps.push({ from: prevP, to: to.clone() });
-          issue('fixed', routePiece[k], msg.replace(/; move it closer.*/, `; added ${n} stepping platform${n > 1 ? 's' : ''} between them`));
+          if (!(easyFirst && pr.gap <= MAX_GAP && pr.rise <= MAX_RISE))
+            issue('fixed', routePiece[k], msg.replace(/; move it closer.*/, `; added ${n} stepping platform${n > 1 ? 's' : ''} between them`));
           out.push(b.clone());
           continue;
         }
@@ -1727,7 +1766,7 @@ export function compose(game, spec = {}) {
         // a real jump: route through the take-off and landing edges so the autopilot jumps at the right place
         const dir = V(pr.to.x - pr.from.x, 0, pr.to.z - pr.from.z).normalize();
         const t0 = pr.from.clone().addScaledVector(dir, -0.6), t1 = pr.to.clone().addScaledVector(dir, 0.8);
-        const h0 = World.heightAt(game, t0.x, t0.z), h1 = World.heightAt(game, t1.x, t1.z);
+        const h0 = heightNear(game, t0.x, t0.z, pr.from.y + 0.5), h1 = heightNear(game, t1.x, t1.z, pr.to.y + 0.5);
         if (h0 != null) t0.y = h0; if (h1 != null) t1.y = h1;
         if (t0.distanceTo(a) > 0.8) out.push(t0);
         out.push(t1); jumps.push({ from: t0, to: t1 });
@@ -1735,7 +1774,7 @@ export function compose(game, spec = {}) {
         // a walk: route points every ~4 u so the autopilot follows the surface (spiral stairs, long ramps, ground paths)
         const c = out[out.length - 1], L = Math.hypot(b.x - c.x, b.z - c.z);
         for (let s = 1, n = Math.floor(L / 4); s <= n && L > 5; s++) {
-          const q = c.clone().lerp(b, s / (n + 1)), h = World.heightAt(game, q.x, q.z);
+          const q = c.clone().lerp(b, s / (n + 1)), h = heightNear(game, q.x, q.z, q.y + 0.5);
           if (h != null) q.y = h;
           out.push(q);
         }
@@ -1744,6 +1783,10 @@ export function compose(game, spec = {}) {
     }
     game._kitSurfaces = (game._kitSurfaces || []).filter(x => !dockSurfs.includes(x));
     level.route = out;
+    { // spawn safety: rails on the first island facing the void, if the level floats
+      const first = level.pieces.find(p => p.island && Math.hypot(p.top.x - out[0].x, p.top.z - out[0].z) < p.r + 0.5);
+      if (first && !ground && dressing !== 'none' && out[1]) guardRails(ctx, first.island, out.find(q => !first.island.contains(q.x, q.z, 0.3)) || out[1]);
+    }
     level.spawn = (spec.spawn ? vecOf(spec.spawn, 'spawn') : out[0].clone()).add(V(0, 1, 0));
     level.spawnYaw = yawTo(out[0], out[Math.min(2, out.length - 1)]);
     if (goalP) level.goal = { position: goalP.clone().add(V(0, 0.5, 0)), radius: 3 };
@@ -1763,6 +1806,11 @@ export function compose(game, spec = {}) {
     for (const [k, h] of (spec.hazards || []).entries()) {
       if (!h || !HAZARD_TYPES.includes(h.type)) { issue('warning', null, `hazards[${k}].type "${h && h.type}" is not a hazard type (dropped); types: ${HAZARD_TYPES.join(', ')}`); continue; }
       const hp = { ...h, position: vecOf(h.position ?? [0, 0, 0], `hazards[${k}].position`) };
+      if (h.type !== 'void') {
+        let acc = 0, nearStart = false;
+        for (let q = 0; q < out.length && acc < 15; q++) { if (q) acc += out[q].distanceTo(out[q - 1]); if (out[q].distanceTo(hp.position) < 4) nearStart = true; }
+        if (nearStart) { issue('warning', null, `hazards[${k}] (${h.type}) is within the first 15 u of the route (dropped: the start must be safe); move it further along`); continue; }
+      }
       if (h.type !== 'void' && out.some(r => Math.hypot(r.x - hp.position.x, r.z - hp.position.z) < 1.2 && Math.abs(r.y - hp.position.y) < 2))
         issue('warning', null, `hazards[${k}] (${h.type}) sits right on the route; the player must jump it (fine for spikes/saw, move it 3 u aside otherwise)`);
       level.hazards.push(hp);
