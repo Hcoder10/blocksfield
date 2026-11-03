@@ -49,6 +49,11 @@ export function build(game, kind, opts = {}) {
   } finally { World._collect(prev); }
   group.updateMatrixWorld(true);
   if (level.bounds.isEmpty()) level.bounds.setFromObject(group);
+  // batch static props per material: hundreds of prop meshes -> a few dozen draws (opts.bake === false to skip)
+  if (opts.bake !== false) {
+    try { level.batching = World.bake(game, group, { keep: level.movers.map(m => m.mesh) }); }
+    catch (e) { console.warn('[kit] Level.build: batching failed, keeping separate meshes', e); }
+  }
   Look.fit(game, level.bounds);
   game.level = level;
   return level;

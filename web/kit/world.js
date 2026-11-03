@@ -929,7 +929,8 @@ export function foliage(game, opts = {}) {
     if (!kind) continue;
     const spec = FOLIAGE[kind];
     if (!spec) throw new Error(`World.foliage: unknown kind "${reqKind}"; kinds: ${Object.keys(FOLIAGE).join(', ')}`);
-    let n = Math.round(areaSize * spec.density * density * w * (quality === 'low' && spec.spacing === 0 ? 0.4 : 1));
+    const thin = spec.spacing === 0 ? (quality === 'potato' ? 0.25 : quality !== 'high' ? 0.4 : 1) : 1;
+    let n = Math.round(areaSize * spec.density * density * w * thin);
     n = Math.min(n, opts.max ?? spec.max ?? 30000);
     if (n <= 0) continue;
     const mats = [];
@@ -1426,7 +1427,7 @@ export function prop(game, kind, opts = {}) {
       L.push({ g: new THREE.ConeGeometry(2.0, 2.4, 8).translate(0, 9.2, 0), c: 'roof', m: { flat: true } });
       const blades = new THREE.Group();
       for (let i = 0; i < 4; i++) { const b = new THREE.Mesh(box(0.9, 5.5, 0.1, 0, 3.0, 0), Look.material(game, { color: 'wood' })); b.rotation.z = i * Math.PI / 2; b.castShadow = true; blades.add(b); }
-      blades.position.set(0, 7.6, 2.0); group.add(blades);
+      blades.position.set(0, 7.6, 2.0); blades.userData.dynamic = true; group.add(blades);
       game.update(dt => { blades.rotation.z += dt * 0.6; }, 31);
       cols.push({ cyl: [0, 4, 0], hh: 4, r: 2 }); top = 8;
       break;
@@ -1523,3 +1524,70 @@ function areaOf(a) {
 
 /** World.reset(game): forget kit surfaces / no-plant zones (Level.build calls this before building) */
 export function reset(game) { game._kitSurfaces = []; game._kitNoPlant = []; }
+
+// ------------------------------------------------------------------------------------------------ static batching
+/**
+ * World.bake(game, root, { keep: Object3D[] }) -> { before, after } draw-call-ish mesh counts.
+ * Merges every static, non-instanced mesh under `root` that shares a material (and shadow flags) into one mesh with
+ * the world transforms baked in: hundreds of prop meshes become a few dozen draws. Level.build calls it on its group.
+ * Skipped: InstancedMesh, meshes with userData.dynamic (or under a parent with it), meshes in `keep` (movers), and
+ * transparent/ShaderMaterial meshes (water, waterfalls, glass) which need their own sort order.
+ */
+export function bake(game, root, opts = {}) {
+  const keep = new Set();
+  for (const k of opts.keep || []) if (k) k.traverse(o => keep.add(o));
+  root.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
+  const buckets = new Map();
+  let before = 0;
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    before++;
+    if (o.isInstancedMesh || o.isSkinnedMesh || keep.has(o) || !o.visible) return;
+    for (let p = o; p; p = p.parent) if (p.userData && p.userData.dynamic) return;
+    const m = o.material;
+    if (!m || Array.isArray(m) || m.isShaderMaterial || m.transparent || o.geometry.morphAttributes.position) return;
+    const g = o.geometry;
+    if (!g.attributes.position || g.attributes.position.count > 120000) return;
+    const sig = Object.keys(g.attributes).filter(k => ['position', 'normal', 'color'].includes(k)).sort().join(',');
+    if (!sig.includes('normal')) return;
+    const key = m.uuid + '|' + sig + '|' + (o.castShadow ? 1 : 0) + (o.receiveShadow ? 1 : 0) + '|' + o.renderOrder;
+    if (!buckets.has(key)) buckets.set(key, { m, items: [], cast: o.castShadow, recv: o.receiveShadow, order: o.renderOrder, sig });
+    buckets.get(key).items.push(o);
+  });
+  const mtx = new THREE.Matrix4(), nm = new THREE.Matrix3();
+  let merged = 0;
+  for (const b of buckets.values()) {
+    if (b.items.length < 2) continue;
+    const parts = [];
+    for (const o of b.items) {
+      let g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+      for (const k of Object.keys(g.attributes)) if (!b.sig.split(',').includes(k)) g.deleteAttribute(k);
+      mtx.multiplyMatrices(inv, o.matrixWorld);
+      g.applyMatrix4(mtx);
+      if (mtx.determinant() < 0) {               // mirrored transform: flip winding so faces stay front-facing
+        const pos = g.attributes.position;
+        for (let i = 0; i < pos.count; i += 3) for (const a of Object.values(g.attributes)) {
+          for (let c = 0; c < a.itemSize; c++) { const t = a.array[(i + 1) * a.itemSize + c]; a.array[(i + 1) * a.itemSize + c] = a.array[(i + 2) * a.itemSize + c]; a.array[(i + 2) * a.itemSize + c] = t; }
+        }
+      }
+      parts.push(g);
+    }
+    let mg;
+    try { mg = mergeGeometries(parts, false); } catch { mg = null; }
+    if (!mg) continue;
+    mg.computeBoundingSphere(); mg.computeBoundingBox();
+    const mesh = new THREE.Mesh(mg, b.m);
+    mesh.castShadow = b.cast; mesh.receiveShadow = b.recv; mesh.renderOrder = b.order;
+    mesh.name = 'kit:baked';
+    root.add(mesh);
+    for (const o of b.items) { o.parent.remove(o); o.geometry.dispose(); }
+    merged += b.items.length;
+  }
+  // prune now-empty prop groups
+  const empties = [];
+  root.traverse(o => { if (o !== root && o.isGroup && o.children.length === 0 && !keep.has(o)) empties.push(o); });
+  for (const e of empties) if (e.parent) e.parent.remove(e);
+  let after = 0; root.traverse(o => { if (o.isMesh) after++; });
+  return { before, after, merged };
+}
