@@ -58,9 +58,9 @@
     const making = `site/game.html?id=${encodeURIComponent(g.id)}`;
     return `<article class="card reveal${g.dev ? " dev" : ""}">
       ${g.dev ? '<span class="chip ink devlabel">DEV PLACEHOLDER</span>' : ""}
-      <a class="media" href="${esc(gameUrl(g, g.play))}" tabindex="-1" aria-hidden="true">${thumb}${video}
-        ${g.genre ? `<span class="chip genre">${esc(g.genre)}</span>` : ""}</a>
+      <a class="media" href="${esc(gameUrl(g, g.play))}" tabindex="-1" aria-hidden="true">${thumb}${video}</a>
       <div class="body">
+        ${g.genre ? `<span class="genre">${esc(g.genre)}</span>` : ""}
         <h3>${esc(g.title || g.id)}</h3>
         ${g.tagline ? `<p class="tagline">${esc(g.tagline)}</p>` : ""}
         ${g.pitch ? `<p class="pitch"><span>“${esc(g.pitch)}”</span></p>` : ""}

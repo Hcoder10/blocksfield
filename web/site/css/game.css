@@ -3,7 +3,7 @@
 .mk-kicker a { text-decoration: none; }
 .mk-kicker a:hover { text-decoration: underline; }
 .mk-kicker::before { display: none; }
-.mk-title { font-size: clamp(46px, 5.6vw, 84px); color: var(--white); line-height: 1; }
+.hero h1.mk-title { font-size: clamp(44px, 4.8vw, 76px); color: var(--white); line-height: 1; white-space: normal; text-wrap: balance; }
 .mk-tagline { margin: 16px 0 0; font-size: clamp(18px, 1.6vw, 22px); font-weight: 600; color: var(--ink); max-width: 30em; }
 .mk-tagline a { font-weight: 700; }
 .mk-controls { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 22px 0 0; font-size: 14px; font-weight: 600; color: var(--ink-2); }
@@ -94,7 +94,12 @@ kbd { display: inline-block; padding: 3px 8px; margin-right: 4px; font: 700 12px
 .calls td { font-variant-numeric: tabular-nums; color: #e8e4ff; }
 .calls tfoot td { font-weight: 700; color: var(--white); border-bottom: 0; }
 .report .sum { margin: 0 0 18px; color: #e8e4ff; font-size: 16px; max-width: 80ch; }
-.report .cols { display: grid; gap: 20px; }
+.report .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; }
+.report details summary { cursor: pointer; list-style: none; }
+.report details summary::-webkit-details-marker { display: none; }
+.report details summary b { color: var(--sun); white-space: nowrap; }
+.report details[open] summary { display: none; }
+.report details p { margin: 0; }
 .report h4 { margin: 0 0 8px; font: 700 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: #a9a2cf; }
 .report ul { margin: 0; padding-left: 18px; color: #d8d3f3; font-size: 14.5px; display: grid; gap: 6px; }
 .mk-final { text-align: center; padding-bottom: 120px; }

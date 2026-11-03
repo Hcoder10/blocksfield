@@ -148,7 +148,8 @@ section { position: relative; }
 .card .media img, .card .media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .card .media video { opacity: 0; transition: opacity .3s; }
 .card.playing .media video { opacity: 1; }
-.card .media .genre { position: absolute; left: 12px; bottom: 12px; }
+.card .genre { align-self: flex-start; margin-bottom: 10px; font: 700 12px/1 var(--body); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--tomato); }
 .card .media .score { position: absolute; right: 12px; top: 12px; }
 .card .body { display: flex; flex-direction: column; flex: 1; padding: 20px 22px 22px; }
 .card h3 { font: 400 30px/1 var(--display); margin: 0; letter-spacing: .01em; }

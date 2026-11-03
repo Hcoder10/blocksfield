@@ -103,7 +103,8 @@
 
     // assets
     const art = (a.stages?.art?.report) || {};
-    const secs = (k) => (art[k]?.seconds ? `<span class="took">${fmtS(art[k].seconds)} on the GPU</span>` : "");
+    // report seconds count from the start of the art burst, so they are a finish time, not a per-asset cost
+    const secs = (k) => (art[k]?.ok && art[k].seconds ? `<span class="took">ready ${fmtS(art[k].seconds)} into the art burst</span>` : "");
     const by = (kind) => Object.entries(assets).filter(([, v]) => v.kind === kind);
     const html = [];
     for (const [k, v] of by("sky")) {
@@ -125,8 +126,8 @@
     wireAudio();
 
     // build log
-    $("#g-log").innerHTML = [timeline(t), scores(a.score), builderReport(a.stages?.build),
-      callsTable(a.model_calls, a.agents)].filter(Boolean).join("");
+    $("#g-log").innerHTML = [timeline(t), scores(a.score), callsTable(a.model_calls, a.agents),
+      builderReport(a.stages?.build)].filter(Boolean).join("");
   }
 
   // stage order: plan, art, scaffold, build, then eval/repair rounds in the order they ran
@@ -181,8 +182,10 @@
     const r = b?.result;
     if (!r || (!r.summary && !r.changes?.length)) return "";
     const list = (xs) => `<ul>${xs.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
-    return `<div class="panel report"><h3>The builder's own report <small>verbatim${b.plays ? ` · played its game ${esc(b.plays)} time${b.plays > 1 ? "s" : ""} while building` : ""}</small></h3>
-      ${r.summary ? `<p class="sum">${esc(r.summary)}</p>` : ""}
+    return `<div class="panel wide report"><h3>The builder's own report <small>verbatim${b.plays ? ` · played its game ${esc(b.plays)} time${b.plays > 1 ? "s" : ""} while building` : ""}</small></h3>
+      ${r.summary ? (r.summary.length > 360
+        ? `<details class="sum"><summary>${esc(r.summary.slice(0, 340).replace(/\s+\S*$/, ""))}… <b>Read the whole summary</b></summary><p>${esc(r.summary)}</p></details>`
+        : `<p class="sum">${esc(r.summary)}</p>`) : ""}
       <div class="cols">${r.changes?.length ? `<div><h4>What it changed</h4>${list(r.changes)}</div>` : ""}
       ${r.known_issues?.length ? `<div><h4>Known issues it reported</h4>${list(r.known_issues)}</div>` : ""}</div></div>`;
   }
@@ -192,7 +195,7 @@
     const names = { lead: "Lead designer", builder: "Builder", judge: "Vision judge" };
     const sum = (f) => roles.reduce((n, [, r]) => n + (r[f] || 0), 0);
     const row = (n, c, p, o) => `<tr><td>${n}</td><td>${nf.format(c)}</td><td>${nf.format(p)}</td><td>${nf.format(o)}</td></tr>`;
-    return `<div class="panel wide"><h3>Model calls <small>all to Qwen3.8-27B, running locally</small></h3>
+    return `<div class="panel"><h3>Model calls <small>all to Qwen3.8-27B, running locally</small></h3>
       <table class="calls"><thead><tr><th>Role</th><th>Calls</th><th>Tokens read</th><th>Tokens written</th></tr></thead><tbody>
       ${roles.map(([k, r]) => row(esc(names[k] || title(k)), r.calls || 0, r.prompt_tokens || 0, r.completion_tokens || 0)).join("")}
       </tbody><tfoot>${row("Total", sum("calls"), sum("prompt_tokens"), sum("completion_tokens"))}</tfoot></table>
