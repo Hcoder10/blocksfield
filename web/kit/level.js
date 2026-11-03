@@ -522,71 +522,231 @@ function arena(ctx) {
 
 // ------------------------------------------------------------------------------------------------ town
 function town(ctx) {
+  // A cozy village grown along a curving main street: south gate, a stream with a stone bridge, a round plaza with a
+  // fountain and market, side alleys ending in small courtyards (nooks), and the town hall on a gentle rise to the north.
   const { game, level, rnd, S } = ctx;
-  const plaza = 14;                      // plaza radius
-  const street = 30 * S + 14;            // street length from plaza edge
-  const W = 7;                           // street width
   const pal = Look.palette(game);
-  const onStreet = (x, z) => (Math.abs(x) < W / 2 && Math.abs(z) < plaza + street) || (Math.abs(z) < W / 2 && Math.abs(x) < plaza + street) || Math.hypot(x, z) < plaza;
-  const size = (plaza + street) * 2 + 120;
-  const ground = World.ground(game, { ...P(ctx), size, flat: plaza + street + 16, hills: 22, bumps: 0.12, seed: ctx.seed + 3,
-    height: (x, z, y) => y * THREE.MathUtils.smoothstep(Math.hypot(x, z), plaza - 1, plaza + 5),
+  const L = 120 * S;                      // main street length
+  const W = 6.5;                          // main street width
+  const AW = 3.6;                         // alley width
+  const PR = 12;                          // plaza radius
+  const rise = 2.2, riseZ = L * 0.3;      // the north end climbs to the town hall terrace
+
+  // main street through the plaza at the origin
+  const main = new THREE.CatmullRomCurve3([
+    V(-6, 0, -L / 2), V(7, 0, -L * 0.3), V(-2, 0, -L * 0.12), V(0, 0, 0), V(5, 0, L * 0.14), V(-6, 0, L * 0.32), V(0, 0, L / 2),
+  ], false, 'centripetal');
+  const mainPts = main.getSpacedPoints(160);
+  // stream: an east-west curve south of the plaza
+  const zS = -L * 0.26, SH = 3.0;            // centre z, half width of the water
+  const streamZ = (x) => zS + 5 * Math.sin(x * 0.045 + 1.1);
+  const streamD = (x, z) => Math.abs(z - streamZ(x));
+  // alleys: from points on the main street out to a nook
+  const alleys = [];
+  const alleyDefs = [[0.2, 1, 26], [0.43, -1, 24], [0.62, 1, 28], [0.8, -1, 22]];
+  for (const [t, side, len] of alleyDefs) {
+    const p = main.getPointAt(t), tg = main.getTangentAt(t), n = V(tg.z, 0, -tg.x).multiplyScalar(side);
+    const bend = V(tg.x, 0, tg.z).multiplyScalar((rnd() - 0.5) * 10);
+    const a = p.clone().addScaledVector(n, W / 2), m = p.clone().addScaledVector(n, len * 0.55).add(bend), e = p.clone().addScaledVector(n, len).add(bend.clone().multiplyScalar(1.6));
+    const c = new THREE.CatmullRomCurve3([a, m, e]);
+    alleys.push({ t, side, curve: c, pts: c.getSpacedPoints(40), nook: e.clone(), dir: n });
+  }
+  const streets = [{ pts: mainPts, hw: W / 2 }, ...alleys.map(a => ({ pts: a.pts, hw: AW / 2 }))];
+  // distance to the nearest street (grid-accelerated)
+  const CELL = 8, grid = new Map();
+  streets.forEach((st, si) => st.pts.forEach((p, i) => { const k = Math.floor(p.x / CELL) + ',' + Math.floor(p.z / CELL); (grid.get(k) || grid.set(k, []).get(k)).push([si, i]); }));
+  const streetD = (x, z) => {   // -> signed distance to the street edge (<0 inside), and which street
+    const cx = Math.floor(x / CELL), cz = Math.floor(z / CELL); let best = Infinity, bs = -1;
+    for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) for (const [si, i] of grid.get((cx + dx) + ',' + (cz + dz)) || []) {
+      const p = streets[si].pts[i], d = Math.hypot(p.x - x, p.z - z) - streets[si].hw;
+      if (d < best) { best = d; bs = si; }
+    }
+    return { d: best, s: bs };
+  };
+  const nookR = 5;
+  const inNook = (x, z, pad = 0) => alleys.some(a => Math.hypot(a.nook.x - x, a.nook.z - z) < nookR + pad);
+  const terrace = (z) => rise * THREE.MathUtils.smoothstep(z, riseZ, riseZ + 14);
+
+  const size = L + 150;
+  const cob = new THREE.Color(pal.stone), cob2 = new THREE.Color(pal.stone).lerp(new THREE.Color(pal.ground), 0.35);
+  const ground = World.ground(game, { ...P(ctx), size, flat: L * 0.5 + 20, hills: 22, bumps: 0.18, seed: ctx.seed + 3,
+    flatAt: (x, z) => THREE.MathUtils.smoothstep(Math.max(0, 40 - Math.abs(x)), 0, 20) * THREE.MathUtils.smoothstep(L / 2 + 20 - Math.abs(z), 0, 20),
+    height: (x, z, y) => {
+      let h = y + terrace(z);
+      const sd = streamD(x, z);
+      if (Math.abs(x) < L) { const k = THREE.MathUtils.smoothstep(SH + 2.5 - sd, 0, 2.5); h = THREE.MathUtils.lerp(h, -1.8, k); }
+      return h;
+    },
     paint: (x, z, c) => {
-      if (onStreet(x, z)) {
-        const cx = Math.floor(x / 1.1), cz = Math.floor(z / 1.1);
+      const { d } = streetD(x, z);
+      const onPlaza = Math.hypot(x, z) < PR + 1;
+      if ((d < 0 || inNook(x, z)) && !onPlaza && streamD(x, z) > SH + 0.6) {
+        const cx = Math.floor(x / 0.9), cz = Math.floor(z / 0.9);
         const tile = ((cx * 7 + cz * 13) & 3) / 3;
-        c.set(pal.stone).multiplyScalar(0.86 + tile * 0.14);
-        if (Math.hypot(x, z) < plaza && Math.floor(Math.hypot(x, z) / 2.2) % 2) c.lerp(new THREE.Color(pal.ground), 0.25);
-      }
+        c.copy(cob).lerp(cob2, ((cx * 5 + cz * 3) & 7) / 14).multiplyScalar(0.84 + tile * 0.16);
+        if (d > -0.5) c.multiplyScalar(0.82);               // kerb line
+      } else if (d < 1.4 && !onPlaza) c.lerp(new THREE.Color(pal.ground), 0.45);
+      const sd = streamD(x, z);
+      if (sd < SH + 2.4 && sd > SH - 0.3) c.lerp(new THREE.Color(pal.stone).multiplyScalar(0.8), 0.7);   // stone banks
     },
   });
-  World.plaza(game, { ...P(ctx), center: V(0, ground.heightAt(0, 0) ?? 0, 0), radius: plaza - 0.5, trim: 'roof', emblem: 'stone', trimAt: 0.75, seed: ctx.seed, collider: true });
-  const gy = (x, z) => World.heightAt(game, x, z) ?? 0;
-  World.prop(game, 'fountain', { ...P(ctx), position: V(0, gy(0, 0) - 0.05, 0), radius: 3.6 });
-  for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + Math.PI / 4; World.prop(game, 'tree', { ...P(ctx), position: V(Math.cos(a) * 9, gy(Math.cos(a) * 9, Math.sin(a) * 9), Math.sin(a) * 9) }); World.prop(game, 'bench', { ...P(ctx), position: V(Math.cos(a) * 6, gy(0, 0), Math.sin(a) * 6), yaw: -a - Math.PI / 2 }); }
-  for (let k = 0; k < 3; k++) { const a = k * 0.5 + 0.9; World.prop(game, 'stall', { ...P(ctx), position: V(Math.cos(a) * 11.5, gy(0, 0), Math.sin(a) * 11.5), yaw: -a - Math.PI / 2, color: ['primary', 'secondary', 'accent'][k] }); }
-  // houses along each street, both sides; a town hall tower at the north end
-  const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
-  const roofs = ['roof', 'secondary', 'primary', 'roof'];
-  let hi = 0;
-  for (let di = 0; di < 4; di++) {
-    const [dx, dz] = dirs[di];
-    for (let s = plaza + 5; s < plaza + street - 3; s += 9.5) {
-      for (const side of [-1, 1]) {
-        const px = dx * s + (dz !== 0 ? side * (W / 2 + 4.6) : 0), pz = dz * s + (dx !== 0 ? side * (W / 2 + 4.6) : 0);
-        const yaw = Math.atan2(-(dz !== 0 ? side : 0), -(dx !== 0 ? side : 0));
-        World.prop(game, 'house', { ...P(ctx), position: V(px, gy(px, pz) - 0.1, pz), yaw, width: 6.5 + rnd() * 1.5, depth: 5.5, floors: 1 + (rnd() < 0.4 ? 1 : 0), roofColor: roofs[(hi++) % roofs.length] });
-      }
-      const lx = dx * (s + 4.7) + (dz !== 0 ? W / 2 - 0.3 : 0), lz = dz * (s + 4.7) + (dx !== 0 ? W / 2 - 0.3 : 0);
-      World.prop(game, 'lamp', { ...P(ctx), position: V(lx, gy(lx, lz), lz), height: 3.4 });
-    }
-    // end of each street
-    const e = plaza + street;
-    if (di === 0) World.prop(game, 'tower', { ...P(ctx), position: V(0, gy(0, e + 4), e + 4), height: 12, radius: 3 });
-    else World.prop(game, 'arch', { ...P(ctx), position: V(dx * e, gy(dx * e, dz * e) - 0.1, dz * e), yaw: Math.atan2(dx, dz), width: 7.5, height: 4.6 });
+  const gy = (x, z) => ground.heightAt(x, z) ?? 0;
+  World.water(game, { ...P(ctx), level: -0.7, size, center: V(0, 0, 0), waves: 0.12 });
+  level.water = { y: -0.7 };
+  World.plaza(game, { ...P(ctx), center: V(0, gy(0, 0), 0), radius: PR, trim: 'roof', emblem: 'stone', trimAt: 0.7, seed: ctx.seed });
+  const py = gy(0, 0) + 0.1;
+
+  // bridge where the main street crosses the stream
+  let ti = 0, tb = Infinity;
+  for (let i = 0; i < mainPts.length; i++) { const d = streamD(mainPts[i].x, mainPts[i].z); if (d < tb) { tb = d; ti = i; } }
+  const span = Math.ceil((SH + 3.2) / (L / 160));
+  const bA = mainPts[Math.max(0, ti - span)].clone(), bB = mainPts[Math.min(mainPts.length - 1, ti + span)].clone();
+  bA.y = gy(bA.x, bA.z) + 0.05; bB.y = gy(bB.x, bB.z) + 0.05;
+  World.prop(game, 'bridge', { ...P(ctx), from: bA, to: bB, width: W - 1.5, sag: -0.9 });
+  const bridgeY = (p) => {          // deck height along the bridge (an arch, matching World.prop bridge with sag -0.9)
+    const ab = bB.clone().sub(bA).setY(0), lenAB = ab.length(); ab.normalize();
+    const u = THREE.MathUtils.clamp(p.clone().sub(bA).setY(0).dot(ab) / lenAB, 0, 1);
+    return bA.y + (bB.y - bA.y) * u + 0.9 * 4 * u * (1 - u);
+  };
+  const onBridge = (i) => i > ti - span && i < ti + span;
+  // a second, small footbridge further along the stream (dressing) and planters on the banks
+  for (const x of [-34, 30]) {
+    const z0 = streamZ(x);
+    const a = V(x, 0, z0 - SH - 2.2), b = V(x, 0, z0 + SH + 2.2); a.y = gy(a.x, a.z) + 0.05; b.y = gy(b.x, b.z) + 0.05;
+    World.prop(game, 'bridge', { ...P(ctx), from: a, to: b, width: 2.4, sag: -0.5 });
   }
-  World.prop(game, 'well', { ...P(ctx), position: V(plaza + 9, gy(plaza + 9, plaza + 9), plaza + 9) });
-  World.prop(game, 'crate', { ...P(ctx), position: V(-plaza - 2, gy(0, 0), W / 2 - 1.2) });
-  World.prop(game, 'barrel', { ...P(ctx), position: V(-plaza - 3.6, gy(0, 0), W / 2 - 1.0) });
-  World.prop(game, 'barrel', { ...P(ctx), position: V(plaza + 3, gy(0, 0), -W / 2 + 1.0) });
-  // route: south gate -> plaza -> east street and back -> west street and back -> north to the town hall
-  const e = plaza + street - 2;
-  const pts = [V(0, 0, -e), V(0, 0, -plaza + 2), V(plaza - 4, 0, -4), V(e, 0, 0), V(plaza - 2, 0, 2.2), V(-plaza + 2, 0, 2.2), V(-e, 0, 0), V(-plaza + 4, 0, 4), V(0, 0, plaza), V(0, 0, e - 2)];
-  level.route = densify(pts, 6).map(p => p.setY(gy(p.x, p.z)));
+
+  // plaza: fountain, market stalls, benches, lantern posts, two trees
+  World.prop(game, 'fountain', { ...P(ctx), position: V(0, py - 0.15, 0), radius: 3.6 });
+  const stallCols = ['primary', 'secondary', 'accent', 'roof'];
+  const mainTanIn = main.getTangentAt(0.5);
+  const avoidA = Math.atan2(mainTanIn.z, mainTanIn.x);
+  let si = 0;
+  for (let k = 0; k < 10; k++) {
+    const a = k / 10 * Math.PI * 2 + 0.31;
+    const da = Math.min(Math.abs(Math.atan2(Math.sin(a - avoidA), Math.cos(a - avoidA))), Math.abs(Math.atan2(Math.sin(a - avoidA - Math.PI), Math.cos(a - avoidA - Math.PI))));
+    if (da < 0.45) continue;                                     // keep the street openings clear
+    if (alleys.some(al => { const p = al.pts[0]; return Math.abs(Math.atan2(Math.sin(Math.atan2(p.z, p.x) - a), Math.cos(Math.atan2(p.z, p.x) - a))) < 0.35 && Math.hypot(p.x, p.z) < PR + 6; })) continue;
+    const r = PR - 1.6, p = V(Math.cos(a) * r, py, Math.sin(a) * r);
+    const yaw = Math.atan2(-Math.cos(a), -Math.sin(a));
+    if (k % 3 === 0) World.prop(game, 'stall', { ...P(ctx), position: p, yaw, color: stallCols[si++ % 4] });
+    else if (k % 3 === 1) World.prop(game, 'bench', { ...P(ctx), position: p.clone().multiplyScalar(0.92).setY(py), yaw });
+    else World.prop(game, 'lantern_post', { ...P(ctx), position: p.clone().setY(py), yaw: yaw + Math.PI / 2 });
+  }
+  for (const a of [avoidA + Math.PI / 2, avoidA - Math.PI / 2]) World.prop(game, 'tree', { ...P(ctx), position: V(Math.cos(a) * 7.2, py, Math.sin(a) * 7.2) });
+
+  // town hall on the terrace at the north end, south gate arch
+  const endP = mainPts[mainPts.length - 1], endT = main.getTangentAt(1);
+  const hallP = endP.clone().addScaledVector(V(endT.x, 0, endT.z).normalize(), 9);
+  World.prop(game, 'tower', { ...P(ctx), position: hallP.clone().setY(gy(hallP.x, hallP.z) - 0.1), height: 13, radius: 3.2 });
+  const gateP = mainPts[0];
+  World.prop(game, 'arch', { ...P(ctx), position: gateP.clone().setY(gy(gateP.x, gateP.z) - 0.1), yaw: Math.atan2(main.getTangentAt(0).x, main.getTangentAt(0).z), width: W + 2.5, height: 5 });
+
+  // nooks: little courtyards at the end of each alley, each with something to find
+  const nookProps = [['well', 'bench', 'barrel'], ['planter', 'crate', 'bench'], ['stall', 'lantern_post', 'planter'], ['well', 'crate', 'barrel']];
+  alleys.forEach((a, k) => {
+    const c = a.nook, cy = gy(c.x, c.z);
+    World.plaza(game, { ...P(ctx), center: V(c.x, cy - 0.06, c.z), radius: nookR - 0.6, trim: 'secondary', emblem: 'accent', seed: k + 9, collider: false });
+    const back = Math.atan2(a.dir.x, a.dir.z);
+    nookProps[k % 4].forEach((kind, j) => {
+      const ang = back + (j - 1) * 0.9;
+      const q = c.clone().add(V(Math.sin(ang) * (nookR - 1.4), 0, Math.cos(ang) * (nookR - 1.4))); q.y = gy(q.x, q.z);
+      World.prop(game, kind, { ...P(ctx), position: q, yaw: ang + Math.PI, width: 2.0 });
+    });
+    level.collectibles.push({ position: c.clone().setY(cy + 1.3), tag: 'gem' });
+  });
+
+  // houses along every street, facing it; varied size, floors, wall and roof colours
+  const walls = ['#f6efe2', '#f3dcc8', '#e8eef2', '#f2e2b6', '#e9d6e4', '#dfe9d2'];
+  const roofs = ['roof', 'secondary', 'primary', '#7a5a8a', '#4a7a6a', 'wood'];
+  const houses = [];               // footprints {x, z, r}
+  const free = (x, z, r) => houses.every(h => Math.hypot(h.x - x, h.z - z) > h.r + r) && Math.hypot(x, z) > PR + r + 1.5
+    && streamD(x, z) > SH + r + 1.0 && !inNook(x, z, r + 0.8) && Math.hypot(hallP.x - x, hallP.z - z) > 6 + r
+    && streetD(x, z).d > r * 0.7 + 0.4 && Math.abs(x) < size / 2 - 20;
+  const gardens = [];
+  let hk = 0;
+  streets.forEach((st, sidx) => {
+    const pts = st.pts, step = sidx === 0 ? 3 : 3;
+    for (let i = 2; i < pts.length - 2; i += step) {
+      const p = pts[i], q = pts[Math.min(i + 1, pts.length - 1)];
+      const tg = q.clone().sub(p).setY(0).normalize(), nrm = V(tg.z, 0, -tg.x);
+      for (const sd of [-1, 1]) {
+        if (rnd() < 0.1) continue;
+        const w = 5 + rnd() * 3, d = 4.5 + rnd() * 1.8, r = Math.max(w, d) * 0.55;
+        const c = p.clone().addScaledVector(nrm, sd * (st.hw + d / 2 + 1.3));
+        if (!free(c.x, c.z, r)) continue;
+        const yaw = Math.atan2(-nrm.x * sd, -nrm.z * sd);     // door (+Z) faces the street
+        const floors = rnd() < 0.35 ? 2 : 1;
+        World.prop(game, 'house', { ...P(ctx), position: c.clone().setY(gy(c.x, c.z) - 0.15), yaw, width: w, depth: d, floors,
+          color: walls[hk % walls.length], roofColor: roofs[(hk * 7 + 3) % roofs.length] });
+        houses.push({ x: c.x, z: c.z, r });
+        hk++;
+        // a garden beside some houses: fence on the street side, flowers inside, maybe a washing line
+        if (rnd() < 0.45) {
+          const gc = c.clone().addScaledVector(tg, (w / 2 + 2.6) * (rnd() < 0.5 ? 1 : -1));
+          if (free(gc.x, gc.z, 2.4)) {
+            gc.y = gy(gc.x, gc.z);
+            const fp = gc.clone().addScaledVector(nrm, -sd * 2.1); fp.y = gy(fp.x, fp.z) - 0.05;
+            World.prop(game, 'fence', { ...P(ctx), position: fp, yaw: Math.atan2(tg.x, tg.z) + Math.PI / 2, length: 4.4 });
+            if (rnd() < 0.5) World.prop(game, 'washing_line', { ...P(ctx), position: gc.clone().addScaledVector(nrm, sd * 0.8), yaw: Math.atan2(tg.x, tg.z) + Math.PI / 2, length: 4 });
+            gardens.push(gc);
+            houses.push({ x: gc.x, z: gc.z, r: 2.4 });
+          }
+        } else if (rnd() < 0.5) {
+          const pp = c.clone().addScaledVector(nrm, -sd * (d / 2 + 0.6)).addScaledVector(tg, w * 0.25); pp.y = gy(pp.x, pp.z);
+          World.prop(game, rnd() < 0.5 ? 'planter' : 'barrel', { ...P(ctx), position: pp, yaw: Math.atan2(tg.x, tg.z) + Math.PI / 2, width: 1.8 });
+        }
+      }
+    }
+  });
+  for (const g of gardens) World.foliage(game, { ...P(ctx), area: { center: g, radius: 2.0 }, kinds: { flowers: 9, bush: 6, grass: 2 }, seed: Math.round(g.x * 13 + g.z), cluster: false });
+  // lamps along the main street, alternating sides
+  for (let i = 8, k = 0; i < mainPts.length - 4; i += 9, k++) {
+    if (onBridge(i) || Math.hypot(mainPts[i].x, mainPts[i].z) < PR + 2) continue;
+    const p = mainPts[i], tg = main.getTangentAt(i / (mainPts.length - 1)), nrm = V(tg.z, 0, -tg.x).multiplyScalar(k % 2 ? 1 : -1);
+    const q = p.clone().addScaledVector(nrm, W / 2 + 0.4); q.y = gy(q.x, q.z);
+    World.prop(game, 'lamp', { ...P(ctx), position: q, height: 3.4 });
+  }
+
+  // route: gate -> main street (over the bridge) -> around the fountain -> into the first northern alley's nook and back
+  // -> up the main street to the town hall
+  const routeY = (p, i) => (i != null && onBridge(i)) ? bridgeY(p) : gy(p.x, p.z);
+  const route = [];
+  const iPlazaIn = mainPts.findIndex(p => Math.hypot(p.x, p.z) < PR - 1);
+  for (let i = 6; i < iPlazaIn; i += 3) route.push(mainPts[i].clone().setY(routeY(mainPts[i], i)));
+  const aIn = Math.atan2(mainPts[iPlazaIn].z, mainPts[iPlazaIn].x);
+  for (let k = 0; k <= 6; k++) { const a = aIn + k / 6 * Math.PI; route.push(V(Math.cos(a) * 7.5, py, Math.sin(a) * 7.5)); }
+  const nookAlley = alleys.find(a => a.t > 0.55) || alleys[0];
+  const iAlley = Math.round(nookAlley.t * (mainPts.length - 1));
+  const iPlazaOut = mainPts.length - 1 - [...mainPts].reverse().findIndex(p => Math.hypot(p.x, p.z) < PR - 1);
+  for (let i = iPlazaOut; i <= iAlley; i += 3) route.push(mainPts[i].clone().setY(routeY(mainPts[i])));
+  for (let k = 0; k < nookAlley.pts.length; k += 6) { const p = nookAlley.pts[k]; route.push(p.clone().setY(gy(p.x, p.z))); }
+  route.push(nookAlley.nook.clone().setY(gy(nookAlley.nook.x, nookAlley.nook.z)));
+  for (let k = nookAlley.pts.length - 1; k >= 0; k -= 8) { const p = nookAlley.pts[k]; route.push(p.clone().setY(gy(p.x, p.z))); }
+  for (let i = iAlley; i < mainPts.length; i += 3) route.push(mainPts[i].clone().setY(routeY(mainPts[i])));
+  level.route = route.filter((p, i) => i === 0 || p.distanceTo(route[i - 1]) > 0.8);
   level.spawn = level.route[0].clone().add(V(0, 1, 0));
-  level.spawnYaw = 0;
-  level.goal = { position: V(0, gy(0, e - 1) + 0.5, e - 1), radius: 3 };
-  level.checkpoints.push({ position: V(0, gy(0, -plaza) + 0.1, -plaza - 1), radius: 3.5 });
-  const trail = alongRoute(level.route, ctx.n).map(p => p.add(V(0, 1.2, 0)));
+  level.spawnYaw = yawTo(level.route[0], level.route[2] || level.route[1]);
+  const gp = endP.clone(); gp.y = gy(gp.x, gp.z);
+  level.goal = { position: gp.clone().add(V(0, 0.5, 0)), radius: 3 };
+  level.checkpoints.push({ position: V(0, py, 0).add(V(Math.cos(aIn) * 9, 0, Math.sin(aIn) * 9)), radius: 3.5 });
+  const trail = alongRoute(level.route, Math.max(0, ctx.n - level.collectibles.length)).map(p => p.add(V(0, 1.2, 0)));
   for (const p of trail) level.collectibles.push({ position: p, tag: 'coin' });
-  World.noPlant(game, [V(0, 0, 0)], plaza + 2);
-  for (const p of densify([V(0, 0, -plaza - street), V(0, 0, plaza + street)], 2)) World.noPlant(game, [p], W);
-  for (const p of densify([V(-plaza - street, 0, 0), V(plaza + street, 0, 0)], 2)) World.noPlant(game, [p], W);
-  const outer = plaza + street + 70;
-  World.foliage(game, { ...P(ctx), area: { min: [-outer, -outer], max: [outer, outer] }, kinds: { grass: 1, flowers: 1.3, bush: 1.2, tree_round: 1.3, tree_pine: 0.8, rock: 0.4 }, density: 0.75, seed: ctx.seed + 5, focus: level.route, focusRadius: 30 });
+
+  // keep foliage off streets, plaza, houses; meadows and orchards around the village
+  for (const st of streets) World.noPlant(game, st.pts.filter((_, i) => i % 2 === 0), (st.hw + 0.6) / 0.6);
+  World.noPlant(game, [V(0, 0, 0)], PR + 2);
+  World.noPlant(game, alleys.map(a => a.nook), nookR + 1);
+  for (const h of houses) World.noPlant(game, [V(h.x, 0, h.z)], h.r + 0.6);
+  const outer = size / 2 - 6;
+  World.foliage(game, { ...P(ctx), area: { min: [-outer, -outer], max: [outer, outer] }, kinds: { grass: 1, flowers: 1.2, bush: 1, tree_round: 1.3, tree_pine: 0.6, rock: 0.3 },
+    density: 0.75, minY: -0.3, seed: ctx.seed + 5, focus: level.route, focusRadius: 28 });
   World.clouds(game, { ...P(ctx), count: 16, height: 55, radius: outer + 80, seed: ctx.seed });
   level.ground = ground;
-  level.bounds = new THREE.Box3(V(-plaza - street - 6, -1, -plaza - street - 6), V(plaza + street + 6, 14, plaza + street + 10));
+  const bb = new THREE.Box3().setFromPoints([...mainPts, ...alleys.map(a => a.nook)]);
+  bb.expandByVector(V(14, 0, 14)); bb.min.y = -2; bb.max.y = 16;
+  level.bounds = bb;
+  level.killY = -20;
   level.hazards.push({ type: 'void', y: -20, position: V(0, -20, 0) });
 }
 

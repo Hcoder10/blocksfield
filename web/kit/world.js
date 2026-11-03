@@ -1060,7 +1060,8 @@ function assemble(game, list, group) {
 
 export const propKinds = ['crate', 'barrel', 'fence', 'lamp', 'house', 'bridge', 'arch', 'crystal', 'sign', 'flag', 'chest',
   'pillar', 'ramp', 'platform_round', 'platform_box', 'spring_pad', 'rock', 'tree', 'wall', 'fountain', 'gate', 'barrier',
-  'cone', 'boost_pad', 'tower', 'bench', 'well', 'stall', 'stairs', 'windmill', 'tire_stack', 'ruins'];
+  'cone', 'boost_pad', 'tower', 'bench', 'well', 'stall', 'stairs', 'windmill', 'tire_stack', 'ruins', 'washing_line',
+  'planter', 'lantern_post'];
 export const PROPS = propKinds;
 export { FOLIAGE_KINDS as FOLIAGE };
 
@@ -1408,6 +1409,41 @@ export function prop(game, kind, opts = {}) {
     case 'tire_stack': {
       for (let i = 0; i < 3; i++) L.push({ g: new THREE.TorusGeometry(0.5, 0.22, 6, 12).rotateX(Math.PI / 2).translate(0, 0.22 + i * 0.42, 0), c: i === 1 ? (main || 'primary') : '#202024' });
       cols.push({ cyl: [0, 0.65, 0], hh: 0.65, r: 0.72 }); top = 1.3;
+      break;
+    }
+    case 'washing_line': {
+      const len = opts.length ?? 6, h = 2.7;
+      for (const x of [-len / 2, len / 2]) L.push({ g: box(0.14, h, 0.14, x, h / 2, 0), c: 'wood' });
+      const sagF = (u) => h - 0.15 - 0.45 * 4 * u * (1 - u);
+      L.push({ g: new THREE.TubeGeometry(new THREE.CatmullRomCurve3([0, 0.25, 0.5, 0.75, 1].map(u => new THREE.Vector3(-len / 2 + u * len, sagF(u), 0))), 12, 0.025, 4), c: '#f4f0e6' });
+      const cloth = ['primary', 'secondary', '#ffffff', 'accent', 'flower'];
+      const n = Math.max(3, Math.round(len / 1.3));
+      for (let i = 0; i < n; i++) {
+        const u = (i + 0.6) / (n + 0.4), w = 0.55 + rnd() * 0.35, hh = 0.6 + rnd() * 0.45;
+        const g = new THREE.PlaneGeometry(w, hh, 1, 2); g.translate(-len / 2 + u * len, sagF(u) - hh / 2 - 0.03, 0);
+        L.push({ g, c: cloth[i % cloth.length], m: { side: 'double', wind: 0.015 } });
+      }
+      top = h;
+      break;
+    }
+    case 'planter': {
+      const w = opts.width ?? 2.2;
+      L.push({ g: box(w, 0.6, 0.8, 0, 0.3, 0), c: main || 'wood' });
+      L.push({ g: box(w - 0.15, 0.1, 0.65, 0, 0.6, 0), c: 'ground2' });
+      for (let i = 0; i < Math.round(w * 2); i++) {
+        const g = new THREE.IcosahedronGeometry(0.2 + rnd() * 0.08, 0); g.translate(-w / 2 + 0.3 + i * 0.5, 0.78, (rnd() - 0.5) * 0.3);
+        L.push({ g, c: ['flower', 'flower2', '#ffffff', 'accent'][i % 4] });
+        const b = new THREE.IcosahedronGeometry(0.22, 0); b.translate(-w / 2 + 0.3 + i * 0.5, 0.66, 0.15); L.push({ g: b, c: 'foliage' });
+      }
+      cols.push({ c: [0, 0.4, 0], h: [w / 2, 0.4, 0.4] }); top = 0.6;
+      break;
+    }
+    case 'lantern_post': {
+      const h = opts.height ?? 3.2;
+      L.push({ g: cyl(0.1, 0.14, h, 6, 0, h / 2, 0), c: 'wood' });
+      L.push({ g: box(1.0, 0.1, 0.1, 0.45, h - 0.15, 0), c: 'wood' });
+      L.push({ g: new THREE.OctahedronGeometry(0.26, 0).scale(1, 1.3, 1).translate(0.85, h - 0.6, 0), c: main || 'glow', m: em(main || pal.glow, 2.6) });
+      cols.push({ cyl: [0, h / 2, 0], hh: h / 2, r: 0.16 }); top = h;
       break;
     }
     case 'ruins': {
