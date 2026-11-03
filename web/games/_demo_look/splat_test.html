@@ -27,8 +27,13 @@ const cams = {
   near: [s.clone().addScaledVector(f, 0).addScaledVector(sd, 1).add(new THREE.Vector3(0, 2, 0)), at(5, 2).add(new THREE.Vector3(0, 1, 0))],
   far: [s.clone().addScaledVector(f, -16).addScaledVector(sd, 6).add(new THREE.Vector3(0, 8, 0)), s.clone().addScaledVector(f, 6)],
 };
-const [cp, ct] = cams[q.get('cam') || 'hero'];
+const [cp, ct] = cams[q.get('cam')] || cams.hero;
 game.cameraOverride = { position: cp, target: ct };
+if (q.get('cam') === 'orbit') {           // slow arc around the splat group, for video
+  const c = at(6.5, 0).add(new THREE.Vector3(0, 2.2, 0));
+  game.update((dt, t) => { const ang = level.spawnYaw + Math.PI + 0.9 - t * 0.12, r = 11.5;
+    game.cameraOverride = { position: new THREE.Vector3(c.x + Math.sin(ang) * r, c.y + 2.6, c.z + Math.cos(ang) * r), target: c }; });
+}
 const frames = []; let last = performance.now();
 game.lateUpdate(() => { const n = performance.now(); frames.push(n - last); last = n; if (frames.length > 200) frames.shift(); }, 99);
 game.start();
