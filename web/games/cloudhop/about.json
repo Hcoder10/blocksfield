@@ -236,29 +236,34 @@
      "seconds": 164.0
     },
     "sfx_collect": {
-     "ok": false,
-     "error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha",
-     "seconds": 180.2
+     "ok": true,
+     "seconds": 180.2,
+     "note": "made by --backfill-assets after the first attempt failed",
+     "first_error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha"
     },
     "sfx_jump": {
-     "ok": false,
-     "error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha",
-     "seconds": 180.2
+     "ok": true,
+     "seconds": 180.2,
+     "note": "made by --backfill-assets after the first attempt failed",
+     "first_error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha"
     },
     "sfx_land": {
-     "ok": false,
-     "error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha",
-     "seconds": 180.2
+     "ok": true,
+     "seconds": 180.2,
+     "note": "made by --backfill-assets after the first attempt failed",
+     "first_error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha"
     },
     "sfx_hit": {
-     "ok": false,
-     "error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha",
-     "seconds": 180.2
+     "ok": true,
+     "seconds": 180.2,
+     "note": "made by --backfill-assets after the first attempt failed",
+     "first_error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha"
     },
     "sfx_boost": {
-     "ok": false,
-     "error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha",
-     "seconds": 180.2
+     "ok": true,
+     "seconds": 180.2,
+     "note": "made by --backfill-assets after the first attempt failed",
+     "first_error": "RuntimeError: sfx failed (502): {\"error\":\"ComfyUI rejected the workflow (400): {\\\"error\\\": {\\\"type\\\": \\\"prompt_outputs_failed_validation\\\", \\\"message\\\": \\\"Prompt outputs failed validation\\\", \\\"details\\\": \\\"\\\", \\\"extra_info\\\": {}}, \\\"node_errors\\\": {\\\"5\\\": {\\\"errors\\\": [{\\\"type\\\": \\\"value_smaller_tha"
     },
     "music_main": {
      "ok": true,
@@ -269,14 +274,16 @@
      "seconds": 184.8
     },
     "prop_candy_mushroom": {
-     "ok": false,
-     "error": "RuntimeError: no 3D output (Idol: prop_splat failed (502): {\"error\":\"workflow failed: {\\\"prompt_id\\\": \\\"473a43bd-ddff-4665-a79b-c634beb9e2da\\\", \\\"node_id\\\": \\\"20\\\", \\\"node_type\\\": \\\"IdolImageToSplat\\\", \\\"executed\\\": [\\\"8\\\", \\\"6\\\", \\\"7\\\", \\\"12\\\", \\\"5\\\", \\\"11\\\", \\\"13\\\"], \\\"exception_message\\\": \\\"Idol ",
-     "seconds": 285.3
+     "ok": true,
+     "seconds": 285.3,
+     "note": "made by --backfill-assets after the first attempt failed",
+     "first_error": "RuntimeError: no 3D output (Idol: prop_splat failed (502): {\"error\":\"workflow failed: {\\\"prompt_id\\\": \\\"473a43bd-ddff-4665-a79b-c634beb9e2da\\\", \\\"node_id\\\": \\\"20\\\", \\\"node_type\\\": \\\"IdolImageToSplat\\\", \\\"executed\\\": [\\\"8\\\", \\\"6\\\", \\\"7\\\", \\\"12\\\", \\\"5\\\", \\\"11\\\", \\\"13\\\"], \\\"exception_message\\\": \\\"Idol "
     },
     "prop_glow_flower": {
-     "ok": false,
-     "error": "RuntimeError: no 3D output (Idol: prop_splat failed (502): {\"error\":\"workflow failed: {\\\"prompt_id\\\": \\\"85b7f31c-943a-49e5-9481-1ba448dc8672\\\", \\\"node_id\\\": \\\"20\\\", \\\"node_type\\\": \\\"IdolImageToSplat\\\", \\\"executed\\\": [\\\"8\\\", \\\"7\\\", \\\"12\\\", \\\"5\\\", \\\"11\\\", \\\"13\\\"], \\\"exception_message\\\": \\\"Idol needs t",
-     "seconds": 289.1
+     "ok": true,
+     "seconds": 289.1,
+     "note": "made by --backfill-assets after the first attempt failed",
+     "first_error": "RuntimeError: no 3D output (Idol: prop_splat failed (502): {\"error\":\"workflow failed: {\\\"prompt_id\\\": \\\"85b7f31c-943a-49e5-9481-1ba448dc8672\\\", \\\"node_id\\\": \\\"20\\\", \\\"node_type\\\": \\\"IdolImageToSplat\\\", \\\"executed\\\": [\\\"8\\\", \\\"7\\\", \\\"12\\\", \\\"5\\\", \\\"11\\\", \\\"13\\\"], \\\"exception_message\\\": \\\"Idol needs t"
     }
    }
   },
