@@ -1413,8 +1413,9 @@ varying vec3 vWPos;
   }
   const np = []; for (let i = 0; i < N; i += 2) np.push(pts[i]);
   World.noPlant(game, np, W / 2 + 2.2);
+  // plants only on the canyon floor and the low desert: never on the terraced walls or ledges, where they float
   World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: ext - 12 }, kinds: { tree_round: 0.9, bush: 1.2, grass: 0.7, tree_dead: 0.5, rock: 0.6 },
-    density: 0.7, seed: ctx.seed + 8, focus: level.route, focusRadius: 26 });
+    density: 0.7, seed: ctx.seed + 8, focus: level.route, focusRadius: 26, maxY: 2.6 });
   World.clouds(game, { ...P(ctx), count: 10, height: 75, radius: ext, seed: ctx.seed });
   level.ground = ground;
   level.bounds = boundsOf(pts, 16);
