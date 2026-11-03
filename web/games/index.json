@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-03T03:31:02-0800",
+ "generated": "2026-11-03T03:43:28-0800",
  "dev": false,
  "space": {
   "level_kind": [
@@ -78,6 +78,8 @@
    "ui_style": "scifi",
    "custom_level": false,
    "layout": null,
+   "start_layout": null,
+   "laid_out": false,
    "mechanics": [],
    "cutscenes": 0,
    "species": null
@@ -113,6 +115,8 @@
    "ui_style": "arcade",
    "custom_level": false,
    "layout": null,
+   "start_layout": null,
+   "laid_out": false,
    "mechanics": [],
    "cutscenes": 0,
    "species": "robot"
@@ -147,6 +151,8 @@
    "ui_style": "arcade",
    "custom_level": false,
    "layout": null,
+   "start_layout": null,
+   "laid_out": false,
    "mechanics": [],
    "cutscenes": 0,
    "species": "fox"
@@ -182,6 +188,8 @@
    "ui_style": "cozy",
    "custom_level": true,
    "layout": null,
+   "start_layout": "spiral_climb",
+   "laid_out": false,
    "mechanics": [],
    "cutscenes": 0,
    "species": "cat"
@@ -216,6 +224,8 @@
    "ui_style": "cozy",
    "custom_level": true,
    "layout": null,
+   "start_layout": "river_run",
+   "laid_out": false,
    "mechanics": [],
    "cutscenes": 0,
    "species": "kid"
@@ -251,6 +261,8 @@
    "ui_style": "sleek",
    "custom_level": false,
    "layout": null,
+   "start_layout": null,
+   "laid_out": false,
    "mechanics": [],
    "cutscenes": 0,
    "species": "robot"
@@ -287,9 +299,48 @@
    "ui_style": "scifi",
    "custom_level": false,
    "layout": null,
+   "start_layout": null,
+   "laid_out": false,
    "mechanics": [],
    "cutscenes": 0,
    "species": "robot"
+  },
+  {
+   "id": "cloudhop2",
+   "title": "Cloudhop Meadows",
+   "tagline": "Hop, dash and bloom your way to the flower portal at the top of the sky!",
+   "pitch": "Cloudhop Meadows: a bright, juicy 3D platformer across floating sky islands. Run, double-jump and dash between candy-coloured islands and wobbly mushroom platforms, collect glowing star seeds, dodge spinning thorn bars, and reach the giant blooming flower portal at the top. Cheerful music, a bouncy HUD with a seed counter and timer.",
+   "genre": "Juicy 3D platformer / collect-and-climb",
+   "controls": [
+    "WASD / arrows: run",
+    "Space: jump (tap again mid-air: double jump)",
+    "Shift: dash",
+    "P / Esc: pause"
+   ],
+   "created": "2026-11-03T03:38:59-0800",
+   "thumbnail": "thumb.jpg",
+   "video": "gameplay.mp4",
+   "play": "index.html",
+   "card_thumb": null,
+   "score": 6.0,
+   "repairs": 2,
+   "model_calls": 51,
+   "minutes": 37.2,
+   "dry_run": false,
+   "superseded_by": null,
+   "interventions": 0,
+   "look": "candy",
+   "level_kind": "sky_islands",
+   "player_type": "platformer",
+   "camera": "follow",
+   "ui_style": "arcade",
+   "custom_level": false,
+   "layout": null,
+   "start_layout": null,
+   "laid_out": false,
+   "mechanics": [],
+   "cutscenes": 0,
+   "species": "bunny"
   },
   {
    "id": "bumble_dash",
@@ -322,6 +373,8 @@
    "ui_style": "arcade",
    "custom_level": false,
    "layout": null,
+   "start_layout": null,
+   "laid_out": false,
    "mechanics": [],
    "cutscenes": 0,
    "species": "bunny"
@@ -357,6 +410,8 @@
    "ui_style": "fantasy",
    "custom_level": false,
    "layout": null,
+   "start_layout": null,
+   "laid_out": false,
    "mechanics": [],
    "cutscenes": 0,
    "species": "knight"
@@ -391,6 +446,8 @@
    "ui_style": "cozy",
    "custom_level": false,
    "layout": null,
+   "start_layout": null,
+   "laid_out": false,
    "mechanics": [],
    "cutscenes": 0,
    "species": "penguin"
@@ -426,9 +483,48 @@
    "ui_style": "cozy",
    "custom_level": false,
    "layout": null,
+   "start_layout": null,
+   "laid_out": false,
    "mechanics": [],
    "cutscenes": 0,
    "species": "cat"
+  },
+  {
+   "id": "lagoon_rush2",
+   "title": "Lagoon Rush",
+   "tagline": "Skim the turquoise, chain the boosts, and take the lead over three splashy laps.",
+   "pitch": "Lagoon Rush: a sunny tropical jet-boat race. Skim across a turquoise lagoon past palm beaches, a striped lighthouse and buoy-lined lanes, hit boost pads and a big jump ramp, and beat three rival boats over three laps. Bright, splashy, summery, toon colours.",
+   "genre": "arcade boat racing",
+   "controls": [
+    "W / \u2191: throttle",
+    "S / \u2193: brake and reverse",
+    "A / D or \u2190 / \u2192: steer",
+    "Gamepad: steer and throttle"
+   ],
+   "created": "2026-11-03T03:42:12-0800",
+   "thumbnail": "thumb.jpg",
+   "video": "gameplay.mp4",
+   "play": "index.html",
+   "card_thumb": null,
+   "score": 5.42,
+   "repairs": 2,
+   "model_calls": 60,
+   "minutes": 38.7,
+   "dry_run": false,
+   "superseded_by": null,
+   "interventions": 0,
+   "look": "toon_bright",
+   "level_kind": "lagoon",
+   "player_type": "boat",
+   "camera": "chase",
+   "ui_style": "arcade",
+   "custom_level": false,
+   "layout": null,
+   "start_layout": null,
+   "laid_out": false,
+   "mechanics": [],
+   "cutscenes": 0,
+   "species": "kid"
   },
   {
    "id": "cloudhop",
@@ -461,6 +557,8 @@
    "ui_style": "arcade",
    "custom_level": false,
    "layout": null,
+   "start_layout": null,
+   "laid_out": false,
    "mechanics": [],
    "cutscenes": 0,
    "species": null
@@ -495,6 +593,8 @@
    "ui_style": "arcade",
    "custom_level": false,
    "layout": null,
+   "start_layout": null,
+   "laid_out": false,
    "mechanics": [],
    "cutscenes": 0,
    "species": null

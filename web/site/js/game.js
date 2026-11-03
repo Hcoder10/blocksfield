@@ -53,7 +53,11 @@
     if (repairs) facts.push(`<span class="chip pink">${repairs} repair round${repairs > 1 ? "s" : ""}</span>`);
     const chosenLevel = a.mapping?.chosen?.level_kind;
     const mechs = Array.isArray(a.mechanics) ? a.mechanics : [];
-    if (chosenLevel === "custom") facts.push('<a class="chip sun" href="#beyond">Level laid out by the model</a>');
+    const lay = a.mapping?.layout;
+    const laidOut = chosenLevel === "custom" && laidOutBy(lay);
+    const startLayout = a.mapping?.chosen?.custom_layout || plan.custom_layout;
+    if (chosenLevel === "custom") facts.push(laidOut ? '<a class="chip sun" href="#beyond">Level laid out by the model</a>'
+      : `<a class="chip" href="#beyond">Composed level${startLayout ? ` (from '${esc(startLayout)}')` : ""}</a>`);
     if (mechs.length) facts.push(`<a class="chip pink" href="#beyond">Custom mechanics: ${mechs.length}</a>`);
     if (a.dry_run) facts.push('<span class="chip ink">DEV: dry run, fake models</span>');
     $("#g-facts").innerHTML = facts.join("");
@@ -106,7 +110,7 @@
     if (plan.features?.length) add("Extras", plan.features.map(esc).join(" · "), "wide");
     $("#g-plan").innerHTML = rows.join("");
     $("#g-map").innerHTML = mappingBlock(a.mapping);
-    renderBeyond(a, chosenLevel, mechs);
+    renderBeyond(a, chosenLevel, mechs, laidOut, startLayout);
 
     // concept vs result
     const shots = plan.concept_shots || [];
@@ -189,16 +193,24 @@
   }
 
   // "Beyond the kits": a model-laid level (mapping.layout, verbatim) and custom mechanics with their code
-  function renderBeyond(a, level, mechs) {
+  // same rule as build_index.level_laid_out: evidence in mapping.layout, or no strong claim
+  function laidOutBy(lay) {
+    if (!lay || typeof lay !== "object") return false;
+    return lay.start === "freeform" || Number(lay.pieces_changed_from_start || 0) > 0;
+  }
+  function renderBeyond(a, level, mechs, laidOut, startLayout) {
     const parts = [];
     if (level === "custom") {
       const lay = a.mapping?.layout;
       const rows = lay && typeof lay === "object"
         ? Object.entries(lay).map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(typeof v === "object" ? JSON.stringify(v) : v)}</td></tr>`).join("")
         : "";
-      parts.push(`<div class="beyond-card"><h3><span class="chip sun">Level laid out by the model</span></h3>
-        <p>Instead of a one-call kit level, the model placed this level's pieces itself.</p>
-        ${rows ? `<table class="layout-tbl">${rows}</table>` : ""}</div>`);
+      parts.push(laidOut
+        ? `<div class="beyond-card"><h3><span class="chip sun">Level laid out by the model</span></h3>
+          <p>Instead of a one-call kit level, the model placed this level's pieces itself.</p>
+          ${rows ? `<table class="layout-tbl">${rows}</table>` : ""}</div>`
+        : `<div class="beyond-card"><h3><span class="chip">Composed level (Level.compose)</span></h3>
+          <p>${startLayout ? `From the '${esc(startLayout)}' starting layout.` : "Built with Level.compose."}</p></div>`);
     }
     if (mechs.length) {
       parts.push(`<div class="beyond-card"><h3><span class="chip pink">Custom mechanics</span></h3><div class="mechs">${mechs.map((m, i) => {

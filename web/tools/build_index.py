@@ -95,6 +95,19 @@ def card_thumb(d: Path, e: dict) -> str | None:
     return rel
 
 
+def level_laid_out(layout) -> bool:
+    """The strong claim "Level laid out by the model" needs evidence in mapping.layout: the model started from a blank
+    (start == 'freeform') or changed pieces of its starting layout. Otherwise a custom level is only "composed" from a
+    starting layout (e.g. submitted unchanged), and no layout record at all is never evidence."""
+    if not isinstance(layout, dict):
+        return False
+    try:
+        changed = float(layout.get("pieces_changed_from_start") or 0)
+    except (TypeError, ValueError):
+        changed = 0
+    return layout.get("start") == "freeform" or changed > 0
+
+
 def game_entry(d: Path) -> dict | None:
     try:
         about = json.loads((d / "about.json").read_text(encoding="utf-8"))
@@ -131,6 +144,8 @@ def game_entry(d: Path) -> dict | None:
         e["level_kind"] = chosen["level_kind"]  # what the shipped game uses, when recorded
     e["custom_level"] = e.get("level_kind") == "custom"
     e["layout"] = mp.get("layout") if e["custom_level"] else None
+    e["start_layout"] = (chosen.get("custom_layout") or plan.get("custom_layout")) if e["custom_level"] else None
+    e["laid_out"] = level_laid_out(e["layout"]) if e["custom_level"] else False
     mech = about.get("mechanics")
     e["mechanics"] = [{"name": m.get("name"), "how": m.get("how") or m.get("implementation") or m.get("kind")}
                       if isinstance(m, dict) else {"name": str(m), "how": None} for m in mech] if isinstance(mech, list) else []

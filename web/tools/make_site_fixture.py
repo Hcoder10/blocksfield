@@ -144,7 +144,7 @@ def main() -> None:
                     "chosen": {"level_kind": "custom", "look": "toon_bright", "player_type": "platformer",
                                "camera": "follow", "ui_style": "toon", "collectible": "star",
                                "collectible_label": "Blooms", "character": {"species": "fox", "accessories": ["scarf"]}},
-                    "layout": {"pieces_start": 14, "pieces_final": 19, "changed": "added a 5-piece spiral climb to the beacon"},
+                    "layout": {"start": "spiral_climb", "pieces_start": 14, "pieces_final": 19, "pieces_changed_from_start": 5},
                     "builder_overrides": {"level_kind": "sky_islands -> custom: a spiral climb read better than the preset arc"}},
         "mechanics": [
             {"name": "bloom chain", "how": "custom", "description": "collecting 3 blooms within 4 s gives a jump boost",

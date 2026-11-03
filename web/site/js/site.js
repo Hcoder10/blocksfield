@@ -61,7 +61,8 @@
     if (g.minutes) meta.push(`${g.minutes} min build`);
     const making = `site/game.html?id=${encodeURIComponent(g.id)}`;
     const badges = [];
-    if (g.custom_level) badges.push('<span class="chip sun">Level laid out by the model</span>');
+    if (g.custom_level) badges.push(g.laid_out ? '<span class="chip sun">Level laid out by the model</span>'
+      : `<span class="chip">Composed level${g.start_layout ? ` (from '${esc(g.start_layout)}')` : ""}</span>`);
     if ((g.mechanics || []).length) badges.push('<span class="chip pink">Custom mechanics</span>');
     if (g.cutscenes) badges.push(`<span class="chip">${g.cutscenes} cutscene${g.cutscenes > 1 ? "s" : ""}</span>`);
     return `<article class="card reveal${g.dev ? " dev" : ""}">
@@ -147,7 +148,7 @@
   // ---- "beyond the kits": up to two real examples (a model-laid level, a custom mechanic); hidden until one exists ----
   function renderBeyond(games) {
     const ex = [];
-    const lvl = games.find((g) => g.custom_level);
+    const lvl = games.find((g) => g.custom_level && g.laid_out);  // strong claim only, with layout evidence
     if (lvl) {
       const lay = lvl.layout && typeof lvl.layout === "object" ? lvl.layout : {};
       const facts = Object.entries(lay).slice(0, 3).map(([k, v]) => `<li><code>${esc(k)}</code> ${esc(typeof v === "object" ? JSON.stringify(v) : v)}</li>`).join("");
