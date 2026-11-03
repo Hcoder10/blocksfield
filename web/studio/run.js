@@ -7,7 +7,7 @@ topbar('run');
 const root = $('#run');
 root.innerHTML = `
   <section class="run-head">
-    <div><div class="t1"><span class="status" id="status">…</span><span class="chip ghost" id="genre"></span><span class="chip ghost" id="rid">${esc(rid)}</span>${params.get('replay') ? `<span class="chip ghost replay-tag" title="a finished build, replayed from its files and log">${params.get('replay') === 'auto' ? 'replay · sped up' : `replayed at ${esc(params.get('replay'))}×`}</span>` : ''}</div>
+    <div><div class="t1"><span class="status" id="status">…</span><span class="chip ghost" id="genre"></span><span class="chip ghost" id="rid">${esc(rid)}</span>${params.get('replay') ? `<span class="chip ghost replay-tag" id="replay-tag" title="a finished build, replayed from its files and log">replayed at ${params.get('replay') === 'auto' ? '…' : esc(params.get('replay'))}×</span>` : ''}</div>
       <h1 class="display outlined" id="title">${esc(rid.replace(/_/g, ' '))}</h1><p class="tagline" id="tagline"></p>
       <p class="pitch" id="pitch"></p></div>
     <div class="clock"><div class="lbl" id="clock-lbl">Build time</div><div class="big" id="clock">0:00</div><div id="score-wrap" style="margin-top:12px"></div></div>
@@ -210,6 +210,7 @@ async function refresh() {
       const nowR = performance.now();
       if (virtT == null) { virtT = r.start + (+params.get('from') || 0); lastReal = nowR; }
       const sp = AUTO[(snap.live ? null : snap.phase) || 'plan'] || 60;
+      const tag = document.getElementById('replay-tag'); if (tag) tag.textContent = `replayed at ${sp}×`;
       virtT += (nowR - lastReal) / 1000 * sp; lastReal = nowR;
       at = Math.min(virtT, r.end + 2);
     }

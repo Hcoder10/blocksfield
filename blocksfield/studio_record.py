@@ -46,7 +46,7 @@ def start_studio() -> str:
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--run", default="neon_drift", help="finished web run to replay")
-    ap.add_argument("--out", default=str(ROOT / "runs" / "studio_clip.mp4"))
+    ap.add_argument("--out", default=str(ROOT / "video" / "studio_take.mp4"))
     ap.add_argument("--seconds", type=float, default=15.0)
     ap.add_argument("--home", type=float, default=5.0, help="seconds on the Create page")
     ap.add_argument("--url", default=None, help="a running Studio (default: start one)")
