@@ -6,7 +6,7 @@ objects itself: pass the level to `Gameplay.rules` and it spawns coins, checkpoi
 
 ```js
 Level.build(game, kind, { size = 'medium', seed = 1, collectibles = 30 }) -> level
-Level.KINDS        // ['sky_islands', 'meadow_course', 'arena', 'town', 'race_track']
+Level.KINDS        // ['sky_islands', 'meadow_course', 'arena', 'town', 'race_track', 'lagoon']
 Level.validate(level) -> []   // list of route problems; [] means every route jump is reachable
 ```
 
@@ -17,6 +17,7 @@ Level.validate(level) -> []   // list of route problems; [] means every route ju
 | `arena` | round tiled arena with walls, 4 gates, 4 raised platforms with ramps, cover (crates, pillars, walls, rocks), fountain | combat, collect, survival, king of the hill |
 | `town` | cozy village: plaza with fountain + market stalls, 4 streets of houses, lamps, town-hall tower | exploration, delivery, hide and seek, collect |
 | `race_track` | closed banked circuit with curbs, barriers, start/finish gantry, boost pads, lake infield | kart / car / boat-free races, time trials |
+| `lagoon` | closed water course through a tropical lagoon: buoy-lined lane, beaches, lighthouse island, boost pads, a jump ramp, rocks | boat / jet-ski races (`Player` type `boat`), water time trials |
 
 Sizes: `small` (~0.7x), `medium`, `large` (~1.45x). `seed` changes the layout; same seed = same level.
 
@@ -30,7 +31,8 @@ level.checkpoints  [{position, radius}] (race: + yaw, index)
 level.hazards      [{type:'void', y}] fall plane (all kinds), [{type:'boost', position, direction, yaw, width, length}] (race)
 level.movers       [{mesh, path:[a, b], period, type:'platform'}] ping-pong platforms (Gameplay animates them)
 level.goal         {position, radius} | null (arena has no goal)      level.killY   fall-death height
-level.track        CatmullRomCurve3 | null (race_track: centre line, closed)    level.laps (race) = 3
+level.track        CatmullRomCurve3 | null (race_track, lagoon: centre line, closed)    level.laps = 3, level.trackWidth
+level.water        {y} | null (lagoon: boats float at y; meadow river; race_track lake)
 level.bounds       Box3        level.group  Object3D with all level art        level.colliders  [...]
 level.spawnPoints  (arena) Vector3[] for enemies          level.islands (sky_islands) island objects
 ```

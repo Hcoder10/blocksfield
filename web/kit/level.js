@@ -8,7 +8,7 @@ import * as World from './world.js';
 export const MAX_GAP = 5.0;       // horizontal edge-to-edge gap on the route (single jump covers ~12; double jump ~18)
 export const MAX_RISE = 2.5;      // height gained in one route jump (apex is 4.5)
 export const JUMP_HEIGHT = 4.5, RUN_SPEED = 12;
-export const kinds = ['sky_islands', 'meadow_course', 'arena', 'town', 'race_track'];
+export const kinds = ['sky_islands', 'meadow_course', 'arena', 'town', 'race_track', 'lagoon'];
 export const KINDS = kinds;
 export const SIZES_LIST = ['small', 'medium', 'large'];
 const SIZES = { small: 0.7, medium: 1, large: 1.45 };
@@ -779,9 +779,117 @@ function raceTrack(ctx) {
   level.bounds = boundsOf(pts, 12);
   level.hazards.push({ type: 'void', y: -20, position: V(0, -20, 0) });
 }
+
+// ------------------------------------------------------------------------------------------------ lagoon (boat race)
+function lagoon(ctx) {
+  const { game, level, rnd, S } = ctx;
+  const R = 90 * S, W = opts(ctx).width ?? 20, WY = 0;
+  const ctrl = [];
+  for (let i = 0; i < 10; i++) {
+    const a = i / 10 * Math.PI * 2;
+    const r = R * (0.8 + 0.28 * Math.sin(a * 3 + ctx.seed) * (0.6 + rnd() * 0.4));
+    ctrl.push(V(Math.cos(a) * r * 1.2, WY, Math.sin(a) * r * 0.9));
+  }
+  const curve = new THREE.CatmullRomCurve3(ctrl, true, 'centripetal');
+  const lenT = curve.getLength(), N = Math.max(240, Math.round(lenT / 2));
+  const pts = [], tans = [];
+  for (let i = 0; i <= N; i++) { const t = (i / N) % 1; const p = curve.getPointAt(t); p.y = WY; pts.push(p); tans.push(curve.getTangentAt(t)); }
+  level.track = new THREE.CatmullRomCurve3(pts.slice(0, N), true, 'centripetal');
+  const CELL = 12, grid = new Map();
+  for (let i = 0; i < N; i++) { const k = Math.floor(pts[i].x / CELL) + ',' + Math.floor(pts[i].z / CELL); (grid.get(k) || grid.set(k, []).get(k)).push(i); }
+  const nearest = (x, z) => {
+    const cx = Math.floor(x / CELL), cz = Math.floor(z / CELL); let bd = Infinity, bi = -1;
+    for (let r = 0; r <= 4 && bi < 0; r++) for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) {
+      if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+      for (const i of grid.get((cx + dx) + ',' + (cz + dz)) || []) { const d = (pts[i].x - x) ** 2 + (pts[i].z - z) ** 2; if (d < bd) { bd = d; bi = i; } }
+    }
+    return bi < 0 ? null : { d: Math.sqrt(bd), i: bi };
+  };
+  const ext = R * 1.2 + 120;
+  // land everywhere, carved into a channel along the course (seabed 3.5 below the water), sandy beaches at the edges
+  const pal = Look.palette(game);
+  const ground = World.ground(game, { ...P(ctx), size: ext * 2, flat: R * 1.2 + 40, hills: 22, bumps: 0.6, seed: ctx.seed + 3,
+    height: (x, z, y) => {
+      const n = nearest(x, z); const land = y + 1.3;
+      if (!n) return land;
+      const k = THREE.MathUtils.smoothstep(W / 2 + 13 - n.d, 0, 9);
+      return THREE.MathUtils.lerp(land, WY - 3.5, k);
+    },
+    paint: (x, z, c) => { const n = nearest(x, z); if (n && n.d < W / 2 + 15) c.lerp(new THREE.Color(pal.sand), THREE.MathUtils.smoothstep(W / 2 + 15 - n.d, 0, 4)); },
+  });
+  World.water(game, { ...P(ctx), level: WY, size: ext * 2, center: V(0, 0, 0), waves: 0.18 });
+  level.water = { y: WY };
+  level.trackWidth = W;
+  const yawAtI = (i) => Math.atan2(tans[i].x, tans[i].z);
+  const side = (i) => V(tans[i].z, 0, -tans[i].x).normalize();
+  // buoy lines on both edges (red/white), colliders keep boats in the lane
+  {
+    const buoys = [];
+    const step = Math.max(2, Math.round(7 / (lenT / N)));
+    for (let i = 0, k = 0; i < N; i += step, k++) for (const sg of [-1, 1]) {
+      const q = pts[i].clone().addScaledVector(side(i), sg * (W / 2 + 1)); q.y = WY;
+      buoys.push({ q, red: k % 2 === 0 });
+      World.colliderBall(game, q.clone().setY(WY + 0.2), 0.7, { what: 'buoy' });
+    }
+    const g = new THREE.SphereGeometry(0.6, 10, 8);
+    for (const red of [true, false]) {
+      const list = buoys.filter(b => b.red === red);
+      const im = new THREE.InstancedMesh(g, Look.material(game, red ? { color: 'danger', emissive: 'danger', emissiveIntensity: Look.isNight(game) ? 1.4 : 0.15 } : { color: '#ffffff' }), list.length);
+      const m4 = new THREE.Matrix4();
+      im.castShadow = true; im.name = 'kit:buoys'; im.frustumCulled = false; ctx.group.add(im);
+      const bob = (dt, t) => { list.forEach((b, i) => { im.setMatrixAt(i, m4.makeScale(1, 0.85, 1).setPosition(b.q.x, WY + 0.15 + Math.sin(t * 2 + b.q.x * 0.3) * 0.12, b.q.z)); }); im.instanceMatrix.needsUpdate = true; };
+      bob(0, 0);
+      game.update(bob, 31);
+    }
+  }
+  // placements
+  level.route = [];
+  for (let i = 0; i < N; i += 3) level.route.push(pts[i].clone());
+  level.spawn = pts[N - 5].clone().add(V(0, 0.6, 0));
+  level.spawnYaw = yawAtI(N - 5);
+  level.goal = { position: pts[0].clone().add(V(0, 0.5, 0)), radius: W / 2 + 1, finishLine: true };
+  for (let k = 1; k < 6; k++) { const i = Math.round(N * k / 6); level.checkpoints.push({ position: pts[i].clone().add(V(0, 0.5, 0)), radius: W / 2 + 2, yaw: yawAtI(i), index: k }); }
+  level.laps = 3;
+  World.prop(game, 'gate', { ...P(ctx), position: pts[1].clone().add(V(0, -1.5, 0)), yaw: yawAtI(1), width: W + 4, height: 8.5 });
+  // straightest stretches: boost pads and one jump ramp
+  const turn = (i) => { const a = tans[(i - 4 + N) % N], b = tans[(i + 4) % N]; return Math.abs(a.x * b.z - a.z * b.x); };
+  const straight = []; for (let i = 15; i < N - 15; i++) straight.push([turn(i), i]); straight.sort((a, b) => a[0] - b[0]);
+  const picks = []; for (const [, i] of straight) { if (picks.every(j => Math.abs(j - i) > N / 7)) picks.push(i); if (picks.length >= 4) break; }
+  picks.slice(0, 3).forEach(i => level.hazards.push({ type: 'boost', position: pts[i].clone().add(V(0, 0.1, 0)), direction: tans[i].clone(), width: 4, length: 5, yaw: yawAtI(i) }));
+  if (picks[3] != null) { const i = picks[3]; World.prop(game, 'ramp', { ...P(ctx), position: pts[i].clone().setY(WY - 0.9), yaw: yawAtI(i) - Math.PI / 2, length: 8, width: 6, height: 2.1, color: 'wood' }); }
+  for (let k = 0; k < ctx.n; k++) {
+    const i = Math.round(((Math.floor(k / 5) * 5 / ctx.n) * N + (k % 5) * 4 + N * 0.06)) % N;
+    const lane = (Math.floor(k / 5) % 3 - 1) * W * 0.25;
+    level.collectibles.push({ position: pts[i].clone().addScaledVector(side(i), lane).setY(WY + 1.2), tag: 'coin' });
+  }
+  // dressing: lighthouse on the infield, houses on the shores, rocks poking out of the water beside the lane
+  const dc = (nearest(0, 0) || { d: 0 }).d;
+  if (dc > W / 2 + 20) {
+    World.prop(game, 'tower', { ...P(ctx), position: V(0, ground.heightAt(0, 0) ?? 1, 0), height: 14, radius: 2.6 });
+    World.prop(game, 'house', { ...P(ctx), position: V(9, (ground.heightAt(9, 6) ?? 1) - 0.1, 6), yaw: -0.6, roofColor: 'secondary' });
+  }
+  for (let k = 0; k < 10; k++) {
+    const i = Math.floor(rnd() * N), sg = rnd() < 0.5 ? -1 : 1;
+    const q = pts[i].clone().addScaledVector(side(i), sg * (W / 2 + 4 + rnd() * 3)); q.y = WY - 0.6;
+    World.prop(game, 'rock', { ...P(ctx), position: q, size: 1.2 + rnd() });
+  }
+  for (let k = 0; k < 5; k++) {
+    const i = Math.floor(N * (k + 0.5) / 5), q = pts[i].clone().addScaledVector(side(i), W / 2 + 22); q.y = ground.heightAt(q.x, q.z) ?? 1;
+    if (q.y > WY + 0.5) World.prop(game, 'house', { ...P(ctx), position: q.add(V(0, -0.1, 0)), yaw: yawAtI(i) + Math.PI, roofColor: k % 2 ? 'roof' : 'primary' });
+  }
+  const np = []; for (let i = 0; i < N; i += 2) np.push(pts[i]);
+  World.noPlant(game, np, W / 2 + 8);
+  World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: ext - 10 }, kinds: { grass: 0.8, flowers: 0.8, bush: 1, palm: 1.6, tree_round: 0.8, rock: 0.6 }, minY: WY + 0.35, density: 0.8, seed: ctx.seed + 8, focus: level.route, focusRadius: 35 });
+  World.clouds(game, { ...P(ctx), count: 20, height: 60, radius: ext, seed: ctx.seed });
+  level.ground = ground;
+  level.bounds = boundsOf(pts, 14);
+  level.killY = WY - 15;
+  level.hazards.push({ type: 'void', y: level.killY, position: V(0, level.killY, 0) });
+}
+
 function opts(ctx) { return ctx.opts || {}; }
 
-const BUILDERS = { sky_islands: skyIslands, meadow_course: meadowCourse, arena, town, race_track: raceTrack };
+const BUILDERS = { sky_islands: skyIslands, meadow_course: meadowCourse, arena, town, race_track: raceTrack, lagoon };
 
 /** Level.validate(level) -> list of route problems (gaps > MAX_GAP+margin or rises > MAX_RISE+margin). [] means reachable. */
 export function validate(level) {
