@@ -502,3 +502,9 @@
 .tk-banner.tk-mechanic .tk-sub { color: #e6d6ff; }
 .tk-touch .tk-prompt { bottom: 30vh; }
 .tk-cozy .tk-banner.tk-mechanic .tk-sub { color: #6b4630; }
+/* counter: met target + bonus tag; lives tag next to health hearts */
+.tk-counter.tk-done .tk-of::after { content: ' \2713'; color: var(--tk-a); }
+.tk-bonus { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: .45em; font-family: var(--tk-num); font-size: 1.15em; color: var(--tk-p); white-space: nowrap; }
+.tk-bonus:empty { display: none; }
+.tk-lives-n { font-size: 1.35em; margin-left: .25em; color: var(--tk-text); }
+.tk-lives-n.tk-lost { animation: tk-pop .5s cubic-bezier(.2, 2, .4, 1); }

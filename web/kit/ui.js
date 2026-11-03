@@ -141,7 +141,8 @@ export function icon(game, name, cls = 'tk-ico') {
   const n = String(name || 'star');
   let url = null;
   if (/[/.]/.test(n)) url = n;
-  else if (game && game.asset) url = game.asset('icon_' + n) || game.asset(n + '_icon') || manifestFor(game, 'icon', n) || null;
+  else if (game && game.asset) url = game.asset('icon_' + n) || game.asset(n + '_icon') || manifestFor(game, 'icon', n)
+    || (game.assets && game.assets.manifest && game.assets.manifest[n] && game.assets.manifest[n].kind === 'icon' ? game.asset(n) : null) || null;
   if (url) {
     const img = h('img', cls, null, { src: url, alt: n, draggable: 'false' }); img.style.objectFit = 'contain';
     img.onerror = () => { const fb = icon(null, n, cls); img.replaceWith(fb); };   // missing generated file -> built-in SVG
@@ -247,6 +248,8 @@ function readCounter(game, c) {
   if (v == null && main) v = num(st.collected);
   let t = c.target ?? num(st[c.id + 'Target']) ?? num(st[c.id + 'Total']) ?? (st.targets ? num(st.targets[c.id]) : null);
   if (t == null && main) t = num(st.target) || null;
+  // races: pickups are a side score, not the goal; only an explicit counter target is shown there
+  if (c.target == null && num(st.laps) > 0) t = null;
   return { v: v ?? 0, t };
 }
 function readTimer(game, H) {
@@ -288,10 +291,12 @@ export function hud(game, opts = {}) {
     if (!c || !c.id) throw new Error('UI.hud: every counter needs an id, e.g. counters: [{ id: "coins", icon: "coin", label: "Coins", target: 30 }]');
     const val = h('span', 'tk-val', ['0']), of = h('span', 'tk-of', ['']);
     const ico = icon(game, c.icon || c.id);
-    const lbl = c.label && c.showLabel ? h('span', 'tk-lbl tk-ol', [c.label]) : null;
+    const lbl = c.label && (c.showLabel || (counters.length > 1 && c.showLabel !== false)) ? h('span', 'tk-lbl tk-ol', [c.label]) : null;
     const box = h('div', 'tk-counter', [ico, lbl, wrap(panel([val, of]))]);
     C.tl.append(box);
-    H.counters.push({ c: { ...c, useGlobalTarget: counters.length === 1 }, box, val, of, last: null, lastT: undefined });
+    const bonus = h('span', 'tk-bonus tk-ol', ['']);
+    box.append(bonus);
+    H.counters.push({ c: { ...c, useGlobalTarget: counters.length === 1 }, box, val, of, bonus, last: null, lastT: undefined });
   });
 
   // timer + objective (top-centre)
@@ -345,12 +350,21 @@ export function hud(game, opts = {}) {
   return H;
 }
 
+// "Collect 20 orbs" -> "Collect 20 fish" when the HUD counter for the main pickup has its own label
+function nounFix(H, st, text) {
+  const tag = st.collectTag, c = H.counters.find(k => k.c.useGlobalTarget || k.c.id === 'collected' || k.c.id === tag);
+  if (!tag || !c || !c.c.label) return text;
+  const lbl = c.c.label.toLowerCase();
+  return text.replace(new RegExp('\\b' + tag.replace(/[^a-z0-9_]/gi, '') + 's?\\b', 'gi'), lbl);
+}
 function refresh(game, H) {
   const st = game.state || {};
   for (const k of H.counters) {
     const { v, t } = readCounter(game, k.c);
+    // never "21/10": a met target reads "10/10" with a check, extras go in a "+11" bonus tag
+    const over = t != null && v > t ? Math.round(v - t) : 0;
+    if (v !== k.last || t !== k.lastT) { k.val.textContent = Math.round(t != null && v > t ? t : v).toLocaleString(); k.bonus.textContent = over ? `+${over}` : ''; }
     if (v !== k.last) {
-      k.val.textContent = Math.round(v).toLocaleString();
       if (k.last != null && v > k.last) {
         k.box.classList.remove('tk-pop'); void k.box.offsetWidth; k.box.classList.add('tk-pop');
         const g = h('span', 'tk-ghost tk-ol', [`+${Math.round(v - k.last)}`]); k.box.append(g); setTimeout(() => g.remove(), 850);
@@ -367,25 +381,45 @@ function refresh(game, H) {
     if (s !== H.timer.last) { H.timer.val.innerHTML = `${f.main}<small>${f.frac}</small>`; H.timer.last = s; }
     H.timer.box.classList.toggle('tk-urgent', down && t <= 10 && t > 0);
   }
-  if (typeof st.objective === 'string' && st.objective && H.opts.objective !== false && (!H.objective || st.objective !== H.objective.txt.textContent)) objective(game, st.objective);
+  // the game's own objective line wins over the rules' generic one (unless it was cut off mid-word by the plan's length cap)
+  const own = typeof H.opts.objective === 'string' ? H.opts.objective.trim() : '';
+  const ownOk = own && !(own.length >= 58 && !/[.!?)…]$/.test(own));
+  const progress = typeof st.objective === 'string' && /\(\d+\s*\/\s*\d+\)|^you (win|lose)/i.test(st.objective);   // quest steps "(1/4)", end lines
+  if ((!ownOk || progress) && typeof st.objective === 'string' && st.objective && H.opts.objective !== false) {
+    const txt = nounFix(H, st, st.objective);
+    if (!H.objective || txt !== H.objective.txt.textContent) objective(game, txt);
+  }
   if (H.lives) {
-    const L = H.lives, v = L.key === 'lives' ? num(st.lives) : (num(st.health) ?? num(st.hp));
-    if (v != null && v !== L.last) {
-      const max = (L.key === 'lives' ? num(st.maxLives) : num(st.maxHealth) ?? num(st.maxHp)) ?? L.max ?? Math.max(v, L.hearts.length || v);
+    // hearts show health whenever the rules track it (hits are visible), with the remaining lives as a "x2" tag;
+    // without health they show lives
+    const L = H.lives;
+    const hpMax = num(st.maxHealth) ?? num(st.maxHp), hp = num(st.health) ?? num(st.hp), lives = num(st.lives);
+    const useHp = L.key === 'health' || (hpMax != null && hpMax > 1 && hp != null);
+    const v = useHp ? hp : lives;
+    const showLives = useHp && L.key !== 'health' && lives != null;
+    const sig = `${useHp}|${v}|${showLives ? lives : ''}`;
+    if (v != null && sig !== L.sig) {
+      if (L.mode !== useHp) { L.mode = useHp; L.max = useHp ? null : (typeof H.opts.lives === 'number' ? H.opts.lives : null); L.hearts = []; L.big = false; L.last = null; L.lx = null; L.box.innerHTML = ''; }
+      const max = useHp ? (hpMax ?? L.max ?? v) : (num(st.maxLives) ?? L.max ?? Math.max(v, L.hearts.length || v));
       L.max = Math.max(max, L.max || 0);
       if (L.max > 6) {
-        if (!L.big) { L.box.innerHTML = ''; L.ico = icon(game, L.icon, 'tk-heart'); L.x = h('span', 'tk-lives-x', ['']); L.box.append(wrap(panel([L.ico, L.x]))); L.big = true; }
+        if (!L.big) { L.box.innerHTML = ''; L.ico = icon(game, L.icon, 'tk-heart'); L.x = h('span', 'tk-lives-x', ['']); L.box.append(wrap(panel([L.ico, L.x]))); L.big = true; L.lx = null; }
         L.x.textContent = `×${v}`;
         if (L.last != null && v < L.last) { L.ico.classList.remove('tk-lost'); void L.ico.offsetWidth; L.ico.classList.add('tk-lost'); }
       } else {
-        if (L.hearts.length !== L.max) { L.box.innerHTML = ''; L.hearts = []; const p = panel([]); for (let i = 0; i < L.max; i++) { const hh = icon(game, L.icon, 'tk-heart'); L.hearts.push(hh); p.append(hh); } L.box.append(wrap(p)); }
+        if (L.hearts.length !== L.max) { L.box.innerHTML = ''; L.hearts = []; L.lx = null; const p = panel([]); for (let i = 0; i < L.max; i++) { const hh = icon(game, L.icon, 'tk-heart'); L.hearts.push(hh); p.append(hh); } L.box.append(wrap(p)); }
         L.hearts.forEach((hh, i) => {
           const empty = i >= v;
           if (empty && !hh.classList.contains('tk-empty') && L.last != null) { hh.classList.add('tk-lost'); setTimeout(() => hh.classList.remove('tk-lost'), 600); }
           hh.classList.toggle('tk-empty', empty);
         });
       }
-      L.last = v;
+      if (showLives) {
+        if (!L.lx) { L.lx = h('span', 'tk-lives-x tk-lives-n', ['']); const p = L.box.querySelector('.tk-panel'); if (p) p.append(L.lx); }
+        if (L.lx.textContent && L.lx.textContent !== `×${lives}`) { L.lx.classList.remove('tk-lost'); void L.lx.offsetWidth; L.lx.classList.add('tk-lost'); }
+        L.lx.textContent = `×${lives}`;
+      }
+      L.last = v; L.sig = sig;
     }
   }
   if (H.lap) {
@@ -961,9 +995,15 @@ export function togglePause(game) { const U = ui(game); if (U.pauseEl) closePaus
 // ---------- win / lose ----------
 function autoStats(game) {
   const U = game.__ui, H = U && U.hud, st = game.state || {}, out = [];
-  if (H && H.timer) { const { t } = readTimer(game, H); const f = fmtTime(t); out.push({ label: 'Time', value: f.main + f.frac }); }
-  else if (num(st.time) != null) { const f = fmtTime(st.time); out.push({ label: 'Time', value: f.main + f.frac }); }
-  if (H) for (const k of H.counters) { const { v, t } = readCounter(game, k.c); out.push({ label: k.c.label || k.c.id, value: t != null ? `${v} / ${t}` : String(v), n: v }); }
+  // clear time is time ELAPSED (the rules' state.time, else the HUD's own clock); a countdown adds a "Time left" row
+  const el = num(st.time) ?? num(st.elapsed) ?? (H ? H.ownTime : null);
+  if (el != null && (el > 0 || (H && H.timer))) { const f = fmtTime(el); out.push({ label: 'Time', value: f.main + f.frac }); }
+  if (num(st.timeLeft) != null && st.timeLeft > 0) { const f = fmtTime(st.timeLeft); out.push({ label: 'Time left', value: f.main + f.frac }); }
+  if (H) for (const k of H.counters) {
+    const { v, t } = readCounter(game, k.c);
+    const shown = t != null ? Math.min(v, t) : v, over = t != null && v > t ? v - t : 0;
+    out.push({ label: k.c.label || k.c.id, value: t != null ? `${shown} / ${t}${over ? `  +${over} bonus` : ''}` : String(v), n: shown });
+  }
   if (num(st.score) != null && st.score !== st.collected && !(H && H.counters.some(k => k.c.id === 'score'))) out.push({ label: 'Score', value: st.score.toLocaleString(), n: st.score });
   if (num(st.deaths) != null) out.push({ label: 'Falls', value: String(st.deaths) });
   if (num(st.position) > 0) out.push({ label: 'Place', value: `${st.position}${ordinal(st.position)}` });
