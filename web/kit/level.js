@@ -8,7 +8,7 @@ import * as World from './world.js';
 export const MAX_GAP = 5.0;       // horizontal edge-to-edge gap on the route (single jump covers ~12; double jump ~18)
 export const MAX_RISE = 2.5;      // height gained in one route jump (apex is 4.5)
 export const JUMP_HEIGHT = 4.5, RUN_SPEED = 12;
-export const kinds = ['sky_islands', 'meadow_course', 'arena', 'town', 'race_track', 'lagoon'];
+export const kinds = ['sky_islands', 'meadow_course', 'arena', 'town', 'race_track', 'lagoon', 'canyon'];
 export const KINDS = kinds;
 export const SIZES_LIST = ['small', 'medium', 'large'];
 const SIZES = { small: 0.7, medium: 1, large: 1.45 };
@@ -1068,9 +1068,284 @@ function lagoon(ctx) {
   level.hazards.push({ type: 'void', y: level.killY, position: V(0, level.killY, 0) });
 }
 
+// ------------------------------------------------------------------------------------------------ canyon
+// A red-rock desert canyon: a winding loop of packed-dirt floor between terraced, banded sandstone walls, with mesas and
+// buttes beyond, natural arches spanning the canyon, hoodoos, cacti, dry scrub and bleached bones. level.track is the
+// loop (karts/boats race it); level.route runs from the start to a sunlit arch three quarters of the way round
+// (platformers). Ramps and boost pads on the straights, saw blades on the shoulders.
+function canyon(ctx) {
+  const { game, level, rnd, S } = ctx;
+  const pal = Look.palette(game);
+  const R = 74 * S, W = opts(ctx).width ?? 15, HW = W / 2 + 5;          // track width, half-width of the canyon floor
+  const ctrl = [];
+  for (let i = 0; i < 11; i++) {
+    const a = i / 11 * Math.PI * 2;
+    const r = R * (0.78 + 0.26 * Math.sin(a * 3 + ctx.seed) * (0.7 + rnd() * 0.3) + (rnd() - 0.5) * 0.1);
+    ctrl.push(V(Math.cos(a) * r * 1.2, 0, Math.sin(a) * r * 0.9));
+  }
+  const curve = new THREE.CatmullRomCurve3(ctrl, true, 'centripetal');
+  const lenT = curve.getLength(), N = Math.max(260, Math.round(lenT / 1.6));
+  const pts = [], tans = [];
+  for (let i = 0; i <= N; i++) {
+    const t = (i / N) % 1, p = curve.getPointAt(t);
+    p.y = 1.1 * Math.sin(t * Math.PI * 4 + ctx.seed) + 0.7 * Math.sin(t * Math.PI * 6 + 1.7);
+    pts.push(p); tans.push(curve.getTangentAt(t));
+  }
+  level.track = new THREE.CatmullRomCurve3(pts.slice(0, N), true, 'centripetal');
+  level.trackWidth = W;
+  level.laps = 3;
+  const side = (i) => V(tans[i].z, 0, -tans[i].x).normalize();
+  const yawAtI = (i) => Math.atan2(tans[i].x, tans[i].z);
+  // nearest track sample (grid accelerated)
+  const CELL = 12, grid = new Map();
+  for (let i = 0; i < N; i++) { const k = Math.floor(pts[i].x / CELL) + ',' + Math.floor(pts[i].z / CELL); (grid.get(k) || grid.set(k, []).get(k)).push(i); }
+  const nearest = (x, z) => {
+    const cx = Math.floor(x / CELL), cz = Math.floor(z / CELL); let bd = Infinity, bi = -1;
+    for (let r = 0; r <= 5 && bi < 0; r++) for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) {
+      if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+      for (const i of grid.get((cx + dx) + ',' + (cz + dz)) || []) { const d = (pts[i].x - x) ** 2 + (pts[i].z - z) ** 2; if (d < bd) { bd = d; bi = i; } }
+    }
+    return bi < 0 ? null : { d: Math.sqrt(bd), i: bi };
+  };
+  // cheap smooth noise (sum of sines) for mesas, buttes and wall wobble
+  const s0 = ctx.seed * 1.37;
+  const nz = (x, z, f) => Math.sin(x * f + s0) * Math.cos(z * f * 1.13 + s0 * 2) * 0.6 + Math.sin((x * 0.7 - z) * f * 1.9 + s0 * 3) * 0.4;
+  const terrace = (v, step = 3.4) => { const t = v / step, f = t - Math.floor(t); return (Math.floor(t) + THREE.MathUtils.smoothstep(f, 0.55, 1)) * step; };
+  const ext = R * 1.3 + 110;
+  const heightFn = (x, z) => {
+    const n = nearest(x, z);
+    const d = n ? n.d : 999, floorY = n ? pts[n.i].y : 0;
+    // the canyon is cut into a high plateau; past its rim the land falls to low desert with free-standing buttes
+    const dc = Math.hypot(x / 1.2, z / 0.9), rim = R * 1.5 + 12 * nz(x, z, 0.02);
+    const plateau = 28 + 3 * nz(x, z, 0.03) + 9 * THREE.MathUtils.smoothstep(nz(x - 20, z + 60, 0.035), 0.25, 0.35);   // stepped mesas on top
+    const b = nz(x + 90, z - 40, 0.026);
+    const desert = 1 + 24 * THREE.MathUtils.smoothstep(b, 0.42, 0.5) + 10 * THREE.MathUtils.smoothstep(b, 0.62, 0.7);
+    const H = THREE.MathUtils.lerp(plateau, desert, THREE.MathUtils.smoothstep(dc, rim, rim + 16));
+    const wall = HW + 1.5 * nz(x, z, 0.09) + 1.0;
+    const k = THREE.MathUtils.smoothstep(d, wall, wall + 11);
+    const floor = floorY - 0.25 + 0.25 * nz(x, z, 0.25) * THREE.MathUtils.smoothstep(d, W / 2, HW);
+    return floor * (1 - k) + terrace(Math.max(0, H) * k, 4.2);     // terraces in absolute height: no seams between canyon arms
+  };
+  const ground = World.ground(game, { ...P(ctx), size: ext * 2, flat: ext, hills: 0, bumps: 0, seed: ctx.seed + 3, style: 'sand',
+    segments: 330, height: (x, z) => heightFn(x, z) });
+  // colours: banded red-rock strata by height, pale ledges and mesa tops, sand floor with a packed-dirt racing line
+  const BAND = ['#8e3420', '#c4562f', '#e38d55', '#a8402a', '#f1b679', '#b9502c', '#d97a44', '#f6d0a0'].map(c => new THREE.Color(c));
+  const sand = new THREE.Color(pal.sand).lerp(new THREE.Color('#e9b77a'), 0.5), dirt = new THREE.Color(pal.ground2).lerp(new THREE.Color('#a8583a'), 0.35);
+  const topC = new THREE.Color(pal.sand).lerp(new THREE.Color('#e7a86e'), 0.45), cc = new THREE.Color();
+  const rockColor = (x, y, z, ny, out) => {
+    const n = nearest(x, z), d = n ? n.d : 999, fy = n ? pts[n.i].y : 0, rise = y - fy;
+    const wob = 0.5 * Math.sin(x * 0.11 + z * 0.07) + 0.25 * Math.sin(x * 0.37 - z * 0.29);
+    const t = (y + wob) / 2.3, b = Math.floor(t), f = t - b;
+    out.copy(BAND[((b % BAND.length) + BAND.length) % BAND.length]);
+    if (f < 0.12) out.multiplyScalar(0.8);                                  // dark seam under each band
+    else if (f > 0.85) out.lerp(BAND[7], 0.18);                             // pale lip on top
+    if (ny > 0.88 && rise > 2.5) out.lerp(topC, 0.8 * THREE.MathUtils.smoothstep(ny, 0.88, 0.97));
+    if (rise < 1.0) {                                                       // canyon floor
+      cc.copy(sand).multiplyScalar(0.93 + 0.08 * Math.sin(x * 0.9) * Math.sin(z * 0.8));
+      if (d < W / 2 + 0.6) cc.lerp(dirt, 0.6 * THREE.MathUtils.smoothstep(W / 2 + 0.6 - d, 0, 1.6));
+      out.lerp(cc, THREE.MathUtils.smoothstep(1.0 - rise, 0, 0.7));
+    }
+    return out;
+  };
+  {
+    // vertex colours carry the floor / ledge tints; a per-vertex 'rock' amount says where the walls are, and the
+    // strata themselves are drawn per pixel from world height (a heightfield is far too coarse for crisp bands)
+    const g = ground.mesh.geometry, pa = g.attributes.position, na = g.attributes.normal, ca = g.attributes.color, c = new THREE.Color();
+    const rockA = new Float32Array(pa.count);
+    for (let i = 0; i < pa.count; i++) {
+      const x = pa.getX(i), y = pa.getY(i), z = pa.getZ(i), ny = na.getY(i);
+      const n = nearest(x, z), fy = n ? pts[n.i].y : 0, rise = y - fy;
+      rockColor(x, y, z, ny, c); ca.setXYZ(i, c.r, c.g, c.b);
+      const floorM = THREE.MathUtils.smoothstep(1.0 - rise, 0, 0.7), topM = rise > 2.5 ? 0.85 * THREE.MathUtils.smoothstep(ny, 0.9, 0.975) : 0;
+      rockA[i] = (1 - floorM) * (1 - topM);
+    }
+    ca.needsUpdate = true;
+    g.setAttribute('rock', new THREE.BufferAttribute(rockA, 1));
+    const m = Look.material(game, { color: '#ffffff', vertexColors: true, rim: 0.151 }).clone();   // own copy: strata shader
+    const prev = m.onBeforeCompile, prevKey = m.customProgramCacheKey ? m.customProgramCacheKey() : '';
+    m.onBeforeCompile = (sh, r) => {
+      if (prev) prev(sh, r);
+      sh.uniforms.uBand = { value: BAND.map(c => c.clone()) };
+      sh.vertexShader = `attribute float rock;
+varying float vRock;
+varying vec3 vWPos;
+` + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+        vRock = rock; vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;`);
+      sh.fragmentShader = `uniform vec3 uBand[8];
+varying float vRock;
+varying vec3 vWPos;
+` + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+        {
+          float wob = 0.5 * sin(vWPos.x * 0.11 + vWPos.z * 0.07) + 0.25 * sin(vWPos.x * 0.37 - vWPos.z * 0.29);
+          float t = (vWPos.y + wob) / 2.3, f = fract(t);
+          int bi = int(mod(floor(t), 7.0));
+          vec3 bc = uBand[0];
+          for (int k = 1; k < 7; k++) if (k == bi) bc = uBand[k];
+          if (f < 0.12) bc *= 0.78; else if (f > 0.86) bc = mix(bc, uBand[7], 0.22);
+          bc *= 0.93 + 0.07 * sin(vWPos.y * 7.0 + 2.0 * sin(vWPos.x * 0.4 + vWPos.z * 0.3));
+          diffuseColor.rgb = mix(diffuseColor.rgb, bc, clamp(vRock, 0.0, 1.0));
+        }`);
+    };
+    m.customProgramCacheKey = () => prevKey + '-canyon-strata';
+    ground.mesh.material = m;
+  }
+  const gy = (x, z) => ground.heightAt(x, z) ?? 0;
+
+  // ---- placements: start, route (platformers) to the goal arch, checkpoints, laps (races)
+  const goalI = Math.round(N * 0.78);
+  level.spawn = pts[N - 6].clone().add(V(0, 1.0, 0));
+  level.spawnYaw = yawAtI(N - 6);
+  level.route = [pts[N - 6].clone()];
+  for (let i = 0; i <= goalI; i += 3) level.route.push(pts[i].clone());
+  level.goal = { position: pts[goalI].clone().add(V(0, 0.5, 0)), radius: 4 };
+  level.route.push(level.goal.position.clone());
+  for (let k = 1; k < 6; k++) { const i = Math.round(N * k / 6); level.checkpoints.push({ position: pts[i].clone().add(V(0, 0.5, 0)), radius: W / 2 + 2, yaw: yawAtI(i), index: k }); }
+  // straightest stretches: boost pads and two jump ramps (kept clear of the goal)
+  const turn = (i) => { const a = tans[(i - 5 + N) % N], b = tans[(i + 5) % N]; return Math.abs(a.x * b.z - a.z * b.x); };
+  const straight = []; for (let i = 20; i < N - 20; i++) if (Math.abs(i - goalI) > 25) straight.push([turn(i), i]);
+  straight.sort((a, b) => a[0] - b[0]);
+  const picks = []; for (const [, i] of straight) { if (picks.every(j => Math.abs(j - i) > N / 8)) picks.push(i); if (picks.length >= 5) break; }
+  const ramps = picks.slice(3, 5), boosts = picks.slice(0, 3);
+  for (const i of boosts) level.hazards.push({ type: 'boost', position: pts[i].clone().add(V(0, 0.1, 0)), direction: tans[i].clone(), width: 4, length: 5, yaw: yawAtI(i) });
+  for (const i of ramps) {
+    World.prop(game, 'ramp', { ...P(ctx), position: pts[i].clone().add(V(0, -0.15, 0)), yaw: yawAtI(i) - Math.PI / 2, length: 8, width: 6.5, height: 1.7, color: 'wood' });
+    for (let k = 0; k < 4; k++) {   // a coin arc over the jump
+      const t = (k + 1) / 5, q = pts[(i + Math.round(4 + t * 10)) % N].clone(); q.y += 2.2 + Math.sin(t * Math.PI) * 2.6;
+      level.collectibles.push({ position: q, tag: 'coin' });
+    }
+  }
+  // collectibles: short coin lines in alternating lanes
+  for (let k = level.collectibles.length; k < ctx.n; k++) {
+    const i = Math.round(((Math.floor(k / 5) * 5 / ctx.n) * N + (k % 5) * 4 + N * 0.04)) % N;
+    const lane = (Math.floor(k / 5) % 3 - 1) * W * 0.26;
+    level.collectibles.push({ position: pts[i].clone().addScaledVector(side(i), lane).add(V(0, 1.2, 0)), tag: 'coin' });
+  }
+  // hazards: saw blades sliding along the shoulders (off the racing line), a boulder field, cliffs are void
+  for (const frac of [0.22, 0.47, 0.64]) {
+    const i = Math.round(N * frac), sg = frac === 0.47 ? -1 : 1, off = W / 2 + 2.2;
+    const a = pts[(i - 5 + N) % N].clone().addScaledVector(side((i - 5 + N) % N), sg * off), b = pts[(i + 5) % N].clone().addScaledVector(side((i + 5) % N), sg * off);
+    a.y = gy(a.x, a.z); b.y = gy(b.x, b.z);
+    level.hazards.push({ type: 'saw', position: a.clone().lerp(b, 0.5), path: [a, b], period: 3.2, radius: 1.2 });
+  }
+  level.killY = -25;
+  level.hazards.push({ type: 'void', y: level.killY, position: V(0, level.killY, 0) });
+
+  // ---- rock dressing, merged into a few draw calls: natural arches, hoodoos, bones
+  const rockGeos = [], boneGeos = [];
+  const tint = (geo, fn) => {
+    const p = geo.attributes.position, col = new Float32Array(p.count * 3), c = new THREE.Color();
+    for (let i = 0; i < p.count; i++) { fn(p.getX(i), p.getY(i), p.getZ(i), c); col.set([c.r, c.g, c.b], i * 3); }
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    return geo;
+  };
+  const strata = (gy0) => (x, y, z, c) => {
+    const b = Math.floor((y - gy0 + 0.4 * Math.sin(x * 0.3 + z * 0.2)) / 1.4);
+    c.copy(BAND[((b % 7) + 7) % 7]);
+  };
+  const lumpy = (geo, amp, f) => {
+    const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const w = amp * (Math.sin(x * f + y * 0.7) * Math.cos(z * f - y * 0.5)); p.setXYZ(i, x + w, y + w * 0.4, z - w); }
+    geo.computeVertexNormals();
+    return geo;
+  };
+  // natural arches: a thick lumpy stone band spanning the canyon, feet buried in the walls
+  const archAt = (i, rise) => {
+    const c = pts[i], sd = side(i), span = HW + 4;
+    const pathPts = [];
+    for (let k = 0; k <= 24; k++) {
+      const a = Math.PI * k / 24, x = -Math.cos(a) * span, y = Math.sin(a) * rise;
+      pathPts.push(c.clone().addScaledVector(sd, x).add(V(0, y - 2.5, 0)));
+    }
+    const tube = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pathPts), 48, 3.2, 9, false);
+    tube.scale(1, 1, 1);
+    lumpy(tube, 0.8, 0.35);
+    rockGeos.push(tint(tube, strata(c.y)));
+    World.colliderTrimesh(game, tube, null, { what: 'arch' });
+  };
+  archAt(goalI, 25);                                         // the goal arch, framing the finish against the sun
+  archAt(Math.round(N * 0.36), 23);
+  // a free-standing mesa arch out in the desert for the skyline
+  {
+    const c = V(-R * 1.55, 0, R * 0.9); c.y = gy(c.x, c.z);
+    const g = new THREE.TorusGeometry(14, 4, 8, 24, Math.PI); g.translate(c.x, c.y - 1, c.z);
+    rockGeos.push(tint(lumpy(g, 1.2, 0.2), strata(c.y)));
+  }
+  // hoodoos: banded spires with a dark cap rock, on the floor's edges and the ledges above
+  const hoodoo = (x, z, h, r) => {
+    const prof = [];
+    for (let k = 0; k <= 10; k++) { const t = k / 10; prof.push(new THREE.Vector2(r * (0.95 - 0.35 * t + 0.18 * Math.sin(t * Math.PI * 3.2)), t * h)); }
+    prof.push(new THREE.Vector2(r * 0.95, h * 1.02), new THREE.Vector2(r * 0.9, h * 1.12), new THREE.Vector2(0, h * 1.14));
+    const y0 = gy(x, z) - 0.6;
+    const geo = new THREE.LatheGeometry(prof, 9).translate(x, y0, z);
+    rockGeos.push(tint(geo, (px, py, pz, c) => { if (py > y0 + h * 1.01) c.set(pal.cliff2).multiplyScalar(0.7); else strata(y0)(px, py, pz, c); }));
+    World.colliderCylinder(game, V(x, y0 + h / 2, z), h / 2, r * 0.8, { what: 'hoodoo' });
+  };
+  for (let k = 0, placed = 0; k < 120 && placed < 26; k++) {
+    const i = Math.floor(rnd() * N), sg = rnd() < 0.5 ? -1 : 1;
+    const q = pts[i].clone().addScaledVector(side(i), sg * (HW + 0.5 + rnd() * 3));
+    if (Math.abs(i - goalI) < 12 || (nearest(q.x, q.z) || { d: 0 }).d < W / 2 + 3.5) continue;
+    hoodoo(q.x, q.z, 4 + rnd() * 6, 0.9 + rnd() * 0.7); placed++;
+  }
+  for (let k = 0; k < 14; k++) {   // tall ones on the mesas around
+    const a = rnd() * Math.PI * 2, d = R * (0.4 + rnd() * 1.3), x = Math.cos(a) * d * 1.2, z = Math.sin(a) * d;
+    if ((nearest(x, z) || { d: 99 }).d < HW + 6) continue;
+    hoodoo(x, z, 7 + rnd() * 9, 1.4 + rnd());
+  }
+  // bones: bleached rib cages and horned skulls half-buried in the sand beside the track
+  for (let k = 0; k < 9; k++) {
+    const i = Math.floor(rnd() * N), sg = rnd() < 0.5 ? -1 : 1;
+    const q = pts[i].clone().addScaledVector(side(i), sg * (W / 2 + 1.5 + rnd() * 2)); q.y = gy(q.x, q.z);
+    const yaw = rnd() * Math.PI * 2, M = new THREE.Matrix4().makeRotationY(yaw).setPosition(q);
+    if (k % 2) {
+      for (let r = 0; r < 5; r++) boneGeos.push(new THREE.TorusGeometry(0.75 - r * 0.06, 0.07, 5, 10, Math.PI).rotateY(Math.PI / 2).translate(r * 0.32 - 0.6, -0.05, 0).applyMatrix4(M));
+      boneGeos.push(new THREE.CylinderGeometry(0.07, 0.07, 1.8, 5).rotateZ(Math.PI / 2).translate(0, 0.72, 0).applyMatrix4(M));
+    } else {
+      boneGeos.push(new THREE.SphereGeometry(0.42, 8, 6).scale(1, 0.75, 1.35).translate(0, 0.25, 0).applyMatrix4(M));
+      for (const s of [-1, 1]) boneGeos.push(new THREE.ConeGeometry(0.1, 0.9, 6).rotateZ(-s * 1.1).translate(s * 0.55, 0.55, -0.2).applyMatrix4(M));
+    }
+  }
+  const merged = (geos, mat, name, shadow = true) => {
+    if (!geos.length) return;
+    const nonIdx = geos.map(g => (g.index ? g.toNonIndexed() : g));
+    for (const g of nonIdx) { if (!g.attributes.color) tint(g, (x, y, z, c) => c.set('#ffffff')); if (g.attributes.uv) g.deleteAttribute('uv'); }
+    const keep = ['position', 'normal', 'color'];
+    for (const g of nonIdx) for (const k of Object.keys(g.attributes)) if (!keep.includes(k)) g.deleteAttribute(k);
+    const out = new THREE.BufferGeometry();
+    for (const k of keep) {
+      const total = nonIdx.reduce((a, g) => a + g.attributes[k].array.length, 0), arr = new Float32Array(total);
+      let o = 0; for (const g of nonIdx) { arr.set(g.attributes[k].array, o); o += g.attributes[k].array.length; }
+      out.setAttribute(k, new THREE.BufferAttribute(arr, 3));
+    }
+    const m = new THREE.Mesh(out, mat); m.name = name; m.castShadow = shadow; m.receiveShadow = true;
+    ctx.group.add(m);
+  };
+  merged(rockGeos, Look.material(game, { color: '#ffffff', vertexColors: true, flat: true }), 'kit:canyon:rocks');
+  merged(boneGeos, Look.material(game, { color: '#f4ecd8' }), 'kit:canyon:bones', false);
+
+  // ---- props + foliage: start sign, flags at the goal, boulders on the floor edges, cacti and dry scrub
+  World.prop(game, 'sign', { ...P(ctx), position: pts[N - 10].clone().addScaledVector(side(N - 10), W / 2 + 2).setY(gy(pts[N - 10].x, pts[N - 10].z)), yaw: yawAtI(N - 10) });
+  for (const sg of [-1, 1]) {
+    const q = pts[goalI].clone().addScaledVector(side(goalI), sg * (W / 2 + 1)); q.y = gy(q.x, q.z) - 0.1;
+    World.prop(game, 'flag', { ...P(ctx), position: q, height: 6, color: sg < 0 ? 'primary' : 'accent' });
+  }
+  for (let k = 0; k < 16; k++) {
+    const i = Math.floor(rnd() * N), sg = rnd() < 0.5 ? -1 : 1;
+    const q = pts[i].clone().addScaledVector(side(i), sg * (W / 2 + 2.8 + rnd() * 2)); q.y = gy(q.x, q.z) - 0.3;
+    if (Math.abs(i - goalI) < 6) continue;
+    World.prop(game, 'rock', { ...P(ctx), position: q, size: 1.0 + rnd() * 1.4 });
+  }
+  const np = []; for (let i = 0; i < N; i += 2) np.push(pts[i]);
+  World.noPlant(game, np, W / 2 + 2.2);
+  World.foliage(game, { ...P(ctx), area: { center: V(0, 0, 0), radius: ext - 12 }, kinds: { tree_round: 0.9, bush: 1.2, grass: 0.7, tree_dead: 0.5, rock: 0.6 },
+    density: 0.7, seed: ctx.seed + 8, focus: level.route, focusRadius: 26 });
+  World.clouds(game, { ...P(ctx), count: 10, height: 75, radius: ext, seed: ctx.seed });
+  level.ground = ground;
+  level.bounds = boundsOf(pts, 16);
+}
+
 function opts(ctx) { return ctx.opts || {}; }
 
-const BUILDERS = { sky_islands: skyIslands, meadow_course: meadowCourse, arena, town, race_track: raceTrack, lagoon };
+const BUILDERS = { sky_islands: skyIslands, meadow_course: meadowCourse, arena, town, race_track: raceTrack, lagoon, canyon };
 
 /** Level.validate(level) -> list of route problems (gaps > MAX_GAP+margin or rises > MAX_RISE+margin). [] means reachable. */
 export function validate(level) {

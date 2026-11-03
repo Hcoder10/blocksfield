@@ -6,7 +6,7 @@ objects itself: pass the level to `Gameplay.rules` and it spawns coins, checkpoi
 
 ```js
 Level.build(game, kind, { size = 'medium', seed = 1, collectibles = 30 }) -> level
-Level.KINDS        // ['sky_islands', 'meadow_course', 'arena', 'town', 'race_track', 'lagoon']
+Level.KINDS        // ['sky_islands', 'meadow_course', 'arena', 'town', 'race_track', 'lagoon', 'canyon']
 Level.validate(level) -> []   // list of route problems; [] means every route jump is reachable
 ```
 
@@ -18,6 +18,7 @@ Level.validate(level) -> []   // list of route problems; [] means every route ju
 | `town` | cozy village: plaza with fountain + market stalls, 4 streets of houses, lamps, town-hall tower | exploration, delivery, hide and seek, collect |
 | `race_track` | closed banked circuit with curbs, barriers, start/finish gantry, boost pads, lake infield | kart / car / boat-free races, time trials |
 | `lagoon` | closed water course through a tropical lagoon: buoy-lined lane, beaches, lighthouse island, boost pads, a jump ramp, rocks | boat / jet-ski races (`Player` type `boat`), water time trials |
+| `canyon` | red-rock desert canyon: a winding loop of packed-dirt floor between terraced, banded sandstone walls cut into a mesa plateau; natural arches, hoodoos, buttes, cacti, scrub, bones; jump ramps, boost pads, saw blades on the shoulders; goal under a sunlit arch | kart races (it has `level.track`) AND platformers (`level.route` runs start -> goal arch); best with the `desert` or `sunset` look |
 
 Sizes: `small` (~0.7x), `medium`, `large` (~1.45x). `seed` changes the layout; same seed = same level.
 
@@ -31,7 +32,7 @@ level.checkpoints  [{position, radius}] (race: + yaw, index)
 level.hazards      [{type:'void', y}] fall plane (all kinds), [{type:'boost', position, direction, yaw, width, length}] (race)
 level.movers       [{mesh, path:[a, b], period, type:'platform'}] ping-pong platforms (Gameplay animates them)
 level.goal         {position, radius} | null (arena has no goal)      level.killY   fall-death height
-level.track        CatmullRomCurve3 | null (race_track, lagoon: centre line, closed)    level.laps = 3, level.trackWidth
+level.track        CatmullRomCurve3 | null (race_track, lagoon, canyon: centre line, closed)    level.laps = 3, level.trackWidth
 level.water        {y} | null (lagoon: boats float at y; meadow river; race_track lake)
 level.bounds       Box3        level.group  Object3D with all level art        level.colliders  [...]
 level.spawnPoints  (arena) Vector3[] for enemies          level.islands (sky_islands) island objects
@@ -58,6 +59,15 @@ K.Gameplay.rules(game, { level, player, collect: { tag: 'coin', target: 30 }, go
 const level = K.Level.build(game, 'race_track', { size: 'large', collectibles: 20 });
 const kart = K.Player.create(game, { type: 'kart', spawn: level.spawn, yaw: level.spawnYaw });
 ```
+
+```js
+K.Look.apply(game, 'desert');                                  // or 'sunset'
+const level = K.Level.build(game, 'canyon', { size: 'medium' });
+// karts race 3 laps of level.track; a platformer instead runs level.route to the goal arch:
+const player = K.Player.create(game, { type: 'kart', spawn: level.spawn, yaw: level.spawnYaw });
+K.Gameplay.rules(game, { level, player });                     // vehicle + track -> race
+```
+`canyon` options: `width` (track width, default 15). The canyon floor is wider than the track; walls are ~30 units tall.
 
 Add your own props on top with `World.prop` (see World.md), e.g. a chest at the goal:
 `K.World.prop(game, 'chest', { position: level.goal.position, yaw: 0 })`.

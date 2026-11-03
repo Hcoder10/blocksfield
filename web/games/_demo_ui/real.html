@@ -7,11 +7,11 @@
 // UI/FX/Audio/Debug on the real Look/Level/Player/Gameplay kits. ?kind=sky_islands|race_track|...&look=...&style=...&title=0
 import * as K from 'kit';
 const q = new URLSearchParams(location.search);
-const kind = q.get('kind') || 'sky_islands', race = /race|track/.test(kind);
+const kind = q.get('kind') || 'sky_islands', race = q.get('player') ? /kart|boat/.test(q.get('player')) : /race|track/.test(kind);
 const game = await K.createGame({ seed: 7 });
 K.Look.apply(game, q.get('look') || 'toon_bright');
 const level = K.Level.build(game, kind, { size: 'medium', collectibles: 30 });
-const player = K.Player.create(game, { type: race ? 'kart' : 'platformer', spawn: level.spawn, yaw: level.spawnYaw });
+const player = K.Player.create(game, { type: q.get('player') || (race ? 'kart' : 'platformer'), spawn: level.spawn, yaw: level.spawnYaw });
 race ? K.Camera.chase(game, player) : K.Camera.follow(game, player);
 K.Gameplay.rules(game, race ? { level, player, race: { laps: 3, opponents: 5 }, timer: true } : { level, player, collect: { tag: 'coin', target: 20 }, goal: true, lives: 3 });
 K.UI.hud(game, race ? { style: q.get('style') || undefined, lap: true, position: true, timer: true, speedometer: true, minimap: true }

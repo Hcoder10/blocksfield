@@ -31,7 +31,7 @@ Runs at 60 fps on a laptop GPU at 1280x720 (`quality: 'high'`), and degrades wit
 Every module is an ES module importing `three` / `three/addons/...` through the page's import map, and must never
 import another module's internals: only the APIs below. Unknown options are ignored, missing options get good
 defaults. Every public function validates its input and throws an Error with a *helpful message* (the model reads
-it), e.g. `Level.build: unknown kind "skyislands"; kinds: sky_islands, meadow_course, arena, town, race_track, lagoon`.
+it), e.g. `Level.build: unknown kind "skyislands"; kinds: sky_islands, meadow_course, arena, town, race_track, lagoon, canyon`.
 
 ## Page skeleton (a generated game)
 
@@ -81,7 +81,7 @@ game.start();
   `level.killY`), `spikes {size}`, `spinner {length, speed, height}`, `bounce {power, radius}`, `boost {direction, yaw,
   width, length}` (race). Gameplay draws every hazard, including boost pads. `movers`: `{mesh, path:[a,b], period, type:
   'platform'}` ping-pong. The mesh has NO collider; Gameplay calls `Physics.addKinematic`. Extra fields: `level.water
-  = {y} | null`, `level.trackWidth` + `level.laps` (race_track, lagoon = water race over `level.water.y`), `level.spawnPoints` (arena), `level.killY`. Static level
+  = {y} | null`, `level.trackWidth` + `level.laps` (race_track, canyon; lagoon = water race over `level.water.y`), `level.spawnPoints` (arena), `level.killY`. Static level
   colliders are made by level.js/world.js directly in collision group `world` and listed in `level.colliders`.
 - `game.state` keys written by `Gameplay.rules` (gameplay.js), read by UI/debug (all optional; absent when the rule is
   off): `score`, `collected`, `target` (collect goal), `lives`, `health`, `maxHealth`, `time` (elapsed s),
