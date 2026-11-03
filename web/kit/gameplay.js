@@ -1344,12 +1344,15 @@ export function autopilot(game, opts = {}) {
   // simulate a jump arc from p with horizontal velocity hv: returns landing point on ground or null
   // simulate the jump the controller would really do: start from the current horizontal velocity, air-accelerate
   // toward `want` (desired horizontal velocity). Returns the landing point on solid ground or null.
-  function arcLands(p, want, v0, double) {
-    const pos = p.clone(); let vy = v0, used2 = !double; const dt = 1 / 30;
+  // dash: also air-dash right after the double jump's apex (long gaps)
+  function arcLands(p, want, v0, double, dash = false) {
+    const pos = p.clone(); let vy = v0, used2 = !double, dashT = -1, usedDash = !dash; const dt = 1 / 30;
     const hv = V3(player.velocity.x, 0, player.velocity.z), acc = (T.airAccel || 30) * dt;
     for (let i = 0; i < 90; i++) {
+      if (dashT > 0) { dashT -= dt; vy = Math.max(vy - 10 * dt, -2); pos.addScaledVector(hv, dt); pos.y += vy * dt; continue; }
       vy -= (vy > 0 ? T.riseGravity : T.fallGravity) * dt;
       if (!used2 && vy < 2) { vy = dblV; used2 = true; }
+      else if (used2 && !usedDash && vy < 1) { usedDash = true; dashT = T.dashTime || 0.18; hv.copy(want).setLength(T.dashSpeed || 24); vy = Math.max(vy, 3); continue; }
       const dv = want.clone().sub(hv); if (dv.length() > acc) dv.setLength(acc); hv.add(dv);
       pos.addScaledVector(hv, dt); pos.y += vy * dt;
       if (vy < 0) {
@@ -1502,7 +1505,7 @@ export function autopilot(game, opts = {}) {
     const tgtSupported = !!supported(tgt);
     const sp = Math.hypot(player.velocity.x, player.velocity.z);
     if (player.grounded) {
-      st.plan = null; st.wantDouble = false; st.hopInPlace = false; st.waiting = false;
+      st.plan = null; st.wantDouble = false; st.hopInPlace = false; st.waiting = false; st.wantDash = false; st.didDouble = false;
       const dy = tgt.y - p.y;
       const g1 = groundAhead(p, dir, 1.1), g2 = groundAhead(p, dir, 0.6);
       const edge = !g1 || g1.point.y < p.y - 1.4;
@@ -1522,7 +1525,11 @@ export function autopilot(game, opts = {}) {
           const ok = (l) => l && l.y > p.y - 6 && (!l.kinematic || (Math.hypot(l.x - p.x, l.z - p.z) < 4.5 && moverBoardable(l))) && spinnerSafe(l, l.t);
           const land = arcLands(p, hv, jumpV, false);
           if (ok(land)) { jump = true; st.plan = land; }
-          else if (dblV) { const land2 = arcLands(p, hv, jumpV, true); if (ok(land2)) { jump = true; st.wantDouble = true; st.plan = land2; } }
+          else if (dblV) {
+            const land2 = arcLands(p, hv, jumpV, true);
+            if (ok(land2)) { jump = true; st.wantDouble = true; st.plan = land2; }
+            else if (T.dash) { const land3 = arcLands(p, hv, jumpV, true, true); if (ok(land3)) { jump = true; st.wantDouble = true; st.wantDash = true; st.plan = land3; } }
+          }
           // nothing to land on yet: if a moving platform serves this gap, wait for it (we walk on when it docks)
           const moverGap = moverNear(p.clone().addScaledVector(dir, 3.5));
           if (!jump) { if (!g2) { mx = -dir.x * 0.4; mz = -dir.z * 0.4; } else { mx = 0; mz = 0; } st.waiting = true; st.waitT += dt; if (moverGap) st.stuckClock = 0; if (st.waitT > (moverGap ? 12 : tgtSupported ? 1.5 : 7)) { jump = true; st.wantDouble = !!dblV; st.waitT = 0; mx = dir.x; mz = dir.z; } }
@@ -1566,7 +1573,8 @@ export function autopilot(game, opts = {}) {
       // air: hold jump for full height, double-jump at apex if planned or if falling short of the target ledge
       if (st.hopInPlace) { mx = 0; mz = 0; }
       if (st.jumpHold > 0) { st.jumpHold -= dt; jump = true; }
-      if (st.wantDouble && player.velocity.y < 2) { jump = false; st.wantDouble = false; st.dblNext = true; }
+      if (st.wantDash && !st.wantDouble && !st.dblNext && st.didDouble && player.velocity.y < 1) { st.wantDash = false; st.didDouble = false; action = true; }
+      if (st.wantDouble && player.velocity.y < 2) { jump = false; st.wantDouble = false; st.dblNext = true; st.didDouble = true; }
       else if (st.dblNext) { jump = true; st.dblNext = false; st.jumpHold = 0.3; }
       else if (dblV && player.velocity.y < -2 && tgt.y > p.y - 0.5 && !st.usedEmergency && dist > 1) {
         const below = Physics.raycast(game, p.clone().add(V3(0, 0.5, 0)), V3(0, -1, 0), 6, { excludeCollider: player.collider });

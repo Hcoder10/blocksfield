@@ -21,6 +21,10 @@ const specs = {
     { type: 'pillar', position: [0, -6, 16], size: 1.2 },
     { type: 'island', position: [0, 0, 32], size: 8 },
   ], route: [[0, 0, 0], [0, 0, 6.5], [0, 0, 25.5], [0, 0, 32]], goal: true, collectibles: 4 },
+  gap: { pieces: [
+    { type: 'island', position: [0, 0, 0], size: 8 },
+    { type: 'island', position: [0, 0, +(q.get('gapz') || 27)], size: 8 },
+  ], route: [[0, 0, 0], [0, 0, 3.8], [0, 0, +(q.get('gapz') || 27) - 3.8], [0, 0, +(q.get('gapz') || 27)]], goal: true, collectibles: 3 },
   lift: { pieces: [
     { type: 'island', position: [0, 0, 0], size: 8 },
     { type: 'cliff', position: [0, 12, 14], size: 6 },
