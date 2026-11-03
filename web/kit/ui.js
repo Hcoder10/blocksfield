@@ -842,6 +842,11 @@ export function ruleToast(game, text, opts = {}) {
   return el;
 }
 /** UI.mechanicBanner(game, 'Gravity Flip', {text:'Press G to flip gravity'}) when a custom mechanic activates */
+/** UI.cutscene(game, urlOrWhen, opts) -> Promise: plays a generated cutscene (cutscene.js, kit-look-world) if the kit has it */
+export async function cutscene(game, what, opts = {}) {
+  try { const C = await import('./cutscene.js'); return C.play ? C.play(game, what, opts) : false; }
+  catch (e) { console.warn('UI.cutscene: cutscene.js not available', e && e.message); return false; }
+}
 export function mechanicBanner(game, name, opts = {}) {
   return banner(game, String(name || 'New mechanic'), { style: 'info', sub: opts.text || 'New mechanic!', duration: opts.duration || 2.2, ...opts, mechanic: true });
 }

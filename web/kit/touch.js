@@ -141,7 +141,7 @@ function build(game, T) {
     T.keys = want;
   }, -20);
   // hide the pad while a full screen (title, pause, win/lose, dialog) is up
-  game.lateUpdate(() => { const U = game.__ui; el.classList.toggle('tk-off', !!(U && (U.title || U.screen || U.pauseEl || U.counting))); }, 32);
+  game.lateUpdate(() => { const U = game.__ui; el.classList.toggle('tk-off', !!((U && (U.title || U.screen || U.pauseEl || U.counting)) || (game.state && game.state.cutscene))); }, 32);
   game.emit('touch', true);
 }
 
